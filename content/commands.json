@@ -52,20 +52,21 @@
      "changed_in_note": null
     },
     "10": {
-     "same_as": "9",
+     "command": "systemctl is-active firewalld",
+     "notes": "Text-identical to the RHEL 8/9 command (this row was authored as same_as: 9 -> 8 before RHEL 10 was independently run). Promoted to its own command entry after Caleb Stone's CR-T-34 capture on saratoga-rhel10 (2026-09-17) proved RHEL 10 was independently executed on a real host: a same_as row can never carry its own verified receipt (it was never run), and this version now has a receipt to carry. See tests/captures/10/firewalld-service-active.json and Riley Park's capture-review-run1-2026-09-18.md RILEY-F5.",
      "changed_in_note": null
     }
    },
    "flags": [
     {
      "flag": "status",
-     "explain": null,
+     "explain": "Shows the unit's loaded state, whether it is enabled, its current run state, its main process id, and a short tail of its journal entries.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     },
     {
      "flag": "is-active",
-     "explain": null,
+     "explain": "Reports one word describing the unit's run state (for example active or inactive) and sets the exit code to match, with nothing else printed.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -143,7 +144,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/firewalld-service-active.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/firewalld-service-active.json"
+    }
+   }
   },
   {
    "id": "ctrl-alt-del-target-masked",
@@ -175,7 +191,7 @@
    "flags": [
     {
      "flag": "status",
-     "explain": null,
+     "explain": "Shows the unit's loaded state, whether it is enabled, its current run state, its main process id, and a short tail of its journal entries.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -249,7 +265,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/ctrl-alt-del-target-masked.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/ctrl-alt-del-target-masked.json"
+    }
+   }
   },
   {
    "id": "journald-service-active",
@@ -274,14 +305,15 @@
      "changed_in_note": null
     },
     "10": {
-     "same_as": "9",
+     "command": "systemctl is-active systemd-journald",
+     "notes": "Text-identical to the RHEL 9 command (this row was authored as same_as: 9 before RHEL 10 was independently run). Promoted to its own command entry after Caleb Stone's CR-T-34 capture on saratoga-rhel10 (2026-09-17) proved RHEL 10 was independently executed on a real host: a same_as row can never carry its own verified receipt (it was never run), and this version now has a receipt to carry. See tests/captures/10/journald-service-active.json.",
      "changed_in_note": null
     }
    },
    "flags": [
     {
      "flag": "is-active",
-     "explain": null,
+     "explain": "Reports one word describing the unit's run state (for example active or inactive) and sets the exit code to match, with nothing else printed.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -327,7 +359,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/journald-service-active.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/journald-service-active.json"
+    }
+   }
   },
   {
    "id": "gen-fw-set-default-zone",
@@ -361,7 +408,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-fw-open-port",
@@ -424,7 +476,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-fw-allow-service",
@@ -481,7 +538,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-nmcli-static-ipv4",
@@ -559,7 +621,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-journalctl-unit-logs",
@@ -639,7 +706,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-journalctl-unit-logs.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-journalctl-unit-logs.json"
+    }
+   }
   },
   {
    "id": "gen-lvcreate-new-lv",
@@ -690,7 +772,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-lvextend-grow",
@@ -744,7 +831,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-sshd-test-config",
@@ -782,7 +874,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-useradd-create",
@@ -848,7 +945,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-usermod-add-group",
@@ -893,7 +995,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-systemctl-query",
@@ -939,7 +1046,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-systemctl-query.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-systemctl-query.json"
+    }
+   }
   },
   {
    "id": "gen-systemctl-manage",
@@ -987,7 +1109,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-dnf-package",
@@ -1031,7 +1158,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false,
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
    "versions": [
     "8",
     "9",
@@ -1080,7 +1212,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
-   "verified": false,
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
    "versions": [
     "7",
     "8",
@@ -1143,7 +1280,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-semanage-port-add",
@@ -1200,7 +1342,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-chage-list",
@@ -1236,7 +1383,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-chage-list.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-chage-list.json"
+    }
+   }
   },
   {
    "id": "gen-chage-set-aging",
@@ -1299,7 +1461,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-auditctl-watch",
@@ -1361,7 +1528,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   },
   {
    "id": "gen-ausearch-by-key",
@@ -1405,7 +1577,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-ausearch-by-key.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-ausearch-by-key.json"
+    }
+   }
   },
   {
    "id": "gen-rsyslogd-test-config",
@@ -1443,7 +1630,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-rsyslogd-test-config.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-rsyslogd-test-config.json"
+    }
+   }
   },
   {
    "id": "gen-chronyd-one-shot-check",
@@ -1477,7 +1679,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false,
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
    "notes": "H1 correction (Marcus Reed): this entry was wrongly raised to blast yellow at G4(d) on a misreading of -Q as clock-stepping (Caleb Stone's CR-T-34 note read -Q for -q; Eli Cross's ruling and this branch's previous commit both repeated it). chronyd(8) draws a clear line between the two: -q is the mode that actually adjusts the system time and then quits (content-src/raw/rhel8/chronyd.man.txt#L64-L66, identical at rhel10#L64-L66); -Q behaves the same way except for that one adjustment -- it reports the measured offset and, because it skips opening network ports entirely, can run as a non-root user as long as nothing in the config needs elevated access (#L68-L74, identical at rhel10#L68-L74). This toolkit only ever generates -Q. blast restored to green. MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) -- chronyd is the only NTP daemon this toolkit generates commands for."
   },
   {
@@ -1518,7 +1725,22 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false,
+   "verified": {
+    "7": false,
+    "8": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "defiant-rhel8",
+     "capture": "tests/captures/8/gen-podman-ps.json"
+    },
+    "9": false,
+    "10": {
+     "by": "Riley Park",
+     "on": "2026-09-18",
+     "host": "saratoga-rhel10",
+     "capture": "tests/captures/10/gen-podman-ps.json"
+    }
+   },
    "versions": [
     "8",
     "9",
@@ -1560,7 +1782,12 @@
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
-   "verified": false,
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
    "versions": [
     "8",
     "9",
