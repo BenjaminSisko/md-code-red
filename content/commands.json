@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 90
+  "entry_count": 116
  },
  "categories": [
   "firewall-cmd",
@@ -32,7 +32,8 @@
   "text-processing",
   "filesystem",
   "process",
-  "network"
+  "network",
+  "git"
  ],
  "entries": [
   {
@@ -5790,6 +5791,1514 @@
     "title": "man page for rsync, as installed on the reference host",
     "url_or_man": "man rsync(1)",
     "version": "rsync 3.1-3.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-clone",
+   "tool": "git",
+   "category": "git",
+   "intent": "Get a full local copy of a remote repository, history included, in one step",
+   "rhel_versions": {
+    "7": {
+     "command": "git clone https://forgejo.example/org/repo.git",
+     "notes": "Downloads every reachable commit, branch, and tag from the remote (not just the default branch's latest snapshot) into a new directory, and checks out the remote's default branch. Git is a single tool with the identical command surface on every RHEL release this product covers -- nothing here is version-specific the way a coreutil's packaging can be."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--branch",
+     "explain": "Check out a specific branch (or tag) instead of the remote's default branch, right after cloning.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--depth",
+     "explain": "Shallow clone: fetch only the most recent N commits' history instead of the full history -- smaller and faster, but some operations (older log ranges, some rebases) need a full clone afterward.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--bare",
+     "explain": "Create a repository with no working tree, just the history -- the shape used for a server-side or mirror copy, not for editing.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The new directory exists, `git log` shows commit history, and `git remote -v` shows the expected origin URL.",
+   "undo": "Delete the cloned directory -- nothing outside it was touched, since clone only creates a new directory tree.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-status",
+   "tool": "git",
+   "category": "git",
+   "intent": "See what branch you're on, what's staged, what's changed but unstaged, and what's untracked, before doing anything else",
+   "rhel_versions": {
+    "7": {
+     "command": "git status",
+     "notes": "The first command to run in any repository before committing, merging, or resetting -- it distinguishes staged changes (will be in the next commit), unstaged changes (modified but not added), and untracked files (never added at all), which is exactly the distinction that determines what a reset mode or a checkout would do to them."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-s",
+     "explain": "Short format: one compact line per file instead of the full sectioned report.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-b",
+     "explain": "Show the branch and tracking-branch relationship even in short format.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported branch, staged/unstaged/untracked files match what the operator expects from their own recent edits.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-add",
+   "tool": "git",
+   "category": "git",
+   "intent": "Stage changes so they will be included in the next commit",
+   "rhel_versions": {
+    "7": {
+     "command": "git add -p",
+     "notes": "Copies the current content of the named file(s) into the index (the staging area); it does not create a commit by itself. -p walks through each changed hunk and asks whether to stage it, which is how to split one file's edits into more than one commit."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-p",
+     "explain": "Interactively choose which hunks within each file to stage, instead of the whole file at once.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-A",
+     "explain": "Stage all changes in the whole working tree, including deletions, not just the given paths.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Stage modifications and deletions to already-tracked files, but never a new untracked file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git status` shows the intended files (or hunks) moved from unstaged/untracked into staged.",
+   "undo": "`git restore --staged <path>` (or the older `git reset HEAD <path>`) unstages a file without touching its content in the working tree.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-commit",
+   "tool": "git",
+   "category": "git",
+   "intent": "Record the currently staged changes as a new point in the repository's history",
+   "rhel_versions": {
+    "7": {
+     "command": "git commit -m \"short, imperative summary of the change\"",
+     "notes": "Commits only what is staged (see git add) -- a modified-but-unstaged file is silently left out unless -a is added, which stages every already-tracked modification first (never a new untracked file). --amend replaces the most recent commit instead of creating a new one: safe if that commit has not been pushed anywhere yet, and a history rewrite (see git-rebase's notes) if it has."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Supply the commit message directly on the command line instead of opening an editor.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "Automatically stage every modified tracked file before committing (never new untracked files).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--amend",
+     "explain": "Replace the most recent commit with a new one (new message and/or currently staged changes) instead of adding a new commit on top.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--no-verify",
+     "explain": "Skip the repository's pre-commit/commit-msg hooks -- bypasses whatever check they enforce, so it should be a deliberate, explained exception, not a default habit.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log -1` shows the new commit with the expected message, and `git status` reports nothing left staged.",
+   "undo": "If not yet pushed anywhere: `git reset --soft HEAD~1` removes the commit and puts its changes back in the staging area, ready to re-commit or edit -- see the 'undo the last commit but keep changes' recovery entry. If already pushed and shared, use `git revert` instead of rewriting the commit away.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-branch",
+   "tool": "git",
+   "category": "git",
+   "intent": "List, create, or delete branches -- a branch is just a movable pointer to a commit, not a copy of the files",
+   "rhel_versions": {
+    "7": {
+     "command": "git branch feature/new-thing",
+     "notes": "With no argument, lists local branches. Given a name, creates a new branch pointing at the current commit but does NOT switch to it (see git switch/checkout for that). -d deletes a branch only if it is already fully merged elsewhere; -D deletes it regardless, which can genuinely lose commits that exist on no other branch (see the 'I lost a commit' recovery entry for what to do if that happens by mistake)."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-d",
+     "explain": "Delete a branch, but refuse if it has commits not merged anywhere else.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-D",
+     "explain": "Delete a branch unconditionally, even if it has commits that exist nowhere else -- can lose work.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "List remote-tracking branches as well as local ones.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "Rename a branch.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git branch` (or `git branch -a`) lists the expected branch, or no longer lists a deleted one.",
+   "undo": "A newly created branch is undone with `git branch -d <name>` (or -D if it has no merged commits yet, since there's nothing to lose). A DELETED branch has no direct undo -- if its tip commit still appears in `git reflog`, `git branch <name> <sha>` recreates it pointing at that commit.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-switch-branch",
+   "tool": "git",
+   "category": "git",
+   "intent": "Move to a different existing branch (or create one and move to it in the same step)",
+   "rhel_versions": {
+    "7": {
+     "command": "git switch feature/new-thing",
+     "notes": "The modern, branch-only replacement for one half of the older, dual-purpose git checkout (see the separate checkout entry for the other half). -c creates the named branch first if it does not exist yet. Switching branches refuses by default if it would silently overwrite uncommitted changes to a tracked file that differs between the two branches -- it does not force through that the way checkout historically could."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Create the named branch (from the current commit, or from a given start point) and switch to it in one step.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--discard-changes",
+     "explain": "Switch even if it would overwrite local modifications, discarding them -- the one way this command stops being safe.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git status` reports the new branch as current, and the working tree matches that branch's last commit.",
+   "undo": "Switch back to the previous branch with `git switch -` (or the branch's name) -- switching itself does not create or delete commits.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-checkout-discard-changes",
+   "tool": "git",
+   "category": "git",
+   "intent": "Throw away uncommitted changes to specific tracked files, restoring them to their last-committed content",
+   "rhel_versions": {
+    "7": {
+     "command": "git checkout -- path/to/file",
+     "notes": "This is git checkout's OTHER job, distinct from switching branches: given one or more paths after --, it overwrites those files in the working tree with their content from HEAD (or a given commit), discarding whatever was edited and never committed. The newer, less ambiguous spelling for this specific job is `git restore <path>`. Either way, there is no staging step and no confirmation prompt -- the previous uncommitted content is simply gone."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--",
+     "explain": "Separates the commit/branch argument (if any) from the pathspec, so a path that happens to share a name with a branch is never misread as one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "<commit>",
+     "explain": "Restore the path from a specific commit instead of from HEAD.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git diff <path>` shows no difference between the working tree and the last commit for that path.",
+   "undo": "None -- the discarded edits were never committed, so there is nothing for git itself to recover them from. Recovery, if any, comes only from an editor's own local backup/undo history or a copy kept outside git.",
+   "blast": "red",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-merge",
+   "tool": "git",
+   "category": "git",
+   "intent": "Bring another branch's commits into the current branch, creating a merge commit if the histories have diverged",
+   "rhel_versions": {
+    "7": {
+     "command": "git merge feature/new-thing",
+     "notes": "If the current branch is a direct ancestor of the branch being merged, git fast-forwards (just moves the pointer, no new commit); otherwise it creates a merge commit with two parents. A merge that touches the same lines of the same file on both sides stops with conflict markers in the affected files and waits for them to be resolved and committed -- it does not silently pick a side."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--no-ff",
+     "explain": "Always create a merge commit, even when a fast-forward would be possible -- keeps a visible record that a branch was merged.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--abort",
+     "explain": "Back out of a merge that has stopped on conflicts, restoring the pre-merge state exactly.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--squash",
+     "explain": "Apply the other branch's changes as uncommitted, staged content instead of a merge commit -- history from the other branch is not carried over.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log --graph` shows the expected merge commit (or fast-forward), and the merged branch's changes are present in the working tree.",
+   "undo": "If the merge has not been pushed anywhere yet: `git reset --hard ORIG_HEAD` (git records the pre-merge tip there automatically) returns to the state before the merge. If it stopped on conflicts and was never completed, `git merge --abort` does the same thing more directly.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-rebase",
+   "tool": "git",
+   "category": "git",
+   "intent": "Replay the current branch's commits on top of a different base commit, producing a linear history instead of a merge commit",
+   "rhel_versions": {
+    "7": {
+     "command": "git rebase main",
+     "notes": "Reads as 'take everything unique to my branch and reapply it on top of main's current tip.' Every replayed commit gets a NEW commit hash, even if its content is identical -- this is a history rewrite, and rewriting commits that have already been pushed and that anyone else has based work on will make their next pull show unexpected conflicts, because the two histories no longer share those commits' identities. Interactive mode (-i) additionally lets each commit be reworded, squashed, reordered, or dropped as it replays."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-i",
+     "explain": "Interactive: open an editable list of the commits about to be replayed, to reword/squash/reorder/drop them.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--onto",
+     "explain": "Replay onto a different commit than the one named as the upstream, for moving a branch's commits to a new base precisely.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--abort",
+     "explain": "Stop an in-progress rebase and return the branch to exactly where it was before the rebase started.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--continue",
+     "explain": "Resume a rebase after resolving the conflicts that paused it on the current commit.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log --graph` shows the branch's commits replayed on top of the new base with no unexpected commits gained or lost; `git diff <old-tip> <new-tip>` (comparing the pre-rebase tip, from reflog, to the new one) shows no unintended content change.",
+   "undo": "Before the rebase finishes: `git rebase --abort` restores the exact pre-rebase state. After it finishes: `git reset --hard <old-tip>` using the pre-rebase tip's hash from `git reflog` restores the branch to before the rebase -- reflog is what makes this recoverable even after the fact (see the 'I lost a commit' recovery entry).",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-log-formats",
+   "tool": "git",
+   "category": "git",
+   "intent": "Read commit history in the shape that answers the question at hand -- one line per commit, a graph of branches, or a date-bounded range",
+   "rhel_versions": {
+    "7": {
+     "command": "git log --oneline --graph --decorate -20",
+     "notes": "--oneline compresses each commit to its short hash and subject line; --graph draws the branch/merge topology in text; --decorate labels commits with the branch/tag names pointing at them. -- since=/--until= filter by date instead of count. Reads only; never changes the repository."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--oneline",
+     "explain": "One compact line per commit: short hash and subject only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--graph",
+     "explain": "Draw an ASCII graph of branch and merge topology alongside the log.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--decorate",
+     "explain": "Label each commit with any branch/tag names pointing at it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "Show the actual diff introduced by each commit, not just its message.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--since",
+     "explain": "Show only commits after a given date/time.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--until",
+     "explain": "Show only commits before a given date/time.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--author",
+     "explain": "Filter to commits by a specific author.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed commits, in the printed order, match what the operator expects for that branch/range.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-diff",
+   "tool": "git",
+   "category": "git",
+   "intent": "See exactly what changed -- unstaged edits, staged edits, or the difference between any two commits or branches",
+   "rhel_versions": {
+    "7": {
+     "command": "git diff HEAD~1..HEAD",
+     "notes": "With no arguments, shows unstaged changes against the index. --staged (a.k.a. --cached) shows staged changes against the last commit instead. Given two commits/branches, shows the difference between them regardless of what is staged or unstaged. Reads only; produces output describing differences, never applies them."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--staged",
+     "explain": "Show staged changes (what a commit right now would record) instead of unstaged working-tree changes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--stat",
+     "explain": "Summarize which files changed and by how many lines, without the line-by-line diff.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--name-only",
+     "explain": "List just the changed filenames.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported differences match what the operator expects between the two states being compared.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-stash",
+   "tool": "git",
+   "category": "git",
+   "intent": "Set aside uncommitted changes temporarily -- to switch branches cleanly or pull without conflicts -- and bring them back later",
+   "rhel_versions": {
+    "7": {
+     "command": "git stash push -m \"wip: description\"",
+     "notes": "push (the default subcommand, so plain `git stash` does the same thing) saves staged AND unstaged tracked changes onto a stack and reverts the working tree to match HEAD; pop reapplies the most recent stash and removes it from the stack, while apply reapplies it but leaves it on the stack. Untracked files are left alone unless -u is added. A stash pop/apply that conflicts with the current working tree stops with conflict markers, the same as a merge would."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "push",
+     "explain": "Save the current staged and unstaged changes onto the stash stack and revert the working tree (the default action).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "pop",
+     "explain": "Reapply the most recent stash to the working tree and remove it from the stack.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "apply",
+     "explain": "Reapply the most recent (or a named) stash but leave it on the stack.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "list",
+     "explain": "List every stash currently saved.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Also stash untracked files, not just already-tracked changes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git stash list` shows the expected entry after push, or `git status` shows the restored changes after pop/apply.",
+   "undo": "A pushed stash can be dropped unapplied with `git stash drop` (or restored with pop/apply) -- the changes are not lost until the stash itself is explicitly dropped or the stack is cleared.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-tag",
+   "tool": "git",
+   "category": "git",
+   "intent": "Mark a specific commit with a fixed, human-readable name, most often a release version",
+   "rhel_versions": {
+    "7": {
+     "command": "git tag -a v1.2.0 -m \"v1.2.0\"",
+     "notes": "A LIGHTWEIGHT tag (no -a) is just a name pointing at a commit, the same as a branch but that never moves. An ANNOTATED tag (-a) is its own object with a message, tagger identity, and date, and is what git describe and most release tooling expect. Unlike a branch, tags are conventionally never moved once pushed -- retagging the same name to a different commit changes what everyone who already fetched that tag believes it points to."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Create an annotated tag object (message, tagger, date) instead of a lightweight pointer.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "Supply the annotated tag's message directly instead of opening an editor.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-d",
+     "explain": "Delete a local tag.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "List existing tags, optionally filtered by a glob pattern.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git tag -l` lists the tag, and `git show <tag>` shows the expected commit (and, for an annotated tag, the message).",
+   "undo": "Delete the local tag with `git tag -d <name>` -- if it was already pushed, the remote copy needs its own explicit delete (see git-push's notes on deleting a pushed ref); deleting a tag never touches the commit it pointed at.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-remote",
+   "tool": "git",
+   "category": "git",
+   "intent": "See or manage the other repositories this one is configured to fetch from and push to",
+   "rhel_versions": {
+    "7": {
+     "command": "git remote -v",
+     "notes": "-v (verbose) shows each remote's name alongside its fetch and push URLs, which can legitimately differ. add/remove/rename change the configured remotes; they never touch history or branches by themselves -- fetch/pull/push are the commands that actually move commits."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-v",
+     "explain": "Show each remote's fetch and push URLs, not just its name.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "add",
+     "explain": "Register a new remote under a name.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "remove",
+     "explain": "Un-register a remote (does not affect any already-fetched history or remote-tracking branches, beyond no longer updating them).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "set-url",
+     "explain": "Change a remote's URL without renaming it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git remote -v` lists the expected remote name(s) and URL(s).",
+   "undo": "Reverse the specific change: `git remote remove <name>` for an added remote, or `git remote add <name> <old-url>` to restore one that was removed -- removing a remote does not delete any commits already fetched from it.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-fetch",
+   "tool": "git",
+   "category": "git",
+   "intent": "Download a remote's new commits and branches into local remote-tracking branches, without touching the current working branch",
+   "rhel_versions": {
+    "7": {
+     "command": "git fetch origin",
+     "notes": "The safe, non-merging half of pull: it updates origin/<branch> remote-tracking references to match the remote, but never touches the local branch you have checked out or your working tree. Reviewing `git log origin/main..main` or `git diff main origin/main` after a fetch, before merging, is how to see what a pull would bring in before it actually changes anything."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--all",
+     "explain": "Fetch from every configured remote, not just one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--prune",
+     "explain": "Remove local remote-tracking branches for branches that no longer exist on the remote.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--tags",
+     "explain": "Also fetch tags that are not already covered by the fetched commits.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log origin/<branch>` (or `git branch -r`) shows the expected new remote-tracking history.",
+   "undo": "Nothing to undo -- fetch only updates remote-tracking references, never the current branch or working tree.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-pull",
+   "tool": "git",
+   "category": "git",
+   "intent": "Fetch a remote's new commits and immediately integrate them into the current branch",
+   "rhel_versions": {
+    "7": {
+     "command": "git pull",
+     "notes": "Equivalent to `git fetch` followed by `git merge` (or, with pull.rebase set / --rebase given, `git rebase`) of the remote-tracking branch into the current one -- so everything git-merge's or git-rebase's notes say about conflicts and history rewriting applies here too, just triggered in one step instead of two. `git fetch` first, reviewed, is the safer sequence when the incoming changes are unfamiliar."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--rebase",
+     "explain": "Integrate the fetched commits by rebasing the current branch onto them instead of merging.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--ff-only",
+     "explain": "Refuse to pull unless it can fast-forward -- fails loudly instead of creating a merge commit or rebasing.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log` shows the remote's new commits now present on the current branch, with no unexpected merge/rebase result.",
+   "undo": "The same as the merge or rebase it performed: `git reset --hard ORIG_HEAD` after a merging pull, or the pre-rebase tip from `git reflog` after a rebasing pull.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-push",
+   "tool": "git",
+   "category": "git",
+   "intent": "Upload local commits to a remote, updating its branch to match",
+   "rhel_versions": {
+    "7": {
+     "command": "git push origin feature/new-thing",
+     "notes": "Normally refuses if the remote branch has commits the local branch does not (someone else pushed first) -- fetch and merge/rebase first rather than forcing past this. --force (or its safer sibling --force-with-lease, which fails if the remote moved since the last fetch instead of blindly overwriting it) REWRITES the remote branch to match local history exactly, discarding whatever commits were only on the remote; on a shared branch this can destroy other people's work with no server-side undo unless the deleted commits happen to still be reachable from someone's reflog or an untouched clone."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--force",
+     "explain": "Overwrite the remote branch to match local history exactly, discarding remote-only commits with no lease check -- avoid on a shared branch.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--force-with-lease",
+     "explain": "Like --force, but refuses if the remote branch has moved since the last fetch, so it cannot blindly discard commits nobody locally has seen yet.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--tags",
+     "explain": "Also push tags that are not already on the remote.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--delete",
+     "explain": "Delete a branch or tag on the remote instead of pushing to it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The remote's branch (checked with `git log` on a fresh fetch, or the forge's own UI) shows the expected new commits.",
+   "undo": "A plain push that only added commits is undone with `git push --force` back to the previous remote tip (from local reflog) if nobody else has based work on it yet. A --force push that discarded someone else's commits has no server-side undo -- recovery depends on that history surviving in their local reflog or another clone.",
+   "blast": "red",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-reset-soft",
+   "tool": "git",
+   "category": "git",
+   "intent": "Undo the last commit (or several) while keeping every changed line staged and ready to re-commit -- moves only the branch pointer",
+   "rhel_versions": {
+    "7": {
+     "command": "git reset --soft HEAD~1",
+     "notes": "Of the three reset modes, --soft touches the least: it moves HEAD (and the current branch) to the given commit and leaves both the index and the working tree exactly as they were. This is the direct answer to 'I want to undo the last commit but keep the changes' -- the changes end up staged, as if `git add` had just been run, ready to edit, re-message, or split before committing again."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "<commit>",
+     "explain": "The commit to move HEAD to, most often HEAD~N (N commits back) or a specific hash.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git status` shows the undone commit's changes now staged, and `git log` no longer shows that commit.",
+   "undo": "`git reset --soft <old-tip>` (the hash the branch pointed at before, found in `git reflog`) moves the branch back to where it was.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-reset-mixed",
+   "tool": "git",
+   "category": "git",
+   "intent": "Undo the last commit (or several) and unstage the changes, leaving them in the working tree as ordinary uncommitted edits",
+   "rhel_versions": {
+    "7": {
+     "command": "git reset HEAD~1",
+     "notes": "--mixed is reset's DEFAULT mode when no mode flag is given. It moves HEAD like --soft, but also resets the index to match the target commit, so the changes show as unstaged modifications in the working tree rather than staged ones. The working tree's actual file content is untouched -- nothing is discarded, only un-staged."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "<commit>",
+     "explain": "The commit to move HEAD and the index to, most often HEAD~N or a specific hash.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git status` shows the undone commit's changes as unstaged modifications, and `git log` no longer shows that commit.",
+   "undo": "`git reset <old-tip>` (the hash from `git reflog`) moves the branch and index back; the working tree was never changed by the mixed reset in the first place.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-reset-hard",
+   "tool": "git",
+   "category": "git",
+   "intent": "Undo the last commit (or several) and discard the changes entirely, resetting the working tree to match the target commit exactly",
+   "rhel_versions": {
+    "7": {
+     "command": "git reset --hard HEAD~1",
+     "notes": "The most destructive of the three modes: it moves HEAD, resets the index, AND overwrites every tracked file in the working tree to match the target commit -- any uncommitted staged or unstaged edits at the time of the reset are gone, not just unstaged. It does not touch untracked files. The commit(s) reset away still exist in git's object database until garbage-collected and are usually recoverable via `git reflog` (see the 'I lost a commit' recovery entry), but any uncommitted work that was never part of a commit has no such safety net."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "<commit>",
+     "explain": "The commit to reset HEAD, the index, and the working tree to, most often HEAD~N or a specific hash.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git status` reports a clean working tree matching the target commit, and `git log` no longer shows the reset-away commits.",
+   "undo": "The commits themselves: `git reset --hard <old-tip>` (the hash from `git reflog`) restores the branch. Any UNCOMMITTED changes present at the moment of the hard reset are not in any commit and are not recoverable by git at all.",
+   "blast": "red",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-revert",
+   "tool": "git",
+   "category": "git",
+   "intent": "Undo a commit's changes by creating a new commit that applies the opposite edit, without rewriting any existing history",
+   "rhel_versions": {
+    "7": {
+     "command": "git revert HEAD",
+     "notes": "The safe way to undo a commit that has already been pushed and shared: unlike reset, revert never removes or rewrites an existing commit, it only adds a new one on top that cancels the target's changes -- so it is safe to run on a branch other people have already based work on. Reverting a commit whose changes have since been further modified or removed can itself conflict, the same as a merge would, and pauses for resolution."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--no-commit",
+     "explain": "Apply the revert's changes to the working tree/index but stop before creating the commit, so several reverts can be combined into one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "For reverting a MERGE commit: specify which parent side to treat as the mainline, since a merge commit has more than one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log` shows the new revert commit, and `git diff <target>..HEAD` shows the target commit's changes are gone from the current state.",
+   "undo": "Revert the revert: `git revert <revert-commit-hash>` re-applies the original change as yet another new commit -- consistent with revert never rewriting history either way.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-bisect",
+   "tool": "git",
+   "category": "git",
+   "intent": "Binary-search the commit history to find exactly which commit introduced a bug, instead of reading the log by eye",
+   "rhel_versions": {
+    "7": {
+     "command": "git bisect start",
+     "notes": "After `git bisect start`, mark a known-bad commit (`git bisect bad`) and a known-good one (`git bisect good <commit>`); git checks out a commit halfway between them for testing, and each `git bisect good`/`git bisect bad` verdict halves the remaining range until one commit is left. `git bisect reset` at the end returns to the branch/commit that was checked out before bisect started -- skipping it leaves the repository checked out at whatever commit bisect landed on (a detached HEAD), not back on the original branch."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "start",
+     "explain": "Begin a bisect session.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "bad",
+     "explain": "Mark the currently checked-out commit (or a named one) as exhibiting the bug.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "good",
+     "explain": "Mark the currently checked-out commit (or a named one) as not exhibiting the bug.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "reset",
+     "explain": "End the bisect session and return to the branch/commit checked out before it started.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "run",
+     "explain": "Automate the good/bad marking by running a given script/command against each candidate commit.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Git reports the single first-bad commit at the end of the session, and testing that commit confirms it introduces the bug.",
+   "undo": "`git bisect reset` at any point ends the session and returns to the original branch -- bisect only checks out commits for testing, it never creates or discards any.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-reflog",
+   "tool": "git",
+   "category": "git",
+   "intent": "See every position HEAD and each branch have pointed to recently, including commits a reset or rebase moved away from",
+   "rhel_versions": {
+    "7": {
+     "command": "git reflog",
+     "notes": "Records a local, per-repository log of where HEAD (and branches) have been, separate from the commit history itself -- this is what makes a hard reset, a rebase, or a branch deletion recoverable: the old tip commit is still listed here (by default for about 90 days) even though it no longer appears in `git log`. Reflog is local only; it is never pushed and a fresh clone has none of it."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "show",
+     "explain": "Show the reflog for a specific ref (defaults to HEAD).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "expire",
+     "explain": "Prune old reflog entries past their retention window -- reduces how far back recovery can reach.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed entries include the operation being investigated (a reset, rebase, checkout, or commit) with the commit hash it moved from/to.",
+   "undo": "Nothing to undo -- read-only. The recovery it enables (`git reset --hard <hash-from-reflog>`, or `git branch <name> <hash-from-reflog>`) is undone the same way any reset or branch creation is.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-cherry-pick",
+   "tool": "git",
+   "category": "git",
+   "intent": "Apply one specific commit's changes onto the current branch, without merging or rebasing everything else that commit's branch contains",
+   "rhel_versions": {
+    "7": {
+     "command": "git cherry-pick abc1234",
+     "notes": "Creates a NEW commit on the current branch with the same changes and message as the named commit, but a different hash and parent -- the source commit is untouched. Used to bring a single fix from one branch to another without pulling in everything else that has happened on the source branch. Like a merge, a cherry-pick that conflicts with the current branch's content stops with conflict markers and waits for resolution."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "--no-commit",
+     "explain": "Apply the changes to the working tree/index but stop before creating the commit, e.g. to cherry-pick several commits into one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--abort",
+     "explain": "Back out of a cherry-pick that stopped on conflicts, restoring the pre-cherry-pick state.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-x",
+     "explain": "Append a line to the new commit's message recording which original commit it was cherry-picked from.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`git log` shows the new commit with the expected changes, and `git diff <source-commit> HEAD` (for that file/path) shows the same content landed.",
+   "undo": "If not yet pushed: `git reset --hard <old-tip>` (from `git reflog`) removes the cherry-picked commit -- the original source commit is never affected either way.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-recovery-wrong-branch",
+   "tool": "git",
+   "category": "git",
+   "intent": "Recovery scenario: 'I committed to the wrong branch' -- move a commit that was just made on the wrong branch onto the right one",
+   "rhel_versions": {
+    "7": {
+     "command": "git log -1  # note the hash, then: git checkout right-branch && git cherry-pick <hash> && git checkout wrong-branch && git reset --hard HEAD~1",
+     "notes": "The commit itself is not damaged -- it exists as an object regardless of which branch pointed at it. The fix is additive-then-subtractive: cherry-pick the commit onto the branch it belongs on (a new commit object, same content), THEN remove it from the wrong branch with reset. Doing the cherry-pick BEFORE the reset means the commit is safely copied before anything is removed, so an interruption partway through never leaves the work existing nowhere. If the wrong-branch commit was already pushed, treat removing it there the same as any other push --force: only safe if nobody else has already fetched it."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [],
+   "verify": "`git log` on the correct branch shows the commit, and `git log` on the originally-wrong branch no longer shows it.",
+   "undo": "If interrupted after the cherry-pick but before the reset, the commit now simply exists on both branches -- re-running just the reset half finishes the cleanup; nothing is lost either way since the cherry-pick step never removes anything.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "git-recovery-lost-commit",
+   "tool": "git",
+   "category": "git",
+   "intent": "Recovery scenario: 'I lost a commit' -- a hard reset, a rebase, or a deleted branch removed a commit from every branch's visible history",
+   "rhel_versions": {
+    "7": {
+     "command": "git reflog  # find the commit's hash, then: git branch recovered-work <hash>",
+     "notes": "A commit that no longer appears in `git log` on any branch is not necessarily gone: as long as it has not been garbage-collected (git's default grace period is long, on the order of weeks, unless someone has run `git gc --prune=now`), it is still a real object in the repository, and `git reflog` almost always still has a line recording the moment HEAD pointed at it. Once the hash is found there, `git branch <new-name> <hash>` recreates a branch pointing at it, or `git cherry-pick <hash>` replays just that commit onto the current branch -- either way the 'lost' commit was never actually deleted, only unreferenced."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [],
+   "verify": "`git log <new-branch-or-hash>` shows the recovered commit and its content matches what was expected to be lost.",
+   "undo": "Nothing further to undo -- this recovery only reads the reflog and creates a new reference; it does not remove anything.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },

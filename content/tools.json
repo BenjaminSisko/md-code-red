@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 83
+  "tool_count": 84
  },
  "tools": [
   {
@@ -2380,6 +2380,34 @@
     "title": "man page for rsync, as installed on the reference host",
     "url_or_man": "man rsync(1)",
     "version": "rsync 3.1-3.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "git",
+   "binary": "git",
+   "label": "git",
+   "category": "git",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    }
