@@ -1449,7 +1449,7 @@
    "id": "gen-chronyd-one-shot-check",
    "tool": "chronyd",
    "category": "chronyd",
-   "intent": "Run a single NTP correction against a server or pool and exit -- this steps the system clock (chronyd(8) -Q), a real state change, even though it does not touch the running chronyd service or its configuration",
+   "intent": "Print the current NTP offset from a server or pool without applying any correction to the system clock -- chronyd(8): -Q \"only prints the offset without making any corrections of the clock and disables server ports to allow chronyd to be started without root privileges\" (content-src/raw/rhel8/chronyd.man.txt#L68-L74, identical at rhel10#L68-L74)",
    "fields": [
     {
      "name": "directive",
@@ -1466,9 +1466,9 @@
      "field": "directive"
     }
    ],
-   "verify": "chronyd -Q exits 0 and prints the step it applied, or an error if the server is unreachable.",
-   "undo": "Nothing to undo — -Q performs one correction and exits; it does not modify the running chronyd service, its configuration, or start anything persistent.",
-   "blast": "yellow",
+   "verify": "chronyd -Q exits 0 and prints the measured offset, or an error if the server is unreachable; it applies no correction, so there is no clock change to confirm.",
+   "undo": "Nothing to undo -- -Q only prints the measured offset (chronyd(8)); it applies no correction, modifies no running chronyd service or its configuration, and starts nothing persistent.",
+   "blast": "green",
    "source": {
     "id": "src-man-chronyd-r8",
     "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
@@ -1478,7 +1478,7 @@
     "license_class": "paraphrase-only"
    },
    "verified": false,
-   "notes": "G4(d): blast raised from green to yellow -- -Q RETRIEVES THE OFFSET AND STEPS THE SYSTEM CLOCK before exiting (chronyd(8), cited below); that is a state change (logs, cron, anything time-sensitive on the host), even though it touches no file and starts nothing persistent, which is what the undo field below is honest about. MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (content-src/raw/rhel8/chronyd.man.txt#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
+   "notes": "H1 correction (Marcus Reed): this entry was wrongly raised to blast yellow at G4(d) on a misreading of -Q as clock-stepping (Caleb Stone's CR-T-34 note read -Q for -q; Eli Cross's ruling and this branch's previous commit both repeated it). chronyd(8) is explicit and identical on RHEL 8 and RHEL 10: -q \"will set the system clock once and exit\" (content-src/raw/rhel8/chronyd.man.txt#L64-L66, identical at rhel10#L64-L66); -Q \"is similar to the -q option, except it only prints the offset without making any corrections of the clock and disables server ports to allow chronyd to be started without root privileges\" (#L68-L74, identical at rhel10#L68-L74). This toolkit only ever generates -Q. blast restored to green. MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) -- chronyd is the only NTP daemon this toolkit generates commands for."
   },
   {
    "id": "gen-podman-ps",

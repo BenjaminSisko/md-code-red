@@ -409,7 +409,7 @@
    "values": {
     "directive": "server time.mil iburst"
    },
-   "blast": "yellow",
+   "blast": "green",
    "flags": [
     "-Q"
    ],
