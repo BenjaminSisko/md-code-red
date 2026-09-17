@@ -1,0 +1,29 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "systemctl status ctrl-alt-del.target",
+ "command_hash_at_capture": "54dba71906b9d69888a5e6f9faa53d5bb9ddfd7f0fd767da481e489b3e78d6e7",
+ "entry_id": "ctrl-alt-del-target-masked",
+ "exit_code": 3,
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "notes": "exit_code 3 is systemctl's normal LSB status code for an inactive/masked unit (not a command failure) per systemctl(1).",
+ "pkg_versions": {
+  "systemd": "systemd-257-23.el10_2.2.x86_64"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "",
+ "stdout": "\u25cb ctrl-alt-del.target\n     Loaded: masked (Reason: Unit ctrl-alt-del.target is masked.)\n     Active: inactive (dead)",
+ "stig_compliance": {
+  "compliant": true,
+  "note": "Loaded: masked, Active: inactive (dead) satisfies RHEL-10-700960",
+  "stig_id": "RHEL-10-700960"
+ },
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 \"Loaded: masked\" and \"Active: inactive (dead)\" both present, matching verify text."
+}

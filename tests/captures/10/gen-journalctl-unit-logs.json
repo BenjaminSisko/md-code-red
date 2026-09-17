@@ -1,0 +1,26 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot",
+ "command_hash_at_capture": "b3d1909b6137b6569d900803e2d2efcad3cf2891b4db4a016f7355a85b4e3c0a",
+ "entry_id": "gen-journalctl-unit-logs",
+ "exit_code": 0,
+ "field_substitutions": {
+  "unit": "sshd.service (golden-table value, exists on both hosts)"
+ },
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "pkg_versions": {
+  "systemd": "systemd-257-23.el10_2.2.x86_64"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "",
+ "stdout": "-- No entries --",
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 no matches, exit status 0 with no output is documented as success, not failure, per verify text."
+}

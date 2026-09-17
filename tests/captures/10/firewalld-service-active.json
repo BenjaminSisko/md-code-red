@@ -1,0 +1,28 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "systemctl is-active firewalld",
+ "command_hash_at_capture": "504ff39e153b3ec8914474d2a27dc98a916e26bf0a0c1581e52f97eb7afec5db",
+ "entry_id": "firewalld-service-active",
+ "exit_code": 0,
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "pkg_versions": {
+  "firewalld": "firewalld-2.4.3-2.el10_2.noarch"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "",
+ "stdout": "active",
+ "stig_compliance": {
+  "compliant": true,
+  "note": "check_cmd output \"active\" satisfies RHEL-10-200531",
+  "stig_id": "RHEL-10-200531"
+ },
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 printed \"active\", matching verify text \"The command prints \\\"active\\\" (RHEL 8/9/10)...\""
+}

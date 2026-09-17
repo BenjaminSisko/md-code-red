@@ -1,0 +1,24 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "ausearch -k 'identity' -ts 'today'",
+ "command_hash_at_capture": "406e1a0c872aae570c4d8ac41539ac4fbbd05c0e47f2e553d94da1077051f9aa",
+ "entry_id": "gen-ausearch-by-key",
+ "exit_code": 1,
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "notes": "Not classified GREEN-but-privileged/deferred because the command's core function (reading audit.log for the given key) executed and returned a defined result without sudo; the config-file permission note is recorded here for transparency per the capture protocol, not treated as a blocking privilege requirement.",
+ "pkg_versions": {
+  "audit": "audit-4.0.3-5.el10.x86_64"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "Error opening config file (Permission denied)\nNOTE - using built-in end_of_event_timeout: 2\nNOTE - using built-in logs: /var/log/audit/audit.log\n<no matches>",
+ "stdout": "",
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PARTIAL \u2014 same as RHEL 8: audit.log read succeeded under built-in defaults, auditd.conf unreadable without privilege."
+}

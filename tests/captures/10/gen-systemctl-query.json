@@ -1,0 +1,30 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "systemctl 'status' 'sshd.service'",
+ "command_hash_at_capture": "f65931c05530d384d7f6c856c333816f47863c5a2276a417d8338ed730eae680",
+ "entry_id": "gen-systemctl-query",
+ "exit_code": 0,
+ "field_substitutions": {
+  "action": "status (golden-table value)",
+  "unit": "sshd.service (golden-table value, exists on both hosts)"
+ },
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "pkg_versions": {
+  "systemd": "systemd-257-23.el10_2.2.x86_64"
+ },
+ "redacted": [
+  "ssh key fingerprint (ECDSA SHA256 public key fingerprint of accepted logins) -> [REDACTED-SSH-KEY-FINGERPRINT]"
+ ],
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "",
+ "stdout": "\u25cf sshd.service - OpenSSH server daemon\n     Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; preset: enabled)\n     Active: active (running) since Thu 2026-09-17 00:31:52 EDT; 8h ago\n Invocation: 18ab01b5d6fc48d5a0e39bb61d375591\n       Docs: man:sshd(8)\n             man:sshd_config(5)\n   Main PID: 3337 (sshd)\n      Tasks: 1 (limit: 202998)\n     Memory: 5.8M (peak: 13.1M)\n        CPU: 4min 33.521s\n     CGroup: /system.slice/sshd.service\n             \u2514\u25023337 \"sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups\"\n\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255746]: Postponed publickey for adm-linux from 192.168.1.126 port 52109 ssh2 [preauth]\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255746]: Accepted key [REDACTED-SSH-KEY-FINGERPRINT] found at /home/adm-linux/.ssh/authorized_keys:1\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255746]: Accepted publickey for adm-linux from 192.168.1.126 port 52109 ssh2: [REDACTED-SSH-KEY-FINGERPRINT]\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255746]: pam_unix(sshd:session): session opened for user adm-linux(uid=1000) by adm-linux(uid=0)\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255746]: User child is on pid 255749\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255785]: main: SHA1 in signatures is disabled for RSA keys\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255785]: Connection from 192.168.1.126 port 52124 on 192.168.1.117 port 22 rdomain \"\"\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255785]: kex_exchange_identification: Connection closed by remote host\nSep 17 09:26:47 saratoga.home.arpa sshd-session[255785]: Connection closed by 192.168.1.126 port 52124\nSep 17 09:26:47 saratoga.home.arpa sshd[3337]: srclimit_penalise: ipv4: new 192.168.1.126/32 deferred penalty of 1 seconds for penalty: connections without attempting authentication",
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 full unit block printed, per verify text."
+}
