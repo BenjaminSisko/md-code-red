@@ -10,11 +10,32 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v0.1.0-sketch (Blueprint stage)  
-**STIG release date:** N/A  
+**Current version:** v1.0.0-dev (Build stage, engine skeleton)  
+**Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-17
 
 ## Recent changes
+
+- **2026-09-17** — CR-T-02..05, branch `salm/milo/engine-fork` (Milo Vance). Engine forked to MD CODE RED:
+  `build.py` renamed and rebuilt around ADR-001's content model — a 14-file `CONTENT` map, `same_as`
+  resolution with cycle detection, STIG reverse links, a search-index seed, and a `validate()` that
+  fails loud on a missing RHEL key, a dangling `stig_id`, missing provenance, or a `verified` claim with
+  no capture receipt; output is `dist/md-code-red_<version>.html` plus a `.sha256` sidecar.
+  `qa.py` merged with the Etsy STIG pipeline's accuracy re-check: 17 gates (Q1–Q17) plus an optional
+  `node --check`, one PASS/FAIL line each, the pinned XCCDF re-parsed and diffed against the embedded
+  rules after verifying `stig-src/SHA256SUMS`, a mechanical `innerHTML` audit with a documented
+  allow-list, and **size reported in MB, never enforced** (Founder ruling, ceiling unlimited).
+  `template.html` replaced with the five-region shell skeleton + palette overlay: CSP meta tag, dark and
+  light token sets from UI spec v1 §6, ARIA landmarks, exactly two `<script>` elements (JSON data island
+  + one ES5 IIFE with `esc()`/`escapeAttr()`/`escapeRegex()`, a schema-versioned guarded storage module,
+  the theme module, the island loader, and the status-bar renderer). Skeleton content: 3 STIG-sourced
+  command entries across all four RHEL versions, 3 tools, the destructive-pattern table, and generated
+  `rules_rhel{7,8,9,10}.json` / `cci_nist.json` / empty `flags_rhel*.json` from the pinned sources.
+  `tests/fixtures/broken-content/` + `tests/test_build_fails_on_broken.py` prove the build fails on six
+  deliberate defects. CI replaced with the seven-step gate (build, QA, accuracy re-check, gitleaks,
+  size report, reproducible-build drift check, artifact upload with sha256) on Python 3.12, no Node.
+  Open item for Devon/Al: `dist/` is git-ignored on working branches because a committed artifact
+  embeds its own build date and cannot stay byte-identical to a rebuild across days (ADR-001 §9).
 
 - **2026-09-17** — Repository created (Stage 03 Blueprint closed, scope signed by the Founder). Engine forked from
   Grey Beard Ansible v1.0.1 (`build.py`, `qa.py`, `template.html`, `extract/`, `content/`) — unmodified in this commit;

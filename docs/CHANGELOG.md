@@ -4,6 +4,22 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — v1.0.0-dev engine skeleton (2026-09-17, CR-T-02..05)
+- `build.py`: MD CODE RED identity constants, 14-file `CONTENT` map, `validate()` (four mandatory RHEL
+  keys, `stig_id` referential integrity, provenance, capture-backed `verified`), `same_as` resolution
+  with cycle detection, STIG reverse links, search-index seed, `dist/md-code-red_<version>.html` + `.sha256`.
+- `qa.py`: gates Q1-Q17 with a PASS/FAIL line each, the pinned-XCCDF accuracy re-check and CCI
+  re-check (`--accuracy`), generated-file integrity, mechanical `innerHTML` audit, and a size
+  **report** (`--size`) that can never fail a build.
+- `template.html`: five-region shell skeleton (RAIL/SIDEBAR/EDITOR/INSPECTOR/STATUSBAR + PALETTE),
+  CSP meta tag, dark/light theme tokens, ES5 IIFE with escaping helpers, guarded storage, theme
+  module, data-island loader, and status-bar renderer.
+- Skeleton content: 3 STIG-sourced command entries, 3 tools, destructive-pattern table, and generated
+  rules/CCI/flags datasets from the pinned DISA sources.
+- `tests/test_build_fails_on_broken.py` and six deliberately broken fixtures.
+- CI: seven steps — build, QA, accuracy re-check, gitleaks, size report, reproducible-build drift
+  check, artifact upload with sha256.
+
 ### Planned
 - Command Builder engine (P0)
 - STIG/NIST tagging and Export as Evidence (P0)
