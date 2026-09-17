@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q18, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q19, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -16,6 +16,11 @@ Q18 is beyond ADR-001's list: it is Marcus's CI merge-gate #4 and #9
 (threat-model-v1 §11), the hostile-input harness over the command assembler and
 the quoting-domain separation check. It is the only gate in this file that
 REQUIRES Node — see gate_q18 for why a skip is not acceptable there.
+
+Q19 is MCR-SEC-020 and MCR-SEC-019 (condition E5): the flag dictionary measured
+against the raw captures it was extracted from, and every generator citation
+checked to show an option that generator actually emits. Q15 cannot see either,
+because it re-runs the extractor and diffs the output against itself.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -1702,6 +1707,180 @@ def gate_q18(ctx):
     return f, d
 
 
+LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
+COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
+RAW_DIR_FOR = {"8": "rhel8", "10": "rhel10"}
+
+
+def _long_options_in_raw(raw_dir, cli):
+    """Distinct long options the committed raw capture for this tool mentions."""
+    if not os.path.isdir(raw_dir):
+        return None
+    files = sorted(f for f in os.listdir(raw_dir)
+                   if f.startswith(cli + ".") and f.endswith(".man.txt"))
+    if not files:
+        return None
+    found = set()
+    for name in files:
+        with open(os.path.join(raw_dir, name), encoding="utf-8", errors="replace") as fh:
+            found |= set(LONG_OPTION_RE.findall(fh.read()))
+    return found
+
+
+def gate_q19(ctx):
+    """MCR-SEC-020 (condition E5) — dictionary coverage, and citations that point at the flag.
+
+    Marcus Reed's finding was not that the flag dictionary has a gap. It was that
+    NOTHING COULD SEE ONE: Q15 re-runs the extractor and diffs the output against
+    itself, so a systematically skipped option class produces a byte-identical
+    re-parse and a PASS. `--add-rich-rule` is absent from flags_rhel8.json and
+    flags_rhel10.json and present in the raw capture twice over, and every gate in
+    this file was green.
+
+    Two halves:
+
+    (a) COVERAGE. Distinct long options in each committed raw capture, against the
+        long option names the dictionary carries for that tool. Long options only,
+        and the gate says so rather than implying more: they are the countable
+        class in man-page text, and the option this finding was raised about is
+        one. The raw count is an upper bound — it picks up prose and per-subcommand
+        options the top-level parser never sees — so this is a REGRESSION gate
+        against content-src/flag_coverage_baseline.json, which records the gap with
+        the date it was accepted and the ticket that owns closing it (CR-T-09/10).
+        A shortfall that GROWS fails. A shortfall that shrinks reports, and asks
+        for the baseline to be tightened, because a stale baseline is a gate that
+        has stopped measuring.
+
+    (b) CITATIONS (MCR-SEC-019). A generator whose source cites a raw capture line
+        must cite a line that actually shows an option the generator EMITS.
+        gen-fw-allow-service cited firewall-cmd.man.txt#L310 — `--add-service`,
+        an option it does not emit, since it composes a rich rule — which is
+        threat-model §4's Explainer row in the provenance rather than in the panel.
+    """
+    f, d, p = [], [], []
+    data = ctx.get("data")
+
+    if not os.path.exists(COVERAGE_BASELINE):
+        f.append("content-src/flag_coverage_baseline.json is missing — MCR-SEC-020's coverage "
+                 "gate has no recorded baseline, so it cannot tell a gap from a regression")
+        return f, d, p
+    with open(COVERAGE_BASELINE, encoding="utf-8") as fh:
+        baseline = json.load(fh)
+    for key in ("_accepted_on", "_accepted_by", "_ticket"):
+        if not baseline.get(key):
+            f.append("the flag-coverage baseline carries no %s — E5 asks for the gap closed OR "
+                     "accepted WITH A DATE, and an undated acceptance is neither" % key)
+
+    measured, stale = 0, []
+    for rel, raw_name in sorted(RAW_DIR_FOR.items()):
+        dict_path = os.path.join(REPO, "content", "flags_rhel%s.json" % rel)
+        if not os.path.exists(dict_path):
+            f.append("content/flags_rhel%s.json is missing" % rel)
+            continue
+        with open(dict_path, encoding="utf-8") as fh:
+            dictionary = json.load(fh)
+        raw_dir = os.path.join(REPO, "content-src", "raw", raw_name)
+        rel_baseline = (baseline.get("coverage") or {}).get(rel) or {}
+        for cli, rec in sorted((dictionary.get("clis") or {}).items()):
+            raw_long = _long_options_in_raw(raw_dir, cli)
+            if raw_long is None:
+                continue                      # no committed capture for this tool on this release
+            dict_long = set()
+            for fl in rec.get("flags") or []:
+                for n in fl.get("names") or []:
+                    if n.startswith("--"):
+                        dict_long.add(n)
+            missing = sorted(raw_long - dict_long)
+            measured += 1
+            row = rel_baseline.get(cli)
+            if row is None:
+                f.append("RHEL %s / %s: the flag-coverage baseline has no row for this tool. A tool "
+                         "with no recorded coverage has never been measured" % (rel, cli))
+                continue
+            accepted = row.get("accepted_missing")
+            if not isinstance(accepted, int):
+                f.append("RHEL %s / %s: the baseline row has no accepted_missing count" % (rel, cli))
+                continue
+            if len(missing) > accepted:
+                f.append("RHEL %s / %s: the flag dictionary now misses %d long options documented in "
+                         "the raw capture, up from the accepted %d. New: %s. A dictionary that loses "
+                         "ground is an Explainer that quietly says 'unverified' about more of the "
+                         "product (MCR-SEC-020)"
+                         % (rel, cli, len(missing), accepted, ", ".join(missing[:8])))
+            elif len(missing) < accepted:
+                stale.append("RHEL %s / %s: %d missing, baseline accepts %d"
+                             % (rel, cli, len(missing), accepted))
+            if missing:
+                d.append("RHEL %s / %s: %d of %d long options in the capture are in the dictionary "
+                         "(%d missing, accepted %s)"
+                         % (rel, cli, len(raw_long) - len(missing), len(raw_long), len(missing),
+                            baseline.get("_accepted_on")))
+    if measured == 0:
+        f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
+    else:
+        d.append("flag-dictionary coverage measured for %d tool/release pairs against the baseline "
+                 "accepted on %s (%s)" % (measured, baseline.get("_accepted_on"), baseline.get("_ticket")))
+    for line in stale:
+        d.append("coverage IMPROVED beyond the baseline — tighten it: " + line)
+
+    # (b) MCR-SEC-019: a cited raw line must show an option the generator emits.
+    if data is None:
+        p.append("no parsed island — the citation half of Q19 needs content/commands.json via the "
+                 "built artifact")
+        return f, d, p
+    cited = 0
+    for e in (((data.get("commands") or {}).get("entries")) or []):
+        if not e.get("template"):
+            continue
+        ref = ((e.get("source") or {}).get("url_or_man")) or ""
+        if "#L" not in ref:
+            continue
+        path_part, _, line_part = ref.partition("#L")
+        target = os.path.join(REPO, path_part)
+        if not os.path.exists(target):
+            f.append("%s cites %s, which does not exist" % (e["id"], ref))
+            continue
+        try:
+            line_no = int(line_part)
+        except ValueError:
+            f.append("%s cites %s, whose line anchor is not a number" % (e["id"], ref))
+            continue
+        with open(target, encoding="utf-8", errors="replace") as fh:
+            lines = fh.read().splitlines()
+        window = "\n".join(lines[max(0, line_no - 4):line_no + 4])
+        # The option that DEFINES this generator is the one bound to a value or
+        # to a composed rich rule, not a decoration like --permanent that half
+        # the firewall-cmd man page mentions. gen-fw-allow-service cited a line
+        # showing --add-service and --permanent; --permanent is emitted, so a
+        # laxer rule here would have passed the very citation MCR-SEC-019 raised.
+        primary = set()
+        decoration = set()
+        for tok in e["template"]:
+            flag = tok.get("flag")
+            if isinstance(flag, str) and flag.startswith("-"):
+                primary.add(flag)
+                continue
+            lit = tok.get("lit")
+            if isinstance(lit, str) and lit.startswith("-"):
+                decoration.add(lit)
+        emitted = primary or decoration
+        if not emitted:
+            d.append("%s cites %s and emits no option token of its own" % (e["id"], ref))
+            continue
+        cited += 1
+        if not any(opt in window for opt in emitted):
+            f.append("%s cites %s, and the eight lines around it show none of the options it "
+                     "actually emits (%s). An explanation that does not match the flag present is "
+                     "threat-model §4's Explainer row, landing in the provenance instead of the "
+                     "panel (MCR-SEC-019)" % (e["id"], ref, ", ".join(sorted(emitted))))
+        else:
+            d.append("%s cites %s, which shows %s" % (e["id"], ref,
+                                                      ", ".join(sorted(o for o in emitted if o in window))))
+    d.append("%d generator citations point at a raw capture line and were checked against the "
+             "options that generator emits" % cited)
+    return f, d, p
+
+
 def gate_node_check(ctx):
     """BQP Gate 2 #1/#9 — JS syntax of the extracted app script. Node is optional."""
     f, d, p = [], [], []
@@ -1791,6 +1970,7 @@ GATES = [
     ("Q16", "Capture backing (expected_output and verified receipts)", gate_q16),
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
     ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
+    ("Q19", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q19),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -1831,7 +2011,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue

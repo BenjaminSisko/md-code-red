@@ -32,6 +32,21 @@ This POAM tracks open security findings, compliance gaps, and remediation schedu
 
 ---
 
+## D4 security-review residuals — accepted with a date
+
+Added by Milo Vance, 2026-09-17, under conditions E4 and E5 of Marcus Reed's D4
+review of `salm/milo/generators`. These are the items the review raised that are
+**not** closed by code in this branch, recorded here rather than dropped. Noor's
+sections above are untouched.
+
+| Finding ID | Severity | Category | Owner | Status | Accepted on | Description and what holds it |
+|---|---|---|---|---|---|---|
+| MCR-SEC-020 | LOW | Provenance / Explainer | CR-T-09/10 (extractor) | Accepted | 2026-09-17 | The flag dictionary is systematically incomplete against the raw captures — `firewall-cmd` carries 16 of 205 long options on RHEL 8, `--add-rich-rule` among the missing. No product risk: the three firewall generators carry `flags: null`, so the inspector renders *"unverified — see man page"* rather than a fabricated explanation, which is the no-guess law working under a dictionary gap. The defect was that **nothing could see the gap** (Q15 re-runs the extractor and diffs its output against itself). Held by: new gate **Q19**, measuring every tool/release pair against `content-src/flag_coverage_baseline.json` and failing when a shortfall **grows**. Closing the shortfall itself belongs to CR-T-09/10. |
+| MCR-SEC-016 (residual) | LOW | Input Validation | Milo Vance | Accepted | 2026-09-17 | `gen-chronyd-one-shot-check`'s `-Q` field stays `comment` (free text): it takes a whole chrony config directive, which is structurally the same class as the rich-rule field that produced MCR-SEC-001 — a config grammar overlapping nothing in the shell and everything in chrony. Bounded today: one-shot, writes no config, correctly `shQuote`d, and it is the only such field. **Before `-Q` grows a second use it must be composed from validated sub-fields the way rich rules now are.** Marcus raised this without rating it; it is recorded so the next author meets it. |
+| MCR-SEC-014 | INFORMATIONAL | Render safety | Milo Vance | Accepted (D2, re-confirmed) | 2026-09-17 | Q17's render-sink audit cannot catch a run-time-derived property name (`el[k] = raw` with `k` from a data object). Documented in `qa.py` and `docs/CODE_STANDARDS.md`; reaching it takes two deliberate acts by someone with commit rights, across two CODEOWNERS-protected paths. Unchanged by this branch. |
+
+---
+
 ## Compliance Gaps (NIST 800-53)
 
 **TODO:** Noor to identify any control implementations delayed until post-v1.0.0.

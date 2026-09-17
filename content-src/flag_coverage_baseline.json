@@ -1,0 +1,445 @@
+{
+ "_doc": "MCR-SEC-020 (condition E5) — recorded flag-dictionary coverage, per release and tool. Q19 measures the same thing on every build and FAILS when a tool's shortfall GROWS. It does not fail on the shortfall itself, which is an extractor defect owned by CR-T-09/10, not by the content in this branch.",
+ "_method": "Distinct LONG options (--name) found in the committed raw capture under content-src/raw/<rel>/<tool>*.man.txt, against the distinct long option names the dictionary content/flags_<rel>.json carries for that tool. Long options only, deliberately: they are the countable class in man-page text, and the option MCR-SEC-020 was raised about (--add-rich-rule) is one. Short options in prose are too noisy to count honestly, so this gate does not pretend to.",
+ "_overcount": "The raw count is an upper bound and includes prose and subcommand options the tool's top-level parser never sees (podman's --foo example, dnf's per-command options). That is why the gate is a REGRESSION gate against these recorded numbers rather than a coverage percentage with a threshold invented here.",
+ "_accepted_on": "2026-09-17",
+ "_accepted_by": "Milo Vance, Toolkit Systems Engineer — under condition E5 of Marcus Reed's D4 review",
+ "_ticket": "CR-T-09/10 (extractor) — the shortfall is theirs to close; MCR-SEC-020 is closed here as ACCEPTED WITH A DATE plus this gate",
+ "_the_finding": "Q15 re-runs the extractor and diffs its output against itself, so a systematically skipped option class produces a byte-identical re-parse and a PASS. Nothing measured the dictionary against the raw captures. Now something does. firewall-cmd is the case Marcus named: 205 long options in the RHEL 8 capture, 16 in the dictionary, and --add-rich-rule among the missing — which is why the three firewall generators correctly carry flags:null and the inspector says 'unverified' rather than inventing an explanation.",
+ "coverage": {
+  "8": {
+   "auditctl": {
+    "raw_long_options": 5,
+    "dictionary_long_options": 5,
+    "accepted_missing": 2,
+    "sample_missing": [
+     "--backlog",
+     "--reset"
+    ]
+   },
+   "ausearch": {
+    "raw_long_options": 48,
+    "dictionary_long_options": 48,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "chage": {
+    "raw_long_options": 9,
+    "dictionary_long_options": 9,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "chronyd": {
+    "raw_long_options": 2,
+    "dictionary_long_options": 2,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "dnf": {
+    "raw_long_options": 140,
+    "dictionary_long_options": 61,
+    "accepted_missing": 80,
+    "sample_missing": [
+     "--all",
+     "--alldeps",
+     "--allow",
+     "--arch",
+     "--archlist",
+     "--autoremove"
+    ]
+   },
+   "firewall-cmd": {
+    "raw_long_options": 205,
+    "dictionary_long_options": 16,
+    "accepted_missing": 189,
+    "sample_missing": [
+     "--add-chain",
+     "--add-destination",
+     "--add-egress-zone",
+     "--add-entries-from-file",
+     "--add-entry",
+     "--add-forward"
+    ]
+   },
+   "git": {
+    "raw_long_options": 30,
+    "dictionary_long_options": 21,
+    "accepted_missing": 9,
+    "sample_missing": [
+     "--all",
+     "--developer-interfaces",
+     "--no-local",
+     "--object-format",
+     "--raw",
+     "--trace-ascii"
+    ]
+   },
+   "journalctl": {
+    "raw_long_options": 57,
+    "dictionary_long_options": 57,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "lvcreate": {
+    "raw_long_options": 76,
+    "dictionary_long_options": 47,
+    "accepted_missing": 31,
+    "sample_missing": [
+     "--activate",
+     "--autobackup",
+     "--cache",
+     "--chunksize",
+     "--contiguous",
+     "--debug"
+    ]
+   },
+   "lvextend": {
+    "raw_long_options": 42,
+    "dictionary_long_options": 19,
+    "accepted_missing": 23,
+    "sample_missing": [
+     "--autobackup",
+     "--cache",
+     "--debug",
+     "--extents",
+     "--force",
+     "--help"
+    ]
+   },
+   "nmcli": {
+    "raw_long_options": 20,
+    "dictionary_long_options": 2,
+    "accepted_missing": 18,
+    "sample_missing": [
+     "--active",
+     "--ask",
+     "--colors",
+     "--escape",
+     "--fields",
+     "--get-values"
+    ]
+   },
+   "podman": {
+    "raw_long_options": 35,
+    "dictionary_long_options": 27,
+    "accepted_missing": 8,
+    "sample_missing": [
+     "--add-subgids",
+     "--add-subuids",
+     "--foo",
+     "--log-driver",
+     "--log-format",
+     "--runtime-"
+    ]
+   },
+   "pvcreate": {
+    "raw_long_options": 37,
+    "dictionary_long_options": 23,
+    "accepted_missing": 15,
+    "sample_missing": [
+     "--debug",
+     "--force",
+     "--help",
+     "--meta",
+     "--metadata",
+     "--metadataprofile"
+    ]
+   },
+   "rsyslogd": {
+    "raw_long_options": 1,
+    "dictionary_long_options": 0,
+    "accepted_missing": 1,
+    "sample_missing": [
+     "--end"
+    ]
+   },
+   "semanage": {
+    "raw_long_options": 1,
+    "dictionary_long_options": 1,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "setsebool": {
+    "raw_long_options": 0,
+    "dictionary_long_options": 0,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "sshd": {
+    "raw_long_options": 0,
+    "dictionary_long_options": 0,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "systemctl": {
+    "raw_long_options": 46,
+    "dictionary_long_options": 44,
+    "accepted_missing": 2,
+    "sample_missing": [
+     "--unit",
+     "--user-unit"
+    ]
+   },
+   "useradd": {
+    "raw_long_options": 24,
+    "dictionary_long_options": 24,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "usermod": {
+    "raw_long_options": 22,
+    "dictionary_long_options": 22,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "vgcreate": {
+    "raw_long_options": 44,
+    "dictionary_long_options": 26,
+    "accepted_missing": 19,
+    "sample_missing": [
+     "--autobackup",
+     "--clustered",
+     "--debug",
+     "--force",
+     "--help",
+     "--maxlogicalvolumes"
+    ]
+   },
+   "yum": {
+    "raw_long_options": 140,
+    "dictionary_long_options": 61,
+    "accepted_missing": 80,
+    "sample_missing": [
+     "--all",
+     "--alldeps",
+     "--allow",
+     "--arch",
+     "--archlist",
+     "--autoremove"
+    ]
+   }
+  },
+  "10": {
+   "auditctl": {
+    "raw_long_options": 5,
+    "dictionary_long_options": 5,
+    "accepted_missing": 2,
+    "sample_missing": [
+     "--backlog",
+     "--reset"
+    ]
+   },
+   "ausearch": {
+    "raw_long_options": 48,
+    "dictionary_long_options": 48,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "chage": {
+    "raw_long_options": 11,
+    "dictionary_long_options": 11,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "chronyd": {
+    "raw_long_options": 2,
+    "dictionary_long_options": 2,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "dnf": {
+    "raw_long_options": 146,
+    "dictionary_long_options": 64,
+    "accepted_missing": 85,
+    "sample_missing": [
+     "--all",
+     "--alldeps",
+     "--allow",
+     "--arch",
+     "--archlist",
+     "--autoremove"
+    ]
+   },
+   "firewall-cmd": {
+    "raw_long_options": 194,
+    "dictionary_long_options": 14,
+    "accepted_missing": 180,
+    "sample_missing": [
+     "--add-chain",
+     "--add-destination",
+     "--add-disable",
+     "--add-egress-zone",
+     "--add-entries-from-file",
+     "--add-entry"
+    ]
+   },
+   "git": {
+    "raw_long_options": 33,
+    "dictionary_long_options": 23,
+    "accepted_missing": 10,
+    "sample_missing": [
+     "--all",
+     "--developer-interfaces",
+     "--no-local",
+     "--object-format",
+     "--raw",
+     "--ref-format"
+    ]
+   },
+   "journalctl": {
+    "raw_long_options": 68,
+    "dictionary_long_options": 46,
+    "accepted_missing": 22,
+    "sample_missing": [
+     "--disk-usage",
+     "--dump-catalog",
+     "--field",
+     "--fields",
+     "--flush",
+     "--header"
+    ]
+   },
+   "lvcreate": {
+    "raw_long_options": 78,
+    "dictionary_long_options": 49,
+    "accepted_missing": 31,
+    "sample_missing": [
+     "--activate",
+     "--autobackup",
+     "--cache",
+     "--chunksize",
+     "--contiguous",
+     "--debug"
+    ]
+   },
+   "lvextend": {
+    "raw_long_options": 45,
+    "dictionary_long_options": 21,
+    "accepted_missing": 24,
+    "sample_missing": [
+     "--autobackup",
+     "--cache",
+     "--debug",
+     "--extents",
+     "--force",
+     "--help"
+    ]
+   },
+   "nmcli": {
+    "raw_long_options": 20,
+    "dictionary_long_options": 2,
+    "accepted_missing": 18,
+    "sample_missing": [
+     "--active",
+     "--ask",
+     "--colors",
+     "--escape",
+     "--fields",
+     "--get-values"
+    ]
+   },
+   "podman": {
+    "raw_long_options": 39,
+    "dictionary_long_options": 32,
+    "accepted_missing": 7,
+    "sample_missing": [
+     "--add-subgids",
+     "--add-subuids",
+     "--foo",
+     "--log-driver",
+     "--log-format",
+     "--runtime-"
+    ]
+   },
+   "pvcreate": {
+    "raw_long_options": 36,
+    "dictionary_long_options": 23,
+    "accepted_missing": 14,
+    "sample_missing": [
+     "--debug",
+     "--force",
+     "--help",
+     "--metadata",
+     "--metadataprofile",
+     "--metadatatype"
+    ]
+   },
+   "rsyslogd": {
+    "raw_long_options": 1,
+    "dictionary_long_options": 0,
+    "accepted_missing": 1,
+    "sample_missing": [
+     "--end"
+    ]
+   },
+   "semanage": {
+    "raw_long_options": 1,
+    "dictionary_long_options": 1,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "setsebool": {
+    "raw_long_options": 0,
+    "dictionary_long_options": 0,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "sshd": {
+    "raw_long_options": 0,
+    "dictionary_long_options": 0,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "systemctl": {
+    "raw_long_options": 66,
+    "dictionary_long_options": 61,
+    "accepted_missing": 5,
+    "sample_missing": [
+     "--load",
+     "--log-level",
+     "--log-target",
+     "--unit",
+     "--user-unit"
+    ]
+   },
+   "useradd": {
+    "raw_long_options": 27,
+    "dictionary_long_options": 27,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "usermod": {
+    "raw_long_options": 25,
+    "dictionary_long_options": 25,
+    "accepted_missing": 0,
+    "sample_missing": []
+   },
+   "vgcreate": {
+    "raw_long_options": 46,
+    "dictionary_long_options": 28,
+    "accepted_missing": 19,
+    "sample_missing": [
+     "--autobackup",
+     "--clustered",
+     "--debug",
+     "--force",
+     "--help",
+     "--maxlogicalvolumes"
+    ]
+   },
+   "yum": {
+    "raw_long_options": 146,
+    "dictionary_long_options": 64,
+    "accepted_missing": 85,
+    "sample_missing": [
+     "--all",
+     "--alldeps",
+     "--allow",
+     "--arch",
+     "--archlist",
+     "--autoremove"
+    ]
+   }
+  }
+ }
+}

@@ -472,7 +472,7 @@
    "source": {
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
-    "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L310",
+    "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
     "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
