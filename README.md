@@ -16,6 +16,40 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — QA gate hardening against fail-open, branch `salm/milo/qa-hardening`
+  (Milo Vance). Al Kowalski's BQP Gate 3 diff review of `qa.py` returned **PASS WITH ISSUES**
+  with one HIGH finding and five MEDIUM/LOW. `qa.py` is the merge gate, so its own defects are
+  trust-path defects, and every fix here landed with the gate first shown to FAIL.
+  **AL-GATE3-001 (HIGH)** — Q17 proved `esc()`/`escapeAttr()` are *called* at every render sink
+  and could never prove they *escape*: a one-line `return s;` in either body defeated the whole
+  render-safety property with zero change to any call site (`render_sink_failures()` returned
+  `([], 4)` on identity escapers). New **Q19** lifts the three escapers verbatim out of the
+  shipped artifact and RUNS them under node against 92 hostile vectors plus 3 generated long
+  ones — every HTML metacharacter, the OWASP XSS basics, already-escaped and doubly-escaped
+  entity text, C0/C1 and bidi and zero-width characters, lone surrogate halves, every regex
+  metacharacter. `esc()` must leave no raw `< > " '` and no bare `&` **and** round-trip exactly,
+  so an escaper that *deletes* the dangerous character fails too rather than silently corrupting
+  DISA fix text. The probe fails three known-broken escapers before it will report a PASS.
+  **AL-GATE3-003 (MED)** — one unbalanced brace inside a string literal inside a `try{}` block
+  desynced Q7's brace counter and rated a genuinely unguarded `localStorage` call "guarded";
+  braces are now counted over a lexically masked copy. **AL-GATE3-004 (MED)** — Q3/Q4/Q8/Q12/
+  Q13/Q16 all reported PASS on a bundle with no entries, no tools and no rules; every one now
+  fails, naming what was empty, carrying across the reasoning Q9 has had since CR-T-07.
+  **AL-GATE3-005 (MED)** — Q3's provenance field list had drifted *weaker* than
+  `extract/schema.py`'s, missing `version`; it is now read out of that file's text, a shared
+  constant and never a shared code path. **AL-GATE3-006 (LOW)** — a harness report that parsed
+  but was key-incomplete crashed Q18 with an uncaught `KeyError` instead of printing a named
+  FAIL. **Q2** gained the MCR-SEC-014 treatment the render sinks already had: a network API
+  reached by a bracketed name, a name fused from string literals, or an alias never called on
+  the same line is now caught. **Q5** markers are classified from their own text and must appear
+  where their kind lives — code in live code, region ids in the markup, user-visible copy in a
+  string, which is the only place copy can be. **Q14** finally has the `tests/test_paraphrase.py`
+  ADR-001 §7.3 promised, and refuses a build whose populated flag dictionary has no raw sources
+  staged. New `docs/QA_GATES.md` lists every gate, what it proves, its negative control and its
+  residuals, and collects the ADR-001 §7 items that are now stale, for Al. Gates: 19 → 20
+  (Q1–Q19 + JS), all PASS. Tests: 51 → 135, all OK. Harness 63,536 checks / 0 failed. Artifact
+  byte-identical (`template.html` untouched), sha256 `5fb9b7ad…`.
+
 - **2026-09-17** — Re-review conditions D1 and D2: MCR-SEC-013 and MCR-SEC-014, branch
   `salm/milo/sec-013-014` (Milo Vance). Marcus Reed's re-review of the fix tranche returned
   **APPROVE WITH CONDITIONS** — no CRITICAL, no HIGH — with two new findings held as conditions.
@@ -178,6 +212,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 - [IDEAS.md](IDEAS.md) — Feature backlog and decision log
 - [WORKFLOW.md](WORKFLOW.md) — Content pipeline and refresh cycles
 - [TEST_PLAN.md](TEST_PLAN.md) — QA charter and validation protocols
+- [QA_GATES.md](QA_GATES.md) — Every gate: what it proves, its negative control, its residuals
 - [ARCHITECTURE_BIBLE.md](ARCHITECTURE_BIBLE.md) — System design and data models
 - [CODE_STANDARDS.md](CODE_STANDARDS.md) — Engineering patterns and security rules
 - [SSP.md](SSP.md) — Security compliance and controls (NIST 800-53)
