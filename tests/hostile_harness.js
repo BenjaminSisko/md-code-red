@@ -1012,12 +1012,21 @@ function main() {
     stats.failures.push("content/commands.json carries no generator (template) entries for the " +
                         "content-spec sweep to fuzz — CR-T-17's registry has nothing to prove itself on");
   }
-  function benignFor(field) {
+  /* MCR-SEC-021, condition E6. This took opts[0] for an enum, so every other
+     field in a hostile run was held at the FIRST option — `install`, never
+     `remove`; `start`, never `stop`. `rot` rotates through the option list
+     instead, and the caller passes the vector index, so a hostile value is
+     fuzzed against every branch of every neighbouring enum rather than only the
+     safest one. The check count does not change; the coverage does. Whether
+     every branch is exercised as a CONTROL, with its blast asserted, is the
+     separate enum-branch sweep further down — this half is about what the
+     hostile sweep holds constant while it fuzzes. */
+  function benignFor(field, rot) {
     if (field.type === "enum") {
       var opts = field.options || [];
       if (!opts.length) return undefined;
-      var first = opts[0];
-      return (typeof first === "string") ? first : first.value;
+      var pick = opts[(rot || 0) % opts.length];
+      return (typeof pick === "string") ? pick : pick.value;
     }
     var def = fx.field_types[field.type];
     return def ? def.benign : undefined;
@@ -1035,12 +1044,6 @@ function main() {
                             "hostile-inputs.json has no benign value for — this sweep cannot fuzz it");
         continue;
       }
-      var baseValues = {};
-      for (var of = 0; of < cfields.length; of++) {
-        if (of === cf) continue;
-        var otherBenign = benignFor(cfields[of]);
-        if (otherBenign !== undefined) baseValues[cfields[of].name] = otherBenign;
-      }
       var fieldVersions = targetField.versions || VERSIONS;
       for (var cv = 0; cv < centryVersions.length; cv++) {
         var version = centryVersions[cv];
@@ -1057,9 +1060,14 @@ function main() {
              a bug — required fields still get the empty vector, since an
              empty REQUIRED field must be rejected. */
           if (vec.id === "empty" && !targetField.required) continue;
+          /* E6: the neighbouring fields are held benign, and every enum among
+             them rotates through its options with the vector index rather than
+             sitting on opts[0] for the whole sweep. */
           var values = {};
-          for (var bk in baseValues) {
-            if (Object.prototype.hasOwnProperty.call(baseValues, bk)) values[bk] = baseValues[bk];
+          for (var of = 0; of < cfields.length; of++) {
+            if (of === cf) continue;
+            var otherBenign = benignFor(cfields[of], vv);
+            if (otherBenign !== undefined) values[cfields[of].name] = otherBenign;
           }
           values[targetField.name] = vec.value;
           var probe = { id: centry.id, tool: centry.tool, blast: centry.blast || "green",
@@ -1287,6 +1295,117 @@ function main() {
         stats.failures.push("content spec " + specEntries[dk].id + " template[" + dt + "] carries " +
                             "both `lit` and `flag` — the declared discriminator is gone and the " +
                             "derived one needs no key (MCR-SEC-022)");
+      }
+    }
+  }
+
+  /* ---- every enum BRANCH, not just opts[0] (MCR-SEC-021, condition E6) ---
+     benignFor() takes opts[0] for an enum, so the control value was always the
+     first option — `install`, never `remove`; `start`, never `stop` or
+     `disable`. The destructive branch of every action enum was never the benign
+     control, so the blast interaction on it was never asserted: Marcus checked
+     those four by hand and they behaved, but a gate nobody runs by hand is the
+     only kind that stays true.
+
+     Every generator x every enum field x every option x every release, against
+     the REAL content/dangerous.json table:
+       - it must assemble (or be null exactly when the option or the spec is
+         gated off that release),
+       - it must be valid getopt syntax,
+       - it must not rate BELOW the blast the spec declares, and
+       - a destructive branch must come out at least yellow.
+
+     The destructive list is content, in the golden fixture, not a judgement
+     buried here. And it is checked in the honest direction: for a generator
+     DECLARED green, a destructive branch must be RAISED to yellow by the
+     pattern table — the "two ways in" design actually working on real content —
+     while a non-destructive branch must stay green. A matcher that fired on
+     everything would satisfy the first assertion and fail the second. */
+  var branchChecks = 0;
+  var RANK = { green: 0, yellow: 1, red: 2 };
+  var destructive = (golden._enum_branches || {}).destructive || [];
+  if (!destructive.length) {
+    stats.failures.push("the golden fixture declares no destructive enum options — the blast " +
+                        "interaction this sweep exists to assert would be vacuous");
+  }
+  for (var eb = 0; eb < specEntries.length; eb++) {
+    var eentry = specEntries[eb];
+    var erow = goldenRows[eentry.id];
+    if (!erow) continue;                          /* already reported by the golden sweep */
+    var efields = eentry.fields || [];
+    var declared = eentry.blast || "green";
+    var sawGreen = false, sawRaised = false, hasDestructive = false;
+    for (var ef = 0; ef < efields.length; ef++) {
+      if (efields[ef].type !== "enum") continue;
+      var eopts = efields[ef].options || [];
+      for (var eo = 0; eo < eopts.length; eo++) {
+        var optRaw = eopts[eo];
+        var optVal = (typeof optRaw === "string") ? optRaw : optRaw.value;
+        var optVersions = (typeof optRaw === "string") ? null : (optRaw.versions || null);
+        for (var ev = 0; ev < VERSIONS.length; ev++) {
+          var erel = VERSIONS[ev];
+          var evalues = {}, ek;
+          for (ek in (erow.values || {})) {
+            if (Object.prototype.hasOwnProperty.call(erow.values, ek)) evalues[ek] = erow.values[ek];
+          }
+          evalues[efields[ef].name] = optVal;
+          branchChecks++;
+          var eres = A.assembleCommand(eentry, erel, evalues, { patterns: realPatterns });
+          var offRelease = (erow.commands[erel] === null) ||
+                           (optVersions !== null && optVersions.indexOf(erel) < 0) ||
+                           (efields[ef].versions && efields[ef].versions.indexOf(erel) < 0);
+          if (eres === null) {
+            if (!offRelease) {
+              stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                  optVal + " / RHEL " + erel + ": returned null, but this option " +
+                                  "is offered on this release");
+            }
+            continue;
+          }
+          if (offRelease) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": assembled " +
+                                JSON.stringify(eres.command) + " on a release it is gated off");
+            continue;
+          }
+          var esyn = optionSyntaxErrors(eres.command);
+          if (esyn.length) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": " + esyn.join("; ") + " — in " +
+                                JSON.stringify(eres.command));
+          }
+          if (RANK[eres.blast] < RANK[declared]) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": rated '" + eres.blast + "', below " +
+                                "the '" + declared + "' the spec declares");
+          }
+          if (destructive.indexOf(optVal) >= 0) {
+            hasDestructive = true;
+            if (RANK[eres.blast] < RANK.yellow) {
+              stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                  optVal + " / RHEL " + erel + ": a DESTRUCTIVE branch rated '" +
+                                  eres.blast + "'. " + JSON.stringify(eres.command) + " must be at " +
+                                  "least yellow, whether by the spec's own declaration or by the " +
+                                  "destructive-pattern table firing on the de-quoted command");
+            }
+            if (declared === "green" && RANK[eres.blast] >= RANK.yellow) sawRaised = true;
+          } else if (eres.blast === "green") {
+            sawGreen = true;
+          }
+        }
+      }
+    }
+    if (declared === "green" && hasDestructive) {
+      branchChecks += 2;
+      if (!sawRaised) {
+        stats.failures.push("enum branch " + eentry.id + ": declared green with a destructive " +
+                            "branch, and no branch was ever RAISED — MCR-SEC-008's de-quoted " +
+                            "projection is not firing on this generator's real content");
+      }
+      if (!sawGreen) {
+        stats.failures.push("enum branch " + eentry.id + ": declared green and NO branch came out " +
+                            "green — a pattern table that rates everything yellow satisfies the " +
+                            "destructive assertion above while proving nothing");
       }
     }
   }
@@ -1555,6 +1674,7 @@ function main() {
     flag_join_checks: joinChecks,
     discriminator_checks: discChecks,
     field_grammar_checks: grammarChecks,
+    enum_branch_checks: branchChecks,
     inspector_flag_checks: inspectorChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
@@ -1603,6 +1723,10 @@ function main() {
     console.log("  " + grammarChecks + " closed-grammar checks (MCR-SEC-016: lvm_size and " +
                 "group_list, with the '+10G' grow form accepted and a free-text LVM size refused " +
                 "on the real generator)");
+    console.log("  " + branchChecks + " enum-branch control checks (MCR-SEC-021: every option of " +
+                "every enum field of every generator on every release, asserted for validity and " +
+                "for blast — a destructive branch must come out at least yellow, and a green " +
+                "generator must still have a green branch)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();
