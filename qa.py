@@ -77,7 +77,8 @@ SAMPLE_STRIDE = 7
 # diffs the result against the committed files (ADR-001 §6.3).
 GENERATORS = (
     "extract/parse_xccdf.py",            # rules_rhel{7,8,9,10}.json, cci_nist.json
-    "extract/make_pending_skeletons.py",  # flags_rhel{7,8,9,10}.json, expected_output.json
+    "extract/make_pending_skeletons.py",  # flags_rhel{7,8,9,10}.json (empty placeholders)
+    "extract/import_captures.py",         # expected_output.json (CR-T-34, from tests/captures/)
 )
 
 CDN_LITERALS = ("cdnjs", "jsdelivr", "unpkg", "googleapis", "gstatic", "cdn.")
@@ -2263,6 +2264,19 @@ def gate_q15(ctx):
     return f, d
 
 
+# capture record field names, content validation protocol §7
+# (07_QA_Test/MD_CODE_RED/test-plan-skeleton-v1.md Part B) plus
+# command_hash_at_capture and verify_result, present on every real capture
+# record — the authoritative set qa.py adapts to, not the reverse (Eli Cross
+# ruling closing the CR-T-34 run's WADE_BLOCKED field-name mismatch). Kept
+# textually identical to extract/import_captures.py's REQUIRED_FIELDS.
+CAPTURE_REQUIRED_FIELDS = (
+    "entry_id", "rhel_version", "host", "redhat_release", "kernel", "pkg_versions",
+    "command_as_run", "exit_code", "stdout", "stderr", "captured_on", "captured_by",
+    "blast_confirmed", "undo_executed", "command_hash_at_capture", "verify_result",
+)
+
+
 def gate_q16(ctx):
     f, d = [], []
     data = ctx["data"]
@@ -2283,8 +2297,7 @@ def gate_q16(ctx):
                     f.append("entry %s stig %s: expected_output with no capture record %s"
                              % (e["id"], s.get("stig_id"), key))
                     continue
-                for field in ("host", "os_release", "kernel", "patch_level", "command_run",
-                              "exit_code", "stdout", "captured_on", "captured_by"):
+                for field in CAPTURE_REQUIRED_FIELDS:
                     if field not in cap:
                         f.append("capture %s: missing required field %s" % (key, field))
         ver = e.get("verified")

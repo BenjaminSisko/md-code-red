@@ -1286,12 +1286,19 @@ function formatEvidenceText(opts){
     push("Fix command / fix text:");
     push(rule&&rule.fix?rule.fix:"(no fix text embedded for this rule)");
     push("");
+    /* Capture records are content validation protocol §7 shape (Eli Cross
+       ruling, CR-T-34): redhat_release, not os_release/patch_level; a nested
+       stig_compliance.compliant, not a flat compliant. cap.text/cap.compliant
+       stay as defensive fallbacks for a differently-shaped record; they are
+       never how a real capture answers these lines. */
     var cap=stigRow.expected_output;
     if(cap&&(cap.stdout!==undefined||cap.text!==undefined)){
+      var compliant=(cap.stig_compliance&&cap.stig_compliance.compliant!==undefined)?
+                     cap.stig_compliance.compliant:cap.compliant;
       push("Expected output (captured): "+(cap.stdout!==undefined?cap.stdout:cap.text));
-      push("Compliant: "+(cap.compliant===true?"yes":(cap.compliant===false?"no":"not recorded")));
+      push("Compliant: "+(compliant===true?"yes":(compliant===false?"no":"not recorded")));
       push("Capture host: "+(cap.host||"not captured"));
-      push("Capture release: "+(cap.os_release||cap.patch_level||"not captured"));
+      push("Capture release: "+(cap.redhat_release||cap.os_release||cap.patch_level||"not captured"));
       push("Capture kernel: "+(cap.kernel||"not captured"));
       push("Captured on: "+(cap.captured_on||"not captured"));
     }else{

@@ -1,9 +1,154 @@
 {
  "_meta": {
   "generator": "extract/import_captures.py",
-  "status": "pending — no capture files under content-src/captures/ (CR-T-34)",
+  "status": "18 capture record(s) validated and folded from tests/captures/ (CR-T-34); 13 carry no STIG mapping on this content and are validated but not indexed (no stig[] row to join onto)",
   "keyed_by": "entry_id|stig_id|rhel_version",
-  "capture_count": 0
+  "capture_count": 5,
+  "files_validated": 18
  },
- "captures": {}
+ "captures": {
+  "ctrl-alt-del-target-masked|RHEL-10-700960|10": {
+   "blast_confirmed": "green",
+   "captured_by": "Caleb Stone",
+   "captured_on": "2026-09-17T13:30:12Z",
+   "command_as_run": "systemctl status ctrl-alt-del.target",
+   "command_hash_at_capture": "54dba71906b9d69888a5e6f9faa53d5bb9ddfd7f0fd767da481e489b3e78d6e7",
+   "entry_id": "ctrl-alt-del-target-masked",
+   "exit_code": 3,
+   "host": "saratoga-rhel10",
+   "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+   "notes": "exit_code 3 is systemctl's normal LSB status code for an inactive/masked unit (not a command failure) per systemctl(1).",
+   "pkg_versions": {
+    "systemd": "systemd-257-23.el10_2.2.x86_64"
+   },
+   "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+   "rhel_version": "10",
+   "stderr": "",
+   "stdout": "○ ctrl-alt-del.target\n     Loaded: masked (Reason: Unit ctrl-alt-del.target is masked.)\n     Active: inactive (dead)",
+   "stig_compliance": {
+    "compliant": true,
+    "note": "Loaded: masked, Active: inactive (dead) satisfies RHEL-10-700960",
+    "stig_id": "RHEL-10-700960"
+   },
+   "undo_executed": {
+    "reason": "green/read-only, no undo needed",
+    "run": false
+   },
+   "verify_result": "PASS — \"Loaded: masked\" and \"Active: inactive (dead)\" both present, matching verify text."
+  },
+  "firewalld-service-active|RHEL-10-200531|10": {
+   "blast_confirmed": "green",
+   "captured_by": "Caleb Stone",
+   "captured_on": "2026-09-17T13:30:12Z",
+   "command_as_run": "systemctl is-active firewalld",
+   "command_hash_at_capture": "504ff39e153b3ec8914474d2a27dc98a916e26bf0a0c1581e52f97eb7afec5db",
+   "entry_id": "firewalld-service-active",
+   "exit_code": 0,
+   "host": "saratoga-rhel10",
+   "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+   "pkg_versions": {
+    "firewalld": "firewalld-2.4.3-2.el10_2.noarch"
+   },
+   "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+   "rhel_version": "10",
+   "stderr": "",
+   "stdout": "active",
+   "stig_compliance": {
+    "compliant": true,
+    "note": "check_cmd output \"active\" satisfies RHEL-10-200531",
+    "stig_id": "RHEL-10-200531"
+   },
+   "undo_executed": {
+    "reason": "green/read-only, no undo needed",
+    "run": false
+   },
+   "verify_result": "PASS — printed \"active\", matching verify text \"The command prints \\\"active\\\" (RHEL 8/9/10)...\""
+  },
+  "journald-service-active|RHEL-10-500000|10": {
+   "blast_confirmed": "green",
+   "captured_by": "Caleb Stone",
+   "captured_on": "2026-09-17T13:30:12Z",
+   "command_as_run": "systemctl is-active systemd-journald",
+   "command_hash_at_capture": "17d376173064ea5c68a09f39630227b87a48f633e94b17bd56813932a9a9ae9e",
+   "entry_id": "journald-service-active",
+   "exit_code": 0,
+   "host": "saratoga-rhel10",
+   "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+   "notes": "No RHEL 8 STIG rule maps to systemd-journald per the pinned V2R8 benchmark (per commands.json note); the RHEL 8 capture is a content-validation read only, not a STIG compliance claim.",
+   "pkg_versions": {
+    "systemd": "systemd-257-23.el10_2.2.x86_64"
+   },
+   "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+   "rhel_version": "10",
+   "stderr": "",
+   "stdout": "active",
+   "stig_compliance": {
+    "compliant": true,
+    "note": "check_cmd output \"active\" satisfies RHEL-10-500000",
+    "stig_id": "RHEL-10-500000"
+   },
+   "undo_executed": {
+    "reason": "green/read-only, no undo needed",
+    "run": false
+   },
+   "verify_result": "PASS — printed \"active\", matching verify text."
+  },
+  "ctrl-alt-del-target-masked|RHEL-08-040170|8": {
+   "blast_confirmed": "green",
+   "captured_by": "Caleb Stone",
+   "captured_on": "2026-09-17T13:30:12Z",
+   "command_as_run": "systemctl status ctrl-alt-del.target",
+   "command_hash_at_capture": "54dba71906b9d69888a5e6f9faa53d5bb9ddfd7f0fd767da481e489b3e78d6e7",
+   "entry_id": "ctrl-alt-del-target-masked",
+   "exit_code": 3,
+   "host": "defiant-rhel8",
+   "kernel": "4.18.0-553.163.1.el8_10.x86_64",
+   "notes": "exit_code 3 is systemctl's normal LSB status code for an inactive/masked unit (not a command failure) per systemctl(1).",
+   "pkg_versions": {
+    "systemd": "systemd-239-82.el8_10.19.x86_64"
+   },
+   "redhat_release": "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+   "rhel_version": "8",
+   "stderr": "",
+   "stdout": "● ctrl-alt-del.target\n   Loaded: masked (Reason: Unit ctrl-alt-del.target is masked.)\n   Active: inactive (dead)",
+   "stig_compliance": {
+    "compliant": true,
+    "note": "Loaded: masked, Active: inactive (dead) satisfies RHEL-08-040170",
+    "stig_id": "RHEL-08-040170"
+   },
+   "undo_executed": {
+    "reason": "green/read-only, no undo needed",
+    "run": false
+   },
+   "verify_result": "PASS — \"Loaded: masked\" and \"Active: inactive (dead)\" both present, matching verify text."
+  },
+  "firewalld-service-active|RHEL-08-040101|8": {
+   "blast_confirmed": "green",
+   "captured_by": "Caleb Stone",
+   "captured_on": "2026-09-17T13:30:12Z",
+   "command_as_run": "systemctl is-active firewalld",
+   "command_hash_at_capture": "504ff39e153b3ec8914474d2a27dc98a916e26bf0a0c1581e52f97eb7afec5db",
+   "entry_id": "firewalld-service-active",
+   "exit_code": 0,
+   "host": "defiant-rhel8",
+   "kernel": "4.18.0-553.163.1.el8_10.x86_64",
+   "pkg_versions": {
+    "firewalld": "firewalld-0.9.11-12.el8_10.noarch"
+   },
+   "redhat_release": "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+   "rhel_version": "8",
+   "stderr": "",
+   "stdout": "active",
+   "stig_compliance": {
+    "compliant": true,
+    "note": "check_cmd output \"active\" satisfies RHEL-08-040101",
+    "stig_id": "RHEL-08-040101"
+   },
+   "undo_executed": {
+    "reason": "green/read-only, no undo needed",
+    "run": false
+   },
+   "verify_result": "PASS — printed \"active\", matching verify text \"The command prints \\\"active\\\" (RHEL 8/9/10)...\""
+  }
+ }
 }
