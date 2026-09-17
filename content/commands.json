@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 19
+  "entry_count": 21
  },
  "categories": [
   "firewall-cmd",
@@ -1192,6 +1192,105 @@
     "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 8 semanage-port",
     "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-chage-list",
+   "tool": "chage",
+   "category": "chage",
+   "intent": "List an account's password aging information",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "chage"
+    },
+    {
+     "lit": "-l"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "The command prints the account's last change, expiry and warning-day settings.",
+   "undo": "Nothing to undo — this only reads aging state.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-chage-r8",
+    "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 chage",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-chage-set-aging",
+   "tool": "chage",
+   "category": "chage",
+   "intent": "Set an account's maximum password age, minimum password age and expiry warning window",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    },
+    {
+     "name": "maxdays",
+     "type": "integer",
+     "required": false
+    },
+    {
+     "name": "mindays",
+     "type": "integer",
+     "required": false
+    },
+    {
+     "name": "warndays",
+     "type": "integer",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "chage"
+    },
+    {
+     "flag": "-M",
+     "field": "maxdays",
+     "optional": true
+    },
+    {
+     "flag": "-m",
+     "field": "mindays",
+     "optional": true
+    },
+    {
+     "flag": "-W",
+     "field": "warndays",
+     "optional": true
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value — leave at least one filled in to get a single non-interactive command.)",
+   "undo": "Run this generator again with the account's previous values (read them first with chage -l).",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-chage-r8",
+    "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 chage",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },

@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 13
+  "tool_count": 14
  },
  "tools": [
   {
@@ -382,6 +382,36 @@
     "10": {
      "available": true,
      "note": "CR-T-09/10 captured only semanage(8)'s own top-level page; the port/fcontext/boolean flags below are on the separate semanage-port(8) man page and are documented, not host-verified."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "chage",
+   "label": "chage",
+   "category": "chage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the man page — RHEL 7's chage predates the CR-T-09/10 extraction hosts."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
     }
    },
    "source": {
