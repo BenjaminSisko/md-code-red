@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q17, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q18, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -11,6 +11,11 @@ Gate numbering follows ADR-001 §7.3 (Q1..Q17). Q1..Q7 come from grey-beard-ansi
 qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file keeps
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
+
+Q18 is beyond ADR-001's list: it is Marcus's CI merge-gate #4 and #9
+(threat-model-v1 §11), the hostile-input harness over the command assembler and
+the quoting-domain separation check. It is the only gate in this file that
+REQUIRES Node — see gate_q18 for why a skip is not acceptable there.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -87,13 +92,33 @@ MARKERS = [
     ("STATUSBAR region", 'id="statusbar"', None),
     ("PALETTE overlay", 'id="palette"', None),
     ("print stylesheet", "@media print", None),
+    # CR-T-13/14/15 — the runtime shell, the keyboard controller, the assembler
+    ("rail renderer", "function renderRail(", None),
+    ("tool list renderer (version-gated)", "function renderToolList(", None),
+    ("editor renderer with gutter", "function renderEditor(", None),
+    ("inspector renderer", "function renderInspector(", None),
+    ("version-gated reason copy", "Not available in RHEL ", None),
+    ("command assembler", "function assembleCommand(", None),
+    ("assembler extraction markers", "MCR-ASSEMBLER-BEGIN", None),
+    ("field type allow-list table", "var FIELD_TYPES=", None),
+    ("field validator", "function validateField(", None),
+    ("spec validator (which field is wrong)", "function validateSpec(", None),
+    ("POSIX shell quoting", "function shQuote(", None),
+    ("YAML quoting (separate escaping domain)", "function yamlQuote(", None),
+    ("rich-rule composition from validated sub-fields", "function composeRichRule(", None),
+    ("blast evaluation against the destructive table", "function blastFor(", None),
+    ("red-blast confirmation banner", "function renderBlastBanner(", None),
+    ("keyboard binding table", "var KEYMAP=", None),
+    ("keyboard controller", 'document.addEventListener("keydown"', None),
+    ("palette controller", "function openPalette(", None),
+    ("palette search", "function paletteMatches(", None),
+    ("clipboard (no network, no download)", "function copyText(", None),
+    # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
-    ("command assembler", "function assembleCommand(", "CR-T-15"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
     ("STIG panel", "function renderStigPanel(", "CR-T-26"),
     ("evidence exporter", "function exportEvidence(", "CR-T-28"),
-    ("search index", "function buildIndex(", "CR-T-29"),
-    ("keyboard controller", 'document.addEventListener("keydown"', "CR-T-14"),
+    ("lazy typed search index", "function buildIndex(", "CR-T-29"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -107,6 +132,24 @@ INNERHTML_ALLOWLIST = {
 }
 AUDITED_ACCUMULATORS = ["html"]          # <name> += <expr>
 AUDITED_PUSH_TARGETS = ["parts"]         # <name>.push(<expr>)
+
+# ---------------------------------------------------------------------------
+# Trojan-source scan (Q17). Raw C0/C1 controls and invisible or bidirectional
+# formatting characters do not belong in hand-written source: they are how a
+# reviewer is shown one thing while the engine compiles another, and they are
+# also how a JS \u escape silently turns into the character it was meant to
+# describe. The ranges are assembled from code points rather than typed, because
+# typing them is the mistake this gate exists to catch.
+# ---------------------------------------------------------------------------
+TROJAN_RANGES = [
+    (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping \t \n \r
+    (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
+    (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
+    (0x200B, 0x200F), (0x202A, 0x202E),                       # zero-width and bidi overrides
+    (0x2060, 0x2064), (0x2066, 0x206F),                       # word joiner and bidi isolates
+    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
+]
+TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
 
 results = []   # (gate_id, name, status, details)  status in PASS/FAIL/PENDING
 
@@ -715,6 +758,82 @@ def gate_q9(ctx):
     return f, d
 
 
+def accuracy_sample(ids):
+    """The Q10 sample: fixed stride, no RNG, reproducible in CI (ADR-001 §7.3).
+
+    A dataset at or below the sample size is checked in full rather than sampled,
+    because sampling 20 out of 20 is just a slower way of checking all of them.
+    """
+    ids = sorted(ids)
+    if len(ids) <= SAMPLE_PER_RELEASE:
+        return ids
+    return (ids[::SAMPLE_STRIDE] or ids)[:SAMPLE_PER_RELEASE]
+
+
+def accuracy_failures(version, rules, src, full_set=True):
+    """Diff an embedded rules list against a fresh parse of the pinned XCCDF.
+
+    Pure: no ctx, no globals beyond the sampling constants, no I/O. gate_q10 and
+    tests/test_accuracy_gate.py both call this, so the gate that runs in CI is
+    the gate the mutated fixture proves. `full_set` is False only when the caller
+    is deliberately passing a reduced dataset (the committed fixtures), never for
+    a shipping build.
+
+    Two layers, on purpose. The SAMPLE catches a rule whose text drifted; the
+    ID-SET PARITY catches a rule that was added, dropped, or renamed outside the
+    sample, which a stride of 20-in-445 would otherwise walk straight past.
+    """
+    bad = []
+    embedded = {}
+    for r in rules:
+        sid = r.get("i")
+        if not sid:
+            bad.append("a rule carries no STIG ID")
+            continue
+        if sid in embedded:
+            bad.append("%s: embedded twice" % sid)
+        embedded[sid] = r
+    ids = sorted(embedded)
+
+    if full_set:
+        extra = sorted(set(ids) - set(src))
+        missing = sorted(set(src) - set(ids))
+        if extra:
+            bad.append("embedded but absent from the pinned XCCDF: %s" % ", ".join(extra[:6]))
+        if missing:
+            bad.append("in the pinned XCCDF but not embedded: %s" % ", ".join(missing[:6]))
+
+    sample = accuracy_sample(ids)
+    if full_set and len(ids) > SAMPLE_PER_RELEASE and len(sample) < SAMPLE_PER_RELEASE:
+        bad.append("stride %d over %d rules yields only %d samples, not the %d ADR-001 §7.3 Q10 requires"
+                   % (SAMPLE_STRIDE, len(ids), len(sample), SAMPLE_PER_RELEASE))
+
+    for sid in sample:
+        e, s = embedded[sid], src.get(sid)
+        if s is None:
+            bad.append("%s: absent from the pinned XCCDF" % sid)
+            continue
+        if e.get("t") != s["t"]:
+            bad.append("%s: title differs from source" % sid)
+        if e.get("rid") != s["rid"]:
+            bad.append("%s: rule id %s != source %s" % (sid, e.get("rid"), s["rid"]))
+        if list(e.get("cci") or []) != s["cci"]:
+            bad.append("%s: CCI %s != source %s" % (sid, e.get("cci"), s["cci"]))
+        if e.get("c") != s["c"]:
+            bad.append("%s: CAT %s != source %s" % (sid, e.get("c"), s["c"]))
+        # CR-T-07 embeds check and fix verbatim and uncapped, so the whole text
+        # must match — not merely a prefix. The split on the Etsy pipeline's
+        # trim marker stays so a capped dataset would still be compared fairly.
+        for key, label in (("fix", "fix"), ("chk", "check")):
+            et = (e.get(key) or "").split("[trimmed")[0].strip()
+            if et and not s[key].startswith(et[:100]):
+                bad.append("%s: %s text prefix differs from source" % (sid, label))
+            elif et and et != s[key]:
+                bad.append("%s: %s text differs from source beyond its first 100 characters"
+                           % (sid, label))
+    return bad, sample
+
+
 def gate_q10(ctx):
     f, d = [], []
     f += ctx["pin_failures"]
@@ -724,45 +843,15 @@ def gate_q10(ctx):
     data = ctx["data"]
     for v in VERSIONS:
         src, _ = ctx["source_rules"][v]
-        embedded = {r["i"]: r for r in data["rules"][v].get("rules", []) if r.get("i")}
-        ids = sorted(embedded)
-        sample = ids[::SAMPLE_STRIDE][:SAMPLE_PER_RELEASE] or ids[:SAMPLE_PER_RELEASE]
-        if len(ids) <= SAMPLE_PER_RELEASE:
-            sample = ids                      # dataset smaller than the sample: check all of it
-        elif len(sample) < SAMPLE_PER_RELEASE:
-            f.append("rules_rhel%s: stride %d over %d rules yields only %d samples, not the %d "
-                     "ADR-001 §7.3 Q10 requires" % (v, SAMPLE_STRIDE, len(ids), len(sample),
-                                                    SAMPLE_PER_RELEASE))
-        bad = []
-        for sid in sample:
-            e, s = embedded[sid], src.get(sid)
-            if s is None:
-                bad.append("%s: absent from the pinned XCCDF" % sid)
-                continue
-            if e.get("t") != s["t"]:
-                bad.append("%s: title differs from source" % sid)
-            if e.get("rid") != s["rid"]:
-                bad.append("%s: rule id %s != source %s" % (sid, e.get("rid"), s["rid"]))
-            if list(e.get("cci") or []) != s["cci"]:
-                bad.append("%s: CCI %s != source %s" % (sid, e.get("cci"), s["cci"]))
-            if e.get("c") != s["c"]:
-                bad.append("%s: CAT %s != source %s" % (sid, e.get("c"), s["c"]))
-            # CR-T-07 embeds check and fix verbatim and uncapped, so the whole text
-            # must match — not merely a prefix. The split on the Etsy pipeline's
-            # trim marker stays so a capped dataset would still be compared fairly.
-            for key, label in (("fix", "fix"), ("chk", "check")):
-                et = (e.get(key) or "").split("[trimmed")[0].strip()
-                if et and not s[key].startswith(et[:100]):
-                    bad.append("%s: %s text prefix differs from source" % (sid, label))
-                elif et and et != s[key]:
-                    bad.append("%s: %s text differs from source beyond its first 100 characters"
-                               % (sid, label))
+        rules = data["rules"][v].get("rules", [])
+        bad, sample = accuracy_failures(v, rules, src)
         if bad:
             f.append("rules_rhel%s accuracy: %s" % (v, "; ".join(bad[:6])))
         else:
-            d.append("rules_rhel%s: %d of %d rules sampled at stride %d, re-parsed from %s, identical "
-                     "on title, rule id, CCI, CAT, and full check and fix text"
-                     % (v, len(sample), len(ids), SAMPLE_STRIDE, XCCDF[v]))
+            d.append("rules_rhel%s: every one of the %d embedded STIG IDs is present in %s and vice "
+                     "versa; %d of them sampled at stride %d and re-parsed, identical on title, rule "
+                     "id, CCI, CAT, and full check and fix text"
+                     % (v, len(rules), XCCDF[v], len(sample), SAMPLE_STRIDE))
     return f, d
 
 
@@ -1080,6 +1169,23 @@ def gate_q17(ctx):
     for need in ("function esc(", "function escapeAttr("):
         if need not in shell:
             f.append("%s definition missing" % need.replace("function ", "").replace("(", "()"))
+    # trojan-source scan of the hand-written shell (the data island is vendor
+    # prose and is not hand-written, so it is excluded by using ctx["shell"])
+    found = {}
+    for m in TROJAN_RE.finditer(shell):
+        cp = ord(m.group(0))
+        if cp in found:
+            continue
+        found[cp] = shell[:m.start()].count("\n") + 1
+    if found:
+        f.append("raw control or invisible character(s) in the shipped shell: %s — source is written "
+                 "with escapes, never with the character itself; a bidi override or a stray NUL is "
+                 "both a review-integrity hazard and how a \\u escape turns into the thing it meant "
+                 "to describe"
+                 % ", ".join("U+%04X at line %d" % (cp, ln) for cp, ln in sorted(found.items())[:8]))
+    else:
+        d.append("no raw C0/C1 control, zero-width, or bidirectional-override character anywhere in "
+                 "the hand-written shell")
     # mechanical innerHTML audit
     audited = 0
     for m in re.finditer(r"\.innerHTML\s*=\s*", shell):
@@ -1110,6 +1216,73 @@ def gate_q17(ctx):
                  "literal, an esc()/escapeAttr()/escapeRegex() call, or an allow-listed accumulator" % audited)
         for k, why in sorted(INNERHTML_ALLOWLIST.items()):
             d.append("allow-list: %s — %s" % (k, why))
+    return f, d
+
+
+def gate_q18(ctx):
+    """Hostile-input harness — threat-model-v1 §11 merge-gate #4, plus gate #9.
+
+    Runs tests/hostile_harness.js against the SHIPPED artifact, not against
+    template.html: the harness lifts the assembler block out of dist/ and runs
+    every fixture vector through it, so the code this gate clears is byte-for-byte
+    the code that crosses the air gap.
+
+    Node is REQUIRED here. Everywhere else in this file Node is optional and its
+    absence downgrades to PENDING, because a missing syntax check is an
+    inconvenience. A missing injection check is not: this gate is the only thing
+    between a form field and a command a human runs as root, so a runner without
+    Node fails it rather than quietly passing a build nobody tested.
+    """
+    f, d = [], []
+    harness = os.path.join(REPO, "tests", "hostile_harness.js")
+    fixture = os.path.join(REPO, "tests", "fixtures", "hostile-inputs.json")
+    if not os.path.exists(harness) or not os.path.exists(fixture):
+        f.append("the hostile-input harness or its fixture is missing — CI merge-gate #4 cannot run")
+        return f, d
+
+    # gate #9, quoting-domain confusion: the three escaping domains must never nest.
+    shell = ctx["shell"]
+    for outer, inner in (("shQuote", "yamlQuote"), ("yamlQuote", "shQuote"),
+                         ("shQuote", "esc"), ("yamlQuote", "esc"),
+                         ("esc", "shQuote"), ("escapeAttr", "shQuote")):
+        if re.search(r"\b%s\s*\(\s*%s\s*\(" % (outer, inner), shell):
+            f.append("quoting-domain confusion: %s(%s(...)) — a shell quoter, a YAML quoter and a "
+                     "DOM escaper are three different jobs (threat-model-v1 §3.2)" % (outer, inner))
+    if not f:
+        d.append("no shQuote/yamlQuote/esc call is nested inside another — the three escaping "
+                 "domains stay separate (threat-model-v1 §11 gate 9)")
+
+    node = shutil.which("node")
+    if not node:
+        f.append("node is not installed on this runner. The command assembler is JavaScript and "
+                 "this gate runs it; CI installs Node (actions/setup-node@v4) precisely so this "
+                 "check cannot be skipped on the build that needed it.")
+        return f, d
+    proc = subprocess.run([node, harness, ctx["artifact"], "--json"],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = proc.stdout.decode("utf-8", "replace")
+    err = proc.stderr.decode("utf-8", "replace").strip()
+    try:
+        rep = json.loads(out)
+    except ValueError:
+        f.append("the harness produced no JSON report: %s" % (err or out)[:400])
+        return f, d
+    for line in rep.get("failures", []):
+        f.append("hostile input: %s" % line)
+    if proc.returncode != 0 and not rep.get("failures"):
+        f.append("the harness exited %d without naming a failure: %s" % (proc.returncode, err[:300]))
+    if not f:
+        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
+                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
+                 "single-quoted token"
+                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
+                    rep["rejected"], rep["quoted_safe"]))
+        d.append("%d positive controls (every field type's benign value still assembles on every "
+                 "release, in every argument shape) and %d invariants — a validator that rejected "
+                 "everything would fail this gate, not pass it"
+                 % (rep["positive_controls"], rep["invariants"]))
+        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
+                 % rep["assembler_bytes"])
     return f, d
 
 
@@ -1198,6 +1371,7 @@ GATES = [
     ("Q15", "Generated-file integrity (re-run the extractor and diff)", gate_q15),
     ("Q16", "Capture backing (expected_output and verified receipts)", gate_q16),
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
+    ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -1238,7 +1412,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue

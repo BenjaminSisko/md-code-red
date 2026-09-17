@@ -1,0 +1,405 @@
+{
+ "_meta": {
+  "purpose": "Adversarial values per field type for the command assembler, threat-model-v1 §12 item 1 and CI merge-gate #4 (§11). tests/hostile_harness.js runs every vector against every field type, in both --flag=VALUE and positional-argument shapes, on all four RHEL versions, plus the composed firewalld rich-rule path.",
+  "contract": "Every (field type, vector) pair has a REQUIRED outcome, and producing the other one fails the gate. For every field type except 'comment' the required outcome is REJECTED — those types are closed grammars and no vector here is a legal value of any of them, so an accepted-but-safely-quoted result means an allow-list stopped enforcing its grammar even though the shell quoting still held. For 'comment', the single free-text type, each vector's own free_text key says which outcome is required. REJECTED means assembleCommand() returned null and the UI can copy nothing. QUOTED-SAFE means the value survives only inside a single-quoted shQuote() token, nothing the shell would still interpret carries any of it, and the command's shell-visible shape is byte-identical to the same command built from that field type's benign value.",
+  "execution_note": "The harness never runs /bin/sh against a vector. Proving the quoting by executing it would mean executing attacker-controlled text in CI on exactly the one build where the quoting is broken, which is the failure this gate exists to catch. It tokenises the assembled command under POSIX single-quote rules instead.",
+  "owner": "Milo Vance, Toolkit Systems Engineer (CR-T-16)",
+  "review": "Marcus Reed review required before merge — CRITICAL gate, plan section (f).",
+  "source": {
+   "title": "MD CODE RED Threat Model v1 §11 item 4 and §12 item 1, Marcus Reed, 2026-09-17",
+   "url_or_man": "02_Engineering/MD_CODE_RED/threat-model-v1.md",
+   "version": "v1",
+   "retrieved_on": "2026-09-17",
+   "license_class": "verbatim-ok"
+  }
+ },
+ "field_types": {
+  "hostname": {
+   "benign": "host01.lab.internal"
+  },
+  "ipv4": {
+   "benign": "10.0.0.5"
+  },
+  "ipv6": {
+   "benign": "2001:db8::1"
+  },
+  "ipaddr": {
+   "benign": "10.0.0.5"
+  },
+  "cidr": {
+   "benign": "10.0.0.0/8"
+  },
+  "port": {
+   "benign": "8443"
+  },
+  "portrange": {
+   "benign": "8000-8100"
+  },
+  "protocol": {
+   "benign": "tcp"
+  },
+  "family": {
+   "benign": "ipv4"
+  },
+  "action": {
+   "benign": "accept"
+  },
+  "unit": {
+   "benign": "sshd.service"
+  },
+  "username": {
+   "benign": "svcacct"
+  },
+  "groupname": {
+   "benign": "wheel"
+  },
+  "path": {
+   "benign": "/etc/issue"
+  },
+  "zone": {
+   "benign": "public"
+  },
+  "service": {
+   "benign": "ssh"
+  },
+  "package": {
+   "benign": "firewalld"
+  },
+  "selinux_boolean": {
+   "benign": "httpd_can_network_connect"
+  },
+  "audit_key": {
+   "benign": "identity"
+  },
+  "interface": {
+   "benign": "eth0"
+  },
+  "integer": {
+   "benign": "42"
+  },
+  "enum": {
+   "benign": "alpha",
+   "options": [
+    "alpha",
+    "bravo"
+   ]
+  },
+  "comment": {
+   "benign": "checked by the ISSO"
+  }
+ },
+ "vectors": [
+  {
+   "id": "cmdsub-dollar",
+   "class": "command substitution",
+   "value": "$(whoami)",
+   "free_text": "quote"
+  },
+  {
+   "id": "cmdsub-backtick",
+   "class": "command substitution",
+   "value": "`whoami`",
+   "free_text": "quote"
+  },
+  {
+   "id": "cmdsub-nested",
+   "class": "command substitution",
+   "value": "x$(id -u)y",
+   "free_text": "quote"
+  },
+  {
+   "id": "param-expansion",
+   "class": "parameter expansion",
+   "value": "$HOME",
+   "free_text": "quote"
+  },
+  {
+   "id": "param-expansion-brace",
+   "class": "parameter expansion",
+   "value": "${IFS}",
+   "free_text": "quote"
+  },
+  {
+   "id": "ansi-c-quote",
+   "class": "parameter expansion",
+   "value": "$'\\x41'",
+   "free_text": "quote"
+  },
+  {
+   "id": "chain-semicolon",
+   "class": "statement separator",
+   "value": "; rm -rf /",
+   "free_text": "quote"
+  },
+  {
+   "id": "chain-pipe",
+   "class": "statement separator",
+   "value": "| cat /etc/shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "chain-and",
+   "class": "statement separator",
+   "value": "&& id",
+   "free_text": "quote"
+  },
+  {
+   "id": "chain-or",
+   "class": "statement separator",
+   "value": "|| id",
+   "free_text": "quote"
+  },
+  {
+   "id": "chain-background",
+   "class": "statement separator",
+   "value": "& id",
+   "free_text": "quote"
+  },
+  {
+   "id": "redirect-out",
+   "class": "redirection",
+   "value": "> /etc/passwd",
+   "free_text": "quote"
+  },
+  {
+   "id": "redirect-in",
+   "class": "redirection",
+   "value": "< /etc/shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "subshell",
+   "class": "grouping",
+   "value": "(id)",
+   "free_text": "quote"
+  },
+  {
+   "id": "brace-expansion",
+   "class": "grouping",
+   "value": "{a,b}",
+   "free_text": "quote"
+  },
+  {
+   "id": "glob-star",
+   "class": "globbing",
+   "value": "*",
+   "free_text": "quote"
+  },
+  {
+   "id": "glob-question",
+   "class": "globbing",
+   "value": "/etc/passw?",
+   "free_text": "quote"
+  },
+  {
+   "id": "newline-lf",
+   "class": "newline injection",
+   "value": "safe\nid",
+   "free_text": "reject"
+  },
+  {
+   "id": "newline-crlf",
+   "class": "newline injection",
+   "value": "safe\r\nid",
+   "free_text": "reject"
+  },
+  {
+   "id": "newline-cr",
+   "class": "newline injection",
+   "value": "safe\rid",
+   "free_text": "reject"
+  },
+  {
+   "id": "tab",
+   "class": "whitespace",
+   "value": "safe\tid",
+   "free_text": "reject"
+  },
+  {
+   "id": "space",
+   "class": "whitespace",
+   "value": "two words",
+   "free_text": "quote"
+  },
+  {
+   "id": "nbsp",
+   "class": "whitespace",
+   "value": "a b",
+   "free_text": "quote"
+  },
+  {
+   "id": "leading-dash-help",
+   "class": "option injection",
+   "value": "--help",
+   "free_text": "reject"
+  },
+  {
+   "id": "leading-dash-rf",
+   "class": "option injection",
+   "value": "-rf",
+   "free_text": "reject"
+  },
+  {
+   "id": "bare-double-dash",
+   "class": "option injection",
+   "value": "--",
+   "free_text": "reject"
+  },
+  {
+   "id": "leading-dash-assign",
+   "class": "option injection",
+   "value": "--zone=public",
+   "free_text": "reject"
+  },
+  {
+   "id": "fullwidth-semicolon",
+   "class": "unicode look-alike",
+   "value": "； id",
+   "free_text": "quote"
+  },
+  {
+   "id": "fullwidth-solidus",
+   "class": "unicode look-alike",
+   "value": "／etc／shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "division-slash",
+   "class": "unicode look-alike",
+   "value": "∕etc∕shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "minus-sign",
+   "class": "unicode look-alike",
+   "value": "−rf",
+   "free_text": "quote"
+  },
+  {
+   "id": "cyrillic-a",
+   "class": "unicode look-alike",
+   "value": "аdmin",
+   "free_text": "quote"
+  },
+  {
+   "id": "zero-width-space",
+   "class": "invisible character",
+   "value": "sa​fe",
+   "free_text": "reject"
+  },
+  {
+   "id": "zero-width-joiner",
+   "class": "invisible character",
+   "value": "sa‍fe",
+   "free_text": "reject"
+  },
+  {
+   "id": "rtl-override",
+   "class": "invisible character",
+   "value": "safe‮gnp",
+   "free_text": "reject"
+  },
+  {
+   "id": "byte-order-mark",
+   "class": "invisible character",
+   "value": "﻿safe",
+   "free_text": "reject"
+  },
+  {
+   "id": "soft-hyphen",
+   "class": "invisible character",
+   "value": "sa­fe",
+   "free_text": "reject"
+  },
+  {
+   "id": "traversal-relative",
+   "class": "path traversal",
+   "value": "../../etc/shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "traversal-embedded",
+   "class": "path traversal",
+   "value": "/etc/../etc/shadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "traversal-encoded",
+   "class": "path traversal",
+   "value": "..%2f..%2fetc%2fshadow",
+   "free_text": "quote"
+  },
+  {
+   "id": "nul-byte",
+   "class": "NUL",
+   "value": "sa\u0000fe",
+   "free_text": "reject"
+  },
+  {
+   "id": "single-quote",
+   "class": "quote breaking",
+   "value": "it's",
+   "free_text": "quote"
+  },
+  {
+   "id": "single-quote-bare",
+   "class": "quote breaking",
+   "value": "'",
+   "free_text": "quote"
+  },
+  {
+   "id": "single-quote-close",
+   "class": "quote breaking",
+   "value": "'; id; '",
+   "free_text": "quote"
+  },
+  {
+   "id": "double-quote",
+   "class": "quote breaking",
+   "value": "\"x\"",
+   "free_text": "quote"
+  },
+  {
+   "id": "backslash-quote",
+   "class": "quote breaking",
+   "value": "a\\'b",
+   "free_text": "quote"
+  },
+  {
+   "id": "backslash-run",
+   "class": "quote breaking",
+   "value": "a\\\\b",
+   "free_text": "quote"
+  },
+  {
+   "id": "comment-hash",
+   "class": "shell comment",
+   "value": "# id",
+   "free_text": "quote"
+  },
+  {
+   "id": "env-assign",
+   "class": "shell syntax",
+   "value": "PATH=/tmp",
+   "free_text": "quote"
+  },
+  {
+   "id": "overlength",
+   "class": "length",
+   "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "free_text": "reject"
+  },
+  {
+   "id": "overlength-valid-chars",
+   "class": "length",
+   "value": "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+   "free_text": "reject"
+  },
+  {
+   "id": "empty",
+   "class": "empty",
+   "value": "",
+   "free_text": "reject"
+  }
+ ]
+}

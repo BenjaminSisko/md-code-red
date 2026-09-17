@@ -1,7 +1,7 @@
 # MD CODE RED CI — BQP HTML profile (ADR-001 §10, threat-model-v1 §11).
 #
 # Seven steps, in order, stopping at the first failure:
-#   1 build            2 QA gate            3 STIG accuracy re-check
+#   1 build            2 QA gate (Q1-Q18)   3 STIG accuracy re-check
 #   4 gitleaks         5 size report        6 drift check (reproducible build)
 #   7 artifact upload (with the .sha256 sidecar)
 #
@@ -12,7 +12,15 @@
 #
 # Size is REPORTED, never enforced: the Founder ruled the ceiling UNLIMITED on
 # 2026-09-17, which supersedes ADR-001 §7.2's 8 MB line. No step here fails on size.
-# Node is NOT required: qa.py runs node --check only if a runner happens to have it.
+#
+# NODE IS NOW REQUIRED (changed under CR-T-16). The command assembler is
+# JavaScript, and Marcus's CI merge-gate #4 (threat-model-v1 §11) runs the
+# hostile-input harness against the assembler lifted out of the built artifact.
+# A Python re-implementation of the quoting would be a second assembler to keep
+# in sync, and the one that shipped would be the one nobody tested — so the
+# runner installs Node and qa.py Q18 FAILS rather than skips without it. The
+# older `node --check` syntax gate stays optional; a missing syntax check is an
+# inconvenience, a missing injection check is a production RHEL host.
 name: CI
 on:
   push:
@@ -28,11 +36,23 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
 
+      # Required, not optional — see the header note. qa.py Q18 and
+      # tests/test_hostile_inputs.py both run the assembler under Node.
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - name: Node is present (the assembler gate cannot be skipped)
+        run: node --version
+
       # extract/schema.py states the content schema once; test_schema.py pins it
       # against valid and invalid bundles, and test_build_fails_on_broken.py proves
       # the build itself refuses defective content. Discover runs both, so a new
       # test file is picked up without editing this protected workflow.
-      - name: Schema and build-refusal tests
+      # test_accuracy_gate.py additionally proves the Q10 accuracy gate FAILS on a
+      # committed mutated fixture and PASSES on the clean one (CR-T-08), and
+      # test_hostile_inputs.py runs the assembler harness over template.html
+      # before anything is built (CR-T-16).
+      - name: Schema, accuracy-gate, hostile-input and build-refusal tests
         run: python3 -m unittest discover -s tests -v
 
       # ---- 1 ----------------------------------------------------------------
@@ -40,7 +60,7 @@ jobs:
         run: python3 build.py
 
       # ---- 2 ----------------------------------------------------------------
-      - name: QA gate (Q1-Q17)
+      - name: QA gate (Q1-Q18, including the hostile-input harness over the built artifact)
         run: python3 qa.py
 
       # ---- 3 ----------------------------------------------------------------
