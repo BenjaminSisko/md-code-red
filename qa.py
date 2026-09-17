@@ -1675,8 +1675,56 @@ def gate_q7(ctx):
     return f, d
 
 
+# AL-GATE3-011: content/glossary.json shipped in the island, bound to
+# DATASETS.GLOSSARY at template.html's data-island loader, and read by
+# nothing -- grep -n GLOSSARY template.html turned up exactly one line, its
+# own assignment. Nothing caught that because nothing checked it: Q8 counts
+# embedded records, Q3 checks provenance, and neither asks whether anything
+# RENDERS a family. This is that check, for every family build.py's CONTENT
+# map embeds -- the module variable DATASETS binds each one to must be
+# referenced somewhere in the shipped app script besides its own assignment.
+#
+# expected_output is the one documented exception. build.py folds
+# data["expected_output"]["captures"] onto each matching rule record's own
+# .expected_output field before the island is serialized (the "captures
+# joined onto rules" step) -- so its content is not unreachable, it is
+# reachable through RULES, which this same check confirms is live. The raw
+# top-level copy is a redundant duplicate of already-embedded data, not an
+# orphan; collapsing that duplicate is a real size win but a separate,
+# narrower finding than AL-GATE3-011 and is not this ticket.
+#
+# This table is maintained BY HAND in step with build.py's CONTENT map — the
+# same discipline load_build_constants() and GENERATORS already rely on
+# (qa.py reads build.py's text rather than importing it). glossary is not
+# listed here: dropping a family from CONTENT means it is no longer this
+# check's business, the same day it stops being build.py's.
+CONTENT_FAMILY_TOKENS = {
+    "COMMANDS": "commands", "TOOLS": "tools", "DANGEROUS": "dangerous",
+    "RULES": "rules", "FLAGS": "flags",
+    "CCI_NIST": "cci_nist", "EXPECTED": "expected_output",
+}
+CONTENT_FAMILY_JOINED_ELSEWHERE = {"EXPECTED"}
+_TOKEN_RE_CACHE = {}
+
+
+def content_family_liveness_failures(app_script):
+    f = []
+    for token, family in sorted(CONTENT_FAMILY_TOKENS.items()):
+        if token in CONTENT_FAMILY_JOINED_ELSEWHERE:
+            continue
+        rx = _TOKEN_RE_CACHE.get(token)
+        if rx is None:
+            rx = _TOKEN_RE_CACHE[token] = re.compile(r"\b%s\b" % token)
+        if len(rx.findall(app_script)) <= 1:
+            f.append("%s (CONTENT family '%s') is bound to DATASETS.%s in the data-island "
+                      "loader and referenced nowhere else in the shipped app script -- "
+                      "embedded payload nothing reads (AL-GATE3-011)" % (token, family, token))
+    return f
+
+
 def gate_q8(ctx):
     f, d = [], []
+    f.extend(content_family_liveness_failures(ctx.get("app_script") or ""))
     data = ctx["data"]
     for v in VERSIONS:
         ds = data["rules"][v]

@@ -43,7 +43,15 @@ CONTENT = {
     "commands": "commands.json",
     "tools": "tools.json",
     "dangerous": "dangerous.json",
-    "glossary": "glossary.json",
+    # glossary.json (AL-GATE3-011) is deliberately NOT embedded here for the
+    # alpha: it shipped in the island, bound to DATASETS.GLOSSARY, and was
+    # read by nothing -- no Glossary kind in the search index, no rail, no
+    # panel, no renderer. CEO decision, Gate 3 review ENG-2026-09-18-002 §8.1
+    # item 2: drop the unreachable payload rather than ship it unfinished.
+    # The file stays committed in content/ for a later tranche that wires a
+    # real glossary view (docs/ARCHITECTURE_BIBLE.md §25); qa.py's
+    # content_family_liveness_failures() (Q8) is what would catch this
+    # regressing back in without a renderer to justify it.
     # generated — extract/parse_xccdf.py (rules_*, cci_nist),
     #             extract/make_pending_skeletons.py (flags_*, expected_output)
     "rules_7": "rules_rhel7.json",

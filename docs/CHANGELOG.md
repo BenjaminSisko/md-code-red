@@ -4,6 +4,62 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — Gate 3 tag blockers 1, 2, 4 and the glossary drop (2026-09-17/18, branch `salm/milo/gate3-blockers`)
+
+Closes three of Al Kowalski's four `v1.0.0-alpha.1` tag blockers from the
+whole-tree Gate 3 review (`ENG-2026-09-18-002`, §8.1) plus the Q20 RHEL 7
+POA&M item folded into the same tranche. The version bump (blocker 3) is
+Taylor's, in the tag procedure, and is deliberately not part of this change.
+
+- **AL-GATE3-009 (tag blocker 1).** `content/flags_rhel9.json` declared
+  `_meta.generator: "extract/extract_rhel_flags.py"` — a script that has
+  never existed; the real extractor is `extract/extract_flags.py`, which the
+  other three `flags_rhel*.json` correctly name. The same stale name was
+  baked into `extract/make_pending_skeletons.py`'s own placeholder template
+  (the true generator of record while `flags_rhel9` stays empty), so both
+  are corrected together. `qa.py`'s Q8 and Q15 never checked a FLAGS
+  dataset's declared generator against anything — both now do, against all
+  four `flags_rhel*.json`, naming the offending dataset by name if one ever
+  declares a generator neither gate re-runs.
+- **AL-GATE3-010 (Q20 RHEL 7 reach, POA&M, ratchet retires 2026-09-25).**
+  `qa.py`'s `RAW_DIR_FOR` was `{"8": "rhel8", "10": "rhel10"}` — RHEL 7 was
+  absent, so `content-src/flag_coverage_baseline.json`'s six `coverage["7"]`
+  rows were read by nothing. Adding `"7"` alone would have measured nothing:
+  `_long_options_in_raw()` filtered raw captures to `.man.txt`, and every
+  RHEL 7 dump is `.help.txt` (UBI7 has no man-db — CR-T-12). Both are fixed:
+  `RAW_DIR_FOR` now includes `"7": "rhel7"`, and the filter reads both
+  suffixes. Q20 now measures 50 tool/release pairs (up from 44). The
+  baseline's pre-recorded `accepted_missing` counts were not widened — they
+  already covered the real RHEL 7 measurement (per the file's own
+  `_rhel7_note`), so Q20 still reports zero failures under the existing
+  owner and date (Caleb Stone, retires 2026-09-25).
+- **AL-GATE3-011 (tag blocker 2) — the glossary is dropped for the alpha,
+  CEO decision.** `content/glossary.json` (9.5 KB) shipped embedded in the
+  data island, bound to `DATASETS.GLOSSARY` in `template.html`'s data-island
+  loader, and read by nothing — no Glossary kind in the search index, no
+  rail, no panel, no renderer. `build.py`'s `CONTENT` map no longer embeds
+  it. **`content/glossary.json` stays committed in the repo, unchanged, for
+  a later tranche** that wires a real glossary view (see
+  `docs/ARCHITECTURE_BIBLE.md` §25 for what that would need) — this is a
+  drop from the shipped artifact, not a deletion of the content. `qa.py`
+  gained `content_family_liveness_failures()` (wired into Q8): every
+  embedded `CONTENT` family must be referenced by the shipped app script
+  beyond its own `DATASETS` assignment, or named as a documented exception
+  (`expected_output`'s raw copy is redundant with the copy `build.py` joins
+  onto `RULES` before the island is built, so it is exempt rather than
+  orphaned). This is the check that would have caught AL-GATE3-011 on its
+  own, and now would catch a regression back to embedding an unreferenced
+  family without a renderer to justify it. Artifact effect: −9.2 KB
+  (2,471,131 → 2,461,910 bytes); content fingerprint and artifact sha256
+  both change, expected for any content change to the embedded island.
+
+Gates after this change: `build.py` rc 0, `qa.py` rc 0, unit tests green,
+`tests/hostile_harness.js` 0 FAILED. `tests/fixtures/evidence/firewalld-
+service-active.rhel9.txt`'s embedded "Content fingerprint" line was
+regenerated from the rebuilt artifact each time the island's sha256 moved
+(the flags_rhel9 fix, then the glossary drop) — via the same
+`buildRealExport()` path `test_evidence_export_real.js` uses, not hand-edited.
+
 ### Fixed — Q14 widened to every curated free-text field, per-field license_class, guide receipt (2026-09-17, branch `salm/milo/q14-scope`)
 
 Self-flagged by Milo Vance during H1: Q14's shingle check scanned only
