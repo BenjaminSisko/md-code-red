@@ -160,9 +160,23 @@ both new gates were kept — theirs stays **Q19** (escaper behaviour, already re
 `docs/QA_GATES.md`) and this branch's coverage gate became **Q20**. `template.html`,
 `extract/schema.py`, `content/` and every test file auto-merged.
 
+#### Q21 — no tracked source file spells an invisible character
+
+A defect of mine, found after the merge and fixed on the same branch. `dd01ad7` rewrote
+`tests/fixtures/hostile-inputs.json` through `json.dump(..., ensure_ascii=False)` while adding the two
+new benign values, and **eight** invisible-character vectors the file states as JSON `\u` escapes on
+purpose — U+200B, U+200D, U+202E, U+FEFF, U+00AD, U+2028, U+2029, U+2065 — came back out as the raw
+characters they name. Q17 could not see it (it scans the built artifact, which this fixture never
+reaches) and the harness could not (it reads the file as JSON, where an escape and its character are
+one value). The fixture is now byte-identical to `origin/main` apart from the two added field types,
+and the harness still rejects all 11,744 invisible-character vectors, so what is tested did not change
+— only how it is written. New gate **Q21** walks `git ls-files` with Q17's own `TROJAN_RANGES` table;
+`tests/test_no_raw_trojan_chars.py` plants each character class in a temp directory and watches the
+scanner fire before believing it. Committed fail-first at `484ec23` (Q21 FAIL, 8 findings).
+
 **Gates on the merged tree, from a clean `dist/`:** `build.py` OK and reproducible · `qa.py`
-**Q1–Q20 PASS** (21 gates with `JS`) · `unittest discover` **141 OK** (135 from the hardening merge,
-plus the 6 added here) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225) ·
+**Q1–Q21 PASS** (22 gates with `JS`) · `unittest discover` **150 OK** (135 from the hardening merge,
+plus the 15 added here) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225) ·
 artifact sha256 `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`.
 
 ### Added — CR-T-17..25 guided-form generators (2026-09-17, branch `salm/milo/generators`)
