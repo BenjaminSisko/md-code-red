@@ -1,132 +1,258 @@
 # Content Pipeline & Refresh Workflow
 
-## Source-to-Build Pipeline
+The exact pipeline this repo runs, as verified against the code and the 2026-09-17
+build. Where a step is a company-record process outside this repo (SME staffing,
+review board membership), this file points at the record rather than restating it
+-- see `docs/DESIGN_INDEX.md` for those paths.
 
-Exact workflow for content review, assembly, and release.
+## 1. Sources & Extraction
 
-### 1. Sources & Extraction
+Four source families feed the build, each with its own extractor and its own
+staged-raw archive for licensing audit:
 
-**TODO:** Define exact source documents (Red Hat docs URLs, DISA STIG release PDFs, man page URLs). Capture in a sources inventory spreadsheet.
+| Family | Source | Extractor | Output |
+|---|---|---|---|
+| STIG rules + CCI map | Pinned DISA XCCDF zips in `stig-src/`, hash-verified against `stig-src/SHA256SUMS` before parsing | `extract/parse_xccdf.py` | `content/rules_rhel{7,8,9,10}.json`, `content/cci_nist.json` |
+| CLI flags/options | `man -P cat`/`--help` output read (read-only, no `sudo`) from a real host over SSH, or from a UBI7 container standing in for RHEL 7 | `extract/extract_flags.py` | `content/flags_rhel<N>.json`, raw text staged under `content-src/raw/rhel<N>/` |
+| STIG-linked evidence | SME-run captures under `tests/captures/<rhel_version>/<entry_id>.json` | `extract/import_captures.py` | `content/expected_output.json` |
+| Ansible module/flag docs | `ansible-doc --json`, CLI `--help` | `extract/extract_ansible_doc.py` | `content/modules.json`, `content/flags.json` -- **not currently loaded by `build.py`'s `CONTENT` map**; this extractor predates the RHEL-focused product and its output does not reach the shipped artifact |
 
-Content originates from:
-- Red Hat Enterprise Linux 7/8/9/10 documentation (portal.redhat.com)
-- DISA STIG release PDFs and SCAP content
-- Linux man pages (man-pages package)
-- Ansible documentation (ansible-doc --json output)
+Every extractor that produces content committed to `content/` supports a
+`--check` mode: re-run the same parse (against the pinned zips, or against the
+already-staged raw text -- neither needs a live host or network) into a temp
+location and diff it byte-for-byte against what is committed. `qa.py`'s Q15 gate
+calls every extractor's `--check` mode and fails the build if a re-run does not
+reproduce the committed content exactly, so a hand-edited generated file cannot
+silently drift from what its own extractor would produce.
 
-### 2. Content JSON Schema
+**Command intent, notes, and flag curation are hand-authored, not extracted.**
+`content/commands.json`, `content/tools.json`, and `content/dangerous.json` are
+curated directly by an RHEL SME and never regenerated from a script -- see
+Section 3.
 
-**TODO:** Finalize entry schema after SME review. Minimum fields:
-- Tool name, RHEL versions supported
-- Command template with required/optional parameters
-- Flag-by-flag explanations
-- STIG ID(s), NIST control(s), expected compliant output
-- Source citation (URL/title, date verified, SME who verified)
+## 2. Content JSON Schema
 
-### 2a. Content Validation Protocol — capture records and per-version `verified`
+The schema is stated once, in `extract/schema.py`, and imported by both
+`build.py`'s `validate()` and `tests/test_schema.py` -- there is no second,
+looser definition anywhere else. Full field-by-field shapes for a command entry,
+a tool, a rule, a flag dictionary, and a capture record are in
+`docs/ARCHITECTURE_BIBLE.md` Section 4; this section states only the promises
+that make the pipeline trustworthy:
+
+- Every command entry, flag, rules dataset, the CCI map, and the destructive-
+  pattern table carry all five provenance fields (`title`, `url_or_man`,
+  `version`, `retrieved_on`, `license_class`) -- enforced at build time by
+  `extract/schema.py`'s `provenance_errors()` and independently re-checked
+  against the shipped artifact by `qa.py`'s Q3.
+- A flag's `explain` is `null` until a human curates original paraphrase for it
+  (man pages are GPL-2.0-or-later; the extractor never writes prose) -- and once
+  any flag dictionary ships non-empty, an uncurated `explain: null` on a
+  `commands.json` entry's own `flags[]` becomes a schema error, so a static
+  entry cannot ship silently uncurated once the dictionary that could answer it
+  exists.
+- No curated string may share an 8-word run with any staged raw source
+  (`tests/test_paraphrase.py`, `qa.py`'s Q14) -- the mechanical floor under
+  "paraphrase, don't copy."
+
+### 2a. Content Validation Protocol -- capture records and per-version `verified`
 
 The full protocol (who runs what, on which host, under what safety rules) is
 Riley Park's and Caleb Stone's company record, not a repo file:
-`07_QA_Test/MD_CODE_RED/test-plan-skeleton-v1.md` Part B, §7-§11. This section
-is a pointer into it plus the two rules that changed inside this repo.
+`07_QA_Test/MD_CODE_RED/test-plan-skeleton-v1.md` Part B, section 7-11. This
+section is a pointer into it plus the two rules that are actually enforced in
+this repo's code.
 
-- **Canonical capture path** (Eli Cross ruling, closing the CR-T-34 path
-  mismatch): `tests/captures/<rhel_version>/<entry_id>.json`, one JSON file per
-  entry per RHEL version, read by `extract/import_captures.py` and enforced by
-  `qa.py`'s Q16 gate. This is the only storage location — the protocol
+- **Canonical capture path** (Eli Cross ruling, closing an earlier three-way
+  path mismatch): `tests/captures/<rhel_version>/<entry_id>.json`, one JSON file
+  per entry per RHEL version, read by `extract/import_captures.py` and enforced
+  by `qa.py`'s Q16 gate. This is the only storage location -- the protocol
   document's own Appendix is a pointer to this path, not a second tree.
-- **`verify_result` is a mandatory capture-record field**, not optional
-  narrative. `extract/import_captures.py`'s `REQUIRED_FIELDS` and `qa.py`'s
-  `CAPTURE_REQUIRED_FIELDS` both refuse a capture record missing it, alongside
-  `command_hash_at_capture`. Riley Park's clarification (capture-review-run1-
-  2026-09-18.md §7, protocol clarification request #1): the WRITTEN protocol
-  document's §7 field table does not currently list either field explicitly,
-  even though the code has gated on both since CR-T-34 — that is a documentation
-  gap in the company-record file, not a difference in what is actually
-  enforced. **Note for Riley/Caleb, not made here:** `test-plan-skeleton-v1.md`
-  §7's table should add `command_hash_at_capture` and `verify_result`
-  explicitly so a future SME reading only the written protocol does not
-  under-scope what a capture record needs. That edit belongs to the
-  company-record file and its own owners; this repo does not carry a copy of
-  it to edit.
-- **`verified` is per RHEL version, not per entry** (CEO ruling closing Riley
-  Park's first capture review, capture-review-run1-2026-09-18.md RILEY-F1: a
-  single whole-entry `verified` flag could not be set for any of the batch's 9
-  entries without overclaiming a version nobody captured). `content/
-  commands.json`'s `verified` field is an object keyed `"7"`/`"8"`/`"9"`/
-  `"10"`, each value `false` or a `{by, on, host, capture}` receipt naming the
-  QA reviewer, the date, the host, and the capture file that backs it. A
-  version whose row is `unavailable` or a `same_as` pointer can never carry a
-  receipt of its own — it was never independently run — and a `same_as`
-  target's receipt never propagates onto the version pointing at it. See
-  `extract/schema.py`'s `verified_errors()`/`resolved_command()` and `qa.py`'s
-  `gate_q16()` for the enforced rules, and `tests/captures/README.md` for the
-  end-to-end SME-captures/QA-verifies flow.
+- **`verify_result` and `command_hash_at_capture` are mandatory capture-record
+  fields**, not optional narrative. `extract/import_captures.py`'s
+  `REQUIRED_FIELDS` and `qa.py`'s `CAPTURE_REQUIRED_FIELDS` both refuse a
+  capture record missing either. (The written protocol document's own field
+  table has not yet been updated to list both explicitly, even though the code
+  has enforced both since this rule was adopted -- a documentation gap in the
+  company-record file, not a difference in what is actually enforced; that edit
+  belongs to that file's own owners, not to this repo.)
+- **`verified` is per RHEL version, not per entry** (a CEO ruling: a single
+  whole-entry `verified` flag could not be set for a real batch of captures
+  without overclaiming a version nobody actually ran). `content/commands.json`'s
+  `verified` field is an object keyed `"7"`/`"8"`/`"9"`/`"10"`, each value
+  `false` or a `{by, on, host, capture}` receipt naming the QA reviewer, the
+  date, the host, and the capture file that backs it. A version whose row is
+  `unavailable` or a `same_as` pointer can never carry a receipt of its own --
+  it was never independently run -- and a `same_as` target's receipt never
+  propagates onto the version pointing at it.
 
-### 3. Content Review Board
+**The flow, end to end, per entry per RHEL version:**
 
-**TODO:** Assign reviewer roles. Review gate MUST pass before build.
+1. **SME captures.** The RHEL SME (Caleb Stone, or a named delegate) runs the
+   entry's command on a real host of the stated version, writes the capture
+   record under `tests/captures/`, and sets nothing in `content/commands.json`
+   -- a capture record on its own asserts nothing about `verified`.
+2. **QA reviews.** The QA reviewer (Riley Park, in this build's history)
+   independently re-runs or re-derives from the capture's own evidence. For each
+   (entry, version) pair cleared, she writes a receipt into
+   `content/commands.json`'s `verified[version]`.
+3. **`qa.py`'s Q16 gate enforces the pairing on every build**: the receipt's
+   `capture` path must resolve to a real file for that exact (entry, version)
+   pair; its `command_hash_at_capture` must match `sha256(command_as_run)`; its
+   `command_as_run` must still match the command this build actually assembles
+   for that version today (a fixed command diffs against the shipped,
+   `same_as`-resolved artifact; a generator entry diffs against the
+   hand-authored validity oracle in `tests/fixtures/golden-commands.json`,
+   since a generator has no single "current" command to diff without one); and
+   the receipt's `by` and the capture's `captured_by`, both normalized
+   (casefold, collapsed whitespace, one stripped trailing parenthetical) and
+   checked against the closed roster in `content-src/roster.json`, must never
+   be the same person -- the SME who ran it is never the QA reviewer who
+   verified it, and a name not on the roster does not resolve, full stop,
+   regardless of whose alias it might be.
+4. See `tests/captures/README.md` for a worked example (Caleb Stone's real run
+   against `defiant`/`saratoga`) and `docs/QA_GATES.md`'s Q16 row for the exact
+   gate mechanics and every negative case it has been watched fail against.
 
-- RHEL SME: Validates command syntax and completeness
-- ISSO: Validates STIG/NIST mappings and control relevance
-- Tech Writer: Validates explanations are plain-English and accurate
+This build's state: 18 capture files validated and folded, 5 of them carrying a
+STIG mapping this content can index (the other 13 validated but with no `stig[]`
+row to join onto), and 18 of 108 possible (entry x RHEL-version) pairs carrying a
+verified receipt. See `docs/USER_GUIDE.md`'s Known Limitations for the same
+numbers from the operator's side.
 
-### 4. Build Assembly
+## 3. Content Review
 
-**TODO:** Document build tool (Node.js script, templating engine). Include BQP gate list.
+No formal, seated content review board is codified in this repo -- the roles that
+exist in practice, read off the commit history and the roster this pipeline
+actually checks against, are:
 
-Build script reads content JSON, template HTML, and generates single air-gap-clean HTML file.
+- **RHEL SME** (`content-src/roster.json`'s `SME` role -- Caleb Stone, Renata
+  Osei in this build): authors and captures command syntax.
+- **QA** (`content-src/roster.json`'s `QA` role -- Riley Park): independently
+  verifies captures and writes `verified` receipts (Section 2a).
+- **Security** (Marcus Reed, by commit history): reviews the assembler, the
+  render sinks, and the QA gates themselves -- not content per se, but every
+  content shape the assembler and the gates have to accept or refuse.
 
-### 5. QA Gate
+The roster file is the one place these roles are machine-checked (Section 2a's
+two-person rule); there is no separate sign-off document this pipeline reads.
 
-**TODO:** Cross-reference with TEST_PLAN.md. Gate includes air-gap scan, syntax check, feature marker verification, data integrity spot-check.
+## 4. Build Assembly
 
-### 6. Release & Distribution
+`python3 build.py`, stdlib only: load every file in `CONTENT` (fail loud if one
+is missing or is not valid JSON), validate against `extract/schema.py`, assemble
+(`same_as` resolution with cycle detection, STIG reverse links, the search-index
+seed, joining `expected_output.json`'s captures onto `commands.json`'s `stig[]`
+rows), then substitute the JSON payload and five identity tokens
+(`__APP_NAME__`, `__VERSION__`, `__BUILT_DATE__`, `__CLASSIFICATION__`,
+`__CONTENT_FINGERPRINT__`) into `template.html`. Output:
+`dist/md-code-red_<version>.html` plus a `.sha256` sidecar. See
+`docs/ARCHITECTURE_BIBLE.md` Section 2 for the full pipeline diagram and Section
+3 for what each file does.
 
-**TODO:** Define distribution channels (file share, USB, email, NFS share).
+## 5. QA Gate
 
----
+`python3 qa.py` runs 22 independent gates plus an optional `node --check`
+against the **shipped artifact** (not `content/` -- that is `build.py`'s own
+`validate()`, a separate check). Every gate, what it proves, how it has been
+watched fail, and what it explicitly does not prove is `docs/QA_GATES.md`, not
+restated here. The full local verification sequence, in order:
+
+```
+rm -rf dist && python3 build.py
+python3 qa.py
+python3 -m unittest discover -s tests
+node tests/hostile_harness.js
+```
+
+All four must be green before a branch is considered mergeable -- this is the
+same sequence `docs/ARCHITECTURE_BIBLE.md`'s rebuild verification checklist
+walks through with expected output numbers for this build.
+
+## 6. Release & Distribution
+
+Not yet formalized in this repo. No distribution channel (file share, USB, NFS,
+email) is codified anywhere in the build, QA, or CI configuration -- `qa.py`'s
+own comments and `docs/POAM.md` do not name one. This is an open item, not an
+oversight this document can resolve by asserting a channel that does not exist
+in the pipeline today.
 
 ## Quarterly STIG Refresh Cycle
 
-Timed to DISA STIG release schedules.
+`stig-src/SOURCES.md` states the refresh rule directly: **first week of each
+quarter, re-check the DISA library for RHEL 8/9/10**; RHEL 7 is re-checked only
+semi-annually, and only to confirm whether it should be *removed* from the
+library, not for a new release -- see "The RHEL 7 frozen source" below. A refresh
+that finds a new benchmark:
 
-### Timeline
+1. Download the new zip from `dl.dod.cyber.mil`, compute its SHA-256, and update
+   `stig-src/SOURCES.md` and `stig-src/SHA256SUMS` **in the same commit** as the
+   new zip (`stig-src/SOURCES.md`'s own header states this as a rule, not a
+   suggestion -- re-pinning is a `dep-bump` PR, never a silent file swap).
+2. Run `python3 extract/parse_xccdf.py` to regenerate
+   `content/rules_rhel<N>.json` and `content/cci_nist.json` from the new pin.
+3. Diff the regenerated rule set against the prior one for the affected
+   release: new rule IDs, removed rule IDs, and check/fix text changes on
+   existing IDs all need an RHEL SME to confirm whether any catalogued command
+   entry's `stig[]` rows, `intent`, or `notes` need updating to match.
+4. Rebuild and run the full QA sequence (Section 5) -- Q8/Q9/Q10 will fail loud
+   on any count mismatch or ID drift the extractor introduces, and Q10's ID-set
+   parity check in particular would catch a release whose rule count changed
+   without every ID being re-verified.
+5. Update `docs/CHANGELOG.md` and this repo's `README.md` Recent changes with
+   the new pinned version and benchmark date.
 
-**Week 1: STIG Release & Diff Analysis**
-- TODO: Monitor DISA site for new STIG releases
-- TODO: Extract new/changed check IDs
-- TODO: Map changes to toolkit content
+**The RHEL 7 frozen source.** RHEL 7's pinned STIG (V3R15, benchmark 24 Jul
+2024) is marked SUNSET at DISA -- a **terminal release**: DISA has stated no
+further RHEL 7 STIG updates are expected, ever. `stig-src/SOURCES.md` records it
+as "frozen terminal version. In project only while RHEL 7 can be validated
+(Founder, 2026-09-17)" -- meaning RHEL 7 support in this tool is contingent on
+being able to keep validating its content (flags, captures) at all, not on a
+future benchmark that will never arrive. The semi-annual RHEL 7 re-check exists
+only to confirm the benchmark has not been pulled from DISA's library entirely,
+not to look for an update. If RHEL 7 support is ever formally deprecated from
+this tool, this is the reason that decision would cite.
 
-**Week 2: Content Updates**
-- TODO: RHEL SME writes new command entries
-- TODO: ISSO maps to NIST controls
-- TODO: Tech Writer drafts explanations
+## Flag-Coverage Baseline and Its Expiry
 
-**Week 3: Review & Build**
-- TODO: Content Review Board validates all new entries
-- TODO: Build new version
-- TODO: QA gate verification
+`content-src/flag_coverage_baseline.json` is a **ratchet**, not a resting place.
+It records, per tool and RHEL release, how many long options a flag dictionary
+currently carries against how many the raw `man`/`--help` capture actually shows
+-- `qa.py`'s Q20 gate re-measures this on every build and fails only when a
+shortfall **grows** past what is recorded here, so a real extractor gap
+(`firewall-cmd` carries 16 of 205 long options on RHEL 8, for one) is an accepted,
+dated residual rather than an unowned one, and cannot silently get worse without
+the gate noticing.
 
-**Week 4: Release & Notify**
-- TODO: Deploy to all enclaves
-- TODO: Notify admins via email/Slack of what changed
-- TODO: Update CHANGELOG
+**The baseline expires 2026-09-25.** `content-src/flag_coverage_baseline.json`
+names its own owner (Caleb Stone, the extractor fix that would close the
+shortfall) and its own retirement date; `tests/test_coverage_baseline_expiry.py`
+proves `qa.py` actually fails the build starting 2026-09-26 if the file has not
+been regenerated against improved dictionaries or explicitly re-dated by then.
+An accepted residual with a date does not get to become a permanent one by
+nobody looking again -- see `docs/POAM.md` for this same item tracked as an open
+finding with an owner and a due date.
 
----
+## File Organization
 
-## File Organization (TBD)
+The layout this pipeline actually reads and writes, as opposed to the original
+skeleton's proposal:
 
 ```
-docs/               (this folder)
-content/
-  rhel-commands/
-    tools.json     (command entries by tool)
-    stig-map.json  (STIG ID → command cross-reference)
-  sources.json     (source citation inventory)
-template.html      (UI template)
-build.py           (assembly script)
-qa.py              (QA validation gates)
+docs/                     companion documentation (this folder)
+content/                  build.py's inputs -- curated + generated JSON,
+                           per docs/ARCHITECTURE_BIBLE.md Section 3's table
+content-src/               build-time-only sources: the roster, the flag-
+                           coverage baseline, staged raw man/--help text
+extract/                  every extractor (build.py imports extract/schema.py;
+                           the rest are standalone scripts, not a package)
+stig-src/                 pinned DISA XCCDF/CCI zips + SHA-256 sums
+tests/                    unittest suite, the hostile harness, golden-command
+                           table, and real SME capture records
+template.html             the UI shell + app script build.py injects into
+build.py                  assembly script
+qa.py                     QA gates against the shipped artifact
+dist/                     build output (git-ignored -- see
+                           docs/ARCHITECTURE_BIBLE.md Section 24 for why a
+                           committed artifact cannot stay byte-identical
+                           across days)
 ```
-
-**TODO:** Confirm folder structure with Zee (Engineering) after initial design review.

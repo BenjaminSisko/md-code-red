@@ -1,151 +1,386 @@
+---
+type: user-guide
+status: current
+last_verified: 2026-09-17
+---
+
 # MD CODE RED User Guide
+
+MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
+menu) and it runs -- no install, no server, no network call of any kind. This guide
+describes what the shipped build (`dist/md-code-red_v1.0.0-dev.html`, 27 command
+entries, 19 tools) actually does, verified against the running artifact and the QA
+gates, not against the original product brief. Where the brief promised something
+this build does not yet do, that is called out plainly rather than described as if
+it worked.
 
 ## Core Workflows
 
-### Journey 1: Generate a Command
+### Journey 1: Generate a command with a guided form
 
-**TODO:** Fill after QA verifies behavior.
+Most of the catalog (24 of 27 entries) is a **guided form generator** -- you fill in
+a small set of fields and watch the exact command assemble as you type. Walkthrough,
+using the real `journalctl` entry:
 
-- Open the HTML file
-- Select RHEL version (7/8/9/10)
-- Search or browse a tool
-- Answer guided questions
-- Command renders live with explanation
-- STIG/NIST badge shows if applicable
-- Copy or Export as Evidence
+1. Open the file. The **Command Builder** rail item is selected by default
+   (`Ctrl+Alt+1`), and RHEL 9 is the starting version.
+2. In the sidebar's **Tools** list, click **journalctl / systemd-journald**. Its one
+   catalogued command, "Read the systemd journal, filtered by unit, minimum priority
+   and time window," appears underneath, tagged **guided form**.
+3. Click it. The editor splits into a **Fields** panel and the assembled-command
+   panel below it. All four fields on this entry (`unit`, `priority`, `since`,
+   `thisboot`) are optional, so a command renders immediately with nothing typed:
+   `journalctl --no-pager`, blast **green**.
+4. Type into the fields -- `unit: sshd.service`, choose `priority: err` from its
+   dropdown (the field is a closed set: emerg/alert/crit/err/warning/notice/info/
+   debug), `since: today`, and choose `thisboot: yes`. The command panel updates on
+   every keystroke, never the field inputs themselves, so you never lose your place
+   mid-word:
+   `journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot`
+5. The **Inspector** panel on the right lists every flag the command actually shows,
+   in order, each with its explanation or the honest `unverified -- see man page`
+   line when no curated explanation exists yet (see Known Limitations -- for this
+   build, that is every flag on every generator entry).
+6. Click **Copy** to put the plain command on the clipboard, or **Copy with
+   comment** (`Ctrl+Shift+C`) to prepend a `#`-prefixed header (tool/version,
+   intent, any STIG/CCI rows, blast level) -- see "Copy vs. Copy with comment"
+   below. A field left invalid (wrong shape for its type) is refused with a plain-
+   English reason under **Fill in the required fields**; nothing partial is ever
+   rendered as if it were complete.
 
-### Journey 2: Build STIG Evidence
+A handful of entries (3 of 27 -- `firewalld-service-active`,
+`ctrl-alt-del-target-masked`, `journald-service-active`) are **static** STIG-sourced
+checks with no form: pick the tool, pick the one command, and the version-specific
+command renders directly.
 
-1. Press `/` (or `Ctrl+K`/`Cmd+K`) and type a STIG ID (e.g. `RHEL-08-010000`), a CCI (`CCI-000366`),
-   or a NIST control (`AC-6`). Results are grouped by kind (Tool, Command, STIG, Flag, CCI, NIST).
-2. Press `Enter` or click a **STIG** result. If a command in this build's catalog is linked to that
-   rule, it opens directly with the command assembled; otherwise the rule opens on its own — the
-   Inspector still shows the full panel, and the editor says plainly that no command is catalogued
-   for it yet. A CCI or NIST result resolves to the first embedded rule that cites it, current RHEL
-   version first.
-3. The Inspector's STIG panel shows the STIG ID, Category, every cited CCI, the CCI → NIST SP 800-53
-   crosswalk, the rule title, and **Check text** / **Fix text** as expandable sections (verbatim DISA
-   text). A RHEL 7 rule also carries the sunset banner; an entry whose command changed between
-   releases carries its "changed in RHEL X" note above the panel.
-4. If a capture has been recorded for that STIG ID/RHEL version pair, the expected compliant output
-   shows under **Expected compliant output (captured)**. Until then the panel says so honestly — "No
-   capture yet" — rather than inventing one.
-5. Click **Export as Evidence** (or `Ctrl+E`) for the SCTM-ready plain-text block — see below.
+### Journey 2: Build STIG evidence for an audit package
 
-### Journey 3: Generate an Ansible Playbook
+1. Press `/` (when focus is not already in a text field) or `Ctrl+K` / `Cmd+K`
+   (works from anywhere, including while typing) to open the command palette, and
+   type a STIG ID (`RHEL-08-010000`), a CCI (`CCI-000366`), or a NIST control
+   (`AC-6`). Results are grouped, in this order: Tool, Command, STIG, Flag, CCI,
+   NIST -- each group capped so one large family cannot crowd the others off
+   screen.
+2. Press `Enter` or click a result. A **STIG** hit opens the rule directly: if a
+   command in this build's catalog is linked to it, the command assembles and the
+   Inspector shows the full panel; otherwise the rule opens on its own -- the panel
+   still renders in full, and the editor says plainly that no command is catalogued
+   for it yet. A **CCI** or **NIST** hit resolves to the first embedded rule that
+   cites it, current RHEL version searched first, then the other three.
+3. The Inspector's STIG panel (also mirrored below the command for printing) shows
+   the STIG ID and Category badge, every cited CCI as its own badge, the CCI to
+   NIST SP 800-53 crosswalk, the rule title, and **Check text** / **Fix text** as
+   expandable `<details>` sections carrying the verbatim DISA text. A RHEL 7 rule
+   also carries a sunset banner ("RHEL 7 STIG V3R15 is SUNSET at DISA -- a terminal
+   release, no further updates expected"); an entry whose command changed between
+   releases carries its own "Changed in RHEL X: ..." note above the panel.
+4. If a capture has been recorded for that exact STIG ID / RHEL version pair, the
+   panel shows **Expected compliant output (captured)**, open by default. Until
+   then it says so honestly -- **No capture yet** -- rather than inventing one. In
+   this build only 5 STIG ID/version pairs carry a capture at all (see Known
+   Limitations).
+5. Click **Export as Evidence** (or `Ctrl+E`) for the SCTM-ready plain-text block --
+   see below.
 
-**TODO:** Fill after QA verifies behavior.
+### Journey 3: Review a state-changing command before you copy it
 
-- Choose Ansible → Playbook
-- Answer target group and task checkboxes
-- Valid YAML renders with task comments
-- Copy to jump box, run, verify
+Every assembled command carries a blast rating -- **green** (read-only), **yellow**
+(a reversible state change), or **red** (destructive, confirmation required) -- shown
+in the muted line under the command's title (`tool . RHEL N . blast <level>`).
+Fourteen of the 24 generator entries in this build are rated yellow (add a user,
+extend a logical volume, open a firewall port, and so on); the three static entries
+and the remaining ten generators are green. **No entry in this shipped build is
+rated red**, and no generator's currently offered field values assemble into a
+command that matches a row of the destructive-pattern table either (see Known
+Limitations) -- the confirmation flow below is real, gate-tested, and inert for this
+release's content.
+
+1. A yellow rating is informational only: it does not block **Copy** or **Copy with
+   comment**, and there is no checkbox to tick. Read the muted blast line and the
+   entry's own **Verify** / **Undo** lines (printed under the command) before you
+   run anything that changes host state.
+2. A red rating (from an entry's own content, or from the destructive-pattern table
+   matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `dnf remove`,
+   and the rest of `content/dangerous.json`'s eleven rows) opens a red bordered
+   banner above the command: **"Destructive operation -- review before running,"**
+   naming which pattern matched and why. **Copy** and **Copy with comment** are
+   both disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
+   have reviewed this command."** The banner is evaluated over the *entire*
+   clipboard payload, including the comment header, not just the command line --
+   so a destructive word hidden only in a comment header still trips it.
+3. **Favorite** the entry (toolbar button, or from the Favorites rail once opened)
+   if you expect to come back to it; see "Favorites & Recent" below.
+
+**Ansible and git generators.** The activity rail also shows an **Ansible** icon
+(`Ctrl+Alt+3`). Clicking it shows a placeholder: "The Ansible generator ... [is]
+still open." No Ansible, git, or config-file generator ships in this build --
+they are Phase 2/3 backlog items (`docs/IDEAS.md` 260917-002, 260917-003,
+260917-004), not a third working journey. Do not rely on this guide's earlier
+drafts, or on the PRD, for what these rail items currently do.
 
 ## UI Reference
 
-### Version Selector
+### RHEL Version Selector and verification status
 
-**TODO:** Fill after QA verifies behavior. Version-specific flags greyed out with tooltip ("Not available in RHEL 7").
+The sidebar's version segmented control (RHEL 7 / 8 / 9 / 10) switches the whole
+app's context. A tool or command not offered on the selected release stays on
+screen, disabled, with its reason and (when one exists) its alternative shown in a
+`.why` line -- gated, never hidden, so you always know a tool exists even when this
+release cannot offer it (RHEL 7 has no `dnf` or `podman`, for example; the entries
+say so and point at `yum` as the alternative for package management).
+
+Every command entry's per-version verification is one of three states, shown as a
+badge in the Inspector, the status bar, and the evidence export -- read from one
+function (`verificationStatusForVersion()`) so the three places can never disagree:
+
+| Badge | Meaning | What backs it |
+|---|---|---|
+| **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
+| **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
+| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: of the 27 entries x 4 RHEL versions (108 pairs), 18 pairs are verified and the other 90 are not host-verified. |
+
+A version whose command is a `same_as` pointer at another version (for example RHEL
+9 often reuses RHEL 8's command text) shows **Not host-verified** even when the text
+is identical to a verified version's -- the command was never independently run on
+that release.
 
 ### Search
 
-The command palette (`/` or `Ctrl+K`/`Cmd+K`) searches a lazily built, typed index over tools,
-command intents, curated flags, the per-release flag dictionaries, every embedded STIG rule ID and
-title, every cited CCI, and every mapped NIST SP 800-53 control — built once, on the first keystroke
-(never at boot), and reused for the rest of the session. Results are grouped by kind (Tool, Command,
-STIG, Flag, CCI, NIST) in that order, each group capped so one large family cannot crowd the others
-off screen. A query with no possible match says so explicitly — "No matches for *x*. Try a tool name
-such as …" — rather than showing an empty list with no explanation. On this build's full embedded
-dataset (roughly 4,000 indexed records), both building the index and answering a query measure well
-under 100 ms (`tests/test_search_index.js`, run in CI via `tests/test_search_index.py`).
+The command palette (`/` or `Ctrl+K`/`Cmd+K`) searches a lazily built, typed index
+over tools, command intents, curated flags, the per-release flag dictionaries, every
+embedded STIG rule ID and title, every cited CCI, and every mapped NIST SP 800-53
+control -- built once, on the first keystroke that reaches the palette (never at
+boot), and reused for the rest of the session. Results are grouped by kind (Tool,
+Command, STIG, Flag, CCI, NIST) in that order, each group capped at 8 so one large
+family cannot crowd the others off screen. A query with no possible match says so
+explicitly -- "No matches for *x*. Try a tool name such as ..." -- rather than
+showing an empty list with no explanation. On this build's full embedded dataset
+(roughly 4,000 indexed records), both building the index and answering a query
+measure well under 100 ms (`tests/test_search_index.js`, run in CI via
+`tests/test_search_index.py`).
+
+### Copy vs. Copy with comment
+
+**Copy** puts the assembled command on the clipboard exactly as shown, nothing
+else. **Copy with comment** (`Ctrl+Shift+C`) prepends a `#`-prefixed header, one
+line per fact, rendered on screen in a read-only preview directly above the button
+row (labeled "Copy with comment -- exactly what reaches the clipboard") so what you
+see is byte-for-byte what lands on the clipboard:
+
+```
+# MD CODE RED v1.0.0-dev -- RHEL 8
+# intent: <the entry's one-line intent text>
+# STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
+# blast: yellow
+<the assembled command, not comment-prefixed>
+```
+
+Every header line is rendered, escaped, and forced single-line before it is
+assembled -- a newline embedded in curated `intent`/`verify`/`undo` text cannot put
+an unrendered second command on the clipboard. The command is the only line in the
+payload that is not `#`-prefixed; if the command itself cannot be rendered as safe
+single-line text, the whole copy is refused rather than silently dropping the
+comment.
 
 ### Export as Evidence
 
-`Ctrl+E`, or the **Export as Evidence** button in the command toolbar, opens a plain-text, SCTM-ready
-block in a modal: tool version and build date, the content fingerprint (sha256 of the embedded data
-island, defined below), STIG ID, STIG version and benchmark date, rule title, CAT, every cited CCI,
-the mapped NIST SP 800-53 controls, check text, fix text, expected output (or an honest "not captured
-yet" line), the assembled command exactly as rendered with its flags, the source citation, capture
-metadata when a capture exists (host, OS release, kernel, capture date), and the operator's own date
-line. The preview shown is byte-for-byte what **Copy evidence text** puts on the clipboard — nothing
-is recomputed between the two. Two exports of the same entry are identical except that one line
-(`tests/test_evidence_export.js`). The command and its flags are read from the same rendered result
-the screen and the ordinary Copy button already use — the exporter never re-assembles the command
-itself.
+`Ctrl+E`, or the **Export as Evidence** button in the command toolbar, opens a
+plain-text, SCTM-ready block in a modal. The preview shown is byte-for-byte what
+**Copy evidence text** puts on the clipboard -- nothing is recomputed between the
+two. The block, in order:
 
-**Content fingerprint.** A sha256 hash of the exact bytes inside this file's embedded data island,
-computed by `build.py` at build time and printed both in the file's own header comment and in the
-About panel, so an operator can quote it offline with no way to compare the file against anything
-else. `qa.py`'s Q1 gate independently re-hashes the shipped island and fails the build if it does not
-match the embedded constant.
+1. Header line, tool version and build date.
+2. **Content fingerprint** (see below).
+3. **Verified (RHEL N): <status text>** -- the same three-state text described
+   above, for the exported version only.
+4. When a STIG row applies: STIG ID; STIG version and benchmark date; rule title;
+   CAT; every cited CCI; the mapped NIST SP 800-53 controls; Check text and Fix
+   text verbatim; then either the captured output, compliance result (yes/no/not
+   recorded), capture host, release, kernel and capture date, or the honest line
+   "Expected output: not captured yet -- no capture record exists for this STIG
+   ID/RHEL version pair."
+5. The assembled command for the exported RHEL version and its blast level, a
+   `Requires: root` line when the entry declares one (currently only
+   `gen-sshd-test-config`), and every flag the command shows with its explanation
+   or `unverified -- see man page`.
+6. The source citation (title, version, retrieval date), or "Source citation: not
+   recorded on this entry."
+7. The operator's own date line (today's date, taken from the browser clock at
+   export time -- there is no server to disagree with it).
+
+**Content fingerprint, and how to check it offline.** The fingerprint is the sha256
+hash of the exact bytes inside this file's own `<script id="mcr-data">` element (the
+embedded JSON data island), computed by `build.py` at build time and printed both
+in the file's own header comment and in the About panel. It exists because the tool
+is air-gapped: there is nowhere to look the content up to compare it against. What
+it actually proves is narrower than "this content is correct" -- it proves **this
+evidence export came from this exact file**. To check it: open the same file's
+**About** panel (`Ctrl+Alt+5`) and compare its "Content fingerprint" line,
+character for character, against the one printed at the top of the evidence export.
+They are read from one constant (`CONTENT_FINGERPRINT`), so inside one file they can
+never disagree. **If they do not match**, the evidence text did not come from the
+copy of the file you have open -- it may have been exported from an older or newer
+build, or edited after export. Re-open the evidence from the file you actually have
+in hand and re-export it; do not attach an evidence block whose fingerprint you
+cannot match to the file that produced it.
 
 ### Keyboard Operation
 
-No mouse is required. Every binding below comes from one table in the app script (`KEYMAP`) read by
-one delegated `keydown` listener, so what this page says and what the tool does cannot drift apart
-without the table changing.
+No mouse is required. Every binding below comes from one table in the app script
+(`KEYMAP`) read by one delegated `keydown` listener, so what this page says and what
+the tool does cannot drift apart without the table changing.
 
 | Action | Binding | Notes |
 |---|---|---|
-| Open the command palette | `/` | Only when the focus is not already in a text field, so typing a slash into a form still types a slash. |
+| Open the command palette | `/` | Only when focus is not already in a text field, so typing a slash into a form still types a slash. |
 | Open the command palette from anywhere | `Ctrl+K` / `Cmd+K` | Works while typing. |
-| Close the palette | `Esc` | |
-| Move through palette results | `↑` / `↓` | Wraps at both ends. |
-| Open the selected palette result | `Enter` | A tool opens its command list; a command loads into the editor. |
+| Close the palette, or the evidence export panel | `Esc` | If the evidence modal is open, `Esc` closes that first. |
 | Toggle the sidebar | `Ctrl+B` | |
 | Toggle the inspector | `Ctrl+I` | |
-| Toggle dark / light theme | `Ctrl+Shift+L` | Also the **Theme** button at the right of the status bar. The choice is kept for the session only. |
-| Jump to a rail section | `Ctrl+Alt+1` … `Ctrl+Alt+5` | Command Builder, STIG Search, Ansible, Favorites, About — in rail order, top to bottom. Focus moves to the rail button. |
-| Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly as the button is. |
-| Export as Evidence | `Ctrl+E` | Opens the evidence preview modal; `Esc` closes it (and closes the palette first if both would otherwise apply). |
-| Move within any list (tools, commands, palette) | `↑` / `↓` | |
-| Activate the focused control | `Enter` or `Space` | Standard control behaviour; nothing is rebound. |
+| Toggle dark / light theme | `Ctrl+Shift+L` | Also the **Theme** button at the right of the status bar. The choice is kept for the browser session only (`sessionStorage`), not across a fresh open of the file. |
+| Jump to a rail section | `Ctrl+Alt+1` ... `Ctrl+Alt+5` | Command Builder, STIG Search, Ansible, Favorites, About, in rail order top to bottom. Focus moves to the rail button. (STIG Search and Ansible are placeholders -- see Journey 3.) |
+| Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |
+| Export as Evidence | `Ctrl+E` | Opens the evidence preview modal. |
+| Move through palette results, or within any list (tools, commands, palette rows) | Arrow Up / Arrow Down | Wraps at both ends inside the palette. |
+| Open the selected palette result | `Enter` | A tool opens its command list; a STIG/CCI/NIST hit opens the rule or resolves to one; a command loads into the editor. |
 | Focus an editor line and pin its explanation | `Enter` or `Space` on a gutter line | Gutter lines are `role="button"`, `tabindex="0"`. |
-| Move anywhere else | `Tab` / `Shift+Tab` | Focus order: rail → sidebar (version selector first) → editor toolbar → gutter lines → inspector → status-bar theme button. The palette traps focus until `Esc`. |
-| Print | `Ctrl+P` / `Cmd+P` | Browser-native. The print stylesheet drops the rail, sidebar, inspector and status bar. |
+| Move anywhere else | `Tab` / `Shift+Tab` | Focus order: rail, sidebar (version selector first), editor toolbar, gutter lines, inspector, status-bar theme button. The palette traps focus until `Esc`. |
+| Print | `Ctrl+P` / `Cmd+P` | Browser-native, not in `KEYMAP`. The print stylesheet drops the rail, sidebar, inspector and status bar. |
 
-Every focusable control shows a visible focus ring; no rule in the stylesheet removes an outline
-without replacing it. The rail buttons are icon-only by design, and each reveals its text label on
-focus as well as on hover, so a keyboard user reads the same word a mouse user does.
+**Note: plain Copy has no keyboard shortcut** -- only Copy *with comment*
+(`Ctrl+Shift+C`) does. Use `Tab` to the **Copy** button and press `Enter` or
+`Space`, or click it.
+
+Every focusable control shows a visible focus ring; no rule in the stylesheet
+removes an outline without replacing it. The rail buttons are icon-only by design
+(`>`, `$`, `Y`, `*`, `i`), and each reveals its text label on focus as well as on
+hover, so a keyboard user reads the same word a mouse user does.
 
 ### Favorites & Recent
 
-Every command entry's toolbar carries a **Favorite** / **Favorited** toggle. The **Favorites** rail
-(`Ctrl+Alt+4`) lists favorited entries and, below them, the entries opened most recently this
-session, newest first. Selecting either jumps straight back to the Command Builder rail with that
-entry loaded.
+Every command entry's toolbar carries a **Favorite** / **Favorited** toggle. The
+**Favorites** rail (`Ctrl+Alt+4`) lists favorited entries and, below them, the
+entries opened most recently this session, newest first (up to 20). Selecting
+either jumps straight back to the Command Builder rail with that entry loaded.
 
-Only entry IDs are ever written to `localStorage` (namespaced `mdcr.v1.`, schema-versioned like every
-other stored value) — never the entry's text. Every ID read back out of storage is checked against
-the live content island before it is trusted (`sanitizeIdList()`, `tests/test_favorites_store.js`);
-an ID that does not resolve — from an older build, or from anything that is not a plain, short ID
-string — is silently dropped rather than rendered blank or as raw stored text. There is no
-favorites/recent export to a file; both lists are per-browser and never leave `localStorage`.
+Only entry IDs are ever written to `localStorage` (namespaced `mdcr.v1.`, schema-
+versioned like every other stored value) -- never the entry's text. Every ID read
+back out of storage is checked against the live content island before it is
+trusted; an ID that does not resolve -- from an older build, or from anything that
+is not a plain, short ID string -- is silently dropped rather than rendered blank
+or as raw stored text. Favorites and recent are **per browser profile** (whatever
+browser and profile opened the file -- `localStorage` is scoped to the page's
+origin, and a `file://` page's storage is local to that browser installation); there
+is no export to a file, and nothing here ever leaves the browser.
 
 ### Print View
 
-`Ctrl+P` / `Cmd+P` prints the current command and, when the selection carries one, its full STIG
-panel — check text, fix text, CCI/NIST crosswalk, sunset banner and "changed in RHEL X" note included
-— with the rail, sidebar, inspector, status bar and any open overlay dropped. Nothing else loads: the
-printed page draws from the same single-file, zero-network artifact as the screen.
+`Ctrl+P` / `Cmd+P` prints the current command and, when the selection carries one,
+its full STIG panel -- check text, fix text, CCI/NIST crosswalk, sunset banner and
+"changed in RHEL X" note included -- with the rail, sidebar, inspector, status bar
+and any open overlay dropped. Nothing else loads: the printed page draws from the
+same single-file, zero-network artifact as the screen.
 
 ### Dark/Light Mode
 
-**TODO:** Fill after QA verifies behavior. Toggle in header; persisted per session.
+`Ctrl+Shift+L`, or the **Theme** button at the right end of the status bar, toggles
+between dark and light. With no explicit choice, the theme follows the browser's
+own `prefers-color-scheme` setting, resolved in an inline `<head>` style before the
+page paints -- there is no flash of the wrong theme on load. An explicit choice is
+kept in `sessionStorage` only: it survives navigating within the same tab for the
+rest of the browser session, but a fresh open of the file (a new tab, or the
+browser restarted) starts from the system preference again.
 
 ### About Panel
 
-The **About** rail (`Ctrl+Alt+5`) shows the tool's version and build date, the content fingerprint,
-every embedded STIG release with its version, benchmark date and rule count (and a sunset marker for
-RHEL 7), the embedded source families with their license classes, and the required attribution block
-from SALM's Content Licensing Ruling v1, reproduced verbatim.
+The **About** rail (`Ctrl+Alt+5`) shows the tool's version and build date, the
+content fingerprint, every embedded STIG release with its version, benchmark date
+and rule count (and a sunset marker for RHEL 7), the embedded source families with
+their license classes, and the required attribution block from SALM's Content
+Licensing Ruling v1, reproduced verbatim -- see README.md's Attribution section for
+the same text.
+
+## Known Limitations
+
+This is the honest state of the shipped build, not a roadmap. Numbers below are
+read directly off `dist/md-code-red_v1.0.0-dev.html` and its build content, not
+estimated.
+
+- **27 command entries across 19 tools.** 24 are guided-form generators; 3 are
+  static STIG-sourced checks. This is a first-phase catalog, not full coverage of
+  RHEL administration.
+- **RHEL 7 flags are extracted from a UBI7 container, not a real RHEL 7 host** --
+  the lab has none. Of the tools probed, only 6 have a parsed flag dictionary on
+  RHEL 7 (`systemctl`, `journalctl`, `yum`, `useradd`, `usermod`, `chage`), because
+  UBI7's public repos ship neither `man`/`man-db` (every tool is `--help`-only) nor
+  most of the other packages at all. The remaining tools are honestly marked
+  `available: false` for RHEL 7 rather than guessed at.
+- **RHEL 9 has no flag dictionary and no captures yet.** `content/flags_rhel9.json`
+  is an empty, pending skeleton (blocked on a RHEL 9 host to read), so every RHEL 9
+  command's flags panel reads `unverified -- see man page` regardless of whether a
+  curated explanation exists for the same flag on RHEL 8 or 10 -- the dictionary is
+  never borrowed across releases.
+- **Only 5 STIG ID/RHEL-version pairs carry a captured expected output**, out of
+  the 10 STIG rows the 3 static entries declare across all four releases:
+  `firewalld-service-active` (RHEL 8, RHEL 10), `ctrl-alt-del-target-masked`
+  (RHEL 8, RHEL 10), and `journald-service-active` (RHEL 10 only -- it has no RHEL
+  8 STIG mapping at all). Every other STIG panel in the build honestly shows "No
+  capture yet."
+- **Flag explanations are almost entirely uncurated.** Across the RHEL 7/8/10 flag
+  dictionaries (2,009 flags total; RHEL 9 has none), zero carry a curated
+  `explain` -- the extractor writes `explain: null` by design and a human SME
+  curates prose in a separate step that has not run yet. Only 4 flags anywhere in
+  the build (on the 3 static entries' own hand-curated `flags[]`) carry a curated
+  explanation; every other flag panel entry in this build reads `unverified -- see
+  man page`. This is the no-guess rule working as intended, not a bug, but it means
+  the Inspector is not yet a teaching tool for most flags.
+- **The "Captured, awaiting QA" verification badge is implemented and tested but
+  never actually shown in this build** -- every capture on record already has a QA
+  receipt.
+- **No entry in this build is rated blast red**, and no generator's field values
+  currently assemble into a command matching a row of the destructive-pattern
+  table. The red confirmation banner and its review checkbox are real, gate-tested
+  code paths (proved against synthetic commands by `tests/hostile_harness.js`), but
+  nothing in this release's content exercises them end to end in the running UI.
+- **The STIG Search and Ansible rail items are placeholders.** STIG lookup today
+  happens through the command palette (Journey 2), not a dedicated browse view. No
+  Ansible, git, or config-file generator ships; see `docs/IDEAS.md` for the backlog
+  items this maps to.
+- **English only, desktop only.** No localization, no mobile layout beyond the
+  responsive breakpoint at 1024px that stacks the inspector under the sidebar.
 
 ## Troubleshooting
 
-**TODO:** Fill after QA verifies behavior. Common issues, workarounds, and when to escalate to the RHEL SME.
+**The file will not open, or shows "Not built yet."** You have `template.html`
+itself, not a built artifact -- it has no data island. Run `python3 build.py` from
+a checkout and open the file it writes under `dist/`.
 
-**Version mismatch:** Confirm RHEL version in header. Commands tagged "Not in RHEL 7" will not render.
+**Opening from `file://` in Firefox ESR or Chromium.** The app needs no network at
+all -- its Content-Security-Policy meta tag refuses every network-capable request
+(`connect-src 'none'`, `object-src 'none'`, `form-action 'none'`) and the shell
+polyfills `NodeList.prototype.forEach` and `Element.prototype.matches`/`closest`
+for older ESR-era engines. If nothing renders, check your browser's own local-file
+permissions (some hardened configurations restrict `file://` script execution
+entirely) rather than looking for a missing server.
 
-**Copy button inactive:** Fill all required fields (marked with red border).
+**Favorites, recent, theme choice, or the RHEL version do not persist between
+opens.** Every `localStorage`/`sessionStorage` access is wrapped in its own
+try/catch and degrades to "nothing was saved" rather than erroring -- a hardened
+browser profile that blocks storage on `file://` pages will show this. The app
+still works; it just starts from defaults (RHEL 9, light/dark by system
+preference, no favorites) every time.
 
-**Dangerous operations warning:** Confirms before copying `rm -rf`, `wipefs`, `lvremove`, `dnf remove` commands.
+**Copy says "Copy failed."** The clipboard write uses a hidden, selected textarea
+and `document.execCommand("copy")` rather than an async clipboard-permission API,
+specifically so it needs no permission prompt on an air-gapped jump box -- but some
+hardened configurations still block it. Select the text in the editor or the
+evidence preview and use your browser's own copy command instead.
+
+**The evidence export's content fingerprint does not match the About panel.** See
+"Export as Evidence" above -- re-export from the file you actually have open rather
+than trusting a fingerprint from elsewhere.
+
+**A tool or command I expect is greyed out.** Check the RHEL version selector
+first. A disabled row always carries its reason in a `.why` line and a tooltip
+(for example "Not available in RHEL 7 -- use yum" on `dnf`); nothing is hidden
+outright.
