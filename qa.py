@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q17, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q18, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -11,6 +11,11 @@ Gate numbering follows ADR-001 §7.3 (Q1..Q17). Q1..Q7 come from grey-beard-ansi
 qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file keeps
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
+
+Q18 is beyond ADR-001's list: it is Marcus's CI merge-gate #4 and #9
+(threat-model-v1 §11), the hostile-input harness over the command assembler and
+the quoting-domain separation check. It is the only gate in this file that
+REQUIRES Node — see gate_q18 for why a skip is not acceptable there.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -87,13 +92,44 @@ MARKERS = [
     ("STATUSBAR region", 'id="statusbar"', None),
     ("PALETTE overlay", 'id="palette"', None),
     ("print stylesheet", "@media print", None),
+    # CR-T-13/14/15 — the runtime shell, the keyboard controller, the assembler
+    ("rail renderer", "function renderRail(", None),
+    ("tool list renderer (version-gated)", "function renderToolList(", None),
+    ("editor renderer with gutter", "function renderEditor(", None),
+    ("inspector renderer", "function renderInspector(", None),
+    ("version-gated reason copy", "Not available in RHEL ", None),
+    ("command assembler", "function assembleCommand(", None),
+    ("assembler extraction markers", "MCR-ASSEMBLER-BEGIN", None),
+    ("field type allow-list table", "var FIELD_TYPES=", None),
+    ("field validator", "function validateField(", None),
+    ("spec validator (which field is wrong)", "function validateSpec(", None),
+    ("POSIX shell quoting", "function shQuote(", None),
+    # MCR-SEC-010: the YAML quoter was dead code with no call site, so Q18's
+    # quoting-domain gate passed on a domain that did not exist. It is removed
+    # and reported PENDING until the Ansible generator gives it a real sink.
+    ("YAML quoting (separate escaping domain)", "function yamlQuote(", "CR-T-17..25"),
+    ("rich-rule composition from validated sub-fields", "function composeRichRule(", None),
+    ("blast evaluation against the destructive table", "function blastFor(", None),
+    ("red-blast confirmation banner", "function renderBlastBanner(", None),
+    ("keyboard binding table", "var KEYMAP=", None),
+    ("keyboard controller", 'document.addEventListener("keydown"', None),
+    ("palette controller", "function openPalette(", None),
+    ("palette search", "function paletteMatches(", None),
+    ("clipboard (no network, no download)", "function copyText(", None),
+    # MCR-SEC-012 / threat-model-v1 §9: the screen, the clipboard and the future
+    # exporter read ONE rendered-state object, never four recomputations.
+    ("single rendered-state object", "function computeResult(", None),
+    ("clipboard payload composed once per interaction", "function withCopyPayloads(", None),
+    ("clipboard header: every line '# '-prefixed", "function commentPayload(", None),
+    ("de-quoted projection for the destructive table", "function unquoteCommand(", None),
+    ("rich-rule slot allow-list", "var RICHRULE_SLOT_TYPES=", None),
+    ("template flag/lit token allow-lists", "var FLAG_TOKEN_RE=", None),
+    # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
-    ("command assembler", "function assembleCommand(", "CR-T-15"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
     ("STIG panel", "function renderStigPanel(", "CR-T-26"),
     ("evidence exporter", "function exportEvidence(", "CR-T-28"),
-    ("search index", "function buildIndex(", "CR-T-29"),
-    ("keyboard controller", 'document.addEventListener("keydown"', "CR-T-14"),
+    ("lazy typed search index", "function buildIndex(", "CR-T-29"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -102,11 +138,64 @@ MARKERS = [
 # it is named here AND every contribution to it is itself audited by this gate.
 # ---------------------------------------------------------------------------
 INNERHTML_ALLOWLIST = {
-    "html": "renderVersionSelector(): every 'html +=' contribution is audited by this same gate",
     'parts.join("")': "renderStatusBar(): every parts.push() argument is audited by this same gate",
 }
-AUDITED_ACCUMULATORS = ["html"]          # <name> += <expr>
 AUDITED_PUSH_TARGETS = ["parts"]         # <name>.push(<expr>)
+
+# ---------------------------------------------------------------------------
+# Render-sink inventory (Q17, MCR-SEC-004).
+#
+# The audit used to look for one sink spelling — `.innerHTML =` — and one
+# hard-coded accumulator name. Five mechanical bypasses followed from that:
+# `+=` on the sink, `html = html + x` (assignment, not `+=`), an intermediate
+# accumulator under any other name, insertAdjacentHTML(), and outerHTML. None of
+# them existed in the code; all five passed the gate. The gate now (a) forbids
+# the sinks this product has no use for outright, (b) derives the accumulator
+# set from the source instead of hard-coding it, and (c) audits `=` and `+=`
+# alike, on the sink and on every derived accumulator.
+#
+# These are FORBIDDEN, not audited: there is no correct use of them here, and a
+# rule with no exception cannot be bypassed by writing the exception.
+# ---------------------------------------------------------------------------
+FORBIDDEN_SINKS = [
+    (re.compile(r"\binsertAdjacentHTML\s*\("), "insertAdjacentHTML()"),
+    (re.compile(r"\.\s*outerHTML\b"), ".outerHTML"),
+    (re.compile(r"\bdocument\s*\.\s*write(?:ln)?\s*\("), "document.write()/document.writeln()"),
+    (re.compile(r"\bcreateContextualFragment\s*\("), "Range.createContextualFragment()"),
+    (re.compile(r"\bsrcdoc\s*="), "srcdoc="),
+]
+# `.innerHTML` may only ever appear as an assignment sink, never read into
+# something else or passed anywhere.
+INNERHTML_ANY_RE = re.compile(r"\.\s*innerHTML\b")
+INNERHTML_SINK_RE = re.compile(r"\.\s*innerHTML\s*\+?=(?!=)\s*")
+# setAttribute must name its attribute with a literal the gate can read, and that
+# literal may not be one that turns a value into a URL, a style or a handler.
+SETATTR_RE = re.compile(r"\.setAttribute\s*\(")
+SETATTR_FORBIDDEN_RE = re.compile(r"^(href|src|srcdoc|style|action|formaction|xlink:href|on[a-z]+)$",
+                                  re.I)
+IDENT_RE = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
+JOIN_RE = re.compile(r"^([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*join\s*\(")
+
+# ---------------------------------------------------------------------------
+# Trojan-source scan (Q17). Raw C0/C1 controls and invisible or bidirectional
+# formatting characters do not belong in hand-written source: they are how a
+# reviewer is shown one thing while the engine compiles another, and they are
+# also how a JS \u escape silently turns into the character it was meant to
+# describe. The ranges are assembled from code points rather than typed, because
+# typing them is the mistake this gate exists to catch.
+# ---------------------------------------------------------------------------
+TROJAN_RANGES = [
+    (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping \t \n \r
+    (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
+    (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
+    (0x200B, 0x200F), (0x2028, 0x2029), (0x202A, 0x202E),     # zero-width, line/paragraph
+                                                              #   separators, bidi overrides
+    (0x2060, 0x206F),                                         # word joiner, invisible format
+                                                              #   and bidi isolates, 2065
+                                                              #   included (MCR-SEC-009)
+    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
+]
+TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
 
 results = []   # (gate_id, name, status, details)  status in PASS/FAIL/PENDING
 
@@ -185,11 +274,43 @@ def split_top_level(expr, sep="+"):
     return [p for p in parts if p != ""]
 
 
+def literal_end(seg):
+    """Index of the quote that closes the string literal starting at seg[0], or None."""
+    if not seg or seg[0] not in "\"'":
+        return None
+    quote, i = seg[0], 1
+    while i < len(seg):
+        c = seg[i]
+        if c == "\\":
+            i += 2
+            continue
+        if c == quote:
+            return i
+        if c in "\n\r":
+            return None            # a JS string literal cannot span a raw newline
+        i += 1
+    return None
+
+
 def is_literal(seg):
-    return len(seg) >= 2 and seg[0] in "\"'" and seg[-1] == seg[0]
+    """True only for ONE complete string literal that closes at its last character.
+
+    MCR-SEC-004(c). The old implementation compared seg[0] and seg[-1] only, so
+    is_literal('"a" + raw + "b"') was True. That was not exploitable while
+    split_top_level() splits on top-level '+' first — but a checker whose
+    correctness depends on the splitter running first is one refactor away from
+    being wrong, and this one guards the XSS path into a tool trusted at root.
+    Template literals are rejected outright: interpolation is the thing this gate
+    exists to catch.
+    """
+    seg = seg.strip()
+    if seg.startswith("`"):
+        return False
+    end = literal_end(seg)
+    return end is not None and end == len(seg) - 1
 
 
-def segment_ok(seg):
+def segment_ok(seg, accumulators=()):
     seg = seg.strip()
     if not seg:
         return True
@@ -197,6 +318,8 @@ def segment_ok(seg):
         return True
     if re.match(r"^(esc|escapeAttr|escapeRegex)\s*\(", seg):
         return True
+    if seg in accumulators:
+        return True            # derived accumulator: its own assignments are audited
     if seg in INNERHTML_ALLOWLIST:
         return True
     if seg.startswith("(") and seg.endswith(")"):
@@ -204,13 +327,165 @@ def segment_ok(seg):
         if "?" in inner:
             cond, _, rest = inner.partition("?")
             branches = split_top_level(rest, ":")
-            return all(segment_ok(b) for b in branches)
-        return segment_ok(inner)
+            return all(segment_ok(b, accumulators) for b in branches)
+        return segment_ok(inner, accumulators)
     return False
 
 
-def expression_ok(expr):
-    return all(segment_ok(s) for s in split_top_level(expr))
+def expression_ok(expr, accumulators=()):
+    return all(segment_ok(s, accumulators) for s in split_top_level(expr))
+
+
+def assignments_to(src, name):
+    """Every `<name> = ...` and `<name> += ...` expression in src.
+
+    The lookbehind keeps `foo.html = x` and `myhtml = x` out; `(?!=)` keeps
+    `==` out.
+    """
+    out = []
+    pat = re.compile(r"(?<![.\w$])%s\s*\+?=(?!=)\s*" % re.escape(name))
+    for m in pat.finditer(src):
+        expr, _end = read_assignment(src, m.end())
+        out.append(expr)
+    return out
+
+
+def sink_expressions(src):
+    """Every expression assigned into an audited render sink (`=` and `+=`)."""
+    out = []
+    for m in INNERHTML_SINK_RE.finditer(src):
+        expr, _end = read_assignment(src, m.end())
+        out.append(expr)
+    return out
+
+
+def derive_accumulators(src):
+    """Every identifier that reaches a render sink, transitively (MCR-SEC-004b).
+
+    An accumulator is not a name this file knows in advance — it is whatever the
+    source assigns into a sink. Start from the bare identifiers on the right of
+    every sink assignment, then follow their own assignments: `var html = "" + h`
+    makes `h` an accumulator too, so `h += entry.intent` is audited rather than
+    invisible. Fixed point, so a chain of any length is covered.
+    """
+    queue, seen = [], set()
+    for expr in sink_expressions(src):
+        for seg in split_top_level(expr):
+            seg = seg.strip()
+            if IDENT_RE.match(seg):
+                queue.append(seg)
+    while queue:
+        name = queue.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        for expr in assignments_to(src, name):
+            for seg in split_top_level(expr):
+                seg = seg.strip()
+                if IDENT_RE.match(seg) and seg not in seen:
+                    queue.append(seg)
+    return seen
+
+
+def render_sink_failures(src):
+    """The whole Q17 render-safety audit over a piece of JS. Returns (failures, audited).
+
+    Factored out of gate_q17 so tests/test_render_audit.py can drive it with the
+    bypass constructs from MCR-SEC-004 and prove each one now fails. A gate that
+    has never been seen to fail is not a gate.
+    """
+    f, audited = [], 0
+
+    for rx, label in FORBIDDEN_SINKS:
+        hits = len(rx.findall(src))
+        if hits:
+            f.append("%s appears %d time(s): this product renders through exactly one audited sink "
+                     "(innerHTML, esc()-wrapped), and there is no correct use of this one here "
+                     "(MCR-SEC-004)" % (label, hits))
+
+    # `.innerHTML` may only be an assignment target
+    for m in INNERHTML_ANY_RE.finditer(src):
+        tail = src[m.end():m.end() + 8]
+        if not re.match(r"\s*\+?=(?!=)", tail):
+            f.append("`.innerHTML` used as something other than an assignment sink (followed by %r) "
+                     "— every render path has to go through the audited assignment form" % tail)
+
+    # setAttribute: the attribute name must be a readable literal, and not one
+    # that turns its value into a URL, a style or an event handler.
+    for m in SETATTR_RE.finditer(src):
+        args, _end = read_assignment(src, m.end())
+        first = split_top_level(args, ",")[0].strip() if args else ""
+        if not is_literal(first):
+            f.append("setAttribute() called with a non-literal attribute name (%s) — the gate cannot "
+                     "prove it is not href/src/style/on*, so write the name out" % first[:40])
+            continue
+        name = first[1:-1]
+        if SETATTR_FORBIDDEN_RE.match(name):
+            f.append("setAttribute(%r, ...) — href/src/srcdoc/style/action/on* turn a string into a "
+                     "URL, a stylesheet or a handler; this product sets data-* and ARIA only" % name)
+
+    accumulators = derive_accumulators(src)
+
+    for expr in sink_expressions(src):
+        audited += 1
+        if not expression_ok(expr, accumulators):
+            bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+            f.append("innerHTML assignment is not esc()/escapeAttr()-wrapped or literal: %s"
+                     % "; ".join(b[:70] for b in bad))
+
+    for name in sorted(accumulators):
+        exprs = assignments_to(src, name)
+        if not exprs:
+            f.append("'%s' is assigned into an innerHTML sink but nothing in this file assigns to it "
+                     "in a form this gate can audit" % name)
+        for expr in exprs:
+            audited += 1
+            if not expression_ok(expr, accumulators):
+                bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+                f.append("accumulator '%s' takes an unescaped segment: %s"
+                         % (name, "; ".join(b[:70] for b in bad)))
+
+    # allow-listed join() accumulators: the push target must itself be audited
+    for expr in sink_expressions(src):
+        for seg in split_top_level(expr):
+            jm = JOIN_RE.match(seg.strip())
+            if jm and jm.group(1) not in AUDITED_PUSH_TARGETS:
+                f.append("'%s.join(...)' reaches a sink but '%s' is not an audited push target"
+                         % (jm.group(1), jm.group(1)))
+
+    for name in AUDITED_PUSH_TARGETS:
+        for m in re.finditer(r"\b%s\.push\(" % re.escape(name), src):
+            expr, _end = read_assignment(src, m.end())
+            audited += 1
+            if not expression_ok(expr, accumulators):
+                bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+                f.append("'%s.push()' takes an unescaped segment: %s"
+                         % (name, "; ".join(b[:70] for b in bad)))
+
+    return f, audited
+
+
+def trojan_scan(text, where):
+    """Raw C0/C1, zero-width and bidirectional-override characters, by code point.
+
+    C10: this runs over the data island as well as the hand-written shell. DISA
+    fix text is rendered AND copied into evidence blocks, so a bidi override in
+    vendor XML is the textbook trojan-source case; excluding the island was a
+    deliberate blind spot.
+    """
+    found = {}
+    for m in TROJAN_RE.finditer(text):
+        cp = ord(m.group(0))
+        if cp in found:
+            continue
+        found[cp] = text[:m.start()].count("\n") + 1
+    if not found:
+        return []
+    return ["raw control or invisible character(s) in %s: %s — source and embedded content are "
+            "written with escapes, never with the character itself; a bidi override or a stray NUL "
+            "is both a review-integrity hazard and how a \\u escape turns into the thing it meant "
+            "to describe"
+            % (where, ", ".join("U+%04X at line %d" % (cp, ln) for cp, ln in sorted(found.items())[:8]))]
 
 
 def read_assignment(src, start):
@@ -332,6 +607,30 @@ def parse_cci_list():
 # gates
 # ---------------------------------------------------------------------------
 
+def island_escape_failures(island):
+    """MCR-SEC-007 — no HTML-significant character survives into the data island.
+
+    Escaping only `</` closes `</script>` and leaves `<!--` and `<script` alone,
+    which is enough to push the HTML tokeniser into script-data-double-escaped
+    state and swallow the island's own closing tag along with the whole app
+    script. build.py escapes every `<` and `>` as \\u003c / \\u003e; this asserts
+    it on the built file, so reverting the escaping fails the build rather than
+    waiting for a DISA fix text that happens to contain `<!--<script`.
+
+    Returns a list of failure strings; empty means the island is clean.
+    """
+    out = []
+    for ch, name in (("<", "less-than"), (">", "greater-than")):
+        n = island.count(ch)
+        if n:
+            at = island.index(ch)
+            out.append("the data island contains %d raw %s character(s) — first at offset %d, "
+                       "context %r. build.py must escape every '<' and '>' as \\u003c / \\u003e so "
+                       "'</script', '<!--', '-->' and '<script' are all closed by one rule "
+                       "(MCR-SEC-007)" % (n, name, at, island[max(0, at - 30):at + 30]))
+    return out
+
+
 def gate_q1(ctx):
     f, d = [], []
     html = ctx["html"]
@@ -364,6 +663,11 @@ def gate_q1(ctx):
         f.append("data island does not parse as JSON")
     else:
         d.append("data island parses (%.2f MB of JSON)" % (ctx["island_len"] / 1024.0 / 1024.0))
+    esc_f = island_escape_failures(ctx["island"])
+    f.extend(esc_f)
+    if not esc_f:
+        d.append("no raw '<' or '>' anywhere in the data island — '</script', '<!--', '-->' and "
+                 "'<script' are all closed by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)")
     consts = ctx["build_consts"]
     version = consts.get("APP_VERSION")
     checks = [
@@ -715,6 +1019,82 @@ def gate_q9(ctx):
     return f, d
 
 
+def accuracy_sample(ids):
+    """The Q10 sample: fixed stride, no RNG, reproducible in CI (ADR-001 §7.3).
+
+    A dataset at or below the sample size is checked in full rather than sampled,
+    because sampling 20 out of 20 is just a slower way of checking all of them.
+    """
+    ids = sorted(ids)
+    if len(ids) <= SAMPLE_PER_RELEASE:
+        return ids
+    return (ids[::SAMPLE_STRIDE] or ids)[:SAMPLE_PER_RELEASE]
+
+
+def accuracy_failures(version, rules, src, full_set=True):
+    """Diff an embedded rules list against a fresh parse of the pinned XCCDF.
+
+    Pure: no ctx, no globals beyond the sampling constants, no I/O. gate_q10 and
+    tests/test_accuracy_gate.py both call this, so the gate that runs in CI is
+    the gate the mutated fixture proves. `full_set` is False only when the caller
+    is deliberately passing a reduced dataset (the committed fixtures), never for
+    a shipping build.
+
+    Two layers, on purpose. The SAMPLE catches a rule whose text drifted; the
+    ID-SET PARITY catches a rule that was added, dropped, or renamed outside the
+    sample, which a stride of 20-in-445 would otherwise walk straight past.
+    """
+    bad = []
+    embedded = {}
+    for r in rules:
+        sid = r.get("i")
+        if not sid:
+            bad.append("a rule carries no STIG ID")
+            continue
+        if sid in embedded:
+            bad.append("%s: embedded twice" % sid)
+        embedded[sid] = r
+    ids = sorted(embedded)
+
+    if full_set:
+        extra = sorted(set(ids) - set(src))
+        missing = sorted(set(src) - set(ids))
+        if extra:
+            bad.append("embedded but absent from the pinned XCCDF: %s" % ", ".join(extra[:6]))
+        if missing:
+            bad.append("in the pinned XCCDF but not embedded: %s" % ", ".join(missing[:6]))
+
+    sample = accuracy_sample(ids)
+    if full_set and len(ids) > SAMPLE_PER_RELEASE and len(sample) < SAMPLE_PER_RELEASE:
+        bad.append("stride %d over %d rules yields only %d samples, not the %d ADR-001 §7.3 Q10 requires"
+                   % (SAMPLE_STRIDE, len(ids), len(sample), SAMPLE_PER_RELEASE))
+
+    for sid in sample:
+        e, s = embedded[sid], src.get(sid)
+        if s is None:
+            bad.append("%s: absent from the pinned XCCDF" % sid)
+            continue
+        if e.get("t") != s["t"]:
+            bad.append("%s: title differs from source" % sid)
+        if e.get("rid") != s["rid"]:
+            bad.append("%s: rule id %s != source %s" % (sid, e.get("rid"), s["rid"]))
+        if list(e.get("cci") or []) != s["cci"]:
+            bad.append("%s: CCI %s != source %s" % (sid, e.get("cci"), s["cci"]))
+        if e.get("c") != s["c"]:
+            bad.append("%s: CAT %s != source %s" % (sid, e.get("c"), s["c"]))
+        # CR-T-07 embeds check and fix verbatim and uncapped, so the whole text
+        # must match — not merely a prefix. The split on the Etsy pipeline's
+        # trim marker stays so a capped dataset would still be compared fairly.
+        for key, label in (("fix", "fix"), ("chk", "check")):
+            et = (e.get(key) or "").split("[trimmed")[0].strip()
+            if et and not s[key].startswith(et[:100]):
+                bad.append("%s: %s text prefix differs from source" % (sid, label))
+            elif et and et != s[key]:
+                bad.append("%s: %s text differs from source beyond its first 100 characters"
+                           % (sid, label))
+    return bad, sample
+
+
 def gate_q10(ctx):
     f, d = [], []
     f += ctx["pin_failures"]
@@ -724,45 +1104,15 @@ def gate_q10(ctx):
     data = ctx["data"]
     for v in VERSIONS:
         src, _ = ctx["source_rules"][v]
-        embedded = {r["i"]: r for r in data["rules"][v].get("rules", []) if r.get("i")}
-        ids = sorted(embedded)
-        sample = ids[::SAMPLE_STRIDE][:SAMPLE_PER_RELEASE] or ids[:SAMPLE_PER_RELEASE]
-        if len(ids) <= SAMPLE_PER_RELEASE:
-            sample = ids                      # dataset smaller than the sample: check all of it
-        elif len(sample) < SAMPLE_PER_RELEASE:
-            f.append("rules_rhel%s: stride %d over %d rules yields only %d samples, not the %d "
-                     "ADR-001 §7.3 Q10 requires" % (v, SAMPLE_STRIDE, len(ids), len(sample),
-                                                    SAMPLE_PER_RELEASE))
-        bad = []
-        for sid in sample:
-            e, s = embedded[sid], src.get(sid)
-            if s is None:
-                bad.append("%s: absent from the pinned XCCDF" % sid)
-                continue
-            if e.get("t") != s["t"]:
-                bad.append("%s: title differs from source" % sid)
-            if e.get("rid") != s["rid"]:
-                bad.append("%s: rule id %s != source %s" % (sid, e.get("rid"), s["rid"]))
-            if list(e.get("cci") or []) != s["cci"]:
-                bad.append("%s: CCI %s != source %s" % (sid, e.get("cci"), s["cci"]))
-            if e.get("c") != s["c"]:
-                bad.append("%s: CAT %s != source %s" % (sid, e.get("c"), s["c"]))
-            # CR-T-07 embeds check and fix verbatim and uncapped, so the whole text
-            # must match — not merely a prefix. The split on the Etsy pipeline's
-            # trim marker stays so a capped dataset would still be compared fairly.
-            for key, label in (("fix", "fix"), ("chk", "check")):
-                et = (e.get(key) or "").split("[trimmed")[0].strip()
-                if et and not s[key].startswith(et[:100]):
-                    bad.append("%s: %s text prefix differs from source" % (sid, label))
-                elif et and et != s[key]:
-                    bad.append("%s: %s text differs from source beyond its first 100 characters"
-                               % (sid, label))
+        rules = data["rules"][v].get("rules", [])
+        bad, sample = accuracy_failures(v, rules, src)
         if bad:
             f.append("rules_rhel%s accuracy: %s" % (v, "; ".join(bad[:6])))
         else:
-            d.append("rules_rhel%s: %d of %d rules sampled at stride %d, re-parsed from %s, identical "
-                     "on title, rule id, CCI, CAT, and full check and fix text"
-                     % (v, len(sample), len(ids), SAMPLE_STRIDE, XCCDF[v]))
+            d.append("rules_rhel%s: every one of the %d embedded STIG IDs is present in %s and vice "
+                     "versa; %d of them sampled at stride %d and re-parsed, identical on title, rule "
+                     "id, CCI, CAT, and full check and fix text"
+                     % (v, len(rules), XCCDF[v], len(sample), SAMPLE_STRIDE))
     return f, d
 
 
@@ -1080,36 +1430,109 @@ def gate_q17(ctx):
     for need in ("function esc(", "function escapeAttr("):
         if need not in shell:
             f.append("%s definition missing" % need.replace("function ", "").replace("(", "()"))
-    # mechanical innerHTML audit
-    audited = 0
-    for m in re.finditer(r"\.innerHTML\s*=\s*", shell):
-        expr, _end = read_assignment(shell, m.end())
-        audited += 1
-        if not expression_ok(expr):
-            bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-            f.append("innerHTML assignment is not esc()/escapeAttr()-wrapped or literal: %s"
-                     % "; ".join(b[:70] for b in bad))
-    for name in AUDITED_ACCUMULATORS:
-        for m in re.finditer(r"\b%s\s*\+=\s*" % re.escape(name), shell):
-            expr, _end = read_assignment(shell, m.end())
-            audited += 1
-            if not expression_ok(expr):
-                bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-                f.append("accumulator '%s' takes an unescaped segment: %s"
-                         % (name, "; ".join(b[:70] for b in bad)))
-    for name in AUDITED_PUSH_TARGETS:
-        for m in re.finditer(r"\b%s\.push\(" % re.escape(name), shell):
-            expr, _end = read_assignment(shell, m.end())
-            audited += 1
-            if not expression_ok(expr):
-                bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-                f.append("'%s.push()' takes an unescaped segment: %s"
-                         % (name, "; ".join(b[:70] for b in bad)))
-    if not any("innerHTML" in x or "accumulator" in x or ".push()" in x for x in f):
-        d.append("%d innerHTML/accumulator expressions audited; every concatenated segment is a string "
-                 "literal, an esc()/escapeAttr()/escapeRegex() call, or an allow-listed accumulator" % audited)
+    # trojan-source scan — the hand-written shell AND the data island (C10).
+    shell_trojan = trojan_scan(shell, "the shipped shell")
+    island_trojan = trojan_scan(ctx["island"], "the embedded data island")
+    f.extend(shell_trojan)
+    f.extend(island_trojan)
+    if not shell_trojan:
+        d.append("no raw C0/C1 control, zero-width, or bidirectional-override character anywhere in "
+                 "the hand-written shell")
+    if not island_trojan:
+        d.append("the same scan over the %.2f MB data island: clean. DISA fix text is rendered AND "
+                 "copied into evidence, so vendor prose gets the trojan-source scan too — the earlier "
+                 "exclusion was a blind spot (MCR-SEC-004 / condition C10)"
+                 % (ctx["island_len"] / 1024.0 / 1024.0))
+
+    # mechanical render-sink audit (MCR-SEC-004)
+    sink_f, audited = render_sink_failures(shell)
+    f.extend(sink_f)
+    if not sink_f:
+        d.append("%d innerHTML/accumulator/push expressions audited; every concatenated segment is a "
+                 "string literal, an esc()/escapeAttr()/escapeRegex() call, or an accumulator this "
+                 "gate derived from the source and audited in turn" % audited)
+        d.append("derived accumulators: %s" % (", ".join(sorted(derive_accumulators(shell))) or "none"))
+        d.append("forbidden sinks absent: %s"
+                 % ", ".join(label for _rx, label in FORBIDDEN_SINKS))
         for k, why in sorted(INNERHTML_ALLOWLIST.items()):
             d.append("allow-list: %s — %s" % (k, why))
+    return f, d
+
+
+def gate_q18(ctx):
+    """Hostile-input harness — threat-model-v1 §11 merge-gate #4, plus gate #9.
+
+    Runs tests/hostile_harness.js against the SHIPPED artifact, not against
+    template.html: the harness lifts the assembler block out of dist/ and runs
+    every fixture vector through it, so the code this gate clears is byte-for-byte
+    the code that crosses the air gap.
+
+    Node is REQUIRED here. Everywhere else in this file Node is optional and its
+    absence downgrades to PENDING, because a missing syntax check is an
+    inconvenience. A missing injection check is not: this gate is the only thing
+    between a form field and a command a human runs as root, so a runner without
+    Node fails it rather than quietly passing a build nobody tested.
+    """
+    f, d = [], []
+    harness = os.path.join(REPO, "tests", "hostile_harness.js")
+    fixture = os.path.join(REPO, "tests", "fixtures", "hostile-inputs.json")
+    if not os.path.exists(harness) or not os.path.exists(fixture):
+        f.append("the hostile-input harness or its fixture is missing — CI merge-gate #4 cannot run")
+        return f, d
+
+    # gate #9, quoting-domain confusion: the three escaping domains must never nest.
+    shell = ctx["shell"]
+    # MCR-SEC-010: SHELL-ONLY until the Ansible generator lands (CR-T-17+). The
+    # YAML half of this gate used to pass on a quoter with no call site, which
+    # read as "Ansible YAML output is proven safe" and was not true. If a YAML
+    # quoter comes back, it must come back with a YAML-parsing oracle in the
+    # harness in the same commit — the harness enforces that and fails here.
+    for outer, inner in (("shQuote", "esc"), ("shQuote", "escapeAttr"),
+                         ("esc", "shQuote"), ("escapeAttr", "shQuote")):
+        if re.search(r"\b%s\s*\(\s*%s\s*\(" % (outer, inner), shell):
+            f.append("quoting-domain confusion: %s(%s(...)) — a shell quoter and a DOM escaper are "
+                     "two different jobs (threat-model-v1 §3.2)" % (outer, inner))
+    if "yamlQuote" in shell:
+        f.append("a YAML quoter is present in the shipped shell. MCR-SEC-010 removed the dead one; "
+                 "the sink that brings it back ships a YAML-parsing oracle in "
+                 "tests/hostile_harness.js in the SAME commit, and this gate's YAML half is "
+                 "re-enabled then — not before")
+    if not f:
+        d.append("no shQuote/esc/escapeAttr call is nested inside another — the escaping domains "
+                 "stay separate (threat-model-v1 §11 gate 9). SHELL-ONLY: there is no YAML sink in "
+                 "this build and no dead YAML quoter pretending otherwise (MCR-SEC-010)")
+
+    node = shutil.which("node")
+    if not node:
+        f.append("node is not installed on this runner. The command assembler is JavaScript and "
+                 "this gate runs it; CI installs Node (actions/setup-node@v4) precisely so this "
+                 "check cannot be skipped on the build that needed it.")
+        return f, d
+    proc = subprocess.run([node, harness, ctx["artifact"], "--json"],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = proc.stdout.decode("utf-8", "replace")
+    err = proc.stderr.decode("utf-8", "replace").strip()
+    try:
+        rep = json.loads(out)
+    except ValueError:
+        f.append("the harness produced no JSON report: %s" % (err or out)[:400])
+        return f, d
+    for line in rep.get("failures", []):
+        f.append("hostile input: %s" % line)
+    if proc.returncode != 0 and not rep.get("failures"):
+        f.append("the harness exited %d without naming a failure: %s" % (proc.returncode, err[:300]))
+    if not f:
+        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
+                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
+                 "single-quoted token"
+                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
+                    rep["rejected"], rep["quoted_safe"]))
+        d.append("%d positive controls (every field type's benign value still assembles on every "
+                 "release, in every argument shape) and %d invariants — a validator that rejected "
+                 "everything would fail this gate, not pass it"
+                 % (rep["positive_controls"], rep["invariants"]))
+        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
+                 % rep["assembler_bytes"])
     return f, d
 
 
@@ -1151,7 +1574,10 @@ def build_ctx():
     data = None
     if island:
         try:
-            data = json.loads(island.replace("<\\/", "</"))
+            # < / > are ordinary JSON escapes; json.loads restores them.
+            # No pre-substitution here on purpose — a gate that repairs its input
+            # cannot tell a well-escaped island from a badly escaped one.
+            data = json.loads(island)
         except json.JSONDecodeError:
             data = None
     app = re.findall(r"<script>(.*?)</script>", html, re.S)
@@ -1198,6 +1624,7 @@ GATES = [
     ("Q15", "Generated-file integrity (re-run the extractor and diff)", gate_q15),
     ("Q16", "Capture backing (expected_output and verified receipts)", gate_q16),
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
+    ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -1238,7 +1665,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue

@@ -18,9 +18,61 @@ The rules implemented here are ADR-001 §5.1 (entry schema and field notes), §5
 this module is the authority for the *sources* in content/.
 """
 
+import re
+
 VERSIONS = ("7", "8", "9", "10")
 BLASTS = ("green", "yellow", "red")
 LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
+
+# ---------------------------------------------------------------------------
+# Header-bound strings must be single-line (MCR-SEC-003).
+#
+# `intent`, `verify`, `undo` and the stig[] rows are copied into the clipboard's
+# comment header, where the screen never shows them: the UI renders `intent` as
+# one <h2> and HTML collapses a newline, so a two-line intent reads as one title
+# on screen and pastes as two lines into a root shell. The renderer's own
+# defence is that every clipboard line is '# '-prefixed; this is the second,
+# independent layer, and it fails the BUILD rather than the clipboard.
+#
+# The rule is "no control character at all", not "no newline": a lone \r, a NUL,
+# a vertical tab and U+2028/U+2029 all end a line somewhere in the stack, and a
+# tab in a header line is never intentional in curated prose.
+#
+# CR-T-33 will populate these fields from multi-line DISA prose. That extractor
+# has to flatten the text; it does not get to move the failure to the clipboard.
+# ---------------------------------------------------------------------------
+CONTROL_RE = re.compile(r"[\u0000-\u001F\u007F-\u009F\u2028\u2029]")  # written as escapes, never as the characters themselves
+HEADER_BOUND_FIELDS = ("intent", "verify", "undo")
+# Captured console output is multi-line by nature and is never header-bound; it
+# is the one stig[] value the single-line rule does not apply to.
+NOT_HEADER_BOUND = ("expected_output",)
+
+
+def control_char_name(s):
+    m = CONTROL_RE.search(s)
+    if not m:
+        return None
+    return "U+%04X" % ord(m.group(0))
+
+
+def single_line_errors(where, value):
+    """Every string reachable from a header-bound value must be one clean line."""
+    errs = []
+    if isinstance(value, str):
+        cp = control_char_name(value)
+        if cp:
+            errs.append("%s contains the control character %s — this string is copied into the "
+                        "clipboard comment header, which the operator never sees rendered, so it "
+                        "must be a single line of printable text" % (where, cp))
+    elif isinstance(value, dict):
+        for k, v in sorted(value.items()):
+            if k in NOT_HEADER_BOUND:
+                continue
+            errs += single_line_errors("%s.%s" % (where, k), v)
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            errs += single_line_errors("%s[%d]" % (where, i), v)
+    return errs
 
 # ADR-001 §5.1 "source" field note. A source that cannot say which version of the
 # document it came from cannot be re-checked, so `version` is mandatory alongside
@@ -134,6 +186,185 @@ def rhel_versions_errors(eid, versions):
 
 
 # ---------------------------------------------------------------------------
+# generator / spec shape (MCR-SEC-006)
+#
+# Before this section, extract/schema.py knew nothing about `fields`, `template`
+# or `richRule`: it validated the curated commands.json entry form only. So the
+# assembler's contract — the one CR-T-25 (Ansible generator) and CR-T-33
+# (catalog authoring) will write fourteen P0 tool categories of templates
+# against — had no build-time check at all, and `template[].flag` /
+# `template[].lit` reached the shell raw and unquoted with nothing but the
+# author's care between them and a command line.
+#
+# These rules MIRROR the runtime rules in template.html's assembler block. The
+# runtime returns null; the build refuses to ship. tests/test_schema.py asserts
+# the two statements of the field-type list and the rich-rule slot table agree,
+# so they cannot drift apart silently.
+# ---------------------------------------------------------------------------
+FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portrange",
+                    "protocol", "family", "action", "unit", "username", "groupname",
+                    "path", "zone", "service", "package", "selinux_boolean", "audit_key",
+                    "interface", "integer", "enum", "comment")
+
+# Closed-grammar types only. `comment` and `enum` are deliberately absent from
+# every slot: rich-rule attribute syntax has no escape for a double quote inside
+# an attribute value, so free text cannot be made safe there (MCR-SEC-001).
+RICHRULE_SLOT_TYPES = {
+    "family": ("family",),
+    "source": ("cidr", "ipaddr", "ipv4", "ipv6"),
+    "destination": ("cidr", "ipaddr", "ipv4", "ipv6"),
+    "service": ("service",),
+    "port": ("port", "portrange"),
+    "protocol": ("protocol",),
+    "action": ("action",),
+}
+
+FLAG_TOKEN_RE = re.compile(r"^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$")
+LIT_TOKEN_RE = re.compile(r"^[A-Za-z0-9_./=:,+-]+$")
+FIELD_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def spec_fields_errors(where, fields, names):
+    errs = []
+    for i, f in enumerate(fields):
+        if not isinstance(f, dict):
+            errs.append("%s: fields[%d] is not an object" % (where, i))
+            continue
+        name = f.get("name")
+        if not isinstance(name, str) or not FIELD_NAME_RE.match(name):
+            errs.append("%s: fields[%d] has no usable name (%r)" % (where, i, name))
+            continue
+        if name in names:
+            errs.append("%s: two fields are both named '%s'" % (where, name))
+        names.add(name)
+        if f.get("type") not in FIELD_TYPE_NAMES:
+            errs.append("%s: field '%s' has type %r, which is not one of the %d types the "
+                        "assembler validates" % (where, name, f.get("type"), len(FIELD_TYPE_NAMES)))
+        vs = f.get("versions")
+        if vs is not None:
+            if not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs):
+                errs.append("%s: field '%s' versions %r is not a non-empty subset of %s"
+                            % (where, name, vs, ", ".join(VERSIONS)))
+        if f.get("type") == "enum":
+            opts = f.get("options")
+            if not isinstance(opts, list) or not opts:
+                errs.append("%s: field '%s' is an enum with no options — an enum with no closed set "
+                            "is free text wearing a <select>" % (where, name))
+    return errs
+
+
+def spec_template_errors(where, template, fields_by_name):
+    errs = []
+    positional = [i for i, t in enumerate(template)
+                  if isinstance(t, dict) and t.get("field") is not None and not t.get("flag")]
+    last_positional = positional[-1] if positional else None
+
+    for i, tok in enumerate(template):
+        at = "%s: template[%d]" % (where, i)
+        if not isinstance(tok, dict):
+            errs.append("%s is not an object" % at)
+            continue
+        shapes = [k for k in ("lit", "field", "richRule") if tok.get(k) is not None]
+        if len(shapes) != 1:
+            errs.append("%s must be exactly one of {lit}, {field} or {richRule}, not %s"
+                        % (at, shapes or "none of them"))
+            continue
+        if tok.get("flag") is not None:
+            flag = tok["flag"]
+            if not isinstance(flag, str) or not FLAG_TOKEN_RE.match(flag):
+                errs.append("%s flag %r is not an option token — it reaches the command line "
+                            "unquoted, so it must match %s (no whitespace, no quote, no shell "
+                            "metacharacter)" % (at, flag, FLAG_TOKEN_RE.pattern))
+        if "lit" in shapes:
+            lit = tok["lit"]
+            if not isinstance(lit, str) or not LIT_TOKEN_RE.match(lit):
+                errs.append("%s lit %r reaches the command line unquoted and must match %s"
+                            % (at, lit, LIT_TOKEN_RE.pattern))
+            req = tok.get("requires")
+            if req is not None and req not in fields_by_name:
+                errs.append("%s requires field '%s', which this spec does not declare" % (at, req))
+        elif "field" in shapes:
+            name = tok["field"]
+            f = fields_by_name.get(name)
+            if f is None:
+                errs.append("%s cites field '%s', which this spec does not declare" % (at, name))
+                continue
+            droppable = (not f.get("required")) or bool(f.get("versions"))
+            if droppable and tok.get("optional") is not True:
+                errs.append("%s uses field '%s', which can be absent (optional or version-gated), "
+                            "without declaring optional:true. Token dropping is a property of the "
+                            "TEMPLATE: undeclared, the assembler returns null rather than shifting "
+                            "the command (MCR-SEC-002)" % (at, name))
+            if tok.get("optional") is True and not tok.get("flag") and i != last_positional:
+                errs.append("%s is a droppable POSITIONAL token with another positional token after "
+                            "it. Dropping it would promote argument n+1 into slot n, so the "
+                            "assembler refuses it at run time and this template can never omit the "
+                            "value it says is optional (MCR-SEC-002)" % at)
+        else:
+            plan = tok["richRule"]
+            if not isinstance(plan, dict) or not plan:
+                errs.append("%s richRule is not a slot map" % at)
+                continue
+            for slot, fname in sorted(plan.items()):
+                if slot not in RICHRULE_SLOT_TYPES:
+                    errs.append("%s richRule names slot '%s', which is not a rich-rule element "
+                                "this assembler composes" % (at, slot))
+                    continue
+                f = fields_by_name.get(fname)
+                if f is None:
+                    errs.append("%s richRule slot '%s' cites field '%s', which this spec does not "
+                                "declare" % (at, slot, fname))
+                    continue
+                if f.get("type") not in RICHRULE_SLOT_TYPES[slot]:
+                    errs.append("%s richRule slot '%s' is filled by field '%s' of type '%s'. That "
+                                "slot takes %s only: rich-rule syntax has no escape for a quote "
+                                "inside an attribute value, so no free-text type may reach it "
+                                "(MCR-SEC-001)"
+                                % (at, slot, fname, f.get("type"),
+                                   " / ".join(RICHRULE_SLOT_TYPES[slot])))
+            if "family" not in plan or "action" not in plan:
+                errs.append("%s richRule has no %s slot — a rich rule with no family or no action "
+                            "is half-formed and the assembler returns null"
+                            % (at, "family" if "family" not in plan else "action"))
+    return errs
+
+
+def spec_errors(where, spec):
+    """A generator spec: fields[] the form renders and template[] the assembler walks."""
+    errs = []
+    fields = spec.get("fields")
+    template = spec.get("template")
+    if not isinstance(fields, list):
+        return ["%s: fields must be a list (a spec with no fields renders no form)" % where]
+    if not isinstance(template, list) or not template:
+        return ["%s: template must be a non-empty list" % where]
+
+    names = set()
+    errs += spec_fields_errors(where, fields, names)
+    fields_by_name = {f.get("name"): f for f in fields if isinstance(f, dict)}
+    errs += spec_template_errors(where, template, fields_by_name)
+
+    used = set()
+    for tok in template:
+        if not isinstance(tok, dict):
+            continue
+        if tok.get("field"):
+            used.add(tok["field"])
+        if isinstance(tok.get("richRule"), dict):
+            used.update(v for v in tok["richRule"].values() if isinstance(v, str))
+        if tok.get("requires"):
+            used.add(tok["requires"])
+    for name in sorted(names - used):
+        errs.append("%s: field '%s' is declared but no template token uses it — the form would ask "
+                    "for a value that never reaches the command" % (where, name))
+
+    vs = spec.get("versions")
+    if vs is not None and (not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs)):
+        errs.append("%s: versions %r is not a non-empty subset of %s" % (where, vs, ", ".join(VERSIONS)))
+    return errs
+
+
+# ---------------------------------------------------------------------------
 # one command entry
 # ---------------------------------------------------------------------------
 
@@ -151,9 +382,22 @@ def entry_errors(e, ctx):
         errs.append("commands entry %s: category '%s' not in commands.json categories" % (eid, e["category"]))
     if e.get("tool") and e["tool"] not in ctx["tool_ids"]:
         errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e["tool"]))
+    # MCR-SEC-003: everything that reaches the clipboard comment header is
+    # checked here, at build time, as well as being '# '-prefixed at render time.
+    for field in HEADER_BOUND_FIELDS:
+        if isinstance(e.get(field), str):
+            errs += single_line_errors("commands entry %s: %s" % (eid, field), e[field])
+    for i, s in enumerate(e.get("stig") or []):
+        errs += single_line_errors("commands entry %s: stig[%d]" % (eid, i), s)
     errs += provenance_errors("commands entry %s" % eid, e.get("source"))
-    errs += rhel_versions_errors(eid, e.get("rhel_versions"))
-    errs += flags_errors(eid, e.get("flags"), dict(ctx, entry_verified=bool(e.get("verified"))))
+    if "template" in e:
+        # A generator spec: the form-and-template shape the assembler walks. Its
+        # commands are composed per release from validated field values, so it
+        # carries no rhel_versions block and no curated flags[] (MCR-SEC-006).
+        errs += spec_errors("commands entry %s" % eid, e)
+    else:
+        errs += rhel_versions_errors(eid, e.get("rhel_versions"))
+        errs += flags_errors(eid, e.get("flags"), dict(ctx, entry_verified=bool(e.get("verified"))))
     errs += stig_errors(eid, e.get("stig"), ctx)
     errs += verified_errors(eid, e.get("verified"))
     return errs

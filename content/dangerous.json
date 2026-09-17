@@ -1,20 +1,75 @@
 {
  "_meta": {
-  "schema": "pattern: id, match (literal substring, matched case-insensitively against the assembled command), label, why, blast_floor — UI spec v1 §4 (red confirmation banner) and §8 (maintainable data table, not scattered string checks)",
+  "schema": "pattern: id, match (literal substring, matched case-insensitively against the assembled command AND against its unquoted projection), label, why, blast_floor — UI spec v1 §4 (red confirmation banner) and §8 (maintainable data table, not scattered string checks)",
   "curated": true,
   "status": "CR-T-02 skeleton — the destructive patterns the UI spec names by example. The banner that consumes this table lands with the command assembler (CR-T-15).",
-  "rule": "This table is data so a content reviewer can extend it without touching the renderer. A command matching any row forces the red confirmation banner and holds Copy until the reviewer checkbox is set.",
-  "pattern_count": 8
+  "rule": "This table is data so a content reviewer can extend it without touching the renderer. A command matching any row forces the red confirmation banner and holds Copy until the reviewer checkbox is set. A pattern may span a value: the assembler quotes every value, so `rm -rf /` is matched against the unquoted projection `rm -rf /etc/pki` as well as against the raw `rm -rf '/etc/pki'` (MCR-SEC-008). Every row in this table is asserted to fire on a synthetic assembled command by tests/hostile_harness.js — a pattern that can never match fails the build.",
+  "pattern_count": 9
  },
  "patterns": [
-  {"id": "dp-rm-rf", "match": "rm -rf", "label": "Recursive force delete", "why": "Removes a directory tree with no prompt and no recovery on a local filesystem.", "blast_floor": "red"},
-  {"id": "dp-wipefs", "match": "wipefs", "label": "Filesystem signature wipe", "why": "Erases filesystem, RAID, and partition-table signatures from a block device.", "blast_floor": "red"},
-  {"id": "dp-lvremove", "match": "lvremove", "label": "Logical volume removal", "why": "Destroys a logical volume and every filesystem on it.", "blast_floor": "red"},
-  {"id": "dp-vgremove", "match": "vgremove", "label": "Volume group removal", "why": "Destroys a volume group and the logical volumes inside it.", "blast_floor": "red"},
-  {"id": "dp-mkfs", "match": "mkfs", "label": "Filesystem creation over a device", "why": "Formats a block device, discarding whatever it held.", "blast_floor": "red"},
-  {"id": "dp-userdel", "match": "userdel", "label": "Account deletion", "why": "Removes an account, and with -r its home directory and mail spool.", "blast_floor": "red"},
-  {"id": "dp-dnf-remove", "match": "dnf remove", "label": "Package removal", "why": "Package removal pulls dependent packages with it; on a running host that can take a service down.", "blast_floor": "yellow"},
-  {"id": "dp-systemctl-disable-now", "match": "systemctl disable --now", "label": "Service stop and disable", "why": "Stops the unit immediately and prevents it starting at boot.", "blast_floor": "yellow"}
+  {
+   "id": "dp-rm-rf",
+   "match": "rm -rf",
+   "label": "Recursive force delete",
+   "why": "Removes a directory tree with no prompt and no recovery on a local filesystem.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-rm-rf-root",
+   "match": "rm -rf /",
+   "label": "Recursive force delete from an absolute path",
+   "why": "Recursive deletion rooted at an absolute path: on / or a mount point this is unrecoverable, and the target is the value the operator just typed.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-wipefs",
+   "match": "wipefs",
+   "label": "Filesystem signature wipe",
+   "why": "Erases filesystem, RAID, and partition-table signatures from a block device.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-lvremove",
+   "match": "lvremove",
+   "label": "Logical volume removal",
+   "why": "Destroys a logical volume and every filesystem on it.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-vgremove",
+   "match": "vgremove",
+   "label": "Volume group removal",
+   "why": "Destroys a volume group and the logical volumes inside it.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-mkfs",
+   "match": "mkfs",
+   "label": "Filesystem creation over a device",
+   "why": "Formats a block device, discarding whatever it held.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-userdel",
+   "match": "userdel",
+   "label": "Account deletion",
+   "why": "Removes an account, and with -r its home directory and mail spool.",
+   "blast_floor": "red"
+  },
+  {
+   "id": "dp-dnf-remove",
+   "match": "dnf remove",
+   "label": "Package removal",
+   "why": "Package removal pulls dependent packages with it; on a running host that can take a service down.",
+   "blast_floor": "yellow"
+  },
+  {
+   "id": "dp-systemctl-disable-now",
+   "match": "systemctl disable --now",
+   "label": "Service stop and disable",
+   "why": "Stops the unit immediately and prevents it starting at boot.",
+   "blast_floor": "yellow"
+  }
  ],
  "source": {
   "title": "MD CODE RED UI Specification v1 §4 (red confirmation banner) and §8 (accessibility and air-gap checklist), Morgan Reyes, 2026-09-17",

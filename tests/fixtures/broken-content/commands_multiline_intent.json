@@ -1,0 +1,329 @@
+{
+ "_meta": {
+  "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "curated": true,
+  "status": "CR-T-02 skeleton — 3 entries, all STIG-sourced, all verified:false. Catalog authoring is CR-T-33.",
+  "rhel_version_value_shapes": [
+   "{command, notes, changed_in_note}",
+   "{same_as: \"<other version key>\", changed_in_note?}",
+   "{unavailable: {reason, alternative}}"
+  ],
+  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
+  "entry_count": 3
+ },
+ "categories": [
+  "firewall-cmd",
+  "nmcli",
+  "journalctl",
+  "lvm",
+  "ssh / sshd config",
+  "useradd / usermod",
+  "systemctl",
+  "dnf / yum",
+  "semanage / setsebool",
+  "chage",
+  "auditctl / ausearch",
+  "rsyslog",
+  "chronyd",
+  "podman"
+ ],
+ "entries": [
+  {
+   "id": "firewalld-service-active",
+   "tool": "firewall-cmd",
+   "category": "firewall-cmd",
+   "intent": "Prove the host firewall is running before claiming the boundary control is in place\r\nrm -rf /var/log/audit  # never rendered, always copied",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl status firewalld",
+     "notes": "The RHEL 7 STIG check reads the full unit status rather than a one-word answer; is-active exists on RHEL 7 but the pinned V3R15 check text is the status form, so this entry follows the check text it cites.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl is-active firewalld",
+     "notes": "The RHEL 8 STIG check narrows to the one-word service state. Reads only; it does not start, enable, or reload anything.",
+     "changed_in_note": null
+    },
+    "9": {
+     "same_as": "8",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "status",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "is-active",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-07-040520",
+     "rule_id": "SV-204604r991589_rule",
+     "rhel_version": "7",
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
+     "check_cmd": "systemctl status firewalld",
+     "fix_cmd": "yum install firewalld && systemctl start firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-08-040101",
+     "rule_id": "SV-244544r958672_rule",
+     "rhel_version": "8",
+     "cci": [
+      "CCI-002314"
+     ],
+     "nist": [
+      "AC-17 (1)"
+     ],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-09-251015",
+     "rule_id": "SV-257936r1044995_rule",
+     "rhel_version": "9",
+     "cci": [
+      "CCI-000382",
+      "CCI-002314"
+     ],
+     "nist": [
+      "CM-7 b",
+      "AC-17 (1)"
+     ],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable --now firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-200531",
+     "rule_id": "SV-280956r1165223_rule",
+     "rhel_version": "10",
+     "cci": [
+      "CCI-000382",
+      "CCI-002314"
+     ],
+     "nist": [
+      "CM-7 b",
+      "AC-17 (1)"
+     ],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable --now firewalld",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "ctrl-alt-del-target-masked",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Show whether an operator at the console can reboot the box with Ctrl-Alt-Delete",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "RHEL 7 wants the target both masked and inactive; the pinned V3R15 check treats an active target as a finding on its own.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "The RHEL 8 check reads the same unit status and looks for \"Loaded: masked\".",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 9. The pinned V2R9 fix uses disable --now and mask --now, which the RHEL 8 fix text does not.",
+     "changed_in_note": null
+    },
+    "10": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 10 under the pinned V1R2 benchmark.",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "status",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
+   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-07-020230",
+     "rule_id": "SV-204455r991589_rule",
+     "rhel_version": "7",
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
+     "check_cmd": "systemctl status ctrl-alt-del.target",
+     "fix_cmd": "systemctl disable ctrl-alt-del.target && systemctl mask ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-08-040170",
+     "rule_id": "SV-230529r1017289_rule",
+     "rhel_version": "8",
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
+     "check_cmd": "sudo systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable ctrl-alt-del.target && sudo systemctl mask ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-09-211050",
+     "rule_id": "SV-257785r1044833_rule",
+     "rhel_version": "9",
+     "cci": [
+      "CCI-002235"
+     ],
+     "nist": [
+      "AC-6 (10)"
+     ],
+     "check_cmd": "sudo systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-700960",
+     "rule_id": "SV-281299r1166849_rule",
+     "rhel_version": "10",
+     "cci": [
+      "CCI-002235"
+     ],
+     "nist": [
+      "AC-6 (10)"
+     ],
+     "check_cmd": "systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "journald-service-active",
+   "tool": "journalctl",
+   "category": "journalctl",
+   "intent": "Prove the systemd journal is running before trusting anything journalctl prints",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "No rule in the pinned RHEL 7 V3R15 benchmark maps to the journal service, so this row carries no STIG mapping and no RHEL 7 capture. The query itself is the same systemd read.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "No rule in the pinned RHEL 8 V2R8 benchmark maps to the journal service; the mapping starts at RHEL 9. The query itself is the same systemd read.",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "RHEL 9 is the first pinned benchmark that requires the journal service to be active, as RHEL-09-211040.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "is-active",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The command prints \"active\".",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-09-211040",
+     "rule_id": "SV-257783r991562_rule",
+     "rhel_version": "9",
+     "cci": [
+      "CCI-001665"
+     ],
+     "nist": [
+      "SC-24"
+     ],
+     "check_cmd": "systemctl is-active systemd-journald",
+     "fix_cmd": "sudo systemctl enable --now systemd-journald",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-500000",
+     "rule_id": "SV-281096r1165643_rule",
+     "rhel_version": "10",
+     "cci": [
+      "CCI-001665"
+     ],
+     "nist": [
+      "SC-24"
+     ],
+     "check_cmd": "systemctl is-active systemd-journald",
+     "fix_cmd": "sudo systemctl enable --now systemd-journald",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  }
+ ]
+}

@@ -4,6 +4,229 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — security review MCR-SEC-001..012 (2026-09-17, branch `salm/milo/shell-assembler`)
+
+Marcus Reed's security review of `4184ea8` returned **DENY with `block_flag`** — 3 HIGH, 5 MEDIUM,
+2 LOW, 2 INFORMATIONAL. Every finding is addressed here. None of them was reachable from the shipped
+UI (the form renderer is CR-T-25), and that is the reason they close now rather than later: the
+assembler is the contract fourteen P0 tool categories of templates will be written against, and a
+gate that clears a contract because nothing calls it yet is not a gate.
+
+**MCR-SEC-001 (HIGH) — rich-rule grammar injection.** `composeRichRule()` carried a comment asserting
+that no validated value could contain a double quote "because no field type's allow-list admits a
+quote character". Two types did: `comment` (every printable character) and `enum` (whatever a content
+author lists). A `comment`-typed field in a rich-rule slot could close an attribute and open new
+elements — the review's reproduction installed an `accept` clause and a logging clause past the
+`drop` the operator had selected, with shell quoting fully intact, so the hostile-input harness rated
+it QUOTED-SAFE. Fixed structurally: `RICHRULE_SLOT_TYPES` lists the closed-grammar field types each
+slot accepts and `comment`/`enum` are deliberately absent, because rich-rule attribute syntax has no
+escape sequence for a quote inside an attribute value — there is no correct encoding, so there is no
+free-text path into a rich rule at all. A character-level re-check at composition time is the second
+layer. The false comment is replaced with the reasoning.
+
+**MCR-SEC-002 (HIGH) — never-half-formed, per template rather than per field.** An optional field
+that was not supplied made its token vanish and the command still assembled: `chown 'apache'
+'/var/www'` became `chown '/var/www'` (the path promoted into the owner argument), and a literal that
+owned a value could be left dangling as `--add-forward-port=port=443:proto=tcp:toaddr=` — the exact
+artefact threat-model-v1 §3.4 names as its reason for existing. Token dropping is now declared:
+`optional:true` is mandatory, a positional token may only drop if every later positional drops with
+it, `{lit:"...", requires:"field"}` binds a literal to its value, and a version-gated field takes the
+same path so one template cannot be well-formed on RHEL 9 and mis-positioned on RHEL 8.
+
+**MCR-SEC-003 (HIGH) — the clipboard header.** "Copy with comment" built `"# label: " + raw content`
+and copied it; none of the header is rendered, so a newline in `intent` put a second, never-displayed
+line into a root shell — the reproduction copied `rm -rf /var/log/audit` off a screen showing one
+title line, with blast green, because `blastFor()` only looked at `res.command`. Four independent
+layers now: `headerSafe()` flattens every value to single-line printable text; `commentPayload()`
+splits on CR/LF/CRLF anyway and prefixes **every** line with `# `, refusing to compose at all if the
+command is not single-line; `blastFor()` runs over the whole payload so the banner fires before the
+click and the acknowledgement covers what the clipboard receives; and `extract/schema.py` rejects any
+control character in `intent`, `verify`, `undo` and every `stig[]` string, failing the build instead
+of the clipboard. The header is also rendered as a read-only preview of exactly what gets copied
+(threat-model-v1 §9).
+
+**MCR-SEC-004 (MEDIUM) — the Q17 render audit had five mechanical bypasses** (`innerHTML +=`,
+`html = html + x`, an intermediate accumulator under another name, `insertAdjacentHTML`,
+`outerHTML`), all rated PASS. Now: forbidden sinks are refused outright (those two plus
+`document.write`/`writeln`, `createContextualFragment`, `srcdoc=`), `.innerHTML` may only be an
+assignment target, `setAttribute()` must name its attribute with a readable literal and may not name
+`href`/`src`/`srcdoc`/`style`/`action`/`formaction`/`xlink:href`/`on*`, the accumulator set is
+derived from the source and closed transitively, `=` and `+=` are audited alike, and `is_literal()`
+parses the literal instead of comparing first and last characters. 13 negative fixtures under
+`tests/fixtures/render-bypass/` prove each construct now fails; audited expressions 24 -> 85.
+
+**MCR-SEC-005 (MEDIUM) — the rich-rule test's hostile-type parameter was dead.**
+`richRuleSpec(hostileField, hostileType)` was only ever called as `richRuleSpec(null, null)`, which
+is why MCR-SEC-001 survived 15,392 checks. It is now driven with every field type in every slot of
+two rich-rule shapes, and the harness gained the second oracle the finding asked for: a rich-rule
+parser that asserts the composed rule's element count, element order, attributes and ACTION equal the
+operator's intent. Both oracles carry negative controls — the injected rule from the review and an
+action-only swap must be caught — so the oracle has been seen to fail before it is believed.
+
+**MCR-SEC-006 (MEDIUM) — `template[].flag` and `template[].lit` are trusted content, not unchecked
+content.** `extract/schema.py` had no `template`/`fields`/`richRule` shape at all. It has one now —
+field names and types, enum options, version subsets, token shapes, both allow-lists
+(`^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$` for flags, `^[A-Za-z0-9_./=:,+-]+$` for lits), `requires:`
+resolution, rich-rule slot types, MCR-SEC-002's droppability rules, and declared-but-unused fields.
+The same two allow-lists are enforced at run time, where a bad token makes the whole template `null`.
+`tests/test_schema.py` asserts the field-type list, the rich-rule slot table and both regexes are
+identical on both sides, so the mirrored tables cannot drift silently.
+
+**MCR-SEC-007 (MEDIUM) — the data island's `</` escaping.** It closed `</script>` and nothing else:
+`<!--` followed by `<script` puts the HTML tokeniser into script-data-double-escaped state, where
+`</script>` stops terminating the element and the island's closing tag, the app script and its own
+"Not built yet" fallback are swallowed as text — a silent denial of use on a jump box, with
+verbatim-embedded DISA fix text as the delivery vehicle. `build.py` now escapes every `<` and `>` as
+`\u003c`/`\u003e`: valid JSON, reversible, one rule instead of a list of sequences. Q1 asserts no raw
+`<` or `>` survives; `qa.py` parses the island without repairing it first.
+
+**MCR-SEC-008 (MEDIUM) — a destructive pattern could not match across a value boundary.** `shQuote()`
+inserts a quote at every literal-to-value boundary, so the first reviewer to add `rm -rf /` to
+`dangerous.json` would have silently disabled that row. `blastFor()` now matches both the raw command
+and its unquoted projection. `rm -rf /` is in the table (8 -> 9 patterns), the constraint is
+documented in `_meta` where a reviewer authors, and the harness asserts every row fires on a
+synthetic assembled command — a pattern that can never fire fails the build.
+
+**MCR-SEC-009 (LOW)** — U+2028, U+2029 and U+2065 added to `INVISIBLE_RE`, to Q17's trojan-source
+ranges, and to the fixture's `invisible character` class (52 -> 55 vectors).
+
+**MCR-SEC-010 (LOW) — DECISION: `yamlQuote()` removed, not wired.** It was correct, used the right
+YAML `''` idiom, and had no call site: `assembleCommand()` has no YAML output path, so Q18's
+quoting-domain gate was passing on a domain that did not exist. A dead escaper reads as "Ansible YAML
+output is proven safe", which the CR-T-25 review would have inherited as a false clean bill. The
+gate is now explicitly **shell-only** until the Ansible generators land (CR-T-17+), the Q5 marker
+reports PENDING rather than PASS, and two gates hold the door for its return: `qa.py` fails if a YAML
+quoter appears in the shipped shell, and the harness refuses to run if one appears in the assembler
+block without a YAML-parsing oracle beside it.
+
+**MCR-SEC-012 (INFORMATIONAL) — one rendered-state object.** `currentResult()` was called
+independently by `renderEditor()`, `renderBlastBanner()`, `renderInspector()` and `doCopy()`. `RESULT`
+is now computed once per interaction, keyed on the state assembly reads and dropped at the top of
+`renderAll()`; the gutter, the banner, the inspector, the clipboard preview, `doCopy()` and the
+CR-T-28 exporter read it (threat-model-v1 §9).
+
+**MCR-SEC-011 (INFORMATIONAL)** needed no code change: it records that no user-supplied value reaches
+the assembler in the shipped UI. Condition **C10** is also closed — Q17's trojan-source scan now
+covers the data island as well as the hand-written shell, because DISA fix text is rendered *and*
+copied into evidence.
+
+Gates on this work: `python3 build.py && python3 qa.py` -> Q1-Q18 PASS; `node tests/hostile_harness.js`
+-> 63,536 checks, 0 failures, 27 invariants, 276 positive controls;
+`python3 -m unittest discover -s tests` -> 51 tests OK; two builds byte-identical; verified in Chrome
+with zero console errors.
+
+
+### Added — runtime shell, keyboard controller and the command assembler (2026-09-17, CR-T-08/13/14/15/16)
+
+**The security-critical tranche.** The command assembler is the surface the threat model ranks as the
+product's top risk: a string this code builds is executed by a trusted human as root on a production
+host, with no sandbox, no approval step and no rollback behind it.
+
+- **`assembleCommand(specOrEntry, version, values)` (CR-T-15)** — pure, DOM-free, data-free, and
+  fenced between `MCR-ASSEMBLER-BEGIN` / `MCR-ASSEMBLER-END` markers so it can be lifted out of the
+  *shipped artifact* and executed under Node by the test harness. `null` is the only answer for an
+  incomplete or invalid input: there is no second return shape carrying a half-built string
+  (threat-model-v1 §3.4). A companion `validateSpec()` tells the UI *which* field is wrong without the
+  assembler ever handing out a partial command to explain itself with.
+- **A per-field TYPE system with 23 allow-list validators** — hostname, ipv4, ipv6, ipaddr, cidr,
+  port, portrange, protocol, family, action, unit, username, groupname, path, zone, service, package,
+  selinux_boolean, audit_key, interface, integer, enum and comment. Full match, length-capped, and
+  preceded by universal checks that reject control characters (NUL, newline, carriage return, tab),
+  invisible and bidirectional-override characters, non-ASCII look-alikes, and any leading dash
+  (argument injection). `comment` is the **only** free-text type, the only one that accepts non-ASCII
+  text, and it is still single-quoted before it can reach a shell.
+- **`shQuote()` and `yamlQuote()` as separate functions** — POSIX `'\''` for the shell, `''` for YAML,
+  and `esc()`/`escapeAttr()` for the DOM: three escaping domains, three functions, never nested.
+  `shQuote()` deliberately has **no** "this value looks harmless, leave it bare" branch; quoting is
+  uniform, which costs `--zone='public'` in the rendered command and buys a rule with no exceptions
+  to audit.
+- **firewalld rich rules composed from validated sub-fields** (`composeRichRule()`), never from one
+  free-text box — the highest-risk field class in threat-model-v1 §3.1.
+- **Blast evaluation against `dangerous.json` matched on the fully assembled, post-quoting command**,
+  with a content entry's own `blast: "red"` tripping the banner independently (§3.3). The red banner
+  is `role="alert"` and holds Copy until the reviewer checkbox is ticked.
+- **Version gating that is structural, not cosmetic** — a field or an enum option that a release does
+  not carry is dropped from the template before assembly, so it is *impossible* to include in that
+  release's command, and the control renders disabled with "Not available in RHEL N" rather than
+  disappearing.
+
+- **Runtime shell (CR-T-13)** — the five regions per UI spec §2 with real content: a rail with
+  focus-revealed text labels (no images anywhere), the version selector persisted by id through the
+  storage guard, the tool list from `tools.json` gated by per-release availability with its reason and
+  alternative, an editor rendering the assembled command in a monospace block with a real line-number
+  gutter (`role="button"`, focusable), an inspector listing every flag the command actually uses with
+  its curated `explain` or the honest "unverified — see man page", and the status bar. Dark and light
+  tokens per UI spec §6 with the theme resolved in an inline `<head>` style, so there is no flash of
+  the wrong theme. Empty, gated and error states per UI spec §7 — with no tool selected the toolbar is
+  *absent*, not merely disabled, so there is no dead control to tab through. Everything renders through
+  `esc()`/`escapeAttr()`; interaction is `data-*` delegation; zero inline handlers.
+- **Keyboard controller (CR-T-14)** — one delegated `keydown` listener over one `KEYMAP` table: `/`
+  and `Ctrl/Cmd+K` for the palette, `Esc`, `Ctrl+B`/`Ctrl+I` panel toggles, `Ctrl+Shift+L` theme,
+  `Ctrl+Shift+C` copy-with-comment, `Ctrl+Alt+1..5` rail jumps, arrow navigation in every list, a
+  focus-trapped palette, and a visible focus ring on every control. Documented in
+  `docs/USER_GUIDE.md`, which replaces its keyboard TODO with the table the code actually implements.
+- **Shell-level command palette** over the build-time index seed, so the keyboard controller has a
+  real palette to drive. The lazy typed index over flags, STIG IDs and control numbers is still
+  CR-T-29 and is marked as such on screen.
+
+### Added — gates that can be shown to fail (2026-09-17, CR-T-08/16)
+- **`qa.py --accuracy` hardening (CR-T-08).** The Q10 comparison moved into a pure
+  `accuracy_failures()` that `gate_q10` and the tests both call, and it grew a second layer: the
+  20-per-release stride sample still catches drifted text, and a new **full ID-set parity check**
+  catches a rule added, dropped or renamed *outside* the sample, which 20-in-445 would otherwise walk
+  straight past.
+- **A committed mutated fixture.** `tests/fixtures/accuracy/clean_rules_rhel9.json` is the
+  deterministic sample of the shipping RHEL 9 dataset, unmodified; `mutated_rules_rhel9.json` is the
+  same file with six planted edits, one per field the gate compares (title, rule id, CCI set, CAT,
+  fix text past the 100-character prefix window, check text). `tests/test_accuracy_gate.py` proves the
+  gate passes on the clean file and names every planted mutation in its failure output on the other —
+  the control case first, because a mutated fixture failing proves nothing if the clean one fails too.
+- **Hostile-input harness (CR-T-16), Marcus's CI merge-gate #4.**
+  `tests/fixtures/hostile-inputs.json` carries **52 vectors across 18 classes** — command
+  substitution, statement separators, redirection, grouping, globbing, newline and CR injection,
+  option injection, unicode look-alikes, invisible and bidi characters, path traversal, NUL,
+  quote-breaking, over-length, empty. `tests/hostile_harness.js` runs every vector against every field
+  type on all four releases in three argument shapes, plus five rich-rule sub-fields: **15,392 checks**
+  per run. Each pair has a *required* outcome — every closed-grammar type must reject every vector,
+  and the one free-text type's expectation is declared per vector — so a validator that stopped
+  enforcing its grammar fails the gate even when the shell quoting still holds.
+- **The harness does not execute `/bin/sh`.** Proving the quoting by running it would mean executing
+  attacker-controlled text in CI on precisely the build where the quoting is broken. It tokenises the
+  assembled command under POSIX rules instead and compares its shell-visible shape against the same
+  command built from a benign value.
+- **Controls in both directions.** 276 positive controls assert every field type's benign value still
+  assembles on every release in every shape, so a gate cannot pass by rejecting everything; two
+  negative controls assert the checker itself still fails an unquoted `$(whoami)` and an appended
+  `; id`.
+- **`qa.py` Q18** runs that harness against the **built artifact**, so the code CI clears is the code
+  that crosses the air gap, and adds threat-model §11 gate #9: a static check that `shQuote`,
+  `yamlQuote` and `esc` are never nested inside one another.
+- **Q17 gained a trojan-source scan** — zero raw C0/C1 control, zero-width or bidirectional-override
+  characters in the hand-written shell. This is not theoretical: it caught 29 such characters in this
+  very branch (below).
+
+### Fixed (2026-09-17, CR-T-15/16)
+- **The `unit` field type admitted a backslash.** Its character class was written `[A-Za-z0-9_.@:\\-]`,
+  and the escaped backslash put `\` *inside* the class. A backslash is inert once single-quoted, so no
+  injection was possible — but it is the one character whose meaning differs between the shell, YAML
+  and a systemd unit name, and the allow-list is supposed to be a grammar, not just an injection
+  filter. **Found by the hostile-input harness on its first policy-enforcing run**, not by review.
+- **29 raw control and invisible characters in `template.html`.** The two regex literals meant to
+  *reject* control and bidi characters had been written with real control characters instead of
+  escapes — including a NUL and five bidirectional overrides — which broke the regex at load time in
+  Chromium (Node's `--check` parsed it happily). Repaired to escapes and now gated by the Q17
+  trojan-source scan, which is the control that stops it recurring.
+
+### Changed (2026-09-17, CR-T-16)
+- **Node is now REQUIRED in CI** (`actions/setup-node@v4` in `.forgejo/workflows/ci.yml`). The
+  assembler is JavaScript and Q18 runs it; a Python re-implementation of the quoting would be a second
+  assembler to keep in sync and the shipped one would be the untested one. The older `node --check`
+  syntax gate stays optional, because a missing syntax check is an inconvenience and a missing
+  injection check is a production RHEL host.
+- **Q5 feature markers** now cover the shell, the keyboard controller and every assembler module, and
+  the assembler / keyboard markers moved from PENDING to required. The generator registry, flag
+  decoder, STIG panel, evidence exporter and lazy typed index stay PENDING against their own tasks.
+
 ### Added — content schema module and the real XCCDF pipeline (2026-09-17, CR-T-06/07)
 - `extract/schema.py`: the ADR-001 §5 content schema as one pure, importable module — provenance,
   the four mandatory RHEL keys and the three legal version-value shapes, `same_as` chains and cycles,

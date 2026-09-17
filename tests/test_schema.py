@@ -124,7 +124,8 @@ class InvalidFixtures(unittest.TestCase):
         """A rule with no fixture has never been seen to fire."""
         covered = " ".join(os.path.basename(p) for p in fixture_files("invalid"))
         for family in ("rhel_key", "same_as", "unavailable", "provenance", "blast", "stig",
-                       "verified", "flag", "duplicate", "rule_count", "cci", "tool", "promise"):
+                       "verified", "flag", "duplicate", "rule_count", "cci", "tool", "promise",
+                       "single_line", "spec"):
             self.assertIn(family, covered, "no invalid fixture covers the '%s' rule family" % family)
 
 
@@ -146,6 +147,69 @@ class SchemaModuleShape(unittest.TestCase):
     def test_a_malformed_bundle_returns_errors_rather_than_raising(self):
         for junk in ({}, {"commands": {}}, {"commands": {"entries": [{}]}}):
             self.assertIsInstance(schema.content_errors(junk), list)
+
+
+class SchemaAndAssemblerAgree(unittest.TestCase):
+    """MCR-SEC-006: two statements of the same table are one statement too many.
+
+    The spec schema's field-type list and rich-rule slot table mirror the
+    assembler's, because the build has to refuse what the run time would refuse.
+    Mirrored tables drift; these tests are what makes the drift a test failure
+    instead of a hole that only shows up as a schema-clean spec the assembler
+    returns null for.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(os.path.join(REPO, "template.html"), encoding="utf-8") as f:
+            cls.tpl = f.read()
+
+    def _block(self, name):
+        start = self.tpl.index("var %s={" % name)
+        depth, i = 0, self.tpl.index("{", start)
+        while i < len(self.tpl):
+            if self.tpl[i] == "{":
+                depth += 1
+            elif self.tpl[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    return self.tpl[start:i + 1]
+            i += 1
+        raise AssertionError("unterminated %s in template.html" % name)
+
+    def test_field_type_names_match_the_assembler(self):
+        import re as _re
+        block = self._block("FIELD_TYPES")
+        names = _re.findall(r"^  ([A-Za-z_][A-Za-z0-9_]*):\{", block, _re.M)
+        self.assertTrue(names, "no field types parsed out of template.html")
+        self.assertEqual(sorted(names), sorted(schema.FIELD_TYPE_NAMES),
+                         "extract/schema.py's FIELD_TYPE_NAMES and template.html's FIELD_TYPES "
+                         "have drifted apart")
+
+    def test_rich_rule_slot_table_matches_the_assembler(self):
+        import re as _re
+        block = self._block("RICHRULE_SLOT_TYPES")
+        got = {}
+        for slot, body in _re.findall(r"([A-Za-z_]+):\[([^\]]*)\]", block):
+            got[slot] = tuple(_re.findall(r'"([^"]+)"', body))
+        self.assertEqual({k: tuple(v) for k, v in schema.RICHRULE_SLOT_TYPES.items()}, got,
+                         "the rich-rule slot allow-list differs between the build and the run time")
+
+    def test_no_rich_rule_slot_admits_a_free_text_type(self):
+        for slot, types in schema.RICHRULE_SLOT_TYPES.items():
+            self.assertNotIn("comment", types, "%s admits free text" % slot)
+            self.assertNotIn("enum", types, "%s admits a content-authored option list" % slot)
+
+    def test_token_allow_lists_match_the_assembler(self):
+        """The flag and lit allow-lists are the same two regexes on both sides."""
+        import re as _re
+        for name, compiled in (("FLAG_TOKEN_RE", schema.FLAG_TOKEN_RE),
+                               ("LIT_TOKEN_RE", schema.LIT_TOKEN_RE)):
+            m = _re.search(r"var %s=/(.+?)/;" % name, self.tpl)
+            self.assertIsNotNone(m, "template.html has no %s" % name)
+            # a JS regex literal escapes '/', a Python pattern string does not
+            self.assertEqual(compiled.pattern, m.group(1).replace("\\/", "/"),
+                             "%s differs between extract/schema.py and template.html" % name)
 
 
 if __name__ == "__main__":
