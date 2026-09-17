@@ -4,6 +4,117 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — runtime shell, keyboard controller and the command assembler (2026-09-17, CR-T-08/13/14/15/16)
+
+**The security-critical tranche.** The command assembler is the surface the threat model ranks as the
+product's top risk: a string this code builds is executed by a trusted human as root on a production
+host, with no sandbox, no approval step and no rollback behind it.
+
+- **`assembleCommand(specOrEntry, version, values)` (CR-T-15)** — pure, DOM-free, data-free, and
+  fenced between `MCR-ASSEMBLER-BEGIN` / `MCR-ASSEMBLER-END` markers so it can be lifted out of the
+  *shipped artifact* and executed under Node by the test harness. `null` is the only answer for an
+  incomplete or invalid input: there is no second return shape carrying a half-built string
+  (threat-model-v1 §3.4). A companion `validateSpec()` tells the UI *which* field is wrong without the
+  assembler ever handing out a partial command to explain itself with.
+- **A per-field TYPE system with 23 allow-list validators** — hostname, ipv4, ipv6, ipaddr, cidr,
+  port, portrange, protocol, family, action, unit, username, groupname, path, zone, service, package,
+  selinux_boolean, audit_key, interface, integer, enum and comment. Full match, length-capped, and
+  preceded by universal checks that reject control characters (NUL, newline, carriage return, tab),
+  invisible and bidirectional-override characters, non-ASCII look-alikes, and any leading dash
+  (argument injection). `comment` is the **only** free-text type, the only one that accepts non-ASCII
+  text, and it is still single-quoted before it can reach a shell.
+- **`shQuote()` and `yamlQuote()` as separate functions** — POSIX `'\''` for the shell, `''` for YAML,
+  and `esc()`/`escapeAttr()` for the DOM: three escaping domains, three functions, never nested.
+  `shQuote()` deliberately has **no** "this value looks harmless, leave it bare" branch; quoting is
+  uniform, which costs `--zone='public'` in the rendered command and buys a rule with no exceptions
+  to audit.
+- **firewalld rich rules composed from validated sub-fields** (`composeRichRule()`), never from one
+  free-text box — the highest-risk field class in threat-model-v1 §3.1.
+- **Blast evaluation against `dangerous.json` matched on the fully assembled, post-quoting command**,
+  with a content entry's own `blast: "red"` tripping the banner independently (§3.3). The red banner
+  is `role="alert"` and holds Copy until the reviewer checkbox is ticked.
+- **Version gating that is structural, not cosmetic** — a field or an enum option that a release does
+  not carry is dropped from the template before assembly, so it is *impossible* to include in that
+  release's command, and the control renders disabled with "Not available in RHEL N" rather than
+  disappearing.
+
+- **Runtime shell (CR-T-13)** — the five regions per UI spec §2 with real content: a rail with
+  focus-revealed text labels (no images anywhere), the version selector persisted by id through the
+  storage guard, the tool list from `tools.json` gated by per-release availability with its reason and
+  alternative, an editor rendering the assembled command in a monospace block with a real line-number
+  gutter (`role="button"`, focusable), an inspector listing every flag the command actually uses with
+  its curated `explain` or the honest "unverified — see man page", and the status bar. Dark and light
+  tokens per UI spec §6 with the theme resolved in an inline `<head>` style, so there is no flash of
+  the wrong theme. Empty, gated and error states per UI spec §7 — with no tool selected the toolbar is
+  *absent*, not merely disabled, so there is no dead control to tab through. Everything renders through
+  `esc()`/`escapeAttr()`; interaction is `data-*` delegation; zero inline handlers.
+- **Keyboard controller (CR-T-14)** — one delegated `keydown` listener over one `KEYMAP` table: `/`
+  and `Ctrl/Cmd+K` for the palette, `Esc`, `Ctrl+B`/`Ctrl+I` panel toggles, `Ctrl+Shift+L` theme,
+  `Ctrl+Shift+C` copy-with-comment, `Ctrl+Alt+1..5` rail jumps, arrow navigation in every list, a
+  focus-trapped palette, and a visible focus ring on every control. Documented in
+  `docs/USER_GUIDE.md`, which replaces its keyboard TODO with the table the code actually implements.
+- **Shell-level command palette** over the build-time index seed, so the keyboard controller has a
+  real palette to drive. The lazy typed index over flags, STIG IDs and control numbers is still
+  CR-T-29 and is marked as such on screen.
+
+### Added — gates that can be shown to fail (2026-09-17, CR-T-08/16)
+- **`qa.py --accuracy` hardening (CR-T-08).** The Q10 comparison moved into a pure
+  `accuracy_failures()` that `gate_q10` and the tests both call, and it grew a second layer: the
+  20-per-release stride sample still catches drifted text, and a new **full ID-set parity check**
+  catches a rule added, dropped or renamed *outside* the sample, which 20-in-445 would otherwise walk
+  straight past.
+- **A committed mutated fixture.** `tests/fixtures/accuracy/clean_rules_rhel9.json` is the
+  deterministic sample of the shipping RHEL 9 dataset, unmodified; `mutated_rules_rhel9.json` is the
+  same file with six planted edits, one per field the gate compares (title, rule id, CCI set, CAT,
+  fix text past the 100-character prefix window, check text). `tests/test_accuracy_gate.py` proves the
+  gate passes on the clean file and names every planted mutation in its failure output on the other —
+  the control case first, because a mutated fixture failing proves nothing if the clean one fails too.
+- **Hostile-input harness (CR-T-16), Marcus's CI merge-gate #4.**
+  `tests/fixtures/hostile-inputs.json` carries **52 vectors across 18 classes** — command
+  substitution, statement separators, redirection, grouping, globbing, newline and CR injection,
+  option injection, unicode look-alikes, invisible and bidi characters, path traversal, NUL,
+  quote-breaking, over-length, empty. `tests/hostile_harness.js` runs every vector against every field
+  type on all four releases in three argument shapes, plus five rich-rule sub-fields: **15,392 checks**
+  per run. Each pair has a *required* outcome — every closed-grammar type must reject every vector,
+  and the one free-text type's expectation is declared per vector — so a validator that stopped
+  enforcing its grammar fails the gate even when the shell quoting still holds.
+- **The harness does not execute `/bin/sh`.** Proving the quoting by running it would mean executing
+  attacker-controlled text in CI on precisely the build where the quoting is broken. It tokenises the
+  assembled command under POSIX rules instead and compares its shell-visible shape against the same
+  command built from a benign value.
+- **Controls in both directions.** 276 positive controls assert every field type's benign value still
+  assembles on every release in every shape, so a gate cannot pass by rejecting everything; two
+  negative controls assert the checker itself still fails an unquoted `$(whoami)` and an appended
+  `; id`.
+- **`qa.py` Q18** runs that harness against the **built artifact**, so the code CI clears is the code
+  that crosses the air gap, and adds threat-model §11 gate #9: a static check that `shQuote`,
+  `yamlQuote` and `esc` are never nested inside one another.
+- **Q17 gained a trojan-source scan** — zero raw C0/C1 control, zero-width or bidirectional-override
+  characters in the hand-written shell. This is not theoretical: it caught 29 such characters in this
+  very branch (below).
+
+### Fixed (2026-09-17, CR-T-15/16)
+- **The `unit` field type admitted a backslash.** Its character class was written `[A-Za-z0-9_.@:\\-]`,
+  and the escaped backslash put `\` *inside* the class. A backslash is inert once single-quoted, so no
+  injection was possible — but it is the one character whose meaning differs between the shell, YAML
+  and a systemd unit name, and the allow-list is supposed to be a grammar, not just an injection
+  filter. **Found by the hostile-input harness on its first policy-enforcing run**, not by review.
+- **29 raw control and invisible characters in `template.html`.** The two regex literals meant to
+  *reject* control and bidi characters had been written with real control characters instead of
+  escapes — including a NUL and five bidirectional overrides — which broke the regex at load time in
+  Chromium (Node's `--check` parsed it happily). Repaired to escapes and now gated by the Q17
+  trojan-source scan, which is the control that stops it recurring.
+
+### Changed (2026-09-17, CR-T-16)
+- **Node is now REQUIRED in CI** (`actions/setup-node@v4` in `.forgejo/workflows/ci.yml`). The
+  assembler is JavaScript and Q18 runs it; a Python re-implementation of the quoting would be a second
+  assembler to keep in sync and the shipped one would be the untested one. The older `node --check`
+  syntax gate stays optional, because a missing syntax check is an inconvenience and a missing
+  injection check is a production RHEL host.
+- **Q5 feature markers** now cover the shell, the keyboard controller and every assembler module, and
+  the assembler / keyboard markers moved from PENDING to required. The generator registry, flag
+  decoder, STIG panel, evidence exporter and lazy typed index stay PENDING against their own tasks.
+
 ### Added — content schema module and the real XCCDF pipeline (2026-09-17, CR-T-06/07)
 - `extract/schema.py`: the ADR-001 §5 content schema as one pure, importable module — provenance,
   the four mandatory RHEL keys and the three legal version-value shapes, `same_as` chains and cycles,

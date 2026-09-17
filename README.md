@@ -10,11 +10,37 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-dev (Build stage — engine + full STIG datasets, 1,492 rules)  
+**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + full STIG datasets, 1,492 rules)  
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-17
 
 ## Recent changes
+
+- **2026-09-17** — CR-T-08/13/14/15/16, branch `salm/milo/shell-assembler` (Milo Vance). **The tool has
+  a working shell and, with it, the command assembler — the piece the threat model ranks as this
+  product's top risk.** The five UI regions are real: a rail with focus-revealed text labels, the
+  version selector persisted through the storage guard, a tool list gated per release with its reason
+  and alternative, an editor rendering the assembled command in a monospace block with a line-number
+  gutter, an inspector naming every flag the command uses with its curated explanation or the honest
+  "unverified — see man page", and the status bar. One delegated `keydown` listener over one binding
+  table implements the whole UI-spec keyboard map (documented in `docs/USER_GUIDE.md`), so no control
+  is mouse-only. Dark and light resolve in an inline `<head>` style with no flash of the wrong theme.
+  **`assembleCommand()` is pure, DOM-free, and fenced by extraction markers so CI runs the shipped
+  assembler itself**: 23 allow-list field types, `shQuote()` and `yamlQuote()` as separate escaping
+  domains, rich rules composed from validated sub-fields, blast matched on the fully assembled
+  post-quoting command, and `null` — never a half-formed command — whenever a required field is
+  missing or invalid. **The hostile-input harness runs 15,392 checks** (52 vectors x 23 field types x
+  4 releases x 3 argument shapes, plus 5 rich-rule sub-fields) with a required outcome per pair, 276
+  positive controls and 2 negative controls, wired into `qa.py` as **Q18** against the built artifact;
+  Node is now a required CI dependency because of it. `qa.py --accuracy` gained full ID-set parity
+  alongside the 20-per-release sample, plus a committed mutated fixture and a test proving the gate
+  fails on it and passes on the clean copy. **Two real defects came out of this work, both found by
+  the new gates rather than by review:** the `unit` field type's character class admitted a backslash,
+  and `template.html` carried 29 raw control and bidi characters where escapes were intended —
+  including a NUL that broke the tool at load time in Chromium while Node's syntax check passed.
+  Q17 now scans for that class of character so it cannot come back. `qa.py` is green on all 18 gates,
+  `python3 -m unittest discover -s tests` runs 26 tests green, and two builds of the same sources are
+  byte-identical.
 
 - **2026-09-17** — CR-T-09/10, branch `salm/milo/flags-extract` (Milo Vance). **The FLAGS dictionaries
   are now real, not empty skeletons — for two of the four RHEL releases.** `extract/extract_flags.py`
