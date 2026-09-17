@@ -2004,6 +2004,8 @@ def gate_q13(ctx):
     for e in data["commands"]["entries"]:
         if e.get("tool") not in tool_ids:
             f.append("entry %s: tool '%s' is not in tools.json" % (e.get("id"), e.get("tool")))
+        if "explain_tool" in e and e.get("explain_tool") not in tool_ids:
+            f.append("entry %s: explain_tool '%s' is not in tools.json" % (e.get("id"), e.get("explain_tool")))
         if e.get("category") not in categories:
             f.append("entry %s: category '%s' is not in commands.json categories" % (e.get("id"), e.get("category")))
         for s in (e.get("stig") or []):
@@ -2827,6 +2829,137 @@ def gate_q21(ctx):
     return f, d, p
 
 
+# ---------------------------------------------------------------------------
+# Q22 — declared tool is the invoked binary, and every flag can be explained
+#
+# Marcus Reed's Panels review, PANEL-001 / condition G1. firewalld-service-active
+# declared tool: "firewall-cmd" and journald-service-active declared
+# tool: "journalctl", but every rhel_versions command on both is a systemctl
+# invocation. The inspector's flag panel resolves an explanation with
+# decodeCmd(explainTool, version, flags), which reads FLAGS[version].clis[explainTool]
+# — so with the wrong binary declared, these flags could never resolve even
+# once CR-T-09/10 populated the RHEL 8/10 dictionaries, and the failure would
+# look identical to an ordinary coverage gap (Q20) rather than a mis-filed entry.
+#
+# Two checks, both fail-first (this gate was committed failing on the two
+# entries above, then content/commands.json and template.html were fixed):
+#
+# (a) BINARY AGREEMENT. The first word of every rhel_versions[version].command
+#     (after stripping one leading "sudo") must equal the binary that
+#     tools.json records for the entry's explain_tool (falling back to tool
+#     when no explain_tool is set — the common case). tool still names the
+#     subject the sidebar rail groups the entry under; explain_tool exists
+#     for exactly the case this gate polices, where that subject is not the
+#     binary the command runs.
+#
+# (b) FLAG EXPLAINABILITY. Every flags[].flag either (1) resolves as a name in
+#     that binary's flag dictionary on some version where the dictionary is
+#     POPULATED (RHEL 7/9 ship empty flags_rhel*.json today — CR-T-09/10 §
+#     "flags_rhel8/flags_rhel10 real" — so only 8 and 10 count as populated),
+#     or (2) carries a curated flags[].explain, or (3) is honestly marked: it
+#     is not option-shaped (does not start with "-", so no man-page OPTIONS
+#     dictionary could ever contain it — "status"/"is-active" are systemctl
+#     SUBCOMMANDS, not flags) and the flag record still carries a
+#     license_class, which is this codebase's existing "not silently guessed,
+#     needs a hand paraphrase" marker (ADR-001 §5.1 flag_explain_rule). A flag
+#     that is option-shaped and unresolved with no explain and no reason on
+#     record is the one shape this gate refuses outright — that is a silent
+#     coverage gap Q20 was built to catch, wearing the wrong disguise.
+# ---------------------------------------------------------------------------
+
+def _q22_populated_dictionaries():
+    """{version: parsed flags_rhelN.json} for every version whose dictionary
+    is non-empty — RHEL 7/9 ship `{"clis": {}}` today (CR-T-09/10 landed real
+    data for 8 and 10 only), and a dictionary with nothing in it can prove
+    nothing about coverage, so it does not count as "populated"."""
+    out = {}
+    for v in VERSIONS:
+        path = os.path.join(REPO, "content", "flags_rhel%s.json" % v)
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8") as fh:
+            dic = json.load(fh)
+        if dic.get("clis"):
+            out[v] = dic
+    return out
+
+
+def _q22_flag_resolves(name, binary, dictionaries):
+    for dic in dictionaries.values():
+        cli = (dic.get("clis") or {}).get(binary)
+        if not cli:
+            continue
+        for fl in cli.get("flags") or []:
+            if name in (fl.get("names") or []):
+                return True
+    return False
+
+
+def gate_q22(ctx):
+    f, d = [], []
+    data = ctx["data"]
+    tools_by_id = {t.get("id"): t for t in data["tools"]["tools"]}
+    dictionaries = _q22_populated_dictionaries()
+    if not dictionaries:
+        f.append("no populated flag dictionary (content/flags_rhel*.json with a non-empty clis) "
+                 "exists — this gate cannot tell a real coverage gap from every dictionary being "
+                 "empty, so it refuses to call anything resolved")
+        return f, d
+    entries_checked = 0
+    flags_checked = 0
+    for e in data["commands"]["entries"]:
+        if "template" in e:
+            continue                      # generator specs compose per release; no rhel_versions block
+        entries_checked += 1
+        eid = e.get("id")
+        explain_tool = e.get("explain_tool") or e.get("tool")
+        tool_rec = tools_by_id.get(explain_tool)
+        if tool_rec is None:
+            f.append("entry %s: explain_tool/tool '%s' is not in tools.json (Q13 also catches this)"
+                     % (eid, explain_tool))
+            continue
+        binary = tool_rec.get("binary") or explain_tool
+        for v in VERSIONS:
+            slot = (e.get("rhel_versions") or {}).get(v) or {}
+            cmd = slot.get("command")
+            if not cmd:
+                continue                  # unavailable on this release — nothing to check
+            words = cmd.split()
+            if words and words[0] == "sudo":
+                words = words[1:]
+            first = words[0] if words else ""
+            if first != binary:
+                f.append("entry %s RHEL %s: command '%s' invokes '%s', but its declared tool "
+                         "resolves to binary '%s' (tool=%s%s) — the flag panel would look the "
+                         "binary up in the wrong dictionary"
+                         % (eid, v, cmd, first, binary, e.get("tool"),
+                            "" if not e.get("explain_tool") else " explain_tool=%s" % e.get("explain_tool")))
+        for fl in (e.get("flags") or []):
+            flags_checked += 1
+            name = fl.get("flag") or ""
+            if _q22_flag_resolves(name, binary, dictionaries):
+                continue
+            if fl.get("explain"):
+                continue
+            if not name.startswith("-") and fl.get("license_class"):
+                continue                  # honestly marked: not an option a dictionary could hold
+            f.append("entry %s: flag '%s' resolves in no populated flag dictionary for binary "
+                     "'%s', carries no curated explain, and has no honest reason on record "
+                     "(license_class) — the no-guess law means this can never be told apart from "
+                     "a silent coverage gap" % (eid, name, binary))
+    if entries_checked == 0:
+        f.append(empty_set_failure(
+            "entries with a rhel_versions block to check tool/binary agreement over",
+            "a gate with nothing to check proves nothing about the class it exists to catch"))
+    elif not f:
+        d.append("%d entries / %d flags checked against %d populated flag dictionar%s (RHEL %s): "
+                 "every command's first word matches its declared binary, and every flag resolves, "
+                 "is curated, or is honestly marked non-option"
+                 % (entries_checked, flags_checked, len(dictionaries),
+                    "y" if len(dictionaries) == 1 else "ies", ", ".join(sorted(dictionaries))))
+    return f, d
+
+
 def gate_node_check(ctx):
     """BQP Gate 2 #1/#9 — JS syntax of the extracted app script. Node is optional."""
     f, d, p = [], [], []
@@ -2920,6 +3053,7 @@ GATES = [
     ("Q19", "Escaper behaviour (esc/escapeAttr/escapeRegex actually escape, run under node)", gate_q19),
     ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
     ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
+    ("Q22", "Declared tool is the invoked binary, and every flag resolves, is curated, or is honestly marked (G1)", gate_q22),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 

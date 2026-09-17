@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "schema": "tool: id, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} — ADR-001 §5.5",
+  "schema": "tool: id, binary, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} — ADR-001 §5.5",
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
@@ -9,6 +9,7 @@
  "tools": [
   {
    "id": "firewall-cmd",
+   "binary": "firewall-cmd",
    "label": "firewall-cmd / firewalld",
    "category": "firewall-cmd",
    "availability": {
@@ -36,6 +37,7 @@
   },
   {
    "id": "systemctl",
+   "binary": "systemctl",
    "label": "systemctl",
    "category": "systemctl",
    "availability": {
@@ -63,6 +65,7 @@
   },
   {
    "id": "journalctl",
+   "binary": "journalctl",
    "label": "journalctl / systemd-journald",
    "category": "journalctl",
    "availability": {
@@ -93,6 +96,7 @@
   },
   {
    "id": "nmcli",
+   "binary": "nmcli",
    "label": "nmcli / NetworkManager",
    "category": "nmcli",
    "availability": {
@@ -123,6 +127,7 @@
   },
   {
    "id": "lvcreate",
+   "binary": "lvcreate",
    "label": "lvcreate (LVM)",
    "category": "lvm",
    "availability": {
@@ -153,6 +158,7 @@
   },
   {
    "id": "lvextend",
+   "binary": "lvextend",
    "label": "lvextend (LVM)",
    "category": "lvm",
    "availability": {
@@ -183,6 +189,7 @@
   },
   {
    "id": "sshd",
+   "binary": "sshd",
    "label": "sshd / sshd_config",
    "category": "ssh / sshd config",
    "availability": {
@@ -213,6 +220,7 @@
   },
   {
    "id": "useradd",
+   "binary": "useradd",
    "label": "useradd",
    "category": "useradd / usermod",
    "availability": {
@@ -243,6 +251,7 @@
   },
   {
    "id": "usermod",
+   "binary": "usermod",
    "label": "usermod",
    "category": "useradd / usermod",
    "availability": {
@@ -273,6 +282,7 @@
   },
   {
    "id": "dnf",
+   "binary": "dnf",
    "label": "dnf",
    "category": "dnf / yum",
    "availability": {
@@ -304,6 +314,7 @@
   },
   {
    "id": "yum",
+   "binary": "yum",
    "label": "yum",
    "category": "dnf / yum",
    "availability": {
@@ -334,6 +345,7 @@
   },
   {
    "id": "setsebool",
+   "binary": "setsebool",
    "label": "setsebool",
    "category": "semanage / setsebool",
    "availability": {
@@ -364,6 +376,7 @@
   },
   {
    "id": "semanage",
+   "binary": "semanage",
    "label": "semanage",
    "category": "semanage / setsebool",
    "availability": {
@@ -394,6 +407,7 @@
   },
   {
    "id": "chage",
+   "binary": "chage",
    "label": "chage",
    "category": "chage",
    "availability": {
@@ -424,6 +438,7 @@
   },
   {
    "id": "auditctl",
+   "binary": "auditctl",
    "label": "auditctl",
    "category": "auditctl / ausearch",
    "availability": {
@@ -454,6 +469,7 @@
   },
   {
    "id": "ausearch",
+   "binary": "ausearch",
    "label": "ausearch",
    "category": "auditctl / ausearch",
    "availability": {
@@ -484,6 +500,7 @@
   },
   {
    "id": "rsyslogd",
+   "binary": "rsyslogd",
    "label": "rsyslogd",
    "category": "rsyslog",
    "availability": {
@@ -514,6 +531,7 @@
   },
   {
    "id": "chronyd",
+   "binary": "chronyd",
    "label": "chronyd / chrony",
    "category": "chronyd",
    "availability": {
@@ -544,6 +562,7 @@
   },
   {
    "id": "podman",
+   "binary": "podman",
    "label": "podman",
    "category": "podman",
    "availability": {

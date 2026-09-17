@@ -509,6 +509,14 @@ def entry_errors(e, ctx):
         errs.append("commands entry %s: category '%s' not in commands.json categories" % (eid, e["category"]))
     if e.get("tool") and e["tool"] not in ctx["tool_ids"]:
         errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e["tool"]))
+    # explain_tool (Marcus Reed Panels review PANEL-001 / condition G1): optional
+    # override telling the inspector's flag dictionary lookup which BINARY the
+    # rhel_versions commands actually invoke, when that differs from `tool` (the
+    # subject `tool` stays what the sidebar rail groups by). Same existence rule
+    # as `tool` — it names a real tool, never a guess.
+    if "explain_tool" in e and e["explain_tool"] not in ctx["tool_ids"]:
+        errs.append("commands entry %s: explain_tool '%s' does not exist in tools.json"
+                    % (eid, e.get("explain_tool")))
     # MCR-SEC-003: everything that reaches the clipboard comment header is
     # checked here, at build time, as well as being '# '-prefixed at render time.
     for field in HEADER_BOUND_FIELDS:
