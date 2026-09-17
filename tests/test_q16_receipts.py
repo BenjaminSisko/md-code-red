@@ -330,5 +330,44 @@ class Q16TwoPersonRoster(Q16TestCase):
                         "residual not stated in diagnostics:\n  " + "\n  ".join(d))
 
 
+class Q16ClosedGrammars(Q16TestCase):
+    """J3 (VER-003): `host` and `capture` are closed grammars, not free
+    text. `by`'s grammar is the roster itself (J2) — covered above."""
+
+    def test_hostile_host_fails(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        data["commands"]["entries"][0]["verified"]["8"]["host"] = '<img src=x onerror=alert(1)>'
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("closed hostname grammar" in x for x in f), "\n  ".join(f))
+
+    def test_hostile_capture_path_fails(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        data["commands"]["entries"][0]["verified"]["8"]["capture"] = \
+            'tests/captures/8/<img src=x onerror=alert(1)>.json'
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("does not match the closed grammar" in x for x in f), "\n  ".join(f))
+
+    def test_capture_path_traversal_fails(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        data["commands"]["entries"][0]["verified"]["8"]["capture"] = \
+            'tests/captures/8/../../../etc/passwd.json'
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("does not match the closed grammar" in x for x in f), "\n  ".join(f))
+
+    def test_receipt_host_disagreeing_with_capture_host_fails(self):
+        """The receipt's own 'host' is a claim about where verification
+        happened — it must equal the capture record's own 'host', not just
+        be well-formed."""
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        data["commands"]["entries"][0]["verified"]["8"]["host"] = "other-host"
+        f, _d = self.run_q16(data, cap)  # cap["host"] is still "fixture-host"
+        self.assertTrue(any("does not match the capture's own host" in x for x in f), "\n  ".join(f))
+
+    def test_wellformed_host_and_capture_path_pass(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        f, _d = self.run_q16(data, cap)
+        self.assertEqual([], f, "\n  ".join(f))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
