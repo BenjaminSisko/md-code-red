@@ -10,11 +10,44 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + full STIG datasets, 1,492 rules)  
+**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules)  
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-17
 
 ## Recent changes
+
+- **2026-09-17** — Guided-form generators CR-T-17..25, branch `salm/milo/generators` (Milo Vance).
+  24 generator specs across the 9 tool areas Zee assigned this tranche: firewall-cmd (default zone,
+  open-port and allow-service rich rules), nmcli (static IPv4), journalctl, lvcreate/lvextend, sshd
+  (`-T -f`), useradd/usermod, systemctl (query and manage, split so a read action and a state-changing
+  action never share one blast level), dnf and yum (RHEL 7 is yum-only — `dnf`'s tools.json entry is
+  `unavailable` on RHEL 7 with `alternative: "yum"`, never a fabricated `dnf` command), setsebool and
+  semanage port, chage (list and set-aging, man-page-sourced per ADR §2.4), auditctl/ausearch, rsyslogd
+  (`-N1` config test), and chronyd (`-Q` one-shot check, with the RHEL 7 chronyd-default/legacy-ntpd
+  note carried in the entry's `notes` field). Every generator is a `commands.json` entry shaped
+  `{fields[], template[]}` — no second registry to keep in sync — consumed by a new `GENERATORS`
+  registry, form renderer and `decodeCmd()` added to `template.html` on top of the existing assembler
+  (`assembleCommand`/`shQuote`/`composeRichRule`/`isPositionalToken`/`blastFor` were not touched).
+  16 new tools.json entries record, per RHEL version, whether a tool's flags are host-verified
+  (Defiant RHEL 8.10 / Saratoga RHEL 10.2, CR-T-09/10) or documented from the corpus (RHEL 7 System
+  Administrator's Guide / RHEL 9 guides, cited by manifest `source_url` + `sha256`) — RHEL 7/9 carry no
+  fabricated flags. Two firewall-cmd generators (`--add-rich-rule`, `--permanent`) cite the raw RHEL
+  8/10 man-page capture directly (`content-src/raw/rhel{8,10}/firewall-cmd.man.txt`) rather than
+  `flags_rhel{8,10}.json`: those two real, host-captured flags are absent from the generated dictionary
+  because `extract_flags.py`'s synopsis-line regex only captures the `[--permanent]` prefix token
+  repeated ahead of firewalld's ~90 per-option lines and misses the option that follows it on the same
+  line — a real extractor gap, flagged for a follow-on fix, not worked around by inventing a flag.
+  `tests/hostile_harness.js` gained a content-spec sweep that loads `content/commands.json` directly
+  and fuzzes every field of every one of the 24 real generator entries with the full hostile-vector set
+  in its own template (12,689 checks), on top of the existing per-field-type sweep — 76,225 checks
+  total, 0 failed. `qa.py` Q12 and `tests/test_schema.py` learned that a generator spec (`"template" in
+  e`) keeps the four-version promise via `spec.versions`/`field.versions` rather than a `rhel_versions`
+  object, closing a gap where the first real generator spec would have failed a gate that predates
+  CR-T-17. Verified rendering, live command assembly (including rich-rule composition), version-gating
+  (podman/dnf disabled-with-reason on RHEL 7, values persisting across a version switch) and dangerous-
+  pattern blast escalation (`yum remove` → yellow) in a real browser against `dist/` over a local HTTP
+  server. Gates: `build.py` / `qa.py` (Q1-Q18 PASS) / `python3 -m unittest discover -s tests` (51 OK) /
+  `node tests/hostile_harness.js` (0 FAILED) all green before and after.
 
 - **2026-09-17** — Security review fixes MCR-SEC-001..012, branch `salm/milo/shell-assembler`
   (Milo Vance). **Marcus Reed reviewed the assembler tranche and returned DENY with `block_flag`:

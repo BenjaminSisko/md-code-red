@@ -4,6 +4,63 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — CR-T-17..25 guided-form generators (2026-09-17, branch `salm/milo/generators`)
+
+24 generator specs, one `GENERATORS` registry, form renderer and `decodeCmd()` — the P0 generator
+tranche Zee assigned after the assembler merged. The assembler itself (`assembleCommand`,
+`validateField`/`validateSpec`, `shQuote`, `composeRichRule`, `isPositionalToken`, `blastFor`) is
+untouched; everything here is content (`content/commands.json`, `content/tools.json`,
+`content/dangerous.json`) plus rendering code that calls the assembler the same way a static entry
+does.
+
+- **CR-T-17** — ported six Grey Beard generators: `gen-fw-set-default-zone`, `gen-fw-open-port`,
+  `gen-fw-allow-service` (firewall-cmd), `gen-nmcli-static-ipv4`, `gen-journalctl-unit-logs`,
+  `gen-lvcreate-new-lv`, `gen-lvextend-grow`, `gen-sshd-test-config`, `gen-useradd-create`,
+  `gen-usermod-add-group`.
+- **CR-T-18** — `gen-systemctl-query` (status/is-active/is-enabled/is-failed, blast green) and
+  `gen-systemctl-manage` (start/stop/restart/reload/enable/disable, blast yellow) — split so a read
+  action and a state-changing action never share one blast level.
+- **CR-T-19** — `gen-dnf-package` (`versions: ["8","9","10"]`) and `gen-yum-package` (all four). RHEL 7
+  never sees a fabricated `dnf` command: the generator is version-gated AND `tools.json`'s `dnf` entry
+  is `unavailable` on RHEL 7 with `reason`/`alternative: "yum"`, so the sidebar shows the note twice
+  over — once on the tool, once on the (absent) generator.
+- **CR-T-20** — `gen-setsebool-set` (`-P` persist is an optional lit bound via `requires:`) and
+  `gen-semanage-port-add`.
+- **CR-T-21** — `gen-chage-list` (`-l`, read-only) and `gen-chage-set-aging` (`-M`/`-m`/`-W`), both
+  man-page-sourced per ADR-001 §2.4 (no RHEL guide covers `chage`'s own flag grammar).
+- **CR-T-22** — `gen-auditctl-watch` (`-w`/`-p`/`-k`) and `gen-ausearch-by-key` (`-k`/`-ts`).
+- **CR-T-23** — `gen-rsyslogd-test-config` (`-N1 -f`, parses and validates, never starts the daemon).
+- **CR-T-24** — `gen-chronyd-one-shot-check` (`-Q`, one correction and exit). The RHEL 7
+  chronyd-default/legacy-ntpd note (CR-P0-05 AC3) is carried in the entry's own `notes` field, which
+  `assembleCommand()` already surfaces to the renderer, and in `tools.json`'s `chronyd` availability
+  notes per version.
+- **CR-T-25** — `gen-podman-ps` and `gen-podman-stop` (`versions: ["8","9","10"]`), with `tools.json`'s
+  `podman` entry `unavailable` on RHEL 7 (no supported package, base or Extras). RHEL 7 never fabricates
+  a podman command (CR-P0-05 AC4): both the generator and the tool are gated, independently.
+
+**Content authoring note.** `flags_rhel8.json`/`flags_rhel10.json` (CR-T-09/10) are the host-verified
+source for every `flag`-typed token in these specs, EXCEPT `--add-rich-rule` and `--permanent` on the
+two firewall-cmd rich-rule generators: both are real, present in the raw RHEL 8/10 man-page capture
+(`content-src/raw/rhel{8,10}/firewall-cmd.man.txt` lines 538/247+), but missing from the generated
+dictionary because `extract_flags.py`'s synopsis-line regex captures only the leading `[--permanent]`
+token repeated ahead of firewalld's ~90 per-option lines and misses the option that follows it on the
+same line (e.g. `--zone=zone`, `--add-service=service`). Cited from the raw capture directly instead of
+invented; flagged as an extractor follow-on, not fixed here (extract/ is a different owner's surface).
+RHEL 7/9 have no `flags_rhel{7,9}.json` (empty placeholders, no host read yet) — every field on those
+releases is either gated off (`field.versions`) or documented from the RHEL 7 System Administrator's
+Guide / RHEL 9 guides (source `url_or_man`/`sha256` from the corpus manifest,
+`license_class: paraphrase-only`), never captured verbatim.
+
+**Gates.** `qa.py` Q12 and `tests/test_schema.py` learned that `"template" in e` (a generator spec)
+keeps the four-version promise via `spec.versions`/`field.versions`, not a `rhel_versions` object —
+both would have failed the FIRST real generator spec, a gap `extract/schema.py`'s own `spec_errors()`
+already closed at build time but these two had not caught up to. `tests/hostile_harness.js` gained a
+content-spec sweep: it loads `content/commands.json` directly and fuzzes every field of every one of
+the 24 generator entries with the full hostile-vector set, in that entry's own template rather than a
+synthetic analog (12,689 checks; the harness's existing per-field-type sweep stays as-is and still runs
+first). `python3 build.py && python3 qa.py && python3 -m unittest discover -s tests && node
+tests/hostile_harness.js` all green.
+
 ### Fixed — security review MCR-SEC-001..012 (2026-09-17, branch `salm/milo/shell-assembler`)
 
 Marcus Reed's security review of `4184ea8` returned **DENY with `block_flag`** — 3 HIGH, 5 MEDIUM,
