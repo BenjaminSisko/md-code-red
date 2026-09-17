@@ -29,6 +29,32 @@ function escapeRegex(str) { /* for use in dynamic RegExp() calls */ }
 - **Attributes:** `element.setAttribute('title', escapeAttr(userValue))`
 - **URLs:** `element.href = sanitizeUrl(userValue)` (no javascript: scheme)
 - **Regex patterns:** `new RegExp(escapeRegex(userPattern))`
+- **Properties are written out, not computed** — `el.innerHTML = …`, never
+  `el["innerHTML"] = …` and never a property name assembled from pieces. A
+  computed property assignment is allowed only where the gate can read the
+  property expression: an identifier, a number, or a dotted/indexed chain
+  (`out[fields[i].name] = …` is fine, and is real code in `template.html`).
+
+### What Q17 does and does not prove (MCR-SEC-014, condition D2)
+
+Q17's render-sink inventory is an **accident-prevention** gate: it exists so the
+next render path somebody writes by hand during CR-T-25/26/27/30 cannot become
+an XSS path by mistake, in code `CODEOWNERS` reviews before it merges.
+
+It reads the source. It catches every sink spelling this product could plausibly
+grow — `.innerHTML` assigned or read, `+=`, derived accumulators to a fixed
+point, `insertAdjacentHTML`, `outerHTML`, `document.write`,
+`createContextualFragment`, `srcdoc`, `setAttribute` with a dangerous or
+unreadable name, and (since MCR-SEC-014) bracketed sink names and sink names
+fused out of string literals inline, through a variable, or across statements.
+
+It is **not a sandbox**. A property name produced at run time from something that
+is not a string literal — characters from a code-point array, a value read out of
+the content island — is invisible to any scan of the source, and no regex gate
+can see it. That residual is stated here, and printed by the gate itself in its
+PASS output, rather than being left implicit: a gate described as unbypassable is
+worse than one whose limits are written down, because the first one stops being
+questioned.
 
 ---
 

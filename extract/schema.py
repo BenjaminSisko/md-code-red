@@ -253,10 +253,55 @@ def spec_fields_errors(where, fields, names):
     return errs
 
 
+def token_gate(tok):
+    """The field a token's presence depends on, or None if it always appears.
+
+    A field token depends on its own field. A `{lit, requires}` token depends on
+    the field `requires` names — that is what makes a literal conditional, and
+    therefore what makes it able to vanish (MCR-SEC-013).
+    """
+    if not isinstance(tok, dict):
+        return None
+    if tok.get("field") is not None:
+        return tok["field"]
+    if tok.get("lit") is not None and tok.get("requires") is not None:
+        return tok["requires"]
+    return None
+
+
+def positional_indexes(template):
+    """Token indexes that occupy an ARGUMENT slot, mirroring isPositionalToken().
+
+    A flag token carries its own name and is position-independent. An
+    UNCONDITIONAL lit can never vanish, so it can never shift anything. What is
+    left is field tokens and conditional literals — the tokens whose absence
+    promotes argument n+1 into slot n (MCR-SEC-002, MCR-SEC-013).
+    """
+    out = []
+    for i, t in enumerate(template):
+        if not isinstance(t, dict) or t.get("flag"):
+            continue
+        if t.get("field") is not None or (t.get("lit") is not None and t.get("requires") is not None):
+            out.append(i)
+    return out
+
+
+def shift_unsafe_after(template, positional, i):
+    """Positional tokens after index i that do NOT vanish when token i does.
+
+    Empty means the drop is safe: either nothing positional follows, or
+    everything that follows is gated on the same field, so it leaves with it.
+    The second case is the shape MCR-SEC-002 shipped — `{lit:"…toaddr=",
+    requires:"toaddr"}` followed by `{field:"toaddr", optional:true}` — and a
+    rule that refused it would refuse the fix for the finding before this one.
+    """
+    gate = token_gate(template[i])
+    return [j for j in positional if j > i and token_gate(template[j]) != gate]
+
+
 def spec_template_errors(where, template, fields_by_name):
     errs = []
-    positional = [i for i, t in enumerate(template)
-                  if isinstance(t, dict) and t.get("field") is not None and not t.get("flag")]
+    positional = positional_indexes(template)
     last_positional = positional[-1] if positional else None
 
     for i, tok in enumerate(template):
@@ -283,6 +328,14 @@ def spec_template_errors(where, template, fields_by_name):
             req = tok.get("requires")
             if req is not None and req not in fields_by_name:
                 errs.append("%s requires field '%s', which this spec does not declare" % (at, req))
+            if req is not None and not tok.get("flag") and shift_unsafe_after(template, positional, i):
+                errs.append("%s is a conditional POSITIONAL literal: it drops when field '%s' is "
+                            "absent, and a positional token after it does not drop with it. "
+                            "Argument n+1 would be promoted into slot n — `chmod '/etc/foo'` with "
+                            "the path in the mode slot — so the assembler returns null at run time "
+                            "and this literal can never be conditional here. Put it last among the "
+                            "positional tokens, or gate the tokens after it on the same field "
+                            "(MCR-SEC-013)" % (at, req))
         elif "field" in shapes:
             name = tok["field"]
             f = fields_by_name.get(name)
@@ -295,7 +348,8 @@ def spec_template_errors(where, template, fields_by_name):
                             "without declaring optional:true. Token dropping is a property of the "
                             "TEMPLATE: undeclared, the assembler returns null rather than shifting "
                             "the command (MCR-SEC-002)" % (at, name))
-            if tok.get("optional") is True and not tok.get("flag") and i != last_positional:
+            if (tok.get("optional") is True and not tok.get("flag")
+                    and i != last_positional and shift_unsafe_after(template, positional, i)):
                 errs.append("%s is a droppable POSITIONAL token with another positional token after "
                             "it. Dropping it would promote argument n+1 into slot n, so the "
                             "assembler refuses it at run time and this template can never omit the "

@@ -500,18 +500,56 @@ function fieldAvailable(field,version){
   return !field.versions || inList(field.versions,version);
 }
 /* Is this token's field going to contribute a value on this release? A token
-   with no field (a lit, a rich rule) is always "present"; a field token is
-   present only if the field exists, is available on this release, and validated
-   into a resolved value. MCR-SEC-002 turns on this one answer. */
+   with no field and no `requires` (a plain lit, a rich rule) is always
+   "present"; a field token is present only if the field exists, is available on
+   this release, and validated into a resolved value. MCR-SEC-002 turns on this
+   one answer.
+
+   MCR-SEC-013: a token carrying `requires` is present only if the field it
+   names is. For a lit that is the whole answer — the lit has no field of its
+   own — and it is what lets the shift rule below ask the same question of a
+   conditional literal that it asks of a field token. */
 function tokenPresent(spec,version,resolved,tok){
-  if(!tok||tok.field===undefined||tok.field===null) return true;
+  if(!tok) return true;
+  if(tok.requires!==undefined && tok.requires!==null){
+    var owner=fieldFor(spec,tok.requires);
+    if(!owner) return false;
+    if(!fieldAvailable(owner,version)) return false;
+    if(!Object.prototype.hasOwnProperty.call(resolved,tok.requires)) return false;
+  }
+  if(tok.field===undefined||tok.field===null) return true;
   var field=fieldFor(spec,tok.field);
   if(!field) return false;
   if(!fieldAvailable(field,version)) return false;
   return Object.prototype.hasOwnProperty.call(resolved,tok.field);
 }
+/* A token that occupies an ARGUMENT slot: one whose disappearance promotes the
+   next argument into its place. Flag tokens carry their own name, so they are
+   position-independent and never positional.
+
+   MCR-SEC-013. This used to be `tok.field && !tok.flag`, which made a `lit`
+   never positional — and a lit made conditional with `requires` can vanish,
+   so `[{lit:"chmod"},{lit:"0644",requires:"mode"},{field:"p"}]` assembled to
+   `chmod '/etc/foo'` with the path sitting in the mode slot. An UNCONDITIONAL
+   lit stays out of this set on purpose: it can never vanish, so it can never
+   shift anything, and counting it would refuse templates that are correct. */
 function isPositionalToken(tok){
-  return !!(tok && tok.field!==undefined && tok.field!==null && !tok.flag);
+  if(!tok || tok.flag) return false;
+  if(tok.field!==undefined && tok.field!==null) return true;
+  return !!(tok.lit!==undefined && tok.lit!==null &&
+            tok.requires!==undefined && tok.requires!==null);
+}
+/* The shift rule, stated once. A positional token at index `at` is about to
+   vanish: does any positional token AFTER it survive? If one does, argument n+1
+   is promoted into slot n and the only honest answer is null. Both callers — the
+   conditional lit (MCR-SEC-013) and the droppable field token (MCR-SEC-002) —
+   ask this same question, because it is the same question. */
+function laterPositionalSurvives(spec,version,resolved,at){
+  for(var j=at+1;j<spec.template.length;j++){
+    if(!isPositionalToken(spec.template[j])) continue;
+    if(tokenPresent(spec,version,resolved,spec.template[j])) return true;
+  }
+  return false;
 }
 
 /* validateSpec() is the UI's window into the same decision assembleCommand()
@@ -770,7 +808,17 @@ function assembleCommand(spec,version,values,opts){
       if(tok.requires!==undefined && tok.requires!==null){
         var owner=fieldFor(spec,tok.requires);
         if(!owner) return null;                   /* lit binds to a field that does not exist */
-        if(!tokenPresent(spec,version,v.resolved,{field:tok.requires})) continue;
+        if(!tokenPresent(spec,version,v.resolved,tok)){
+          /* MCR-SEC-013. `requires` is this literal's declaration that it may
+             vanish — the lit's equivalent of optional:true. It is still an
+             argument slot, so it may only vanish under the same rule a field
+             token obeys: every later positional token has to vanish with it.
+             The legal shape is the one MCR-SEC-002 shipped — the literal and
+             the value after it gated on the SAME field, so they leave together
+             and nothing is promoted. */
+          if(isPositionalToken(tok) && laterPositionalSurvives(spec,version,v.resolved,i)) return null;
+          continue;
+        }
       }
       words.push(String(tok.lit));
       continue;
@@ -802,12 +850,7 @@ function assembleCommand(spec,version,values,opts){
          A version-gated field takes the same path as an unsupplied one: the same
          template must not be well-formed on RHEL 9 and mis-positioned on RHEL 8. */
       if(tok.optional!==true) return null;
-      if(isPositionalToken(tok)){
-        for(var j=i+1;j<spec.template.length;j++){
-          if(!isPositionalToken(spec.template[j])) continue;
-          if(tokenPresent(spec,version,v.resolved,spec.template[j])) return null;
-        }
-      }
+      if(isPositionalToken(tok) && laterPositionalSurvives(spec,version,v.resolved,i)) return null;
       continue;
     }
     var q=shQuote(v.resolved[tok.field]);
