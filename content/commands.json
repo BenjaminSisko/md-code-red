@@ -645,7 +645,7 @@
    "fields": [
     {
      "name": "size",
-     "type": "comment",
+     "type": "lvm_size",
      "required": true
     },
     {
@@ -696,7 +696,7 @@
    "fields": [
     {
      "name": "size",
-     "type": "comment",
+     "type": "lvm_size",
      "required": true
     },
     {
@@ -797,7 +797,7 @@
     },
     {
      "name": "groups",
-     "type": "comment",
+     "type": "group_list",
      "required": false
     },
     {
@@ -858,7 +858,7 @@
     },
     {
      "name": "groups",
-     "type": "comment",
+     "type": "group_list",
      "required": true
     }
    ],

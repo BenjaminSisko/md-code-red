@@ -1291,6 +1291,78 @@ function main() {
     }
   }
 
+  /* ---- closed grammars where one exists (MCR-SEC-016, condition E4) ------
+     threat-model §3.1 requires a closed grammar wherever the field has one, and
+     `comment` — the single free-text type — was carrying four fields that do:
+     two LVM sizes and two group lists. Nothing was injectable (every value is
+     shQuote'd and every one of them fails closed at the target tool), but
+     `lvextend -L 'ticket RFC-1234' -r '/dev/vg0/lv0'` assembled, returned
+     non-null and rendered Copy — a nonsense LVM size accepted as a complete
+     command on a yellow-blast storage tool.
+
+     The sharp case is the one the placeholder now has to teach: `10G` and
+     `+10G` are BOTH valid LVM sizes and they mean different things — set the
+     volume to 10G, versus grow it by 10G. A grammar that accepts both still
+     has to show the operator which one they typed. */
+  var grammarChecks = 0;
+  var grammarCases = [
+    ["lvm_size", "10G", true], ["lvm_size", "+10G", true], ["lvm_size", "512", true],
+    ["lvm_size", "1.5T", true], ["lvm_size", "100%FREE", true], ["lvm_size", "50%VG", true],
+    ["lvm_size", "8m", true],
+    ["lvm_size", "ticket RFC-1234", false], ["lvm_size", "10 G", false],
+    ["lvm_size", "10GB", false], ["lvm_size", "-10G", false], ["lvm_size", "big", false],
+    ["lvm_size", "10G;id", false], ["lvm_size", "100%EVERYTHING", false],
+    ["group_list", "wheel", true], ["group_list", "wheel,docker", true],
+    ["group_list", "_svc,wheel,docker", true],
+    ["group_list", "wheel docker", false], ["group_list", "wheel,,docker", false],
+    ["group_list", "Wheel", false], ["group_list", "wheel;id", false],
+    ["group_list", "wheel,", false], ["group_list", "-wheel", false]
+  ];
+  for (var gc = 0; gc < grammarCases.length; gc++) {
+    grammarChecks++;
+    var gcType = grammarCases[gc][0];
+    if (!A.FIELD_TYPES[gcType]) {
+      stats.failures.push("field grammar: there is no '" + gcType + "' field type. MCR-SEC-016 " +
+                          "requires a closed grammar where the field has one, and `comment` — the " +
+                          "one free-text type in the product — is not it");
+      continue;
+    }
+    var gcRes = A.validateField(gcType, grammarCases[gc][1], { name: "v", type: gcType });
+    if (gcRes.ok !== grammarCases[gc][2]) {
+      stats.failures.push("field grammar: " + gcType + " " + JSON.stringify(grammarCases[gc][1]) +
+                          " was " + (gcRes.ok ? "accepted" : "refused (" + gcRes.reason + ")") +
+                          ", expected " + (grammarCases[gc][2] ? "accepted" : "refused"));
+    }
+  }
+  /* MCR-SEC-016 reproduction, verbatim from the D4 review, kept as a named
+     regression: the real generator, the real field, the value Marcus typed. */
+  for (var grv = 0; grv < VERSIONS.length; grv++) {
+    grammarChecks++;
+    var lvSpec = null;
+    for (var lvi = 0; lvi < specEntries.length; lvi++) {
+      if (specEntries[lvi].id === "gen-lvextend-grow") lvSpec = specEntries[lvi];
+    }
+    if (lvSpec === null) {
+      stats.failures.push("MCR-SEC-016 regression: gen-lvextend-grow is not in content/commands.json");
+      break;
+    }
+    var lvBad = A.assembleCommand(lvSpec, VERSIONS[grv],
+                                  { size: "ticket RFC-1234", resizefs: "yes",
+                                    lvpath: "/dev/vg0/lv0" }, { patterns: [] });
+    if (lvBad !== null) {
+      stats.failures.push("MCR-SEC-016 regression / RHEL " + VERSIONS[grv] + ": a nonsense LVM size " +
+                          "assembled into a complete command — " + JSON.stringify(lvBad.command));
+    }
+    grammarChecks++;
+    var lvGood = A.assembleCommand(lvSpec, VERSIONS[grv],
+                                   { size: "+10G", resizefs: "yes", lvpath: "/dev/vg0/lv0" },
+                                   { patterns: [] });
+    if (lvGood === null) {
+      stats.failures.push("MCR-SEC-016 control / RHEL " + VERSIONS[grv] + ": the '+10G' grow form " +
+                          "was refused — check the healthy case before believing the signal");
+    }
+  }
+
   /* ---- the DERIVED join rule, token by token (MCR-SEC-015 / E1) ----------
      The golden table proves the 24 shipped generators. This proves the RULE,
      on token shapes no generator writes today, so the twenty-first generator
@@ -1482,6 +1554,7 @@ function main() {
     option_syntax_checks: syntaxChecks,
     flag_join_checks: joinChecks,
     discriminator_checks: discChecks,
+    field_grammar_checks: grammarChecks,
     inspector_flag_checks: inspectorChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
@@ -1527,6 +1600,9 @@ function main() {
                 "OPTION and never an argument slot; a token carrying both lit and flag is refused) " +
                 "and " + inspectorChecks + " inspector flag-list checks (MCR-SEC-023: the panel " +
                 "names every option the command shows, and no option it does not)");
+    console.log("  " + grammarChecks + " closed-grammar checks (MCR-SEC-016: lvm_size and " +
+                "group_list, with the '+10G' grow form accepted and a free-text LVM size refused " +
+                "on the real generator)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

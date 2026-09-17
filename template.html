@@ -445,6 +445,21 @@ var FIELD_TYPES={
   audit_key:{cap:31,label:"audit rule key",re:/^[A-Za-z0-9_-]{1,31}$/},
   interface:{cap:15,label:"network interface",re:/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,14}$/},
   integer:{cap:10,label:"whole number",re:/^(0|[1-9]\d{0,9})$/},
+  /* MCR-SEC-016 (condition E4). Both of these were typed `comment` — the one
+     free-text type — and both have a well-known closed grammar, which
+     threat-model §3.1 requires wherever one exists. Nothing was injectable:
+     every value is shQuote'd and every wrong one fails closed at the tool. The
+     residual was a wrong-but-valid value reaching Copy on a yellow-blast
+     storage command — `lvextend -L 'ticket RFC-1234'` assembled.
+
+     The LVM label is doing real work. `10G` and `+10G` are both valid and mean
+     different things — SET the volume to 10G, versus GROW it by 10G — and the
+     placeholder is the only place in the UI that says so, because the field,
+     the flag and the blast rating are identical either way. */
+  lvm_size:{cap:16,label:"LVM size — 10G sets, +10G grows, 100%FREE fills",
+            re:/^([+-]?\d+(\.\d+)?[bBsSkKmMgGtTpPeE]?|\d+%(FREE|VG|PVS|ORIGIN))$/},
+  group_list:{cap:256,label:"group, or comma-separated group list",
+              re:/^[a-z_][a-z0-9_-]{0,31}(,[a-z_][a-z0-9_-]{0,31})*$/},
   enum:{cap:64,label:"choice",optionsFromField:true},
   comment:{cap:200,label:"free-text comment",unicode:true,re:/^[^\u0000-\u001F\u007F]+$/}
 };

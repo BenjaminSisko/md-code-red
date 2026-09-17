@@ -1,12 +1,12 @@
 {
  "_meta": {
-  "purpose": "Adversarial values per field type for the command assembler, threat-model-v1 \u00a712 item 1 and CI merge-gate #4 (\u00a711). tests/hostile_harness.js runs every vector against every field type, in both --flag=VALUE and positional-argument shapes, on all four RHEL versions, plus the composed firewalld rich-rule path.",
-  "contract": "Every (field type, vector) pair has a REQUIRED outcome, and producing the other one fails the gate. For every field type except 'comment' the required outcome is REJECTED \u2014 those types are closed grammars and no vector here is a legal value of any of them, so an accepted-but-safely-quoted result means an allow-list stopped enforcing its grammar even though the shell quoting still held. For 'comment', the single free-text type, each vector's own free_text key says which outcome is required. REJECTED means assembleCommand() returned null and the UI can copy nothing. QUOTED-SAFE means the value survives only inside a single-quoted shQuote() token, nothing the shell would still interpret carries any of it, and the command's shell-visible shape is byte-identical to the same command built from that field type's benign value.",
+  "purpose": "Adversarial values per field type for the command assembler, threat-model-v1 §12 item 1 and CI merge-gate #4 (§11). tests/hostile_harness.js runs every vector against every field type, in both --flag=VALUE and positional-argument shapes, on all four RHEL versions, plus the composed firewalld rich-rule path.",
+  "contract": "Every (field type, vector) pair has a REQUIRED outcome, and producing the other one fails the gate. For every field type except 'comment' the required outcome is REJECTED — those types are closed grammars and no vector here is a legal value of any of them, so an accepted-but-safely-quoted result means an allow-list stopped enforcing its grammar even though the shell quoting still held. For 'comment', the single free-text type, each vector's own free_text key says which outcome is required. REJECTED means assembleCommand() returned null and the UI can copy nothing. QUOTED-SAFE means the value survives only inside a single-quoted shQuote() token, nothing the shell would still interpret carries any of it, and the command's shell-visible shape is byte-identical to the same command built from that field type's benign value.",
   "execution_note": "The harness never runs /bin/sh against a vector. Proving the quoting by executing it would mean executing attacker-controlled text in CI on exactly the one build where the quoting is broken, which is the failure this gate exists to catch. It tokenises the assembled command under POSIX single-quote rules instead.",
   "owner": "Milo Vance, Toolkit Systems Engineer (CR-T-16)",
-  "review": "Marcus Reed review required before merge \u2014 CRITICAL gate, plan section (f).",
+  "review": "Marcus Reed review required before merge — CRITICAL gate, plan section (f).",
   "source": {
-   "title": "MD CODE RED Threat Model v1 \u00a711 item 4 and \u00a712 item 1, Marcus Reed, 2026-09-17",
+   "title": "MD CODE RED Threat Model v1 §11 item 4 and §12 item 1, Marcus Reed, 2026-09-17",
    "url_or_man": "02_Engineering/MD_CODE_RED/threat-model-v1.md",
    "version": "v1",
    "retrieved_on": "2026-09-17",
@@ -76,6 +76,12 @@
   },
   "integer": {
    "benign": "42"
+  },
+  "lvm_size": {
+   "benign": "10G"
+  },
+  "group_list": {
+   "benign": "wheel"
   },
   "enum": {
    "benign": "alpha",
@@ -224,7 +230,7 @@
   {
    "id": "nbsp",
    "class": "whitespace",
-   "value": "a\u00a0b",
+   "value": "a b",
    "free_text": "quote"
   },
   {
@@ -254,79 +260,79 @@
   {
    "id": "fullwidth-semicolon",
    "class": "unicode look-alike",
-   "value": "\uff1b id",
+   "value": "； id",
    "free_text": "quote"
   },
   {
    "id": "fullwidth-solidus",
    "class": "unicode look-alike",
-   "value": "\uff0fetc\uff0fshadow",
+   "value": "／etc／shadow",
    "free_text": "quote"
   },
   {
    "id": "division-slash",
    "class": "unicode look-alike",
-   "value": "\u2215etc\u2215shadow",
+   "value": "∕etc∕shadow",
    "free_text": "quote"
   },
   {
    "id": "minus-sign",
    "class": "unicode look-alike",
-   "value": "\u2212rf",
+   "value": "−rf",
    "free_text": "quote"
   },
   {
    "id": "cyrillic-a",
    "class": "unicode look-alike",
-   "value": "\u0430dmin",
+   "value": "аdmin",
    "free_text": "quote"
   },
   {
    "id": "zero-width-space",
    "class": "invisible character",
-   "value": "sa\u200bfe",
+   "value": "sa​fe",
    "free_text": "reject"
   },
   {
    "id": "zero-width-joiner",
    "class": "invisible character",
-   "value": "sa\u200dfe",
+   "value": "sa‍fe",
    "free_text": "reject"
   },
   {
    "id": "rtl-override",
    "class": "invisible character",
-   "value": "safe\u202egnp",
+   "value": "safe‮gnp",
    "free_text": "reject"
   },
   {
    "id": "byte-order-mark",
    "class": "invisible character",
-   "value": "\ufeffsafe",
+   "value": "﻿safe",
    "free_text": "reject"
   },
   {
    "id": "soft-hyphen",
    "class": "invisible character",
-   "value": "sa\u00adfe",
+   "value": "sa­fe",
    "free_text": "reject"
   },
   {
    "id": "line-separator",
    "class": "invisible character",
-   "value": "sa\u2028fe",
+   "value": "sa fe",
    "free_text": "reject"
   },
   {
    "id": "paragraph-separator",
    "class": "invisible character",
-   "value": "sa\u2029fe",
+   "value": "sa fe",
    "free_text": "reject"
   },
   {
    "id": "invisible-u2065",
    "class": "invisible character",
-   "value": "sa\u2065fe",
+   "value": "sa⁥fe",
    "free_text": "reject"
   },
   {
