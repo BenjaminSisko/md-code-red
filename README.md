@@ -64,12 +64,16 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   violations, and shown failing against the pre-fix tree. Merged with `origin/main` at `da2ab47` (the
   Gate 3 qa.py hardening), where the new coverage gate takes the number **Q20** because Q19 is now the
   escaper property gate. Gates on the merged tree, from a clean `dist/`: `build.py` reproducible /
-  `qa.py` **Q1–Q21 PASS** / `unittest` **150 OK** (135 from the hardening merge + 15 added here) /
+  `qa.py` **Q1–Q21 PASS** / `unittest` **159 OK** (135 from the hardening merge + 24 added here) /
   harness **81,577 checks, 0 FAILED** (was 76,225) / artifact sha256
   `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`. Also closed on this branch:
   **Q21**, after a `json.dump(..., ensure_ascii=False)` round-trip in `dd01ad7` turned eight
   invisible-character vectors in `tests/fixtures/hostile-inputs.json` into the raw characters they
   name — no gate could see it, because Q17 scans the artifact and the harness reads the file as JSON.
+  Marcus's D4 re-review then took Q21 wider (all 226 tracked files, nothing excluded, a U+FEFF at
+  offset 0 the only allowance), settled **MCR-SEC-025** from the pinned chronyd capture (directives
+  are operands, so the command stands; the citation and notes were the part that was wrong), and gave
+  the **Q20** coverage ratchet a retirement plan — owner Caleb Stone, 2026-09-25, enforced by the gate.
 
 - **2026-09-17** — Guided-form generators CR-T-17..25, branch `salm/milo/generators` (Milo Vance).
   24 generator specs across the 9 tool areas Zee assigned this tranche: firewall-cmd (default zone,

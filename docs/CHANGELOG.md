@@ -174,9 +174,34 @@ and the harness still rejects all 11,744 invisible-character vectors, so what is
 `tests/test_no_raw_trojan_chars.py` plants each character class in a temp directory and watches the
 scanner fire before believing it. Committed fail-first at `484ec23` (Q21 FAIL, 8 findings).
 
+#### Marcus Reed's D4 re-review — conditions F1, F2, F3
+
+**F1** — the fixture carried **eight** raw characters, not three: U+200B, U+200D, U+202E, U+FEFF,
+U+00AD, U+2028, U+2029, U+2065. All eight re-escaped; the file is byte-identical to `origin/main`
+apart from the two field types E4 added, all 55 vectors parse identically, and the harness still
+rejects 11,744 invisible-character vectors. Q21's character set is `qa.TROJAN_RANGES` — Q17's own
+table — which already covers everything the condition lists. The gate was then **widened** on
+Marcus's narrower rule: the exclusion list is now **empty**, all 226 tracked files are scanned
+(`stig-src/` and `content-src/raw/` included, both measured clean), and the single allowance is a
+U+FEFF at offset 0 — allowed at 0, caught one byte later, both halves tested.
+
+**F2 / MCR-SEC-025** — settled from the pinned capture, and the spec **stays**: chronyd(8) SYNOPSIS is
+`chronyd [OPTION]... [DIRECTIVE]...` (`content-src/raw/rhel8/chronyd.man.txt#L7`, identical on
+RHEL 10) and `-Q` takes no argument (#L68), so configuration directives are **operands** accepted
+after the options and `chronyd -Q 'server time.mil iburst'` is correct as emitted. The golden row is
+unchanged. What was wrong was the *modelling* — the directive is a separate operand, not `-Q`'s value
+— so the citation moves from `man 8 chronyd` to the `-Q` line in the capture, and the operand grammar
+is recorded in the entry's `notes`, which the renderer surfaces.
+
+**F3** — the Q20 ratchet gets a retirement plan: **owner Caleb Stone** (extractor fix, CR-T-09
+follow-up), **retires 2026-09-25**. Q20 now FAILS from 2026-09-26 unless the baseline is regenerated
+against the new dictionaries or re-dated in writing, and `tests/test_coverage_baseline_expiry.py`
+watches that fire against an injected date rather than leaving it to be discovered on the day. An
+accepted residual does not get to become a permanent one by nobody looking.
+
 **Gates on the merged tree, from a clean `dist/`:** `build.py` OK and reproducible · `qa.py`
-**Q1–Q21 PASS** (22 gates with `JS`) · `unittest discover` **150 OK** (135 from the hardening merge,
-plus the 15 added here) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225) ·
+**Q1–Q21 PASS** (22 gates with `JS`) · `unittest discover` **159 OK** (135 from the hardening merge,
+plus the 24 added here) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225) ·
 artifact sha256 `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`.
 
 ### Added — CR-T-17..25 guided-form generators (2026-09-17, branch `salm/milo/generators`)

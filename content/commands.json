@@ -1467,13 +1467,13 @@
    "source": {
     "id": "src-man-chronyd-r8",
     "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
-    "url_or_man": "man 8 chronyd",
+    "url_or_man": "content-src/raw/rhel8/chronyd.man.txt#L68",
     "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
    "verified": false,
-   "notes": "RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
+   "notes": "MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (content-src/raw/rhel8/chronyd.man.txt#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
   },
   {
    "id": "gen-podman-ps",

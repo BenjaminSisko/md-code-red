@@ -2496,6 +2496,35 @@ def _long_options_in_raw(raw_dir, cli):
     return found
 
 
+def coverage_baseline_expiry_failures(baseline, today=None):
+    """MCR-SEC-020, condition F3 — the ratchet has to be able to expire.
+
+    An accepted residual with a gate holding it steady is a good answer for a
+    fortnight and a bad one forever: the gate stops being a countdown and starts
+    being the plan. So the baseline names an owner and a date, and after that
+    date this returns a failure until someone re-dates the file — which means
+    either the extractor fix landed and the numbers came down, or a human
+    decided, in writing, to extend it.
+    """
+    import datetime
+    owner = baseline.get("_retire_owner")
+    by = baseline.get("_retire_by")
+    if not owner or not by:
+        return ["the flag-coverage baseline names no _retire_owner/_retire_by. A ratchet with no "
+                "retirement plan is not a countdown, it is the plan (MCR-SEC-020, condition F3)"]
+    try:
+        deadline = datetime.date(*[int(x) for x in by.split("-")])
+    except (ValueError, TypeError):
+        return ["the flag-coverage baseline's _retire_by %r is not an ISO date" % by]
+    now = today or datetime.date.today()
+    if now > deadline:
+        return ["the flag-coverage baseline expired on %s and has not been re-dated. Owner: %s. "
+                "Either CR-T-09's extractor fix landed (regenerate this file against the new "
+                "dictionaries) or the residual needs extending in writing — but it stops being "
+                "accepted by default (MCR-SEC-020, condition F3)" % (by, owner)]
+    return []
+
+
 def gate_q20(ctx):
     """MCR-SEC-020 (condition E5) — dictionary coverage, and citations that point at the flag.
 
@@ -2535,7 +2564,8 @@ def gate_q20(ctx):
         return f, d, p
     with open(COVERAGE_BASELINE, encoding="utf-8") as fh:
         baseline = json.load(fh)
-    for key in ("_accepted_on", "_accepted_by", "_ticket"):
+    f.extend(coverage_baseline_expiry_failures(baseline))
+    for key in ("_accepted_on", "_accepted_by", "_ticket", "_retire_owner", "_retire_by"):
         if not baseline.get(key):
             f.append("the flag-coverage baseline carries no %s — E5 asks for the gap closed OR "
                      "accepted WITH A DATE, and an undated acceptance is neither" % key)
@@ -2588,7 +2618,9 @@ def gate_q20(ctx):
         f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
     else:
         d.append("flag-dictionary coverage measured for %d tool/release pairs against the baseline "
-                 "accepted on %s (%s)" % (measured, baseline.get("_accepted_on"), baseline.get("_ticket")))
+                 "accepted on %s (%s); ratchet retires %s, owner %s"
+                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"),
+                    baseline.get("_retire_by"), baseline.get("_retire_owner")))
     for line in stale:
         d.append("coverage IMPROVED beyond the baseline — tighten it: " + line)
 

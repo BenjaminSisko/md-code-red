@@ -1,11 +1,14 @@
 {
- "_doc": "MCR-SEC-020 (condition E5) — recorded flag-dictionary coverage, per release and tool. Q19 measures the same thing on every build and FAILS when a tool's shortfall GROWS. It does not fail on the shortfall itself, which is an extractor defect owned by CR-T-09/10, not by the content in this branch.",
+ "_doc": "MCR-SEC-020 (condition E5) \u2014 recorded flag-dictionary coverage, per release and tool. Q19 measures the same thing on every build and FAILS when a tool's shortfall GROWS. It does not fail on the shortfall itself, which is an extractor defect owned by CR-T-09/10, not by the content in this branch.",
  "_method": "Distinct LONG options (--name) found in the committed raw capture under content-src/raw/<rel>/<tool>*.man.txt, against the distinct long option names the dictionary content/flags_<rel>.json carries for that tool. Long options only, deliberately: they are the countable class in man-page text, and the option MCR-SEC-020 was raised about (--add-rich-rule) is one. Short options in prose are too noisy to count honestly, so this gate does not pretend to.",
  "_overcount": "The raw count is an upper bound and includes prose and subcommand options the tool's top-level parser never sees (podman's --foo example, dnf's per-command options). That is why the gate is a REGRESSION gate against these recorded numbers rather than a coverage percentage with a threshold invented here.",
  "_accepted_on": "2026-09-17",
- "_accepted_by": "Milo Vance, Toolkit Systems Engineer — under condition E5 of Marcus Reed's D4 review",
- "_ticket": "CR-T-09/10 (extractor) — the shortfall is theirs to close; MCR-SEC-020 is closed here as ACCEPTED WITH A DATE plus this gate",
- "_the_finding": "Q15 re-runs the extractor and diffs its output against itself, so a systematically skipped option class produces a byte-identical re-parse and a PASS. Nothing measured the dictionary against the raw captures. Now something does. firewall-cmd is the case Marcus named: 205 long options in the RHEL 8 capture, 16 in the dictionary, and --add-rich-rule among the missing — which is why the three firewall generators correctly carry flags:null and the inspector says 'unverified' rather than inventing an explanation.",
+ "_accepted_by": "Milo Vance, Toolkit Systems Engineer \u2014 under condition E5 of Marcus Reed's D4 review",
+ "_ticket": "CR-T-09/10 (extractor) \u2014 the shortfall is theirs to close; MCR-SEC-020 is closed here as ACCEPTED WITH A DATE plus this gate",
+ "_retire_owner": "Caleb Stone (extractor, CR-T-09 follow-up)",
+ "_retire_by": "2026-09-25",
+ "_retirement_plan": "This baseline is a RATCHET, not a resting place. It exists so a shortfall that GROWS fails the build while the extractor defect behind the shortfall is fixed. When CR-T-09's follow-up lands, the numbers here drop, Q20 reports 'coverage IMPROVED beyond the baseline \u2014 tighten it', and this file is regenerated against the new dictionaries. Q20 FAILS on 2026-09-26 if the date above has passed and the file has not been re-dated, so an accepted residual cannot quietly become a permanent one.",
+ "_the_finding": "Q15 re-runs the extractor and diffs its output against itself, so a systematically skipped option class produces a byte-identical re-parse and a PASS. Nothing measured the dictionary against the raw captures. Now something does. firewall-cmd is the case Marcus named: 205 long options in the RHEL 8 capture, 16 in the dictionary, and --add-rich-rule among the missing \u2014 which is why the three firewall generators correctly carry flags:null and the inspector says 'unverified' rather than inventing an explanation.",
  "coverage": {
   "8": {
    "auditctl": {
