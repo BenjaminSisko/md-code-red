@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q20, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q21, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -12,7 +12,7 @@ qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file kee
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
 
-Q18, Q19 and Q20 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
+Q18 through Q21 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
 (threat-model-v1 §11), the hostile-input harness over the command assembler and
 the quoting-domain separation check. Q19 closes AL-GATE3-001 from Al Kowalski's
 BQP Gate 3 review: Q17 proves esc()/escapeAttr() are CALLED at every render
@@ -26,6 +26,12 @@ every generator citation checked to show an option that generator actually
 emits. Q15 cannot see either, because it re-runs the extractor and diffs the
 output against itself — a systematically skipped option class produces a
 byte-identical re-parse and a PASS.
+
+Q21 scans TRACKED SOURCE FILES for raw control, bidi and zero-width characters,
+using the same TROJAN_RANGES table Q17 applies to the shipped artifact. Q17
+proves what crosses the air gap is clean; Q21 proves the repository is. The
+failure it exists for is not an attacker but an editor — see the block comment
+above gate_q21.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -2644,6 +2650,103 @@ def gate_q20(ctx):
     return f, d, p
 
 
+# ---------------------------------------------------------------------------
+# Q21 — raw trojan characters in tracked SOURCE files
+#
+# Q17 scans the built artifact's shell and data island: it proves what crosses
+# the air gap is clean. This proves the REPO is, which is a different corpus and
+# a different failure mode. Most tracked files never reach the artifact — tests,
+# fixtures, docs — and the way this goes wrong is not an attacker, it is an
+# editor: tests/fixtures/hostile-inputs.json states its invisible-character
+# vectors as JSON \u escapes ON PURPOSE, so the file that describes U+202E is
+# itself readable and diffable, and a round-trip through json.dump(...,
+# ensure_ascii=False) turned eight of them into the raw characters they name.
+# That is how it happened here, at dd01ad7, by my own hand.
+#
+# Deliberately NOT folded into Q17: a Q17 failure would then mean either "the
+# shipped artifact is poisoned" or "someone's editor rewrote a fixture", and a
+# gate whose failure is ambiguous costs more than it saves. Q17 also reads
+# ctx["shell"]; this needs `git ls-files`.
+#
+# The character set is qa.py's own TROJAN_RANGES — the one Q17 already uses.
+# Two statements of the same table is one too many (MCR-SEC-006's doctrine, and
+# tests/test_schema.py already holds that line for the field-type and rich-rule
+# tables). It is strictly broader than "bidi and line separators": it carries C0
+# and C1 minus \t \n \r, soft hyphen, the zero-width run, the bidi isolates, and
+# U+2065 (MCR-SEC-009).
+#
+# stig-src/ and content-src/raw/ are excluded: pinned vendor captures, checked
+# by their own SHA256SUMS, and not ours to normalise. U_CCI_List.xml's leading
+# BOM lives there and is legitimate.
+# ---------------------------------------------------------------------------
+TROJAN_SCAN_EXCLUDE = ("stig-src/", "content-src/raw/")
+
+
+def raw_trojan_failures(paths, root=None):
+    """Raw control/bidi/zero-width characters in these files. One message each.
+
+    Takes an explicit path list rather than walking anything itself, so the
+    negative control can hand it a planted file and watch it fire — a scanner
+    that has only ever been pointed at clean input is not a scanner.
+    """
+    failures = []
+    root = root or REPO
+    for rel in paths:
+        full = rel if os.path.isabs(rel) else os.path.join(root, rel)
+        try:
+            with open(full, "rb") as fh:
+                raw = fh.read()
+        except (IOError, OSError):
+            continue                                  # deleted or unreadable: not this gate's call
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue                                  # binary or non-UTF-8: nothing to say
+        for m in TROJAN_RE.finditer(text):
+            ch = m.group()
+            byte = len(text[:m.start()].encode("utf-8"))
+            around = text[max(0, m.start() - 12):m.start() + 12].replace("\n", "\\n")
+            failures.append("%s: raw U+%04X at byte %d, near %r. This character must be written as "
+                            "an escape its format provides (JSON \\u%04x, a source-language escape), "
+                            "never as the character itself — a file that spells out an invisible or "
+                            "bidirectional character is a file no reviewer can read correctly"
+                            % (rel, ord(ch), byte, around, ord(ch)))
+    return failures
+
+
+def tracked_text_files():
+    """`git ls-files`, minus the pinned vendor captures. Empty if git is absent."""
+    git = shutil.which("git")
+    if not git:
+        return None
+    proc = subprocess.run([git, "ls-files", "-z"], cwd=REPO,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        return None
+    names = [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+    return [n for n in names if not n.startswith(TROJAN_SCAN_EXCLUDE)]
+
+
+def gate_q21(ctx):
+    """No tracked source file carries a raw trojan character (see the block above)."""
+    f, d, p = [], [], []
+    paths = tracked_text_files()
+    if paths is None:
+        f.append("git ls-files is unavailable, so the tracked-file corpus cannot be enumerated. "
+                 "This gate reports FAIL rather than skipping: a scan with nothing to scan is a "
+                 "PASS that means nothing")
+        return f, d, p
+    if len(paths) < 50:
+        f.append("git ls-files returned only %d files to scan — the corpus collapsed and this gate "
+                 "would pass on an empty repository" % len(paths))
+        return f, d, p
+    f.extend(raw_trojan_failures(paths))
+    d.append("%d tracked text files scanned for raw control, bidi and zero-width characters "
+             "(stig-src/ and content-src/raw/ excluded: pinned vendor captures with their own "
+             "checksums)" % len(paths))
+    return f, d, p
+
+
 def gate_node_check(ctx):
     """BQP Gate 2 #1/#9 — JS syntax of the extracted app script. Node is optional."""
     f, d, p = [], [], []
@@ -2736,6 +2839,7 @@ GATES = [
     ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
     ("Q19", "Escaper behaviour (esc/escapeAttr/escapeRegex actually escape, run under node)", gate_q19),
     ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
+    ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -2776,7 +2880,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "Q20", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "Q20", "Q21", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue
