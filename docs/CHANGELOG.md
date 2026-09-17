@@ -4,6 +4,29 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed
+
+- **qa.py dist/ artifact-selection fail-open (AL-GATE3-001-class).**
+  `find_artifact()` used to glob `dist/` for `md-code-red_*.html` and take
+  whichever name sorted last -- post-release verification (DECISION_LOG
+  2026-09-17, three incidents this cycle) found the dangerous direction: a
+  stale artifact that merely sorted last and carried the CURRENT version
+  string could be gated and PASS instead of the fresh build, since every
+  downstream check only reads the file it is handed. `find_artifact()` now
+  derives the one filename `build.py`'s own `APP_VERSION` names instead of
+  listing the directory, so a stale file cannot be selected regardless of
+  naming, dating, or sort order. New `dist_integrity_failures()` refuses to
+  proceed at all -- before Q1 or any other gate runs -- if `dist/` holds any
+  other `md-code-red_*.html`/`.sha256`/`.provenance.json` (named, with the
+  cleanup command) or if the correctly-named artifact predates `build.py`,
+  `template.html`, or anything in `content/`. `tests/test_provenance_manifest.py`
+  carried the identical glob-and-sort-last duplicate for locating the
+  artifact under test; it now imports `qa.find_artifact()` instead of
+  re-implementing it. Proven with `tests/test_dist_integrity.py` (5 tests,
+  committed failing against the pre-fix code, now green). Released artifact
+  `dist/md-code-red_v1.0.0-alpha.1.*` (sha256 `0234322c...4001`) is unaffected
+  and unchanged.
+
 ## v1.0.0-alpha.1 — 2026-09-18 (lab-only alpha)
 
 First internal alpha, released to SALM-controlled lab pilot hosts only.

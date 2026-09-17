@@ -316,10 +316,107 @@ def sha256_file(path):
 
 
 def find_artifact():
-    if not os.path.isdir(DIST):
+    """The ONE artifact qa.py gates: the exact filename build.py's own
+    APP_VERSION names -- never whatever a directory listing happens to sort
+    last.
+
+    AL-GATE3-001-class fail-open (DECISION_LOG 2026-09-17/18, three dist/
+    incidents this cycle). The old implementation globbed dist/ for anything
+    matching `md-code-red_*.html` and took `sorted(...)[-1]`. That is
+    fail-open in the dangerous direction: a stale artifact left behind by an
+    old branch, a hand copy, or a sidecar export, if it merely sorted last
+    AND carried the CURRENT version string, would be gated and PASS instead
+    of the fresh build -- every downstream check only reads the file it was
+    handed and has no way to ask whether it is the file build.py just wrote.
+    Deriving the name from APP_VERSION instead of the directory listing closes
+    that off structurally: there is exactly one filename this function will
+    ever return for a given build.py, and a stale file cannot become it no
+    matter how it is named, dated, or sorted.
+
+    Returns the path if that exact file exists, else None -- callers that
+    treat this as "is there a build to gate" (most of tests/) keep working
+    unchanged. dist_integrity_failures() is the separate check for whether
+    dist/ is clean enough to gate it at all.
+    """
+    version = load_build_constants().get("APP_VERSION")
+    if not version:
         return None
-    cands = sorted(f for f in os.listdir(DIST) if f.startswith("md-code-red_") and f.endswith(".html"))
-    return os.path.join(DIST, cands[-1]) if cands else None
+    path = os.path.join(DIST, "md-code-red_%s.html" % version)
+    return path if os.path.exists(path) else None
+
+
+def newest_source_mtime():
+    """The newest mtime among build.py's declared inputs: build.py itself,
+    template.html, and every file in content/ (ADR-001 section 4's CONTENT
+    map -- the same directory load_content() reads to assemble the island).
+
+    This is the mtime half of AL-GATE3-001's fail-open: a correctly-NAMED
+    artifact that simply was not rebuilt after content/ or template.html
+    changed would pass find_artifact() and every content check that only
+    reads the file it was handed, because none of them compare the artifact
+    against the tree it should have come from. Returns (mtime, path) of the
+    newest input found, or (None, None) if none of the expected inputs exist
+    (a scratch dist/ with no repo around it, in a test).
+    """
+    candidates = [os.path.join(REPO, "build.py"), os.path.join(REPO, "template.html")]
+    if os.path.isdir(CONTENT):
+        candidates.extend(os.path.join(CONTENT, f) for f in sorted(os.listdir(CONTENT)))
+    stats = [(os.path.getmtime(p), p) for p in candidates if os.path.exists(p)]
+    if not stats:
+        return None, None
+    return max(stats)
+
+
+def dist_integrity_failures():
+    """Refuse a dirty dist/ by name, and a stale-but-correctly-named
+    artifact by mtime -- the two halves of AL-GATE3-001 that find_artifact()
+    alone cannot close (it only ever returns ONE path; it says nothing about
+    what else is sitting next to it, or whether that one path is fresh).
+
+    DECISION_LOG 2026-09-17/18: three incidents from one root cause, two
+    false FAILs and one push-before-read. A dirty dist/ is now a hard
+    refusal, named, with the cleanup command spelled out -- not a silent
+    pass and not a guess at which file to gate.
+
+    Returns a list of failure strings; empty means dist/ is clean enough to
+    proceed. Callers exit non-zero on any entry (build_ctx() does; a build
+    step should too before it hands dist/ to anything downstream).
+    """
+    out = []
+    if not os.path.isdir(DIST):
+        return out
+    consts = load_build_constants()
+    version = consts.get("APP_VERSION")
+    if not version:
+        return out  # find_artifact() already reports this failure mode
+    expected_name = "md-code-red_%s.html" % version
+    # The artifact's OWN sidecars belong next to it -- build.py writes
+    # <expected_name>.sha256 itself, and extract/make_provenance.py writes
+    # <version>.provenance.json -- so only a stray whose name is NOT one of
+    # these three is a hazard, never the build's own paperwork.
+    allowed = {expected_name, expected_name + ".sha256", "md-code-red_%s.provenance.json" % version}
+    entries = sorted(os.listdir(DIST))
+    strays = [f for f in entries
+              if f not in allowed and f.startswith("md-code-red_")
+              and (f.endswith(".html") or f.endswith(".sha256") or f.endswith(".provenance.json"))]
+    if strays:
+        out.append(
+            "dist/ contains %d file(s) besides the current build's %s: %s. A stale "
+            "artifact or sidecar sitting next to the real one is exactly what let a "
+            "QA gate validate a file build.py did not just produce (AL-GATE3-001; "
+            "DECISION_LOG 2026-09-17/18, three incidents this cycle). Clean dist/ "
+            "before gating it: `git clean -fdx dist` or `rm -rf dist && python3 build.py`."
+            % (len(strays), expected_name, ", ".join(strays)))
+    expected_path = os.path.join(DIST, expected_name)
+    if os.path.exists(expected_path):
+        newest_mtime, newest_path = newest_source_mtime()
+        if newest_mtime is not None and os.path.getmtime(expected_path) < newest_mtime:
+            out.append(
+                "dist/%s is older than %s -- the artifact predates its own build input, "
+                "so it cannot be what building the current tree would produce. Rebuild: "
+                "`rm -rf dist && python3 build.py`."
+                % (expected_name, os.path.relpath(newest_path, REPO)))
+    return out
 
 
 def load_build_constants():
@@ -3464,8 +3561,21 @@ def gate_node_check(ctx):
 
 def build_ctx():
     artifact = find_artifact()
+    dirty = dist_integrity_failures()
     if not artifact:
-        print("FAIL: no dist/md-code-red_*.html — run python3 build.py first")
+        version = load_build_constants().get("APP_VERSION")
+        if version:
+            print("FAIL: dist/md-code-red_%s.html does not exist -- run python3 build.py first"
+                  % version)
+        else:
+            print("FAIL: could not read APP_VERSION out of build.py -- cannot name the "
+                  "artifact to gate")
+        for msg in dirty:
+            print("FAIL: %s" % msg)
+        sys.exit(1)
+    if dirty:
+        for msg in dirty:
+            print("FAIL: %s" % msg)
         sys.exit(1)
     with open(artifact, encoding="utf-8") as fh:
         html = fh.read()

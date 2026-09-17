@@ -151,6 +151,17 @@ class DistIntegrityTests(unittest.TestCase):
 
         self.assertEqual(qa.dist_integrity_failures(), [])
 
+    def test_the_artifacts_own_sidecars_are_not_strays(self):
+        """build.py writes <artifact>.sha256 right next to the artifact, and
+        make_provenance.py writes <version>.provenance.json -- neither is a
+        stray; a fix that flagged the build's own paperwork as dirty would
+        make every real build FAIL, which is worse than the bug it closes."""
+        self._write("md-code-red_%s.html" % APP_VERSION, "FRESH")
+        self._write("md-code-red_%s.html.sha256" % APP_VERSION, "deadbeef  md-code-red.html\n")
+        self._write("md-code-red_%s.provenance.json" % APP_VERSION, "{}")
+
+        self.assertEqual(qa.dist_integrity_failures(), [])
+
     # -- a correctly-named but stale artifact is refused by mtime ---------
 
     def test_stale_mtime_is_refused(self):
