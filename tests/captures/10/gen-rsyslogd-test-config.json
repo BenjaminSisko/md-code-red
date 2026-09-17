@@ -1,0 +1,23 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "rsyslogd -N1 -f '/etc/rsyslog.conf'",
+ "command_hash_at_capture": "50f124c8d683fede4af52773cb0012b7ed723cef997fdc9fe1ba1e1736ebd0fe",
+ "entry_id": "gen-rsyslogd-test-config",
+ "exit_code": 0,
+ "host": "saratoga-rhel10",
+ "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+ "pkg_versions": {
+  "rsyslog": "rsyslog-8.2510.0-5.el10.x86_64"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+ "rhel_version": "10",
+ "stderr": "",
+ "stdout": "rsyslogd: version 8.2510.0-5.el10, config validation run (level 1), master config /etc/rsyslog.conf\nrsyslogd: End of config validation run. Bye.",
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 exits 0, no error line, per verify text."
+}
