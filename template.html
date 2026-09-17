@@ -533,11 +533,37 @@ function tokenPresent(spec,version,resolved,tok){
    `chmod '/etc/foo'` with the path sitting in the mode slot. An UNCONDITIONAL
    lit stays out of this set on purpose: it can never vanish, so it can never
    shift anything, and counting it would refuse templates that are correct. */
+/* MCR-SEC-018 / MCR-SEC-022 (conditions E3 and E7). The rule above counted ANY
+   conditional literal as an argument slot, which over-refused two real specs
+   whose conditional literal is an OPTION — `setsebool -P` and `lvextend -r`.
+   Dropping either shifts nothing: `setsebool boolean state` and
+   `lvextend -L +10G /dev/vg0/lv0` are both correct. The dangerous part was the
+   obvious workaround: an author clearing that build error by deleting
+   `requires` makes `-P` unconditional, so every SELinux boolean change becomes
+   PERSISTENT when the operator asked for runtime-only.
+
+   The first answer here was a DECLARED discriminator — a `flag` key alongside
+   `lit` saying "treat me as an option". Nothing checked that the declaration was
+   true, so `{lit:"0644", flag:"-P", requires:"m"}` was accepted and reopened
+   MCR-SEC-013 through the very key meant to close it. A rule that a sibling key
+   silently disables is not a rule.
+
+   This is the DERIVED discriminator, and it is derived from the word the token
+   actually EMITS: a `lit` matching FLAG_TOKEN_RE is an option and never occupies
+   an argument slot. `-P` and `-r` match; `0644` and `/etc/shadow` do not, and
+   stay refused by construction. There is no second key to disagree with the
+   first — assembleCommand() refuses a token carrying both `lit` and `flag`
+   outright — so the smuggle cannot be expressed rather than being policed.
+
+   A field token with a flag is still position-independent: it carries its own
+   name, and the dual-key refusal means `tok.flag` here can only belong to a
+   field or a rich rule. */
 function isPositionalToken(tok){
   if(!tok || tok.flag) return false;
   if(tok.field!==undefined && tok.field!==null) return true;
-  return !!(tok.lit!==undefined && tok.lit!==null &&
-            tok.requires!==undefined && tok.requires!==null);
+  if(tok.lit===undefined || tok.lit===null) return false;
+  if(FLAG_TOKEN_RE.test(String(tok.lit))) return false;    /* option-shaped lit: an OPTION */
+  return tok.requires!==undefined && tok.requires!==null;
 }
 /* The shift rule, stated once. A positional token at index `at` is about to
    vanish: does any positional token AFTER it survive? If one does, argument n+1
@@ -846,6 +872,16 @@ function assembleCommand(spec,version,values,opts){
     if(tok.flag!==undefined && tok.flag!==null && !FLAG_TOKEN_RE.test(String(tok.flag))) return null;
     if(tok.lit!==undefined && tok.lit!==null){
       if(!LIT_TOKEN_RE.test(String(tok.lit))) return null;
+      /* MCR-SEC-022 (E7). A lit token emits its `lit` and nothing else, so a
+         `flag` beside it emits nothing — its only effect was to switch the D1
+         positional rule off, unchecked, for whatever literal it was attached to.
+         Whether a literal is an option is DERIVED from the literal (see
+         isPositionalToken()), so the key is unnecessary for a real option and a
+         bypass for anything else. Refused either way, including when it tells
+         the truth: a rule with an off-switch is not a rule, and the shipped
+         content carried two exemplars of the shape for the next author to copy.
+         extract/schema.py refuses it at build time; this is the backstop. */
+      if(tok.flag!==undefined && tok.flag!==null) return null;
       /* A literal may belong to a field — '--add-forward-port=...toaddr=' belongs
          to the toaddr value that follows it. requires: names that field, so the
          literal disappears WITH it and can never be left dangling. */
@@ -865,6 +901,18 @@ function assembleCommand(spec,version,values,opts){
         }
       }
       words.push(String(tok.lit));
+      /* MCR-SEC-023. The lit branch used to push the word and return, so an
+         option the command SHOWS — `sshd -T`, `setsebool -P`, `lvextend -r`,
+         `journalctl --no-pager --boot` — was absent from the flag-by-flag panel
+         entirely. A panel silent about a flag that is present is a smaller
+         version of threat-model §4's Explainer row, a panel that describes one
+         that is not. The same derived test decides it: an option-shaped literal
+         is an option, so it belongs in the flag list, in command order. With no
+         curated explain and no dictionary hit, `explain:null` renders
+         "unverified — see man page" — the no-guess law, not a guess. */
+      if(FLAG_TOKEN_RE.test(String(tok.lit))){
+        flags.push({flag:String(tok.lit),explain:tok.explain||null});
+      }
       continue;
     }
     if(tok.richRule){

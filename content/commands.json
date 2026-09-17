@@ -722,7 +722,6 @@
      "field": "size"
     },
     {
-     "flag": "-r",
      "lit": "-r",
      "requires": "resizefs"
     },
@@ -1118,7 +1117,6 @@
      "lit": "setsebool"
     },
     {
-     "flag": "-P",
      "lit": "-P",
      "requires": "persist"
     },

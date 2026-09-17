@@ -1539,4 +1539,14 @@ function main() {
   process.exit(stats.failures.length ? 1 : 0);
 }
 
-main();
+/* Run as a CLI (`node tests/hostile_harness.js`) exactly as before. Required as
+   a module, export the pieces tests/shift_crosscheck_driver.js needs, so the
+   exhaustive shift cross-check (MCR-SEC-018, condition E3) lifts the SAME
+   assembler through the SAME purity-checked extractor rather than growing a
+   second copy of it. */
+if (require.main === module) {
+  main();
+} else {
+  module.exports = { extractAssembler: extractAssembler, tokenize: tokenize,
+                     skeleton: skeleton, optionSyntaxErrors: optionSyntaxErrors };
+}

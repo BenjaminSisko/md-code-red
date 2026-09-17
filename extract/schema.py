@@ -281,8 +281,22 @@ def positional_indexes(template):
     for i, t in enumerate(template):
         if not isinstance(t, dict) or t.get("flag"):
             continue
-        if t.get("field") is not None or (t.get("lit") is not None and t.get("requires") is not None):
+        if t.get("field") is not None:
             out.append(i)
+            continue
+        lit = t.get("lit")
+        if lit is None or t.get("requires") is None:
+            continue
+        # MCR-SEC-018 / MCR-SEC-022, conditions E3 and E7. The discriminator is
+        # DERIVED from the word the token emits, not declared beside it: a lit
+        # matching FLAG_TOKEN_RE is an OPTION and never occupies an argument
+        # slot, so `setsebool -P` and `lvextend -r` may be conditional with a
+        # positional token after them and nothing shifts when they drop.
+        # `0644` and `/etc/shadow` do not match and stay refused by
+        # construction — there is no key to disagree with the literal.
+        if isinstance(lit, str) and FLAG_TOKEN_RE.match(lit):
+            continue
+        out.append(i)
     return out
 
 
@@ -369,10 +383,25 @@ def spec_template_errors(where, template, fields_by_name):
             if not isinstance(lit, str) or not LIT_TOKEN_RE.match(lit):
                 errs.append("%s lit %r reaches the command line unquoted and must match %s"
                             % (at, lit, LIT_TOKEN_RE.pattern))
+            if tok.get("flag") is not None:
+                # MCR-SEC-022, condition E7. A lit token emits its `lit`; a
+                # `flag` beside it emits nothing and only told positional_indexes()
+                # to look away — unchecked, for whatever literal it was attached
+                # to, which is how {lit:"0644", flag:"-P"} reopened MCR-SEC-013.
+                # Refused even when flag == lit: the branch shipped two exemplars
+                # of the shape, and an author who hits the D1 build error should
+                # not have a documented-looking lever to pull. Whether a literal
+                # is an option is derived from the literal itself, so a real
+                # option needs no key at all.
+                errs.append("%s carries both `lit` and `flag`. The word this token emits is its "
+                            "`lit` (%r); `flag` emits nothing here and only switched the positional "
+                            "rule off for it. An option-shaped literal is recognised as an option "
+                            "by matching %s — delete the `flag` key (MCR-SEC-022)"
+                            % (at, lit, FLAG_TOKEN_RE.pattern))
             req = tok.get("requires")
             if req is not None and req not in fields_by_name:
                 errs.append("%s requires field '%s', which this spec does not declare" % (at, req))
-            if req is not None and not tok.get("flag") and shift_unsafe_after(template, positional, i):
+            if req is not None and i in positional and shift_unsafe_after(template, positional, i):
                 errs.append("%s is a conditional POSITIONAL literal: it drops when field '%s' is "
                             "absent, and a positional token after it does not drop with it. "
                             "Argument n+1 would be promoted into slot n — `chmod '/etc/foo'` with "
