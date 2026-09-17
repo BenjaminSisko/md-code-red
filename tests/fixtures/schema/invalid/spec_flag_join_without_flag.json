@@ -1,0 +1,347 @@
+{
+ "_case": "a token declares a flag join but carries no `flag` for it to apply to — a key that does nothing is a key the next author will trust (MCR-SEC-015, condition E1)",
+ "_expect": "declares a flag join (eq) but has no `flag` to join",
+ "commands": {
+  "_meta": {
+   "schema": "ADR-001 §5.1",
+   "curated": true,
+   "entry_count": 1
+  },
+  "categories": [
+   "systemctl"
+  ],
+  "entries": [
+   {
+    "id": "fixture-service-active",
+    "tool": "systemctl",
+    "category": "systemctl",
+    "intent": "Prove a unit is running before claiming the control is in place",
+    "rhel_versions": {
+     "7": {
+      "command": "systemctl status fixtured",
+      "notes": "RHEL 7 reads the full unit block.",
+      "changed_in_note": null
+     },
+     "8": {
+      "command": "systemctl is-active fixtured",
+      "notes": "RHEL 8 narrows to the one-word state.",
+      "changed_in_note": null
+     },
+     "9": {
+      "same_as": "8",
+      "changed_in_note": null
+     },
+     "10": {
+      "unavailable": {
+       "reason": "The fixtured unit does not exist on RHEL 10.",
+       "alternative": null
+      }
+     }
+    },
+    "flags": [
+     {
+      "flag": "is-active",
+      "explain": null,
+      "source_ref": null,
+      "license_class": "paraphrase-only"
+     }
+    ],
+    "verify": "The command prints \"active\".",
+    "undo": "Nothing to undo — this command only reads unit state.",
+    "blast": "green",
+    "stig": [
+     {
+      "stig_id": "RHEL-08-000001",
+      "rule_id": "SV-000008r000000_rule",
+      "rhel_version": "8",
+      "cci": [
+       "CCI-000366"
+      ],
+      "nist": [
+       "CM-6 b"
+      ],
+      "check_cmd": "systemctl is-active fixtured",
+      "fix_cmd": "systemctl enable --now fixtured",
+      "expected_output": null
+     }
+    ],
+    "source": {
+     "id": "src-fixture",
+     "title": "Schema fixture source",
+     "url_or_man": "tests/fixtures/schema/README.md",
+     "version": "fixture v1",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    },
+    "verified": false
+   },
+   {
+    "id": "fixture-generator-spec",
+    "tool": "systemctl",
+    "category": "systemctl",
+    "intent": "a token declares a flag join but carries no `flag` for it to apply to — a key that does nothing is a key the next author",
+    "fields": [
+     {
+      "name": "u",
+      "type": "unit",
+      "required": true
+     }
+    ],
+    "template": [
+     {
+      "lit": "journalctl"
+     },
+     {
+      "lit": "--no-pager",
+      "eq": false
+     },
+     {
+      "field": "u"
+     }
+    ],
+    "verify": "The command prints the unit state.",
+    "undo": "None: this entry only reads state.",
+    "blast": "green",
+    "source": {
+     "id": "src-fixture",
+     "title": "Schema fixture source",
+     "url_or_man": "tests/fixtures/schema/README.md",
+     "version": "fixture v1",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    },
+    "verified": false
+   }
+  ]
+ },
+ "tools": {
+  "_meta": {
+   "curated": true,
+   "tool_count": 1
+  },
+  "tools": [
+   {
+    "id": "systemctl",
+    "label": "systemctl",
+    "category": "systemctl",
+    "availability": {
+     "7": {
+      "available": true
+     },
+     "8": {
+      "available": true
+     },
+     "9": {
+      "available": true
+     },
+     "10": {
+      "available": false,
+      "reason": "Fixture: unavailable on RHEL 10.",
+      "alternative": null
+     }
+    },
+    "source": {
+     "title": "Schema fixture source",
+     "url_or_man": "tests/fixtures/schema/README.md",
+     "version": "fixture v1",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    }
+   }
+  ]
+ },
+ "rules": {
+  "7": {
+   "_meta": {
+    "rhel_version": "7",
+    "generator": "extract/parse_xccdf.py",
+    "partial": false,
+    "rule_count": 1,
+    "source": {
+     "title": "Schema fixture STIG",
+     "url_or_man": "stig-src/fixture.xml",
+     "version": "V3R15",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    }
+   },
+   "rules": [
+    {
+     "v": "V-000007",
+     "i": "RHEL-07-000001",
+     "rid": "SV-000007r000000_rule",
+     "c": "II",
+     "t": "Fixture rule, RHEL 7.",
+     "cci": [
+      "CCI-000366"
+     ],
+     "n": [
+      "CM-6 b"
+     ],
+     "chk": "Fixture check text.",
+     "fix": "Fixture fix text."
+    }
+   ]
+  },
+  "8": {
+   "_meta": {
+    "rhel_version": "8",
+    "generator": "extract/parse_xccdf.py",
+    "partial": false,
+    "rule_count": 1,
+    "source": {
+     "title": "Schema fixture STIG",
+     "url_or_man": "stig-src/fixture.xml",
+     "version": "V2R8",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    }
+   },
+   "rules": [
+    {
+     "v": "V-000008",
+     "i": "RHEL-08-000001",
+     "rid": "SV-000008r000000_rule",
+     "c": "I",
+     "t": "Fixture rule, RHEL 8.",
+     "cci": [
+      "CCI-000366"
+     ],
+     "n": [
+      "CM-6 b"
+     ],
+     "chk": "Fixture check text.",
+     "fix": "Fixture fix text."
+    }
+   ]
+  },
+  "9": {
+   "_meta": {
+    "rhel_version": "9",
+    "generator": "extract/parse_xccdf.py",
+    "partial": false,
+    "rule_count": 1,
+    "source": {
+     "title": "Schema fixture STIG",
+     "url_or_man": "stig-src/fixture.xml",
+     "version": "V2R9",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    }
+   },
+   "rules": [
+    {
+     "v": "V-000009",
+     "i": "RHEL-09-000001",
+     "rid": "SV-000009r000000_rule",
+     "c": "II",
+     "t": "Fixture rule, RHEL 9.",
+     "cci": [
+      "CCI-000366"
+     ],
+     "n": [
+      "CM-6 b"
+     ],
+     "chk": "Fixture check text.",
+     "fix": "Fixture fix text."
+    }
+   ]
+  },
+  "10": {
+   "_meta": {
+    "rhel_version": "10",
+    "generator": "extract/parse_xccdf.py",
+    "partial": false,
+    "rule_count": 1,
+    "source": {
+     "title": "Schema fixture STIG",
+     "url_or_man": "stig-src/fixture.xml",
+     "version": "V1R2",
+     "retrieved_on": "2026-09-17",
+     "license_class": "verbatim-ok"
+    }
+   },
+   "rules": [
+    {
+     "v": "V-000010",
+     "i": "RHEL-10-000001",
+     "rid": "SV-000010r000000_rule",
+     "c": "III",
+     "t": "Fixture rule, RHEL 10.",
+     "cci": [
+      "CCI-000366"
+     ],
+     "n": [
+      "CM-6 b"
+     ],
+     "chk": "Fixture check text.",
+     "fix": "Fixture fix text."
+    }
+   ]
+  }
+ },
+ "flags": {
+  "7": {
+   "_meta": {
+    "rhel_version": "7",
+    "generator": "extract/extract_rhel_flags.py",
+    "status": "pending — no RHEL 7 host read yet"
+   },
+   "clis": {}
+  },
+  "8": {
+   "_meta": {
+    "rhel_version": "8",
+    "generator": "extract/extract_rhel_flags.py",
+    "status": "pending — no RHEL 8 host read yet"
+   },
+   "clis": {}
+  },
+  "9": {
+   "_meta": {
+    "rhel_version": "9",
+    "generator": "extract/extract_rhel_flags.py",
+    "status": "pending — no RHEL 9 host read yet"
+   },
+   "clis": {}
+  },
+  "10": {
+   "_meta": {
+    "rhel_version": "10",
+    "generator": "extract/extract_rhel_flags.py",
+    "status": "pending — no RHEL 10 host read yet"
+   },
+   "clis": {}
+  }
+ },
+ "cci_nist": {
+  "_meta": {
+   "generator": "extract/parse_xccdf.py",
+   "entry_count": 1,
+   "source": {
+    "title": "Schema fixture CCI list",
+    "url_or_man": "stig-src/U_CCI_List.xml",
+    "version": "2025-01-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  "cci": {
+   "CCI-000366": {
+    "nist": [
+     "CM-6 b"
+    ],
+    "rev": "5",
+    "text": "Implement the security configuration settings."
+   }
+  }
+ },
+ "expected_output": {
+  "_meta": {
+   "generator": "extract/import_captures.py",
+   "status": "pending — no capture files",
+   "capture_count": 0
+  },
+  "captures": {}
+ }
+}

@@ -77,6 +77,12 @@
   "integer": {
    "benign": "42"
   },
+  "lvm_size": {
+   "benign": "10G"
+  },
+  "group_list": {
+   "benign": "wheel"
+  },
   "enum": {
    "benign": "alpha",
    "options": [

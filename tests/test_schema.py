@@ -65,9 +65,18 @@ class RealContentIsSchemaClean(unittest.TestCase):
         self.assertEqual([], errs, "content/ is not schema-clean:\n  " + "\n  ".join(errs))
 
     def test_every_entry_carries_all_four_rhel_keys(self):
-        """Stated separately from the bundle check because it is the P0 promise."""
+        """Stated separately from the bundle check because it is the P0 promise.
+
+        A generator spec (CR-T-17+, `"template" in e`) keeps the same promise a
+        different way: its command is composed per release from validated field
+        values, gated by spec.versions/field.versions rather than a fixed
+        rhel_versions object (extract/schema.py's spec_errors() is the authority
+        for that shape), so it carries no rhel_versions key at all by design.
+        """
         data = build.load_content()
         for e in data["commands"]["entries"]:
+            if "template" in e:
+                continue
             self.assertEqual(set(schema.VERSIONS), set(e["rhel_versions"].keys()),
                              "entry %s does not cover all four releases" % e["id"])
 

@@ -241,6 +241,76 @@ function bareText(words) {
 
 var UNQUOTED_OK = /^[A-Za-z0-9_./=:@%+,\- ]*$/;
 
+/* ---------------------------------------------- the VALIDITY oracle --------
+ * MCR-SEC-021 / MCR-SEC-015, conditions E1 and E6. Everything above this point
+ * is a CONTAINMENT oracle: it proves a hostile value cannot escape its single
+ * quotes and cannot change the command's shell-visible shape. It says nothing
+ * about whether the shape itself is a legal invocation of the tool — which is
+ * precisely how 20 short-option tokens joined with '=' passed 76,225 checks.
+ *
+ * optionSyntaxErrors() is the general half of the missing oracle: getopt(3)
+ * syntax, asserted on every benign command this harness assembles. The specific
+ * half is tests/fixtures/golden-commands.json, which states the exact command
+ * every generator must emit.
+ *
+ *   short option (single dash):  -X value   or  -Xvalue   — NEVER -X=value,
+ *       because getopt() hands the '=' to the program as optarg[0].
+ *   long option  (double dash):  --name=value  or  --name value  — both legal;
+ *       this product emits the '=' form, and E1 must not "fix" it away.
+ */
+var SHORT_OPT_EQ_RE = /^-[A-Za-z0-9][A-Za-z0-9-]*=/;
+var LONG_OPT_RE = /^--[A-Za-z0-9][A-Za-z0-9-]*(=|$)/;
+var SHORT_OPT_RE = /^-[A-Za-z0-9][A-Za-z0-9-]*$/;
+
+function optionSyntaxErrors(command) {
+  var errs = [];
+  var words = tokenize(command);
+  if (words === null) {
+    return ["does not tokenise as balanced shell words"];
+  }
+  for (var i = 0; i < words.length; i++) {
+    var bare = words[i].bare;
+    if (bare.charAt(0) !== "-" || bare.length < 2) continue;   /* not option-shaped */
+    if (bare === "--") continue;                               /* end-of-options marker */
+    if (bare.charAt(1) === "-") {
+      if (!LONG_OPT_RE.test(bare)) {
+        errs.push("word " + i + " " + JSON.stringify(words[i].raw) +
+                  " is double-dashed but is not a long option");
+      }
+      continue;
+    }
+    if (SHORT_OPT_EQ_RE.test(bare)) {
+      errs.push("word " + i + " " + JSON.stringify(words[i].raw) + " joins a SHORT option to its " +
+                "value with '='. getopt(3) passes the '=' through as the first character of the " +
+                "argument, so the tool receives a value that is not the one on screen " +
+                "(MCR-SEC-015). A short option takes '-X value' or glued '-Xvalue'");
+      continue;
+    }
+    if (!SHORT_OPT_RE.test(bare)) {
+      errs.push("word " + i + " " + JSON.stringify(words[i].raw) +
+                " is single-dashed but is not a short option token");
+    }
+  }
+  return errs;
+}
+
+/* The long options a spec's template binds to a value. E1 removes the '='
+   join from SHORT options only; if it also removed it from long ones, every
+   firewall-cmd and journalctl generator would still assemble and every
+   containment check would still pass. These flags are what proves it did not. */
+function longValueFlags(spec) {
+  var out = [], t = (spec && spec.template) || [];
+  for (var i = 0; i < t.length; i++) {
+    var tok = t[i];
+    if (!tok || typeof tok.flag !== "string") continue;
+    if (tok.flag.indexOf("--") !== 0) continue;
+    if (tok.field === undefined && tok.richRule === undefined) continue;   /* bare option */
+    if (tok.eq === false) continue;                                        /* declared space-joined */
+    out.push(tok.flag);
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------- specs */
 
 function flagSpec(type, def, versions) {
@@ -923,6 +993,538 @@ function main() {
                         (quiet ? quiet.blast : "null") + " — the de-quoted matcher fires on anything");
   }
 
+  /* ---- CR-T-17..25: every REAL generator spec, every REAL field -----------
+     Everything above fuzzes a SYNTHETIC spec per field type — proof that the
+     assembler's allow-lists hold in general. It says nothing about whether a
+     particular generator's template wires a field to the slot its type
+     promises, or whether an author-picked "documented" flag/lit token is
+     still a closed-grammar token. This sweep loads content/commands.json
+     itself and drives the exact specs CR-T-17..25 ships: for every generator
+     entry and every field it declares, every OTHER field is held at its
+     type's benign value and the field under test takes every hostile vector
+     in turn, on every release the field is offered on. A field new to a
+     future generator is picked up automatically — nothing here names a
+     generator or a field by id. */
+  var contentSpecChecks = 0;
+  var commandsContent = JSON.parse(fs.readFileSync(path.join(REPO, "content", "commands.json"), "utf8"));
+  var specEntries = (commandsContent.entries || []).filter(function (e) { return !!e.template; });
+  if (!specEntries.length) {
+    stats.failures.push("content/commands.json carries no generator (template) entries for the " +
+                        "content-spec sweep to fuzz — CR-T-17's registry has nothing to prove itself on");
+  }
+  /* MCR-SEC-021, condition E6. This took opts[0] for an enum, so every other
+     field in a hostile run was held at the FIRST option — `install`, never
+     `remove`; `start`, never `stop`. `rot` rotates through the option list
+     instead, and the caller passes the vector index, so a hostile value is
+     fuzzed against every branch of every neighbouring enum rather than only the
+     safest one. The check count does not change; the coverage does. Whether
+     every branch is exercised as a CONTROL, with its blast asserted, is the
+     separate enum-branch sweep further down — this half is about what the
+     hostile sweep holds constant while it fuzzes. */
+  function benignFor(field, rot) {
+    if (field.type === "enum") {
+      var opts = field.options || [];
+      if (!opts.length) return undefined;
+      var pick = opts[(rot || 0) % opts.length];
+      return (typeof pick === "string") ? pick : pick.value;
+    }
+    var def = fx.field_types[field.type];
+    return def ? def.benign : undefined;
+  }
+  for (var se = 0; se < specEntries.length; se++) {
+    var centry = specEntries[se];
+    var cfields = centry.fields || [];
+    var centryVersions = centry.versions || VERSIONS;
+    for (var cf = 0; cf < cfields.length; cf++) {
+      var targetField = cfields[cf];
+      var targetBenign = benignFor(targetField);
+      if (targetBenign === undefined) {
+        stats.failures.push("content spec " + centry.id + ": field '" + targetField.name +
+                            "' has type '" + targetField.type + "', which tests/fixtures/" +
+                            "hostile-inputs.json has no benign value for — this sweep cannot fuzz it");
+        continue;
+      }
+      var fieldVersions = targetField.versions || VERSIONS;
+      for (var cv = 0; cv < centryVersions.length; cv++) {
+        var version = centryVersions[cv];
+        if (VERSIONS.indexOf(version) < 0) continue;         /* spec.versions has to name a real release */
+        if (fieldVersions.indexOf(version) < 0) continue;    /* field itself is gated off this release */
+        for (var vv = 0; vv < vectors.length; vv++) {
+          var vec = vectors[vv];
+          /* The "empty" vector on an OPTIONAL field is not a hostile-input
+             question at all: an empty value is "not supplied" (validateSpec),
+             so the field is simply dropped and the template still assembles —
+             correct, and already the exact case the harness's own
+             never-half-formed sweep exists to prove, on every template shape.
+             Asserting "reject" here would fail on correct behaviour, not catch
+             a bug — required fields still get the empty vector, since an
+             empty REQUIRED field must be rejected. */
+          if (vec.id === "empty" && !targetField.required) continue;
+          /* E6: the neighbouring fields are held benign, and every enum among
+             them rotates through its options with the vector index rather than
+             sitting on opts[0] for the whole sweep. */
+          var values = {};
+          for (var of = 0; of < cfields.length; of++) {
+            if (of === cf) continue;
+            var otherBenign = benignFor(cfields[of], vv);
+            if (otherBenign !== undefined) values[cfields[of].name] = otherBenign;
+          }
+          values[targetField.name] = vec.value;
+          var probe = { id: centry.id, tool: centry.tool, blast: centry.blast || "green",
+                        fields: centry.fields, template: centry.template, versions: centry.versions };
+          probe._hostileField = targetField.name;
+          probe._benign = targetBenign;
+          contentSpecChecks++;
+          check(centry.id + " / field " + targetField.name + " / " + vec.id + " / RHEL " + version,
+                vec["class"], probe, version, values, vec.value,
+                targetField.type === "comment" ? vec.free_text : "reject");
+        }
+      }
+    }
+  }
+
+  /* ---- CR-T-17..25: the GOLDEN-COMMAND table (MCR-SEC-015 / E1, E6) -------
+     The sweep above is a containment oracle and nothing more. This is the
+     validity oracle Marcus Reed's D4 review required: for every generator, on
+     every release, the exact command it must emit for a stated set of benign
+     values, hand-authored from each tool's man page in
+     tests/fixtures/golden-commands.json and never generated from the assembler.
+
+     Three assertions per row, plus two completeness assertions over the table:
+       1. EXACT equality with the golden string (or null where the generator is
+          gated off that release — null, never a shortened command).
+       2. getopt(3) syntax, via optionSyntaxErrors(): no short option may be
+          joined to its value with '='.
+       3. every long option the template binds to a value still carries its
+          '=' join, so the E1 fix cannot over-correct and quietly turn
+          `--unit='sshd.service'` into `--unit 'sshd.service'` unnoticed.
+     ...and the blast rating the row declares, computed against the REAL
+     content/dangerous.json table rather than an empty one. */
+  var golden = JSON.parse(fs.readFileSync(path.join(REPO, "tests", "fixtures",
+                                                    "golden-commands.json"), "utf8"));
+  var goldenRows = golden.generators || {};
+  var realPatterns = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "dangerous.json"),
+                                                 "utf8")).patterns) || [];
+  var goldenChecks = 0, syntaxChecks = 0, inspectorChecks = 0;
+  for (var gs = 0; gs < specEntries.length; gs++) {
+    var gentry = specEntries[gs];
+    var grow = Object.prototype.hasOwnProperty.call(goldenRows, gentry.id) ? goldenRows[gentry.id] : null;
+    if (grow === null) {
+      stats.failures.push("golden table: generator " + gentry.id + " has no row in tests/fixtures/" +
+                          "golden-commands.json. A generator whose exact command is not written down " +
+                          "is covered by the containment oracle only, which is how MCR-SEC-015 shipped");
+      continue;
+    }
+    var glongs = longValueFlags(gentry);
+    for (var gv2 = 0; gv2 < VERSIONS.length; gv2++) {
+      var gver = VERSIONS[gv2];
+      if (!Object.prototype.hasOwnProperty.call(grow.commands || {}, gver)) {
+        stats.failures.push("golden table: " + gentry.id + " has no expected command for RHEL " + gver);
+        continue;
+      }
+      var want = grow.commands[gver];
+      goldenChecks++;
+      var gres;
+      try {
+        gres = A.assembleCommand(gentry, gver, grow.values || {}, { patterns: realPatterns });
+      } catch (ge) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": assembler threw " + ge.message);
+        continue;
+      }
+      var gotCommand = gres === null ? null : gres.command;
+      if (gotCommand !== want) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": expected " +
+                            JSON.stringify(want) + " but the assembler produced " +
+                            JSON.stringify(gotCommand) + " — " + (grow.pins || ""));
+        continue;
+      }
+      if (gres === null) continue;                 /* correctly gated off this release */
+      if (gres.blast !== grow.blast) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": blast is '" + gres.blast +
+                            "', the table says '" + grow.blast + "'");
+      }
+      /* MCR-SEC-023: the flag-by-flag panel must name every option the command
+         shows, in the order it shows them — option tokens AND option-shaped
+         literals. A panel silent about a flag that is present is a smaller
+         version of a panel describing one that is not. */
+      inspectorChecks++;
+      var gotFlags = [];
+      for (var gf = 0; gf < gres.flags.length; gf++) gotFlags.push(gres.flags[gf].flag);
+      var wantFlags = grow.flags || [];
+      if (gotFlags.join(" ") !== wantFlags.join(" ")) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": the inspector's flag list " +
+                            "is [" + gotFlags.join(", ") + "], the table says [" + wantFlags.join(", ") +
+                            "] — the panel and the command must agree (MCR-SEC-023)");
+      }
+      for (var gfc = 0; gfc < gotFlags.length; gfc++) {
+        inspectorChecks++;
+        if (gres.command.indexOf(gotFlags[gfc]) < 0) {
+          stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": the inspector names flag " +
+                              gotFlags[gfc] + ", which is not in " + JSON.stringify(gres.command) +
+                              " — describing a flag that is not present is the Explainer row of " +
+                              "threat-model §4");
+        }
+      }
+      syntaxChecks++;
+      var gsyn = optionSyntaxErrors(gres.command);
+      if (gsyn.length) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": " + gsyn.join("; ") +
+                            " — in " + JSON.stringify(gres.command));
+      }
+      for (var gl = 0; gl < glongs.length; gl++) {
+        syntaxChecks++;
+        if (gres.command.indexOf(glongs[gl] + "='") < 0) {
+          stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": long option " +
+                              glongs[gl] + " lost its '=' join in " + JSON.stringify(gres.command) +
+                              " — E1 removes the '=' from SHORT options only");
+        }
+      }
+    }
+  }
+  var goldenIds = Object.keys(goldenRows);
+  for (var gi = 0; gi < goldenIds.length; gi++) {
+    var known = false;
+    for (var gk = 0; gk < specEntries.length; gk++) {
+      if (specEntries[gk].id === goldenIds[gi]) { known = true; break; }
+    }
+    if (!known) {
+      stats.failures.push("golden table: row '" + goldenIds[gi] + "' names a generator that is not " +
+                          "in content/commands.json — a stale expectation proves nothing");
+    }
+  }
+  /* negative control: the syntax oracle must be able to fail, on the exact
+     defect MCR-SEC-015 reported and on the long form it must NOT flag. */
+  if (!optionSyntaxErrors("auditctl -w='/etc/motd' -p='r' -k='identity'").length) {
+    stats.failures.push("invariant: the option-syntax oracle rated MCR-SEC-015's own reproduction " +
+                        "as valid getopt syntax — it cannot fail and therefore proves nothing");
+  }
+  if (optionSyntaxErrors("firewall-cmd --set-default-zone='public' --permanent").length) {
+    stats.failures.push("invariant: the option-syntax oracle flagged a correct GNU long option");
+  }
+  if (optionSyntaxErrors("rsyslogd -N1 -f '/etc/rsyslog.conf'").length) {
+    stats.failures.push("invariant: the option-syntax oracle flagged the glued short option -N1, " +
+                        "which is legal");
+  }
+
+  /* ---- the DERIVED positional discriminator (MCR-SEC-018/022, E3 and E7) --
+     Marcus Reed's D4 addendum table, run as a test on every release.
+
+     The D1 rule says a conditional literal occupies an argument slot, so it may
+     only vanish when every later positional token vanishes with it. Milo's first
+     answer was a DECLARED discriminator: a `flag` key alongside `lit` told the
+     rule "this literal is an option, look away". Neither half checked that the
+     declaration was true, so `{lit:"0644", flag:"-P", requires:"m"}` was
+     accepted and reopened MCR-SEC-013 through the key that was meant to close
+     it. A rule a sibling key silently disables is not a rule.
+
+     The discriminator is now DERIVED from the word the token actually emits: a
+     `lit` matching FLAG_TOKEN_RE is an option and never occupies an argument
+     slot. There is no second key to disagree with the first, so the smuggle
+     cannot be expressed — and a token carrying both `lit` and `flag` is refused
+     outright, at build time and at run time, because `flag` emits nothing there
+     and exists only to point the rule away from the word that does.
+
+     Template under test: [{lit:"chmod"}, TOKEN, {field:"p"}] — `m` optional,
+     `p` a required path, exactly the shape of the original MCR-SEC-013 vector. */
+  var discChecks = 0;
+  function discSpec(tok) {
+    return { id: "harness-discriminator", tool: "harness", blast: "green",
+             fields: [{ name: "m", type: "integer", required: false, versions: VERSIONS },
+                      { name: "p", type: "path", required: true, versions: VERSIONS }],
+             template: [{ lit: "chmod" }, tok, { field: "p" }] };
+  }
+  var discCases = [
+    [{ lit: "0644", requires: "m" }, "chmod 0644 '/etc/foo'", null,
+     "the baseline MCR-SEC-013 vector: a bare conditional literal is positional, so it may not " +
+     "drop while the path after it survives"],
+    [{ lit: "-P", flag: "-P", requires: "m" }, null, null,
+     "the dual-key shape the branch shipped twice. `flag` emits nothing on a lit token; it only " +
+     "switched the positional rule off. Refused now even when it tells the truth, because a rule " +
+     "that can be switched off by a key nobody checks is not a rule (MCR-SEC-022)"],
+    [{ lit: "0644", flag: "-P", requires: "m" }, null, null,
+     "Marcus's smuggle: an ARGUMENT literal wearing an option's flag key. This assembled " +
+     "`chmod '/etc/foo'` with the path in the mode slot — MCR-SEC-013, reopened"],
+    [{ lit: "/etc/shadow", flag: "-x", requires: "m" }, null, null,
+     "the same smuggle with a path literal, which is the shape that actually hurts"],
+    [{ lit: "-P", requires: "m" }, "chmod -P '/etc/foo'", "chmod '/etc/foo'",
+     "the DERIVED answer, and the shape gen-setsebool-set and gen-lvextend-grow now use: an " +
+     "option-shaped literal is an option, so dropping it shifts nothing and both states are " +
+     "correct — with no key at all"]
+  ];
+  for (var dc = 0; dc < discCases.length; dc++) {
+    for (var dv = 0; dv < VERSIONS.length; dv++) {
+      var dspec = discSpec(discCases[dc][0]);
+      discChecks += 2;
+      var withM = A.assembleCommand(dspec, VERSIONS[dv], { m: "7", p: "/etc/foo" }, { patterns: [] });
+      var noM = A.assembleCommand(dspec, VERSIONS[dv], { p: "/etc/foo" }, { patterns: [] });
+      var gotWith = withM === null ? null : withM.command;
+      var gotNo = noM === null ? null : noM.command;
+      if (gotWith !== discCases[dc][1]) {
+        stats.failures.push("discriminator / RHEL " + VERSIONS[dv] + " / " +
+                            JSON.stringify(discCases[dc][0]) + " with 'm' supplied: expected " +
+                            JSON.stringify(discCases[dc][1]) + ", got " + JSON.stringify(gotWith) +
+                            " — " + discCases[dc][3]);
+      }
+      if (gotNo !== discCases[dc][2]) {
+        stats.failures.push("discriminator / RHEL " + VERSIONS[dv] + " / " +
+                            JSON.stringify(discCases[dc][0]) + " with 'm' ABSENT: expected " +
+                            JSON.stringify(discCases[dc][2]) + ", got " + JSON.stringify(gotNo) +
+                            " — " + discCases[dc][3]);
+      }
+    }
+  }
+  /* MCR-SEC-023 on the derived shape: the option-shaped literal reaches the
+     inspector's flag list, so the panel and the command say the same thing. */
+  discChecks++;
+  var discFlagged = A.assembleCommand(discSpec({ lit: "-P", requires: "m" }), "9",
+                                      { m: "7", p: "/etc/foo" }, { patterns: [] });
+  if (!discFlagged || discFlagged.flags.length !== 1 || discFlagged.flags[0].flag !== "-P") {
+    stats.failures.push("discriminator: an option-shaped literal did not reach the inspector's flag " +
+                        "list — flags=" + JSON.stringify(discFlagged ? discFlagged.flags : null) +
+                        " (MCR-SEC-023)");
+  } else if (discFlagged.flags[0].explain !== null) {
+    stats.failures.push("discriminator: an uncurated option-shaped literal was given an explanation " +
+                        "rather than null — the no-guess law renders 'unverified' from null");
+  }
+  /* control: the shipped content carries no dual-key token any more. */
+  for (var dk = 0; dk < specEntries.length; dk++) {
+    var dtpl = specEntries[dk].template || [];
+    for (var dt = 0; dt < dtpl.length; dt++) {
+      discChecks++;
+      if (dtpl[dt] && dtpl[dt].lit !== undefined && dtpl[dt].flag !== undefined) {
+        stats.failures.push("content spec " + specEntries[dk].id + " template[" + dt + "] carries " +
+                            "both `lit` and `flag` — the declared discriminator is gone and the " +
+                            "derived one needs no key (MCR-SEC-022)");
+      }
+    }
+  }
+
+  /* ---- every enum BRANCH, not just opts[0] (MCR-SEC-021, condition E6) ---
+     benignFor() takes opts[0] for an enum, so the control value was always the
+     first option — `install`, never `remove`; `start`, never `stop` or
+     `disable`. The destructive branch of every action enum was never the benign
+     control, so the blast interaction on it was never asserted: Marcus checked
+     those four by hand and they behaved, but a gate nobody runs by hand is the
+     only kind that stays true.
+
+     Every generator x every enum field x every option x every release, against
+     the REAL content/dangerous.json table:
+       - it must assemble (or be null exactly when the option or the spec is
+         gated off that release),
+       - it must be valid getopt syntax,
+       - it must not rate BELOW the blast the spec declares, and
+       - a destructive branch must come out at least yellow.
+
+     The destructive list is content, in the golden fixture, not a judgement
+     buried here. And it is checked in the honest direction: for a generator
+     DECLARED green, a destructive branch must be RAISED to yellow by the
+     pattern table — the "two ways in" design actually working on real content —
+     while a non-destructive branch must stay green. A matcher that fired on
+     everything would satisfy the first assertion and fail the second. */
+  var branchChecks = 0;
+  var RANK = { green: 0, yellow: 1, red: 2 };
+  var destructive = (golden._enum_branches || {}).destructive || [];
+  if (!destructive.length) {
+    stats.failures.push("the golden fixture declares no destructive enum options — the blast " +
+                        "interaction this sweep exists to assert would be vacuous");
+  }
+  for (var eb = 0; eb < specEntries.length; eb++) {
+    var eentry = specEntries[eb];
+    var erow = goldenRows[eentry.id];
+    if (!erow) continue;                          /* already reported by the golden sweep */
+    var efields = eentry.fields || [];
+    var declared = eentry.blast || "green";
+    var sawGreen = false, sawRaised = false, hasDestructive = false;
+    for (var ef = 0; ef < efields.length; ef++) {
+      if (efields[ef].type !== "enum") continue;
+      var eopts = efields[ef].options || [];
+      for (var eo = 0; eo < eopts.length; eo++) {
+        var optRaw = eopts[eo];
+        var optVal = (typeof optRaw === "string") ? optRaw : optRaw.value;
+        var optVersions = (typeof optRaw === "string") ? null : (optRaw.versions || null);
+        for (var ev = 0; ev < VERSIONS.length; ev++) {
+          var erel = VERSIONS[ev];
+          var evalues = {}, ek;
+          for (ek in (erow.values || {})) {
+            if (Object.prototype.hasOwnProperty.call(erow.values, ek)) evalues[ek] = erow.values[ek];
+          }
+          evalues[efields[ef].name] = optVal;
+          branchChecks++;
+          var eres = A.assembleCommand(eentry, erel, evalues, { patterns: realPatterns });
+          var offRelease = (erow.commands[erel] === null) ||
+                           (optVersions !== null && optVersions.indexOf(erel) < 0) ||
+                           (efields[ef].versions && efields[ef].versions.indexOf(erel) < 0);
+          if (eres === null) {
+            if (!offRelease) {
+              stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                  optVal + " / RHEL " + erel + ": returned null, but this option " +
+                                  "is offered on this release");
+            }
+            continue;
+          }
+          if (offRelease) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": assembled " +
+                                JSON.stringify(eres.command) + " on a release it is gated off");
+            continue;
+          }
+          var esyn = optionSyntaxErrors(eres.command);
+          if (esyn.length) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": " + esyn.join("; ") + " — in " +
+                                JSON.stringify(eres.command));
+          }
+          if (RANK[eres.blast] < RANK[declared]) {
+            stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                optVal + " / RHEL " + erel + ": rated '" + eres.blast + "', below " +
+                                "the '" + declared + "' the spec declares");
+          }
+          if (destructive.indexOf(optVal) >= 0) {
+            hasDestructive = true;
+            if (RANK[eres.blast] < RANK.yellow) {
+              stats.failures.push("enum branch " + eentry.id + " / " + efields[ef].name + "=" +
+                                  optVal + " / RHEL " + erel + ": a DESTRUCTIVE branch rated '" +
+                                  eres.blast + "'. " + JSON.stringify(eres.command) + " must be at " +
+                                  "least yellow, whether by the spec's own declaration or by the " +
+                                  "destructive-pattern table firing on the de-quoted command");
+            }
+            if (declared === "green" && RANK[eres.blast] >= RANK.yellow) sawRaised = true;
+          } else if (eres.blast === "green") {
+            sawGreen = true;
+          }
+        }
+      }
+    }
+    if (declared === "green" && hasDestructive) {
+      branchChecks += 2;
+      if (!sawRaised) {
+        stats.failures.push("enum branch " + eentry.id + ": declared green with a destructive " +
+                            "branch, and no branch was ever RAISED — MCR-SEC-008's de-quoted " +
+                            "projection is not firing on this generator's real content");
+      }
+      if (!sawGreen) {
+        stats.failures.push("enum branch " + eentry.id + ": declared green and NO branch came out " +
+                            "green — a pattern table that rates everything yellow satisfies the " +
+                            "destructive assertion above while proving nothing");
+      }
+    }
+  }
+
+  /* ---- closed grammars where one exists (MCR-SEC-016, condition E4) ------
+     threat-model §3.1 requires a closed grammar wherever the field has one, and
+     `comment` — the single free-text type — was carrying four fields that do:
+     two LVM sizes and two group lists. Nothing was injectable (every value is
+     shQuote'd and every one of them fails closed at the target tool), but
+     `lvextend -L 'ticket RFC-1234' -r '/dev/vg0/lv0'` assembled, returned
+     non-null and rendered Copy — a nonsense LVM size accepted as a complete
+     command on a yellow-blast storage tool.
+
+     The sharp case is the one the placeholder now has to teach: `10G` and
+     `+10G` are BOTH valid LVM sizes and they mean different things — set the
+     volume to 10G, versus grow it by 10G. A grammar that accepts both still
+     has to show the operator which one they typed. */
+  var grammarChecks = 0;
+  var grammarCases = [
+    ["lvm_size", "10G", true], ["lvm_size", "+10G", true], ["lvm_size", "512", true],
+    ["lvm_size", "1.5T", true], ["lvm_size", "100%FREE", true], ["lvm_size", "50%VG", true],
+    ["lvm_size", "8m", true],
+    ["lvm_size", "ticket RFC-1234", false], ["lvm_size", "10 G", false],
+    ["lvm_size", "10GB", false], ["lvm_size", "-10G", false], ["lvm_size", "big", false],
+    ["lvm_size", "10G;id", false], ["lvm_size", "100%EVERYTHING", false],
+    ["group_list", "wheel", true], ["group_list", "wheel,docker", true],
+    ["group_list", "_svc,wheel,docker", true],
+    ["group_list", "wheel docker", false], ["group_list", "wheel,,docker", false],
+    ["group_list", "Wheel", false], ["group_list", "wheel;id", false],
+    ["group_list", "wheel,", false], ["group_list", "-wheel", false]
+  ];
+  for (var gc = 0; gc < grammarCases.length; gc++) {
+    grammarChecks++;
+    var gcType = grammarCases[gc][0];
+    if (!A.FIELD_TYPES[gcType]) {
+      stats.failures.push("field grammar: there is no '" + gcType + "' field type. MCR-SEC-016 " +
+                          "requires a closed grammar where the field has one, and `comment` — the " +
+                          "one free-text type in the product — is not it");
+      continue;
+    }
+    var gcRes = A.validateField(gcType, grammarCases[gc][1], { name: "v", type: gcType });
+    if (gcRes.ok !== grammarCases[gc][2]) {
+      stats.failures.push("field grammar: " + gcType + " " + JSON.stringify(grammarCases[gc][1]) +
+                          " was " + (gcRes.ok ? "accepted" : "refused (" + gcRes.reason + ")") +
+                          ", expected " + (grammarCases[gc][2] ? "accepted" : "refused"));
+    }
+  }
+  /* MCR-SEC-016 reproduction, verbatim from the D4 review, kept as a named
+     regression: the real generator, the real field, the value Marcus typed. */
+  for (var grv = 0; grv < VERSIONS.length; grv++) {
+    grammarChecks++;
+    var lvSpec = null;
+    for (var lvi = 0; lvi < specEntries.length; lvi++) {
+      if (specEntries[lvi].id === "gen-lvextend-grow") lvSpec = specEntries[lvi];
+    }
+    if (lvSpec === null) {
+      stats.failures.push("MCR-SEC-016 regression: gen-lvextend-grow is not in content/commands.json");
+      break;
+    }
+    var lvBad = A.assembleCommand(lvSpec, VERSIONS[grv],
+                                  { size: "ticket RFC-1234", resizefs: "yes",
+                                    lvpath: "/dev/vg0/lv0" }, { patterns: [] });
+    if (lvBad !== null) {
+      stats.failures.push("MCR-SEC-016 regression / RHEL " + VERSIONS[grv] + ": a nonsense LVM size " +
+                          "assembled into a complete command — " + JSON.stringify(lvBad.command));
+    }
+    grammarChecks++;
+    var lvGood = A.assembleCommand(lvSpec, VERSIONS[grv],
+                                   { size: "+10G", resizefs: "yes", lvpath: "/dev/vg0/lv0" },
+                                   { patterns: [] });
+    if (lvGood === null) {
+      stats.failures.push("MCR-SEC-016 control / RHEL " + VERSIONS[grv] + ": the '+10G' grow form " +
+                          "was refused — check the healthy case before believing the signal");
+    }
+  }
+
+  /* ---- the DERIVED join rule, token by token (MCR-SEC-015 / E1) ----------
+     The golden table proves the 24 shipped generators. This proves the RULE,
+     on token shapes no generator writes today, so the twenty-first generator
+     inherits it: the join is computed from the flag's shape, the two escape
+     hatches are legal only on the shape they belong to, and a token that
+     declares a join its shape derives is a disagreement — null, never a guess.
+     extract/schema.py refuses each of these at build time; this is the run-time
+     backstop, and the two halves have to agree. */
+  var joinChecks = 0;
+  function joinSpec(tok) {
+    return { id: "harness-join", tool: "harness", blast: "green",
+             fields: [{ name: "v", type: "integer", required: true, versions: VERSIONS }],
+             template: [{ lit: "probe" }, tok] };
+  }
+  var joinCases = [
+    [{ flag: "-M", field: "v" }, "probe -M '42'", "a short option derives a SPACE join"],
+    [{ flag: "-M", field: "v", join: "glued" }, "probe -M'42'", "join:\"glued\" emits -Xvalue"],
+    [{ flag: "--value", field: "v" }, "probe --value='42'", "a long option derives an '=' join"],
+    [{ flag: "--value", field: "v", eq: false }, "probe --value '42'", "eq:false spaces a long option"],
+    [{ flag: "-M", field: "v", eq: false }, null,
+     "a SHORT option may not declare eq — the join is derived, and eq:false here is an author " +
+     "asserting a rule the shape already states"],
+    [{ flag: "-M", field: "v", eq: true }, null,
+     "a SHORT option may not declare eq:true — that is the MCR-SEC-015 defect, spelled out"],
+    [{ flag: "--value", field: "v", join: "glued" }, null,
+     "a LONG option may not declare join"],
+    [{ flag: "-M", field: "v", join: "spaced" }, null, "\"glued\" is the only declared join"]
+  ];
+  for (var jc = 0; jc < joinCases.length; jc++) {
+    for (var jv = 0; jv < VERSIONS.length; jv++) {
+      joinChecks++;
+      var jres = A.assembleCommand(joinSpec(joinCases[jc][0]), VERSIONS[jv], { v: "42" },
+                                   { patterns: [] });
+      var jgot = jres === null ? null : jres.command;
+      if (jgot !== joinCases[jc][1]) {
+        stats.failures.push("join rule / RHEL " + VERSIONS[jv] + " / " +
+                            JSON.stringify(joinCases[jc][0]) + ": expected " +
+                            JSON.stringify(joinCases[jc][1]) + ", got " + JSON.stringify(jgot) +
+                            " — " + joinCases[jc][2]);
+      }
+    }
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -1065,6 +1667,15 @@ function main() {
     clipboard_checks: clipboardChecks,
     token_allow_list_checks: tokenChecks,
     destructive_pattern_checks: patternChecks,
+    content_spec_checks: contentSpecChecks,
+    content_spec_entries: specEntries.length,
+    golden_command_checks: goldenChecks,
+    option_syntax_checks: syntaxChecks,
+    flag_join_checks: joinChecks,
+    discriminator_checks: discChecks,
+    field_grammar_checks: grammarChecks,
+    enum_branch_checks: branchChecks,
+    inspector_flag_checks: inspectorChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1073,7 +1684,7 @@ function main() {
        + 2 tokeniser negative controls + 2 rich-rule-oracle negative controls
        + 2 blast invariants + the MCR-SEC-001 regression (1 vector check + 1 per
        release + 1 typed) */
-    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length),
+    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length) + 3,
     failures: stats.failures
   };
   if (asJson) {
@@ -1096,6 +1707,26 @@ function main() {
     console.log("  " + tokenChecks + " flag/lit allow-list checks and " + patternChecks +
                 " destructive-pattern checks (every row of content/dangerous.json fires on a " +
                 "synthetic assembled command)");
+    console.log("  " + contentSpecChecks + " content-spec checks: every field of every one of the " +
+                specEntries.length + " REAL generator entries in content/commands.json (CR-T-17..25), " +
+                "fuzzed with the same hostile vector set in its own template, not a synthetic analog");
+    console.log("  " + goldenChecks + " golden-command checks (VALIDITY oracle: the exact command " +
+                "every generator must emit, per release, hand-authored from the man pages in " +
+                "tests/fixtures/golden-commands.json) and " + syntaxChecks + " getopt(3) option-syntax " +
+                "checks (no short option joined with '='; every long option keeps its '=')");
+    console.log("  " + joinChecks + " derived-join checks: the join is computed from the flag's " +
+                "shape, and a token declaring a join its shape derives is null on every release");
+    console.log("  " + discChecks + " derived-discriminator checks (an option-shaped lit is an " +
+                "OPTION and never an argument slot; a token carrying both lit and flag is refused) " +
+                "and " + inspectorChecks + " inspector flag-list checks (MCR-SEC-023: the panel " +
+                "names every option the command shows, and no option it does not)");
+    console.log("  " + grammarChecks + " closed-grammar checks (MCR-SEC-016: lvm_size and " +
+                "group_list, with the '+10G' grow form accepted and a free-text LVM size refused " +
+                "on the real generator)");
+    console.log("  " + branchChecks + " enum-branch control checks (MCR-SEC-021: every option of " +
+                "every enum field of every generator on every release, asserted for validity and " +
+                "for blast — a destructive branch must come out at least yellow, and a green " +
+                "generator must still have a green branch)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();
@@ -1108,4 +1739,14 @@ function main() {
   process.exit(stats.failures.length ? 1 : 0);
 }
 
-main();
+/* Run as a CLI (`node tests/hostile_harness.js`) exactly as before. Required as
+   a module, export the pieces tests/shift_crosscheck_driver.js needs, so the
+   exhaustive shift cross-check (MCR-SEC-018, condition E3) lifts the SAME
+   assembler through the SAME purity-checked extractor rather than growing a
+   second copy of it. */
+if (require.main === module) {
+  main();
+} else {
+  module.exports = { extractAssembler: extractAssembler, tokenize: tokenize,
+                     skeleton: skeleton, optionSyntaxErrors: optionSyntaxErrors };
+}

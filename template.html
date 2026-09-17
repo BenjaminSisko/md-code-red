@@ -162,6 +162,19 @@ code,pre{font-family:var(--font-mono);}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
 .unverified{color:var(--text-muted); font-style:italic;}
+/* generator guided-form fields (CR-T-17..25) — required/optional/version-gated
+   states per UI spec v1 §4: required carries a coloured mark and "(required)"
+   in the label text (never colour alone), a gated field is disabled with its
+   reason in a .why line, exactly like a gated tool/entry row above. */
+.field{display:flex; flex-direction:column; gap:3px; margin:0 0 10px;}
+.field label{font-size:12px; color:var(--text-secondary);}
+.field .req{color:var(--danger);}
+.field input,.field select{font:inherit; font-size:13px; padding:4px 7px;
+  border:1px solid var(--border-primary); border-radius:5px;
+  background:var(--bg-app); color:var(--text-primary);}
+.field input[disabled],.field select[disabled]{color:var(--text-muted); cursor:not-allowed;
+  border-style:dashed;}
+.field .why{margin:0; font-size:11px; color:var(--text-muted);}
 @media print{
   body{display:block;}
   #rail,#sidebar,#inspector,#statusbar,#palette{display:none;}
@@ -432,6 +445,21 @@ var FIELD_TYPES={
   audit_key:{cap:31,label:"audit rule key",re:/^[A-Za-z0-9_-]{1,31}$/},
   interface:{cap:15,label:"network interface",re:/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,14}$/},
   integer:{cap:10,label:"whole number",re:/^(0|[1-9]\d{0,9})$/},
+  /* MCR-SEC-016 (condition E4). Both of these were typed `comment` — the one
+     free-text type — and both have a well-known closed grammar, which
+     threat-model §3.1 requires wherever one exists. Nothing was injectable:
+     every value is shQuote'd and every wrong one fails closed at the tool. The
+     residual was a wrong-but-valid value reaching Copy on a yellow-blast
+     storage command — `lvextend -L 'ticket RFC-1234'` assembled.
+
+     The LVM label is doing real work. `10G` and `+10G` are both valid and mean
+     different things — SET the volume to 10G, versus GROW it by 10G — and the
+     placeholder is the only place in the UI that says so, because the field,
+     the flag and the blast rating are identical either way. */
+  lvm_size:{cap:16,label:"LVM size — 10G sets, +10G grows, 100%FREE fills",
+            re:/^([+-]?\d+(\.\d+)?[bBsSkKmMgGtTpPeE]?|\d+%(FREE|VG|PVS|ORIGIN))$/},
+  group_list:{cap:256,label:"group, or comma-separated group list",
+              re:/^[a-z_][a-z0-9_-]{0,31}(,[a-z_][a-z0-9_-]{0,31})*$/},
   enum:{cap:64,label:"choice",optionsFromField:true},
   comment:{cap:200,label:"free-text comment",unicode:true,re:/^[^\u0000-\u001F\u007F]+$/}
 };
@@ -520,11 +548,37 @@ function tokenPresent(spec,version,resolved,tok){
    `chmod '/etc/foo'` with the path sitting in the mode slot. An UNCONDITIONAL
    lit stays out of this set on purpose: it can never vanish, so it can never
    shift anything, and counting it would refuse templates that are correct. */
+/* MCR-SEC-018 / MCR-SEC-022 (conditions E3 and E7). The rule above counted ANY
+   conditional literal as an argument slot, which over-refused two real specs
+   whose conditional literal is an OPTION — `setsebool -P` and `lvextend -r`.
+   Dropping either shifts nothing: `setsebool boolean state` and
+   `lvextend -L +10G /dev/vg0/lv0` are both correct. The dangerous part was the
+   obvious workaround: an author clearing that build error by deleting
+   `requires` makes `-P` unconditional, so every SELinux boolean change becomes
+   PERSISTENT when the operator asked for runtime-only.
+
+   The first answer here was a DECLARED discriminator — a `flag` key alongside
+   `lit` saying "treat me as an option". Nothing checked that the declaration was
+   true, so `{lit:"0644", flag:"-P", requires:"m"}` was accepted and reopened
+   MCR-SEC-013 through the very key meant to close it. A rule that a sibling key
+   silently disables is not a rule.
+
+   This is the DERIVED discriminator, and it is derived from the word the token
+   actually EMITS: a `lit` matching FLAG_TOKEN_RE is an option and never occupies
+   an argument slot. `-P` and `-r` match; `0644` and `/etc/shadow` do not, and
+   stay refused by construction. There is no second key to disagree with the
+   first — assembleCommand() refuses a token carrying both `lit` and `flag`
+   outright — so the smuggle cannot be expressed rather than being policed.
+
+   A field token with a flag is still position-independent: it carries its own
+   name, and the dual-key refusal means `tok.flag` here can only belong to a
+   field or a rich rule. */
 function isPositionalToken(tok){
   if(!tok || tok.flag) return false;
   if(tok.field!==undefined && tok.field!==null) return true;
-  return !!(tok.lit!==undefined && tok.lit!==null &&
-            tok.requires!==undefined && tok.requires!==null);
+  if(tok.lit===undefined || tok.lit===null) return false;
+  if(FLAG_TOKEN_RE.test(String(tok.lit))) return false;    /* option-shaped lit: an OPTION */
+  return tok.requires!==undefined && tok.requires!==null;
 }
 /* The shift rule, stated once. A positional token at index `at` is about to
    vanish: does any positional token AFTER it survive? If one does, argument n+1
@@ -767,6 +821,50 @@ function assembleEntry(entry,version,patterns){
 var FLAG_TOKEN_RE=/^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$/;
 var LIT_TOKEN_RE=/^[A-Za-z0-9_.\/=:,+-]+$/;
 
+/* MCR-SEC-015 (condition E1). How a flag is joined to its value is a property of
+   the FLAG'S SHAPE, not a per-token decision a content author gets to make and
+   get wrong twenty times:
+
+     --long   joins with '='  — getopt_long() accepts --name=value; this is the
+                                form the man pages show and the product emits
+     -X       joins with ' '  — getopt() takes '-X value'. It does NOT accept
+                                '-X=value': the '=' is handed straight through as
+                                the first character of optarg, so `chage -M=60`
+                                sets max-days to the string "=60" and
+                                `auditctl -w=/etc/motd` watches nothing while
+                                looking, to the operator, like it worked.
+
+   The assembler joined EVERY flag with '=' unless the token said eq:false, and
+   eq:false was used nowhere in the 24 shipped generator specs — so 20 short-
+   option tokens across 11 of them emitted a command that is wrong for its tool.
+   No gate could see it, because every one of those commands is perfectly quoted
+   (MCR-SEC-021: containment is not validity).
+
+   Deriving the rule fixes all 20 at once and makes the defect unwritable rather
+   than merely absent: the join is computed from the flag, so a new generator
+   inherits it. The two escape hatches stay, narrowly:
+
+     eq:false     on a --long flag, for a long option that wants ' '
+     join:"glued" on a -X flag, for a tool that requires '-Xvalue'
+
+   and each is legal ONLY on the shape it belongs to. A token that declares the
+   join for a shape that derives it is a disagreement between the content and
+   the rule, and the only honest answer to a disagreement is null — never "guess
+   which one the author meant". extract/schema.py refuses the same token at
+   build time; this is the run-time backstop. */
+function flagJoin(tok){
+  var flag=String(tok.flag);
+  if(flag.charAt(1)==="-"){                                  /* --long */
+    if(tok.join!==undefined && tok.join!==null) return null;  /* `join` is a short-option word */
+    if(tok.eq!==undefined && tok.eq!==null && tok.eq!==false && tok.eq!==true) return null;
+    return tok.eq===false?" ":"=";
+  }
+  if(tok.eq!==undefined && tok.eq!==null) return null;        /* -X derives its join; it cannot be declared */
+  if(tok.join===undefined || tok.join===null) return " ";
+  if(tok.join==="glued") return "";                           /* -Xvalue, where a tool requires it */
+  return null;
+}
+
 /* assembleCommand(specOrEntry, version, values) -> {command, flags[], blast} | null
    NULL is the only answer for an incomplete or invalid input. There is no
    second return shape carrying a half-built string, because a half-formed root
@@ -789,6 +887,16 @@ function assembleCommand(spec,version,values,opts){
     if(tok.flag!==undefined && tok.flag!==null && !FLAG_TOKEN_RE.test(String(tok.flag))) return null;
     if(tok.lit!==undefined && tok.lit!==null){
       if(!LIT_TOKEN_RE.test(String(tok.lit))) return null;
+      /* MCR-SEC-022 (E7). A lit token emits its `lit` and nothing else, so a
+         `flag` beside it emits nothing — its only effect was to switch the D1
+         positional rule off, unchecked, for whatever literal it was attached to.
+         Whether a literal is an option is DERIVED from the literal (see
+         isPositionalToken()), so the key is unnecessary for a real option and a
+         bypass for anything else. Refused either way, including when it tells
+         the truth: a rule with an off-switch is not a rule, and the shipped
+         content carried two exemplars of the shape for the next author to copy.
+         extract/schema.py refuses it at build time; this is the backstop. */
+      if(tok.flag!==undefined && tok.flag!==null) return null;
       /* A literal may belong to a field — '--add-forward-port=...toaddr=' belongs
          to the toaddr value that follows it. requires: names that field, so the
          literal disappears WITH it and can never be left dangling. */
@@ -808,13 +916,31 @@ function assembleCommand(spec,version,values,opts){
         }
       }
       words.push(String(tok.lit));
+      /* MCR-SEC-023. The lit branch used to push the word and return, so an
+         option the command SHOWS — `sshd -T`, `setsebool -P`, `lvextend -r`,
+         `journalctl --no-pager --boot` — was absent from the flag-by-flag panel
+         entirely. A panel silent about a flag that is present is a smaller
+         version of threat-model §4's Explainer row, a panel that describes one
+         that is not. The same derived test decides it: an option-shaped literal
+         is an option, so it belongs in the flag list, in command order. With no
+         curated explain and no dictionary hit, `explain:null` renders
+         "unverified — see man page" — the no-guess law, not a guess. */
+      if(FLAG_TOKEN_RE.test(String(tok.lit))){
+        flags.push({flag:String(tok.lit),explain:tok.explain||null});
+      }
       continue;
     }
     if(tok.richRule){
       var composed=composeRichRule(v.resolved,tok.richRule,types);
       if(composed===null) return null;
-      words.push(tok.flag?String(tok.flag)+"="+shQuote(composed):shQuote(composed));
-      if(tok.flag) flags.push({flag:String(tok.flag),explain:tok.explain||null});
+      if(tok.flag){
+        var rjoin=flagJoin(tok);                  /* MCR-SEC-015: one join rule, not two */
+        if(rjoin===null) return null;
+        words.push(String(tok.flag)+rjoin+shQuote(composed));
+        flags.push({flag:String(tok.flag),explain:tok.explain||null});
+      }else{
+        words.push(shQuote(composed));
+      }
       continue;
     }
     var field=fieldFor(spec,tok.field);
@@ -842,7 +968,9 @@ function assembleCommand(spec,version,values,opts){
     }
     var q=shQuote(v.resolved[tok.field]);
     if(tok.flag){
-      words.push(String(tok.flag)+(tok.eq===false?" ":"=")+q);
+      var join=flagJoin(tok);                     /* MCR-SEC-015: derived from the flag's shape */
+      if(join===null) return null;                /* the token declares a join its shape derives */
+      words.push(String(tok.flag)+join+q);
       flags.push({flag:String(tok.flag),explain:field.explain||null});
     }else{
       words.push(q);
@@ -879,9 +1007,26 @@ try{
 }
 var PATTERNS=(DATASETS.DANGEROUS&&DATASETS.DANGEROUS.patterns)||[];
 
+/* ============ generator registry (CR-T-17..25, ADR-001 §8 module 4) ============
+   A generator is not authored as a second list: it IS a commands.json entry
+   whose shape is {fields[], template[]} instead of {rhel_versions}
+   (extract/schema.py's spec_errors() is the build-time authority for that
+   shape — see MCR-SEC-006's block comment above the assembler's own
+   FLAG_TOKEN_RE/LIT_TOKEN_RE). GENERATORS is simply the runtime's derived view
+   of "which content-island entries are generators", computed once at boot so
+   the tool list, the form renderer and Q5's feature-marker scan (which greps
+   the shipped shell for the literal text "var GENERATORS=") all read the same
+   list instead of each re-deriving "has a template" ad hoc. */
+var GENERATORS=(function(){
+  var entries=(DATASETS.COMMANDS&&DATASETS.COMMANDS.entries)||[],out=[];
+  for(var i=0;i<entries.length;i++){ if(entries[i].template) out.push(entries[i]); }
+  return out;
+})();
+function isGeneratorEntry(entry){ return !!(entry&&entry.template); }
+
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:"9",rail:"builder",toolId:null,entryId:null,line:0,acked:false,
-           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[]};
+           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],formValues:{}};
 (function(){
   var saved=STORE.getSession("version",null);
   if(saved && RHEL_VERSIONS.indexOf(saved)>=0) STATE.version=saved;
@@ -919,8 +1064,8 @@ function toolAvailability(tool){
 /* The dictionary answer for a flag, in the SELECTED version only. Decoding a
    RHEL 9 command against a RHEL 10 dictionary would be a silent lie, so a
    version with no dictionary yields the humility copy, not a neighbour's text. */
-function flagExplain(toolId,flag){
-  var dict=(DATASETS.FLAGS||{})[STATE.version];
+function flagExplain(toolId,flag,version){
+  var dict=(DATASETS.FLAGS||{})[version||STATE.version];
   var cli=dict&&dict.clis?dict.clis[toolId]:null;
   if(!cli||!cli.flags) return null;
   for(var i=0;i<cli.flags.length;i++){
@@ -928,6 +1073,26 @@ function flagExplain(toolId,flag){
     if(f.names && f.names.indexOf(flag)>=0 && f.explain) return f.explain;
   }
   return null;
+}
+/* ============ decoder — ADR-001 §8 module 7 ============
+   Grey Beard's decodeCmd() grown a version dimension: every flag an assembled
+   result carries is resolved to an explanation, curated first (a static
+   commands.json entry's own flags[].explain) and the SELECTED-VERSION flag
+   dictionary second (flagExplain() already refuses to read a neighbour
+   version's dictionary — decodeCmd() is told the version explicitly rather
+   than assuming STATE.version, so a future paste-and-decode panel can decode
+   against a version that is not the one currently on screen). Unknown or
+   uncurated stays null — the no-guess law applies here exactly as it does at
+   authoring time (CR-P0-02 AC3). */
+function decodeCmd(toolId,version,flags){
+  var out=[],i;
+  flags=flags||[];
+  for(i=0;i<flags.length;i++){
+    var f=flags[i];
+    var explain=f.explain||flagExplain(toolId,f.flag,version);
+    out.push({flag:f.flag,explain:explain||null});
+  }
+  return out;
 }
 /* ---- one rendered-state object per interaction (MCR-SEC-012) --------------
    threat-model-v1 §9 and §4 require that the copy path and the evidence
@@ -949,12 +1114,28 @@ function flagExplain(toolId,flag){
    banner, the inspector, the clipboard preview, doCopy() and the CR-T-28
    exporter all read it. */
 var RESULT={key:null,value:null};
-function resultKey(){ return STATE.version+"|"+String(STATE.entryId); }
+/* A generator's assembled command depends on live form input as well as on
+   STATE.version/entryId, so its key folds STATE.formValues in too — every
+   keystroke is then a genuinely new "interaction" for MCR-SEC-012's cache,
+   computed once and reused by the gutter, the banner, the inspector and the
+   clipboard, exactly like a static entry's key never needing formValues at
+   all (a plain string concatenation is a no-op when the object is empty). */
+function resultKey(){ return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey(); }
+function formValuesKey(){
+  var keys=[],k,out=[];
+  for(k in STATE.formValues){ if(Object.prototype.hasOwnProperty.call(STATE.formValues,k)) keys.push(k); }
+  keys.sort();
+  for(var i=0;i<keys.length;i++){
+    out.push(encodeURIComponent(keys[i])+"="+encodeURIComponent(STATE.formValues[keys[i]]));
+  }
+  return out.join("&");
+}
 function computeResult(){
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
-  var res=assembleCommand(entry,STATE.version,{},{patterns:PATTERNS});
+  var values=isGeneratorEntry(entry)?STATE.formValues:{};
+  var res=assembleCommand(entry,STATE.version,values,{patterns:PATTERNS});
   if(!res) return null;
   return withCopyPayloads(res,entry);
 }
@@ -1094,6 +1275,22 @@ function renderRail(){
 
 /* The tool list is gated, never filtered: a tool that RHEL N does not ship stays
    on screen, disabled, carrying the reason and the alternative (CR-P0-01 AC2). */
+/* Is this catalog entry offered on the selected release, and why not if it
+   isn't — the same question, answered the same way, for a static curated
+   entry (gated by rhel_versions[v].unavailable) and a generator spec (gated
+   by spec.versions, CR-T-17+). Neither branch ever hides the row; both return
+   a reason the sidebar renders (CR-P0-01 AC2). */
+function entryGateInfo(e){
+  if(isGeneratorEntry(e)){
+    var gated=!!(e.versions && !inList(e.versions,STATE.version));
+    return {gated:gated,
+            reason:gated?"This generator is not offered on RHEL "+STATE.version+".":""};
+  }
+  var slot=(e.rhel_versions||{})[STATE.version]||{};
+  var gated2=!!slot.unavailable;
+  return {gated:gated2, reason:gated2?((slot.unavailable&&slot.unavailable.reason)||""):""};
+}
+
 function renderToolList(){
   var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
@@ -1116,7 +1313,9 @@ function renderToolList(){
     var open=(t.id===STATE.toolId);
     if(av.available){
       html+="<li><button type=\"button\" class=\"row\" data-tool=\""+escapeAttr(t.id)+"\" aria-current=\""+
-            (open?"true":"false")+"\">"+esc(t.label||t.id)+"</button></li>";
+            (open?"true":"false")+"\">"+esc(t.label||t.id);
+      if(av.note){ html+="<span class=\"why\">"+esc(av.note)+"</span>"; }
+      html+="</button></li>";
     }else{
       html+="<li><button type=\"button\" class=\"row\" aria-disabled=\"true\" disabled title=\""+
             escapeAttr(GATED_COPY+STATE.version+(av.reason?" — "+av.reason:""))+"\">"+esc(t.label||t.id)+
@@ -1130,15 +1329,15 @@ function renderToolList(){
     }
     for(var j=0;j<entries.length;j++){
       var e=entries[j];
-      var slot=(e.rhel_versions||{})[STATE.version]||{};
-      var gated=!!slot.unavailable;
-      if(gated){
+      var gate=entryGateInfo(e);
+      if(gate.gated){
         html+="<li><button type=\"button\" class=\"row\" aria-disabled=\"true\" disabled title=\""+
-              escapeAttr(GATED_COPY+STATE.version+" — "+((slot.unavailable&&slot.unavailable.reason)||""))+"\">"+
+              escapeAttr(GATED_COPY+STATE.version+(gate.reason?" — "+gate.reason:""))+"\">"+
               esc(e.intent||e.id)+"<span class=\"why\">"+esc(GATED_COPY+STATE.version)+"</span></button></li>";
       }else{
         html+="<li><button type=\"button\" class=\"row\" data-entry=\""+escapeAttr(e.id)+"\" aria-current=\""+
-              (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+"</button></li>";
+              (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+
+              (isGeneratorEntry(e)?"<span class=\"why\">guided form</span>":"")+"</button></li>";
       }
     }
     html+="</ul></li>";
@@ -1178,6 +1377,10 @@ function renderEditor(){
   if(!entry){
     html+="<div class=\"card\"><h2>Entry not found</h2><p class=\"muted\">This build's content island has no entry with that id. Nothing is guessed and nothing is rendered from raw text.</p></div>";
     el("editor-card").innerHTML=html;
+    return;
+  }
+  if(isGeneratorEntry(entry)){
+    renderGeneratorEditor(entry);
     return;
   }
   var res=currentResult();
@@ -1224,6 +1427,145 @@ function renderEditor(){
   el("editor-card").innerHTML=html;
 }
 
+/* ============ generator form renderer (CR-T-17..25, ADR-001 §8 module 5) ====
+   Builds the SIDEBAR-of-the-editor form from a generator's fields[] — marks
+   required fields per UI spec §4 (*, "(required)" in the label text, never
+   colour alone, aria-required), and renders a version-gated field disabled +
+   aria-disabled + aria-describedby pointing at the reason, exactly like a
+   gated tool or entry row. The form frame (this function) is rebuilt only on
+   entry selection and on a RHEL version change — never on a keystroke, so
+   typing never loses focus; renderGeneratorResult() below is the part that
+   redraws on every keystroke, into its own #gen-result sink. */
+/* One accumulator, inline, exactly like every other renderer in this file —
+   deliberately NOT split into a per-field helper that RETURNS an HTML string:
+   Q17's audit only trusts a segment reaching a sink if it is a string
+   literal, one of esc()/escapeAttr()/escapeRegex(), or an accumulator this
+   gate derived from assignments in THIS file — a bare call to a helper
+   function is none of those, so the helper's returned markup would be an
+   unaudited segment no matter how carefully the helper itself escapes it. */
+function renderGeneratorForm(entry){
+  var html="<p class=\"region-label\">Fields</p>";
+  var fields=entry.fields||[];
+  for(var i=0;i<fields.length;i++){
+    var field=fields[i];
+    var name=field.name;
+    var val=STATE.formValues[name]!==undefined?STATE.formValues[name]:"";
+    var gated=!fieldAvailable(field,STATE.version);
+    var id="genf-"+entry.id+"-"+name;
+    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc(name);
+    if(field.required){ html+=" <span class=\"req\">*</span> (required)"; }
+    else{ html+=" (optional)"; }
+    html+="</label>";
+    if(gated){
+      html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+            "\" disabled aria-disabled=\"true\" aria-describedby=\""+escapeAttr(id)+"-why\" value=\"\">";
+      html+="<p class=\"why\" id=\""+escapeAttr(id)+"-why\">"+esc(GATED_COPY+STATE.version)+"</p>";
+      html+="</div>";
+      continue;
+    }
+    /* type "enum" is the author-curated closed set (field.options); a handful
+       of built-in FIELD_TYPES are ALSO closed sets (protocol/family/action)
+       with their enum baked into the type itself — both render a <select>,
+       neither makes the operator type a value the assembler would just as
+       happily have offered as a choice. */
+    var builtinEnum=(FIELD_TYPES[field.type]||{}).enums;
+    if(field.type==="enum"||builtinEnum){
+      html+="<select id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+            "\" aria-required=\""+(field.required?"true":"false")+"\">";
+      html+="<option value=\"\">(choose)</option>";
+      var opts=field.type==="enum"?(field.options||[]):builtinEnum;
+      for(var j=0;j<opts.length;j++){
+        var o=opts[j];
+        var ov=(typeof o==="string")?o:o.value;
+        var optGated=(typeof o!=="string")&&o.versions&&!inList(o.versions,STATE.version);
+        html+="<option value=\""+escapeAttr(ov)+"\"";
+        if(ov===val){ html+=" selected"; }
+        if(optGated){ html+=" disabled"; }
+        html+=">"+esc(ov);
+        if(optGated){ html+=" ("+esc(GATED_COPY+STATE.version)+")"; }
+        html+="</option>";
+      }
+      html+="</select></div>";
+      continue;
+    }
+    html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+          "\" aria-required=\""+(field.required?"true":"false")+"\" maxlength=\""+
+          escapeAttr(String((FIELD_TYPES[field.type]||{}).cap||200))+"\" placeholder=\""+
+          escapeAttr((FIELD_TYPES[field.type]||{}).label||field.type)+"\" value=\""+
+          escapeAttr(val)+"\"></div>";
+  }
+  el("gen-fields").innerHTML=html;
+}
+/* Fills #gen-result — the assembled command, the toolbar, the clipboard
+   preview, verify/undo/notes — from the SAME currentResult() every other
+   region reads (MCR-SEC-012). Runs on every keystroke; never touches the
+   fields above it, so a text input never loses focus mid-word. */
+function renderGeneratorResult(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  var target=el("gen-result");
+  if(!entry||!target) return;
+  var res=currentResult();
+  renderBlastBanner(res);
+  var html="";
+  if(!res){
+    if(entry.versions && !inList(entry.versions,STATE.version)){
+      html+="<div class=\"card\"><h2>"+esc(GATED_COPY+STATE.version)+"</h2>"+
+            "<p class=\"muted\">This generator is not offered on RHEL "+esc(STATE.version)+
+            ".</p></div>";
+    }else{
+      var v=validateSpec(entry,STATE.version,STATE.formValues);
+      html+="<div class=\"card\"><h2>Fill in the required fields</h2>";
+      if(v.missing.length){
+        html+="<p class=\"muted\">Still needed: "+esc(v.missing.join(", "))+"</p>";
+      }
+      for(var i=0;i<v.invalid.length;i++){
+        html+="<p class=\"muted\">"+esc(v.invalid[i].name)+": "+esc(v.invalid[i].reason)+"</p>";
+      }
+      html+="<p class=\"muted\">Copy is not rendered at all until a complete command is "
+            +"assembled — there is no dead control to tab through.</p></div>";
+    }
+    target.innerHTML=html;
+    return;
+  }
+  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+"</p>";
+  var lines=String(res.command).split("\n");
+  html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
+  for(var li=0;li<lines.length;li++){
+    html+="<div class=\"codeline\" role=\"button\" tabindex=\"0\" data-line=\""+escapeAttr(String(li))+
+          "\" aria-current=\""+(li===STATE.line?"true":"false")+
+          "\" aria-label=\"Line "+escapeAttr(String(li+1))+"\"><span class=\"ln\">"+esc(String(li+1))+
+          "</span><span class=\"lc\">"+esc(lines[li])+"</span></div>";
+  }
+  html+="</div>";
+  var blocked=(res.blast==="red"&&!STATE.acked);
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
+  html+="</div>";
+  if(res.copy_comment){
+    html+="<p class=\"region-label\">Copy with comment — exactly what reaches the clipboard</p>";
+    html+="<pre class=\"copypreview\" aria-label=\"Clipboard preview for Copy with comment\">"+
+          esc(res.copy_comment)+"</pre>";
+  }
+  if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
+  html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
+  html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  target.innerHTML=html;
+}
+function renderGeneratorEditor(entry){
+  /* The frame owns ONLY its own literal/esc() markup (Q17's audit rule: a
+     bare call to another render function is not a trusted segment, only
+     esc()/escapeAttr()/escapeRegex() and literals are) — the fields and the
+     result each write into their OWN sink below, as separate statements,
+     never concatenated into this accumulator. */
+  var html="<h2>"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"muted\">"+esc(entry.tool)+" — guided form</p>";
+  html+="<div id=\"gen-fields\"></div><div id=\"gen-result\"></div>";
+  el("editor-card").innerHTML=html;
+  renderGeneratorForm(entry);
+  renderGeneratorResult();
+}
+
 function renderInspector(){
   var html="";
   var res=currentResult();
@@ -1244,10 +1586,10 @@ function renderInspector(){
     if(cci) html+="<span class=\"badge\">"+esc(cci)+"</span>";
   }
   html+="<p class=\"region-label\">Flag by flag</p>";
-  var flags=res.flags||[];
+  var flags=decodeCmd(res.tool,res.version,res.flags||[]);
   if(!flags.length) html+="<p class=\"muted\">This command takes no flags.</p>";
   for(var j=0;j<flags.length;j++){
-    var explain=flags[j].explain||flagExplain(res.tool,flags[j].flag);
+    var explain=flags[j].explain;
     html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(flags[j].flag)+"</span>";
     if(explain){
       html+="<span class=\"mean\">"+esc(explain)+"</span>";
@@ -1401,11 +1743,11 @@ function selectTool(id,toggle){
 function selectEntry(id){
   var entry=entryById(id);
   if(!entry) return;
-  var slot=(entry.rhel_versions||{})[STATE.version]||{};
-  if(slot.unavailable) return;                    /* gated: cannot be selected at all */
+  if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
   STATE.entryId=id;
   STATE.line=0;
   STATE.acked=false;
+  STATE.formValues={};                              /* a new entry starts with a blank form */
   renderAll();
 }
 function setRail(name){
@@ -1451,20 +1793,55 @@ document.addEventListener("click",function(ev){
   var hit=t.closest("[data-hit]");
   if(hit){ activateHit(parseInt(hit.getAttribute("data-hit"),10)); return; }
   var line=t.closest("[data-line]");
-  if(line){ STATE.line=parseInt(line.getAttribute("data-line"),10); renderEditor(); renderInspector(); return; }
+  if(line){
+    STATE.line=parseInt(line.getAttribute("data-line"),10);
+    reRenderEditorAndInspector();
+    return;
+  }
   if(t===el("palette")){ closePalette(); return; }
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
   if(action==="theme"){ THEME.toggle(); return; }
-  if(action==="ack"){ STATE.acked=!!a.checked; renderEditor(); return; }
+  if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="copy"){ doCopy(false); return; }
   if(action==="copy-comment"){ doCopy(true); return; }
 });
 
+/* A line click or the red-blast ack checkbox only needs the RESULT re-drawn,
+   not the whole region: for a generator entry a full renderEditor() would
+   rebuild the field inputs from scratch (safe — they re-read STATE.formValues
+   — but pointless and a needless focus reset), so this redraws only
+   #gen-result for a generator and falls back to the ordinary full render for
+   a static entry, which has no separate form to preserve. */
+function reRenderEditorAndInspector(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(entry && isGeneratorEntry(entry)){ renderGeneratorResult(); }
+  else{ renderEditor(); }
+  renderInspector();
+}
+
+/* ============ generator field input -> STATE.formValues, no full re-render ============
+   Only #gen-result (the assembled command, banner, toolbar, inspector) redraws
+   on a keystroke; the field inputs above it are untouched, so a text input
+   never loses focus or cursor position mid-word. Both "input" (fires on every
+   keystroke, and on most engines on a <select>) and "change" (the reliable
+   event for <select>/checkbox on older engines) route through the same
+   handler; re-running it twice for one edit is idempotent. */
+function onFieldChange(ev){
+  var f=ev.target&&ev.target.closest?ev.target.closest("[data-field]"):null;
+  if(!f) return;
+  var name=f.getAttribute("data-field");
+  var val=f.value;
+  if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
+  renderGeneratorResult();
+  renderInspector();
+}
 document.addEventListener("input",function(ev){
-  if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); }
+  if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); return; }
+  onFieldChange(ev);
 });
+document.addEventListener("change",onFieldChange);
 
 /* ============ keyboard controller — ONE delegated keydown, ONE binding table ============ */
 /* UI spec §5. Every binding lives in KEYMAP; nothing in this file attaches a

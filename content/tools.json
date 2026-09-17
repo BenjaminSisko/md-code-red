@@ -2,9 +2,9 @@
  "_meta": {
   "schema": "tool: id, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} — ADR-001 §5.5",
   "curated": true,
-  "status": "CR-T-02 skeleton — only the tools the three skeleton command entries use. The full 14-category matrix lands with the P0 generators (CR-T-17..25).",
+  "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 3
+  "tool_count": 19
  },
  "tools": [
   {
@@ -12,10 +12,19 @@
    "label": "firewall-cmd / firewalld",
    "category": "firewall-cmd",
    "availability": {
-    "7": {"available": true, "note": "firewalld is the application firewall the pinned RHEL 7 benchmark checks for (RHEL-07-040520)."},
-    "8": {"available": true},
-    "9": {"available": true},
-    "10": {"available": true}
+    "7": {
+     "available": true,
+     "note": "firewalld is the application firewall the pinned RHEL 7 benchmark checks for (RHEL-07-040520)."
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
    },
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
@@ -30,10 +39,19 @@
    "label": "systemctl",
    "category": "systemctl",
    "availability": {
-    "7": {"available": true, "note": "RHEL 7 is the first release where systemd, and therefore systemctl, is the init system."},
-    "8": {"available": true},
-    "9": {"available": true},
-    "10": {"available": true}
+    "7": {
+     "available": true,
+     "note": "RHEL 7 is the first release where systemd, and therefore systemctl, is the init system."
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
    },
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md) — every pinned release's check text drives the service state through systemctl",
@@ -48,15 +66,509 @@
    "label": "journalctl / systemd-journald",
    "category": "journalctl",
    "availability": {
-    "7": {"available": true, "note": "No pinned RHEL 7 benchmark rule maps to the journal service; the service itself ships with systemd."},
-    "8": {"available": true, "note": "No pinned RHEL 8 benchmark rule maps to the journal service."},
-    "9": {"available": true, "note": "RHEL-09-211040 requires the service to be active."},
-    "10": {"available": true, "note": "RHEL-10-500000 requires the service to be active."}
+    "7": {
+     "available": true,
+     "note": "No pinned RHEL 7 benchmark rule maps to the journal service; the service itself ships with systemd."
+    },
+    "8": {
+     "available": true,
+     "note": "No pinned RHEL 8 benchmark rule maps to the journal service."
+    },
+    "9": {
+     "available": true,
+     "note": "RHEL-09-211040 requires the service to be active."
+    },
+    "10": {
+     "available": true,
+     "note": "RHEL-10-500000 requires the service to be active."
+    }
    },
    "source": {
     "title": "DISA RHEL 9 V2R9 and RHEL 10 V1R2 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
     "version": "RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "nmcli",
+   "label": "nmcli / NetworkManager",
+   "category": "nmcli",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "NetworkManager and nmcli are present on RHEL 7; flag names below are documented from the RHEL 7 System Administrator's Guide, not captured by the CR-T-09/10 host extraction (RHEL 7/9 extraction is out of scope for that tranche)."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the RHEL 9 Managing networking infrastructure services guide, not captured by the CR-T-09/10 host extraction."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "lvcreate",
+   "label": "lvcreate (LVM)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (LVM chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "lvextend",
+   "label": "lvextend (LVM)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (LVM chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "sshd",
+   "label": "sshd / sshd_config",
+   "category": "ssh / sshd config",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (OpenSSH chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "useradd",
+   "label": "useradd",
+   "category": "useradd / usermod",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (Users and Groups chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "usermod",
+   "label": "usermod",
+   "category": "useradd / usermod",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (Users and Groups chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "dnf",
+   "label": "dnf",
+   "category": "dnf / yum",
+   "availability": {
+    "7": {
+     "available": false,
+     "reason": "RHEL 7 ships yum only; dnf is not available.",
+     "alternative": "yum"
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "yum",
+   "label": "yum",
+   "category": "dnf / yum",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "RHEL 7's package manager; documented from the RHEL 7 System Administrator's Guide (Yum chapter), not host-extracted."
+    },
+    "8": {
+     "available": true,
+     "note": "yum is a compatibility symlink to dnf. Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "yum is a compatibility symlink to dnf. Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "yum is a compatibility symlink to dnf. Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "setsebool",
+   "label": "setsebool",
+   "category": "semanage / setsebool",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (SELinux chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "setsebool(8) shipped no long-option table for CR-T-09/10 to capture; -P is documented from the man page itself."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "setsebool(8) shipped no long-option table for CR-T-09/10 to capture; -P is documented from the man page itself."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "semanage",
+   "label": "semanage",
+   "category": "semanage / setsebool",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (SELinux chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "CR-T-09/10 captured only semanage(8)'s own top-level page; the port/fcontext/boolean flags below are on the separate semanage-port(8) man page and are documented, not host-verified."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "CR-T-09/10 captured only semanage(8)'s own top-level page; the port/fcontext/boolean flags below are on the separate semanage-port(8) man page and are documented, not host-verified."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "chage",
+   "label": "chage",
+   "category": "chage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the man page — RHEL 7's chage predates the CR-T-09/10 extraction hosts."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "auditctl",
+   "label": "auditctl",
+   "category": "auditctl / ausearch",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (System Auditing chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "ausearch",
+   "label": "ausearch",
+   "category": "auditctl / ausearch",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (System Auditing chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "rsyslogd",
+   "label": "rsyslogd",
+   "category": "rsyslog",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "rsyslog has been RHEL's default syslog daemon since RHEL 6; documented from the RHEL 7 System Administrator's Guide, not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "chronyd",
+   "label": "chronyd / chrony",
+   "category": "chronyd",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "chronyd is the RHEL 7 default NTP daemon (chrony package); ntpd is available as a legacy alternative from the separate ntp package, but is not installed or enabled by default."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10. ntpd is not in the default repositories from RHEL 8 forward — chronyd only."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts. chronyd only; ntpd is not available."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10. chronyd only; ntpd is not available."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "podman",
+   "label": "podman",
+   "category": "podman",
+   "availability": {
+    "7": {
+     "available": false,
+     "reason": "Not available as a supported package on RHEL 7 (base or Extras); podman is RHEL 8+.",
+     "alternative": null
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }

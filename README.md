@@ -10,12 +10,103 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + full STIG datasets, 1,492 rules)  
+**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules)  
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-17
 
 ## Recent changes
 
+- **2026-09-17** — D4 review fixes MCR-SEC-015..023, conditions E1–E7, branch
+  `salm/milo/generators` (Milo Vance). Marcus Reed's D4 review of the generator tranche returned
+  **DENY** on one HIGH that blocks on its own, plus six conditions and two advisories. All are closed
+  on this branch. **MCR-SEC-015 (HIGH, E1)** — the assembler joined every flag to its value with `=`
+  unless the token said `eq:false`, and `eq:false` was used nowhere in the 24 shipped specs, so 20
+  short-option tokens across 11 of 24 generators emitted `-X=value`, which getopt(3) does not accept:
+  it hands the `=` to the tool as the first character of the argument. `chage -M=60` sets max-days to
+  `"=60"`; `useradd -c=RFC-1234 -s=/bin/bash` silently sets a wrong GECOS and an invalid login shell;
+  `auditctl -w=/etc/motd` watches nothing while looking, to the operator recording the STIG control,
+  like it worked. Fixed at the assembler rather than per token: a new `flagJoin()` derives the join
+  from the flag's own shape — `--long` takes `=`, `-X` takes a space — so all 20 are correct with **no
+  content edit** and the defect is unwritable rather than merely absent. Two escape hatches survive,
+  each legal only on the shape it belongs to (`eq:false` on a long option, `join:"glued"` on a short
+  one), and `extract/schema.py` refuses the disagreement at build time while the assembler returns
+  null at run time. **MCR-SEC-022 (E7) and MCR-SEC-018 (E3)** — the D1 positional rule had an
+  unchecked off-switch: a `flag` key beside `lit` told it to look away, so `{lit:"0644",flag:"-P",
+  requires:"m"}` was accepted and reopened MCR-SEC-013 through the key meant to close it. Replaced
+  with the **derived** discriminator Marcus recommended — a `lit` matching `FLAG_TOKEN_RE` is an
+  option and never occupies an argument slot — in both halves; a token carrying both `lit` and `flag`
+  is now refused outright, including when they agree, and the two shipped exemplars of the shape lose
+  their `flag` key (both keep `requires`). That also closes MCR-SEC-018's over-refusal without the
+  dangerous workaround it invited — deleting `requires` would have made every SELinux boolean change
+  persistent when the operator asked for runtime-only. **MCR-SEC-023** — the lit branch pushed the
+  word and returned, so `sshd -T`, `setsebool -P`, `lvextend -r` and `journalctl --no-pager --boot`
+  appeared in the command and were absent from the flag-by-flag panel; option-shaped literals now
+  reach the inspector, rendering *"unverified — see man page"* where no explanation is curated.
+  **MCR-SEC-016 (E4)** — `lvm_size` and `group_list` field types; four fields retyped off `comment`,
+  the one free-text type, so `lvextend -L 'ticket RFC-1234'` no longer assembles. The LVM placeholder
+  now distinguishes `10G` (set to) from `+10G` (grow by), which nothing in the UI did. **MCR-SEC-019 /
+  MCR-SEC-020 (E5)** — `gen-fw-allow-service`'s citation repointed from `#L310` (`--add-service`, an
+  option it does not emit) to `#L538`, and a new **gate Q20** measures the flag dictionary against the
+  raw captures for all 44 tool/release pairs and checks that every generator citation shows the option
+  that generator actually emits. The dictionary gap is accepted with a date and a ticket in
+  `docs/POAM.md` and `content-src/flag_coverage_baseline.json`; what was missing was not the coverage
+  but anything able to see the gap, since Q15 re-runs the extractor and diffs its output against
+  itself. **MCR-SEC-021 (E6)** — the harness was a containment oracle only: it never asserted the
+  benign command is a valid invocation of its tool, which is how 20 malformed joins passed 76,225
+  checks. It gains a hand-authored **golden-command table** (`tests/fixtures/golden-commands.json`,
+  one row per generator per release, never generated from the assembler), a getopt(3) syntax oracle,
+  and an enum-branch sweep — `benignFor()` no longer pins every enum to `opts[0]`, and every
+  destructive branch must come out at least yellow while a green generator must still have a green
+  branch. The E1 and E7 fixes were committed **fail-first**: `77a688f` (44 harness failures) before
+  `5315fef`, and `1389487` (78 harness + 5 unit failures) before `dee9005`. E2 was already met at
+  `996b504`. Also new: `tests/test_positional_crosscheck.py`, which re-runs Marcus's exhaustive shift
+  sweep extended with option-shaped literals — 3,258 schema-accepted shapes, 104,256 runs, 0 shift
+  violations, and shown failing against the pre-fix tree. Merged with `origin/main` at `da2ab47` (the
+  Gate 3 qa.py hardening), where the new coverage gate takes the number **Q20** because Q19 is now the
+  escaper property gate. Gates on the merged tree, from a clean `dist/`: `build.py` reproducible /
+  `qa.py` **Q1–Q21 PASS** / `unittest` **159 OK** (135 from the hardening merge + 24 added here) /
+  harness **81,577 checks, 0 FAILED** (was 76,225) / artifact sha256
+  `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`. Also closed on this branch:
+  **Q21**, after a `json.dump(..., ensure_ascii=False)` round-trip in `dd01ad7` turned eight
+  invisible-character vectors in `tests/fixtures/hostile-inputs.json` into the raw characters they
+  name — no gate could see it, because Q17 scans the artifact and the harness reads the file as JSON.
+  Marcus's D4 re-review then took Q21 wider (all 226 tracked files, nothing excluded, a U+FEFF at
+  offset 0 the only allowance), settled **MCR-SEC-025** from the pinned chronyd capture (directives
+  are operands, so the command stands; the citation and notes were the part that was wrong), and gave
+  the **Q20** coverage ratchet a retirement plan — owner Caleb Stone, 2026-09-25, enforced by the gate.
+
+- **2026-09-17** — Guided-form generators CR-T-17..25, branch `salm/milo/generators` (Milo Vance).
+  24 generator specs across the 9 tool areas Zee assigned this tranche: firewall-cmd (default zone,
+  open-port and allow-service rich rules), nmcli (static IPv4), journalctl, lvcreate/lvextend, sshd
+  (`-T -f`), useradd/usermod, systemctl (query and manage, split so a read action and a state-changing
+  action never share one blast level), dnf and yum (RHEL 7 is yum-only — `dnf`'s tools.json entry is
+  `unavailable` on RHEL 7 with `alternative: "yum"`, never a fabricated `dnf` command), setsebool and
+  semanage port, chage (list and set-aging, man-page-sourced per ADR §2.4), auditctl/ausearch, rsyslogd
+  (`-N1` config test), and chronyd (`-Q` one-shot check, with the RHEL 7 chronyd-default/legacy-ntpd
+  note carried in the entry's `notes` field). Every generator is a `commands.json` entry shaped
+  `{fields[], template[]}` — no second registry to keep in sync — consumed by a new `GENERATORS`
+  registry, form renderer and `decodeCmd()` added to `template.html` on top of the existing assembler
+  (`assembleCommand`/`shQuote`/`composeRichRule`/`isPositionalToken`/`blastFor` were not touched).
+  16 new tools.json entries record, per RHEL version, whether a tool's flags are host-verified
+  (Defiant RHEL 8.10 / Saratoga RHEL 10.2, CR-T-09/10) or documented from the corpus (RHEL 7 System
+  Administrator's Guide / RHEL 9 guides, cited by manifest `source_url` + `sha256`) — RHEL 7/9 carry no
+  fabricated flags. Two firewall-cmd generators (`--add-rich-rule`, `--permanent`) cite the raw RHEL
+  8/10 man-page capture directly (`content-src/raw/rhel{8,10}/firewall-cmd.man.txt`) rather than
+  `flags_rhel{8,10}.json`: those two real, host-captured flags are absent from the generated dictionary
+  because `extract_flags.py`'s synopsis-line regex only captures the `[--permanent]` prefix token
+  repeated ahead of firewalld's ~90 per-option lines and misses the option that follows it on the same
+  line — a real extractor gap, flagged for a follow-on fix, not worked around by inventing a flag.
+  `tests/hostile_harness.js` gained a content-spec sweep that loads `content/commands.json` directly
+  and fuzzes every field of every one of the 24 real generator entries with the full hostile-vector set
+  in its own template (12,689 checks), on top of the existing per-field-type sweep — 76,225 checks
+  total, 0 failed. `qa.py` Q12 and `tests/test_schema.py` learned that a generator spec (`"template" in
+  e`) keeps the four-version promise via `spec.versions`/`field.versions` rather than a `rhel_versions`
+  object, closing a gap where the first real generator spec would have failed a gate that predates
+  CR-T-17. Verified rendering, live command assembly (including rich-rule composition), version-gating
+  (podman/dnf disabled-with-reason on RHEL 7, values persisting across a version switch) and dangerous-
+  pattern blast escalation (`yum remove` → yellow) in a real browser against `dist/` over a local HTTP
+  server. Gates: `build.py` / `qa.py` (Q1-Q18 PASS) / `python3 -m unittest discover -s tests` (51 OK) /
+  `node tests/hostile_harness.js` (0 FAILED) all green before and after.
 - **2026-09-17** — QA gate hardening against fail-open, branch `salm/milo/qa-hardening`
   (Milo Vance). Al Kowalski's BQP Gate 3 diff review of `qa.py` returned **PASS WITH ISSUES**
   with one HIGH finding and five MEDIUM/LOW. `qa.py` is the merge gate, so its own defects are

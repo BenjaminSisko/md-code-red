@@ -2,14 +2,14 @@
  "_meta": {
   "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
   "curated": true,
-  "status": "CR-T-02 skeleton — 3 entries, all STIG-sourced, all verified:false. Catalog authoring is CR-T-33.",
+  "status": "CR-T-02 skeleton (3 curated entries) + CR-T-17..25 generator specs (24 entries): guided forms for firewall-cmd, nmcli, journalctl, lvm, sshd, useradd/usermod, systemctl, dnf/yum, semanage/setsebool, chage, auditctl/ausearch, rsyslog, chronyd, podman. Full catalog authoring is still CR-T-33.",
   "rhel_version_value_shapes": [
    "{command, notes, changed_in_note}",
    "{same_as: \"<other version key>\", changed_in_note?}",
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 3
+  "entry_count": 27
  },
  "categories": [
   "firewall-cmd",
@@ -44,12 +44,28 @@
      "notes": "The RHEL 8 STIG check narrows to the one-word service state. Reads only; it does not start, enable, or reload anything.",
      "changed_in_note": null
     },
-    "9": {"same_as": "8", "changed_in_note": null},
-    "10": {"same_as": "9", "changed_in_note": null}
+    "9": {
+     "same_as": "8",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
    },
    "flags": [
-    {"flag": "status", "explain": null, "source_ref": null, "license_class": "paraphrase-only"},
-    {"flag": "is-active", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+    {
+     "flag": "status",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "is-active",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
    ],
    "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
    "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
@@ -59,8 +75,12 @@
      "stig_id": "RHEL-07-040520",
      "rule_id": "SV-204604r991589_rule",
      "rhel_version": "7",
-     "cci": ["CCI-000366"],
-     "nist": ["CM-6 b"],
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
      "check_cmd": "systemctl status firewalld",
      "fix_cmd": "yum install firewalld && systemctl start firewalld",
      "expected_output": null
@@ -69,8 +89,12 @@
      "stig_id": "RHEL-08-040101",
      "rule_id": "SV-244544r958672_rule",
      "rhel_version": "8",
-     "cci": ["CCI-002314"],
-     "nist": ["AC-17 (1)"],
+     "cci": [
+      "CCI-002314"
+     ],
+     "nist": [
+      "AC-17 (1)"
+     ],
      "check_cmd": "systemctl is-active firewalld",
      "fix_cmd": "sudo systemctl enable firewalld",
      "expected_output": null
@@ -79,8 +103,14 @@
      "stig_id": "RHEL-09-251015",
      "rule_id": "SV-257936r1044995_rule",
      "rhel_version": "9",
-     "cci": ["CCI-000382", "CCI-002314"],
-     "nist": ["CM-7 b", "AC-17 (1)"],
+     "cci": [
+      "CCI-000382",
+      "CCI-002314"
+     ],
+     "nist": [
+      "CM-7 b",
+      "AC-17 (1)"
+     ],
      "check_cmd": "systemctl is-active firewalld",
      "fix_cmd": "sudo systemctl enable --now firewalld",
      "expected_output": null
@@ -89,8 +119,14 @@
      "stig_id": "RHEL-10-200531",
      "rule_id": "SV-280956r1165223_rule",
      "rhel_version": "10",
-     "cci": ["CCI-000382", "CCI-002314"],
-     "nist": ["CM-7 b", "AC-17 (1)"],
+     "cci": [
+      "CCI-000382",
+      "CCI-002314"
+     ],
+     "nist": [
+      "CM-7 b",
+      "AC-17 (1)"
+     ],
      "check_cmd": "systemctl is-active firewalld",
      "fix_cmd": "sudo systemctl enable --now firewalld",
      "expected_output": null
@@ -134,7 +170,12 @@
     }
    },
    "flags": [
-    {"flag": "status", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+    {
+     "flag": "status",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
    ],
    "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
    "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
@@ -144,8 +185,12 @@
      "stig_id": "RHEL-07-020230",
      "rule_id": "SV-204455r991589_rule",
      "rhel_version": "7",
-     "cci": ["CCI-000366"],
-     "nist": ["CM-6 b"],
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
      "check_cmd": "systemctl status ctrl-alt-del.target",
      "fix_cmd": "systemctl disable ctrl-alt-del.target && systemctl mask ctrl-alt-del.target",
      "expected_output": null
@@ -154,8 +199,12 @@
      "stig_id": "RHEL-08-040170",
      "rule_id": "SV-230529r1017289_rule",
      "rhel_version": "8",
-     "cci": ["CCI-000366"],
-     "nist": ["CM-6 b"],
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
      "check_cmd": "sudo systemctl status ctrl-alt-del.target",
      "fix_cmd": "sudo systemctl disable ctrl-alt-del.target && sudo systemctl mask ctrl-alt-del.target",
      "expected_output": null
@@ -164,8 +213,12 @@
      "stig_id": "RHEL-09-211050",
      "rule_id": "SV-257785r1044833_rule",
      "rhel_version": "9",
-     "cci": ["CCI-002235"],
-     "nist": ["AC-6 (10)"],
+     "cci": [
+      "CCI-002235"
+     ],
+     "nist": [
+      "AC-6 (10)"
+     ],
      "check_cmd": "sudo systemctl status ctrl-alt-del.target",
      "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
      "expected_output": null
@@ -174,8 +227,12 @@
      "stig_id": "RHEL-10-700960",
      "rule_id": "SV-281299r1166849_rule",
      "rhel_version": "10",
-     "cci": ["CCI-002235"],
-     "nist": ["AC-6 (10)"],
+     "cci": [
+      "CCI-002235"
+     ],
+     "nist": [
+      "AC-6 (10)"
+     ],
      "check_cmd": "systemctl status ctrl-alt-del.target",
      "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
      "expected_output": null
@@ -212,10 +269,18 @@
      "notes": "RHEL 9 is the first pinned benchmark that requires the journal service to be active, as RHEL-09-211040.",
      "changed_in_note": null
     },
-    "10": {"same_as": "9", "changed_in_note": null}
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
    },
    "flags": [
-    {"flag": "is-active", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+    {
+     "flag": "is-active",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
    ],
    "verify": "The command prints \"active\".",
    "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
@@ -225,8 +290,12 @@
      "stig_id": "RHEL-09-211040",
      "rule_id": "SV-257783r991562_rule",
      "rhel_version": "9",
-     "cci": ["CCI-001665"],
-     "nist": ["SC-24"],
+     "cci": [
+      "CCI-001665"
+     ],
+     "nist": [
+      "SC-24"
+     ],
      "check_cmd": "systemctl is-active systemd-journald",
      "fix_cmd": "sudo systemctl enable --now systemd-journald",
      "expected_output": null
@@ -235,8 +304,12 @@
      "stig_id": "RHEL-10-500000",
      "rule_id": "SV-281096r1165643_rule",
      "rhel_version": "10",
-     "cci": ["CCI-001665"],
-     "nist": ["SC-24"],
+     "cci": [
+      "CCI-001665"
+     ],
+     "nist": [
+      "SC-24"
+     ],
      "check_cmd": "systemctl is-active systemd-journald",
      "fix_cmd": "sudo systemctl enable --now systemd-journald",
      "expected_output": null
@@ -251,6 +324,1244 @@
     "license_class": "verbatim-ok"
    },
    "verified": false
+  },
+  {
+   "id": "gen-fw-set-default-zone",
+   "tool": "firewall-cmd",
+   "category": "firewall-cmd",
+   "intent": "Change the default firewall zone new connections are placed in",
+   "fields": [
+    {
+     "name": "zone",
+     "type": "zone",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "firewall-cmd"
+    },
+    {
+     "flag": "--set-default-zone",
+     "field": "zone"
+    }
+   ],
+   "verify": "firewall-cmd --get-default-zone prints the zone just set.",
+   "undo": "Run this generator again with the previous zone name.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-firewall-cmd-r8",
+    "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 firewall-cmd",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-fw-open-port",
+   "tool": "firewall-cmd",
+   "category": "firewall-cmd",
+   "intent": "Open (or close) a port through the permanent firewalld configuration",
+   "fields": [
+    {
+     "name": "family",
+     "type": "family",
+     "required": true
+    },
+    {
+     "name": "source",
+     "type": "cidr",
+     "required": false
+    },
+    {
+     "name": "port",
+     "type": "portrange",
+     "required": true
+    },
+    {
+     "name": "proto",
+     "type": "protocol",
+     "required": true
+    },
+    {
+     "name": "act",
+     "type": "action",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "firewall-cmd"
+    },
+    {
+     "lit": "--permanent"
+    },
+    {
+     "flag": "--add-rich-rule",
+     "richRule": {
+      "family": "family",
+      "source": "source",
+      "port": "port",
+      "protocol": "proto",
+      "action": "act"
+     }
+    }
+   ],
+   "verify": "firewall-cmd --permanent --list-rich-rules shows the rule; run firewall-cmd --reload afterward to apply it to the running firewall.",
+   "undo": "Run this generator again with action=reject or action=drop reversed to accept, or edit /etc/firewalld/zones/<zone>.xml and reload.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-firewall-cmd-r8",
+    "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-fw-allow-service",
+   "tool": "firewall-cmd",
+   "category": "firewall-cmd",
+   "intent": "Allow (or block) a named firewalld service through the permanent configuration",
+   "fields": [
+    {
+     "name": "family",
+     "type": "family",
+     "required": true
+    },
+    {
+     "name": "source",
+     "type": "cidr",
+     "required": false
+    },
+    {
+     "name": "svc",
+     "type": "service",
+     "required": true
+    },
+    {
+     "name": "act",
+     "type": "action",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "firewall-cmd"
+    },
+    {
+     "lit": "--permanent"
+    },
+    {
+     "flag": "--add-rich-rule",
+     "richRule": {
+      "family": "family",
+      "source": "source",
+      "service": "svc",
+      "action": "act"
+     }
+    }
+   ],
+   "verify": "firewall-cmd --permanent --list-rich-rules shows the rule; run firewall-cmd --reload afterward to apply it to the running firewall.",
+   "undo": "Run this generator again with the reverse action, or edit /etc/firewalld/zones/<zone>.xml and reload.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-firewall-cmd-r8",
+    "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-nmcli-static-ipv4",
+   "tool": "nmcli",
+   "category": "nmcli",
+   "intent": "Give a NetworkManager connection a static IPv4 address, gateway and DNS method",
+   "fields": [
+    {
+     "name": "con",
+     "type": "service",
+     "required": true
+    },
+    {
+     "name": "ifname",
+     "type": "interface",
+     "required": true
+    },
+    {
+     "name": "address",
+     "type": "cidr",
+     "required": true
+    },
+    {
+     "name": "gateway",
+     "type": "ipv4",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "nmcli"
+    },
+    {
+     "lit": "connection"
+    },
+    {
+     "lit": "modify"
+    },
+    {
+     "field": "con"
+    },
+    {
+     "lit": "connection.interface-name"
+    },
+    {
+     "field": "ifname"
+    },
+    {
+     "lit": "ipv4.addresses"
+    },
+    {
+     "field": "address"
+    },
+    {
+     "lit": "ipv4.gateway"
+    },
+    {
+     "field": "gateway"
+    },
+    {
+     "lit": "ipv4.method"
+    },
+    {
+     "lit": "manual"
+    }
+   ],
+   "verify": "nmcli connection show <con> reports the new address under IP4.ADDRESS and IP4.GATEWAY. If the connection is not currently active, bring it up with nmcli connection up <con>.",
+   "undo": "nmcli connection modify <con> ipv4.method auto, then nmcli connection up <con>, returns the connection to DHCP.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-nmcli-r8",
+    "title": "nmcli(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 nmcli",
+    "version": "RHEL 8 — content-src/raw/rhel8/nmcli.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-journalctl-unit-logs",
+   "tool": "journalctl",
+   "category": "journalctl",
+   "intent": "Read the systemd journal, filtered by unit, minimum priority and time window",
+   "fields": [
+    {
+     "name": "unit",
+     "type": "unit",
+     "required": false
+    },
+    {
+     "name": "priority",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "emerg",
+      "alert",
+      "crit",
+      "err",
+      "warning",
+      "notice",
+      "info",
+      "debug"
+     ]
+    },
+    {
+     "name": "since",
+     "type": "comment",
+     "required": false
+    },
+    {
+     "name": "thisboot",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "journalctl"
+    },
+    {
+     "lit": "--no-pager"
+    },
+    {
+     "flag": "--unit",
+     "field": "unit",
+     "optional": true
+    },
+    {
+     "flag": "--priority",
+     "field": "priority",
+     "optional": true
+    },
+    {
+     "flag": "--since",
+     "field": "since",
+     "optional": true
+    },
+    {
+     "lit": "--boot",
+     "requires": "thisboot"
+    }
+   ],
+   "verify": "The command prints matching journal entries. No matches is exit status 0 with no output, not a failure.",
+   "undo": "Nothing to undo — journalctl only reads the journal and changes nothing on the host.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-journalctl-r8",
+    "title": "journalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 journalctl",
+    "version": "RHEL 8 — content-src/raw/rhel8/journalctl.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-lvcreate-new-lv",
+   "tool": "lvcreate",
+   "category": "lvm",
+   "intent": "Create a new logical volume of a given size inside an existing volume group",
+   "fields": [
+    {
+     "name": "size",
+     "type": "lvm_size",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "service",
+     "required": true
+    },
+    {
+     "name": "vg",
+     "type": "service",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "lvcreate"
+    },
+    {
+     "flag": "-L",
+     "field": "size"
+    },
+    {
+     "flag": "-n",
+     "field": "name"
+    },
+    {
+     "field": "vg"
+    }
+   ],
+   "verify": "lvs <vg>/<name> shows the new logical volume at the requested size.",
+   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume — blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-lvcreate-r8",
+    "title": "lvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 lvcreate",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvcreate.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-lvextend-grow",
+   "tool": "lvextend",
+   "category": "lvm",
+   "intent": "Grow an existing logical volume, optionally resizing its filesystem in the same step",
+   "fields": [
+    {
+     "name": "size",
+     "type": "lvm_size",
+     "required": true
+    },
+    {
+     "name": "resizefs",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    },
+    {
+     "name": "lvpath",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "lvextend"
+    },
+    {
+     "flag": "-L",
+     "field": "size"
+    },
+    {
+     "lit": "-r",
+     "requires": "resizefs"
+    },
+    {
+     "field": "lvpath"
+    }
+   ],
+   "verify": "lvs <lvpath> (or df -h on the mountpoint, if -r resized the filesystem) shows the new size.",
+   "undo": "lvextend only grows a volume; lvreduce is the shrink path and is destructive on most filesystems (unmount and back up first). There is no safe undo for a grow.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-lvextend-r8",
+    "title": "lvextend(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 lvextend",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvextend.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-sshd-test-config",
+   "tool": "sshd",
+   "category": "ssh / sshd config",
+   "intent": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon",
+   "fields": [
+    {
+     "name": "path",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "sshd"
+    },
+    {
+     "lit": "-T"
+    },
+    {
+     "flag": "-f",
+     "field": "path"
+    }
+   ],
+   "verify": "The command prints the merged, effective configuration and exits 0 with no syntax error.",
+   "undo": "Nothing to undo — test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-sshd-r8",
+    "title": "sshd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 sshd",
+    "version": "RHEL 8 — content-src/raw/rhel8/sshd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-useradd-create",
+   "tool": "useradd",
+   "category": "useradd / usermod",
+   "intent": "Create a new local account with a home directory, comment, supplementary groups and shell",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    },
+    {
+     "name": "comment",
+     "type": "comment",
+     "required": false
+    },
+    {
+     "name": "groups",
+     "type": "group_list",
+     "required": false
+    },
+    {
+     "name": "shell",
+     "type": "path",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "useradd"
+    },
+    {
+     "lit": "-m"
+    },
+    {
+     "flag": "-c",
+     "field": "comment",
+     "optional": true
+    },
+    {
+     "flag": "-G",
+     "field": "groups",
+     "optional": true
+    },
+    {
+     "flag": "-s",
+     "field": "shell",
+     "optional": true
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "getent passwd <username> shows the new account with a home directory and the requested shell.",
+   "undo": "userdel -r <username> removes the account and its home directory — blast: red, see the dangerous-pattern table (dp-userdel).",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-useradd-r8",
+    "title": "useradd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 useradd",
+    "version": "RHEL 8 — content-src/raw/rhel8/useradd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-usermod-add-group",
+   "tool": "usermod",
+   "category": "useradd / usermod",
+   "intent": "Add an existing account to one or more supplementary groups without removing it from any group it is already in",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    },
+    {
+     "name": "groups",
+     "type": "group_list",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "usermod"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-G",
+     "field": "groups"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "id <username> lists the new group under supplementary groups.",
+   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it — usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-usermod-r8",
+    "title": "usermod(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 usermod",
+    "version": "RHEL 8 — content-src/raw/rhel8/usermod.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-systemctl-query",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Read a systemd unit's current state without changing it",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "status",
+      "is-active",
+      "is-enabled",
+      "is-failed"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "unit",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "systemctl"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "unit"
+    }
+   ],
+   "verify": "The command's own output IS the verification: is-active/is-enabled/is-failed print one word, status prints the full unit block.",
+   "undo": "Nothing to undo — every action in this generator only reads unit state.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-systemctl-manage",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Start, stop, restart, enable or disable a systemd unit",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "start",
+      "stop",
+      "restart",
+      "reload",
+      "enable",
+      "disable"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "unit",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "systemctl"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "unit"
+    }
+   ],
+   "verify": "systemctl is-active <unit> (and is-enabled <unit> for enable/disable) reports the new state.",
+   "undo": "Run this generator again with the reverse action (start<->stop, enable<->disable).",
+   "blast": "yellow",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-dnf-package",
+   "tool": "dnf",
+   "category": "dnf / yum",
+   "intent": "Install or remove a package with dnf",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "install",
+      "remove"
+     ]
+    },
+    {
+     "name": "pkg",
+     "type": "package",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "dnf"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "pkg"
+    }
+   ],
+   "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
+   "undo": "Run this generator again with the reverse action.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ]
+  },
+  {
+   "id": "gen-yum-package",
+   "tool": "yum",
+   "category": "dnf / yum",
+   "intent": "Install or remove a package with yum (RHEL 7's package manager; a compatibility symlink to dnf on RHEL 8+)",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "install",
+      "remove"
+     ]
+    },
+    {
+     "name": "pkg",
+     "type": "package",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "yum"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "pkg"
+    }
+   ],
+   "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
+   "undo": "Run this generator again with the reverse action.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false,
+   "versions": [
+    "7",
+    "8",
+    "9",
+    "10"
+   ]
+  },
+  {
+   "id": "gen-setsebool-set",
+   "tool": "setsebool",
+   "category": "semanage / setsebool",
+   "intent": "Turn an SELinux boolean on or off, optionally persisting the change across reboot",
+   "fields": [
+    {
+     "name": "boolean",
+     "type": "selinux_boolean",
+     "required": true
+    },
+    {
+     "name": "state",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "on",
+      "off"
+     ]
+    },
+    {
+     "name": "persist",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "setsebool"
+    },
+    {
+     "lit": "-P",
+     "requires": "persist"
+    },
+    {
+     "field": "boolean"
+    },
+    {
+     "field": "state"
+    }
+   ],
+   "verify": "getsebool <boolean> reports the new state; without -P the change reverts on reboot.",
+   "undo": "Run this generator again with the reverse state.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-setsebool-r8",
+    "title": "setsebool(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 setsebool",
+    "version": "RHEL 8 — content-src/raw/rhel8/setsebool.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-semanage-port-add",
+   "tool": "semanage",
+   "category": "semanage / setsebool",
+   "intent": "Label a non-default port with an SELinux port type so a policy that expects the type on that port stops denying it",
+   "fields": [
+    {
+     "name": "porttype",
+     "type": "selinux_boolean",
+     "required": true
+    },
+    {
+     "name": "proto",
+     "type": "protocol",
+     "required": true
+    },
+    {
+     "name": "port",
+     "type": "portrange",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "semanage"
+    },
+    {
+     "lit": "port"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-t",
+     "field": "porttype"
+    },
+    {
+     "flag": "-p",
+     "field": "proto"
+    },
+    {
+     "field": "port"
+    }
+   ],
+   "verify": "semanage port -l | grep <porttype> lists the new port in the type's port range.",
+   "undo": "semanage port -d -t <porttype> -p <proto> <port> removes the mapping.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-semanage-port-r8",
+    "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 8 semanage-port",
+    "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-chage-list",
+   "tool": "chage",
+   "category": "chage",
+   "intent": "List an account's password aging information",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "chage"
+    },
+    {
+     "lit": "-l"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "The command prints the account's last change, expiry and warning-day settings.",
+   "undo": "Nothing to undo — this only reads aging state.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-chage-r8",
+    "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 chage",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-chage-set-aging",
+   "tool": "chage",
+   "category": "chage",
+   "intent": "Set an account's maximum password age, minimum password age and expiry warning window",
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    },
+    {
+     "name": "maxdays",
+     "type": "integer",
+     "required": false
+    },
+    {
+     "name": "mindays",
+     "type": "integer",
+     "required": false
+    },
+    {
+     "name": "warndays",
+     "type": "integer",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "chage"
+    },
+    {
+     "flag": "-M",
+     "field": "maxdays",
+     "optional": true
+    },
+    {
+     "flag": "-m",
+     "field": "mindays",
+     "optional": true
+    },
+    {
+     "flag": "-W",
+     "field": "warndays",
+     "optional": true
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value — leave at least one filled in to get a single non-interactive command.)",
+   "undo": "Run this generator again with the account's previous values (read them first with chage -l).",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-chage-r8",
+    "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 1 chage",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-auditctl-watch",
+   "tool": "auditctl",
+   "category": "auditctl / ausearch",
+   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot — persistent rules go in /etc/audit/rules.d/)",
+   "fields": [
+    {
+     "name": "path",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "perms",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "r",
+      "w",
+      "x",
+      "a",
+      "wa",
+      "rwa",
+      "rwxa"
+     ]
+    },
+    {
+     "name": "key",
+     "type": "audit_key",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "auditctl"
+    },
+    {
+     "flag": "-w",
+     "field": "path"
+    },
+    {
+     "flag": "-p",
+     "field": "perms"
+    },
+    {
+     "flag": "-k",
+     "field": "key",
+     "optional": true
+    }
+   ],
+   "verify": "auditctl -l lists the new watch rule.",
+   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule — the flags must match the rule exactly.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-auditctl-r8",
+    "title": "auditctl(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 auditctl",
+    "version": "RHEL 8 — content-src/raw/rhel8/auditctl.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-ausearch-by-key",
+   "tool": "ausearch",
+   "category": "auditctl / ausearch",
+   "intent": "Search the audit log for events tagged with a rule key, optionally bounded by start time",
+   "fields": [
+    {
+     "name": "key",
+     "type": "audit_key",
+     "required": true
+    },
+    {
+     "name": "start",
+     "type": "comment",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "ausearch"
+    },
+    {
+     "flag": "-k",
+     "field": "key"
+    },
+    {
+     "flag": "-ts",
+     "field": "start",
+     "optional": true
+    }
+   ],
+   "verify": "The command prints matching audit events, or exits 1 with no output if none matched.",
+   "undo": "Nothing to undo — ausearch only reads the audit log.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-ausearch-r8",
+    "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 ausearch",
+    "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-rsyslogd-test-config",
+   "tool": "rsyslogd",
+   "category": "rsyslog",
+   "intent": "Parse an rsyslog configuration file and report syntax errors without starting the daemon",
+   "fields": [
+    {
+     "name": "path",
+     "type": "path",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "rsyslogd"
+    },
+    {
+     "lit": "-N1"
+    },
+    {
+     "flag": "-f",
+     "field": "path",
+     "optional": true
+    }
+   ],
+   "verify": "rsyslogd -N1 exits 0 and prints no error line if the configuration is valid.",
+   "undo": "Nothing to undo — -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-rsyslogd-r8",
+    "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 rsyslogd",
+    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-chronyd-one-shot-check",
+   "tool": "chronyd",
+   "category": "chronyd",
+   "intent": "Run a single NTP correction against a server or pool and exit, without touching the running chronyd service or its configuration",
+   "fields": [
+    {
+     "name": "directive",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "chronyd"
+    },
+    {
+     "flag": "-Q",
+     "field": "directive"
+    }
+   ],
+   "verify": "chronyd -Q exits 0 and prints the step it applied, or an error if the server is unreachable.",
+   "undo": "Nothing to undo — -Q performs one correction and exits; it does not modify the running chronyd service, its configuration, or start anything persistent.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-chronyd-r8",
+    "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "content-src/raw/rhel8/chronyd.man.txt#L68",
+    "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "notes": "MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (content-src/raw/rhel8/chronyd.man.txt#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
+  },
+  {
+   "id": "gen-podman-ps",
+   "tool": "podman",
+   "category": "podman",
+   "intent": "List containers",
+   "fields": [
+    {
+     "name": "all",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "podman"
+    },
+    {
+     "lit": "ps"
+    },
+    {
+     "lit": "-a",
+     "requires": "all"
+    }
+   ],
+   "verify": "The command's own table output IS the verification — one row per container (running only, or every container with -a).",
+   "undo": "Nothing to undo — ps only lists container state.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-podman-ps-r8",
+    "title": "podman-ps(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 1 podman-ps",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ],
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+  },
+  {
+   "id": "gen-podman-stop",
+   "tool": "podman",
+   "category": "podman",
+   "intent": "Stop a running container",
+   "fields": [
+    {
+     "name": "container",
+     "type": "service",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "podman"
+    },
+    {
+     "lit": "stop"
+    },
+    {
+     "field": "container"
+    }
+   ],
+   "verify": "podman ps no longer lists the container as Up.",
+   "undo": "podman start <container> starts it again (state and data in the container are unaffected by stop).",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-podman-stop-r8",
+    "title": "podman-stop(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 1 podman-stop",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ],
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   }
  ]
 }

@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q19, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q21, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -12,13 +12,26 @@ qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file kee
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
 
-Q18 and Q19 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
+Q18 through Q21 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
 (threat-model-v1 §11), the hostile-input harness over the command assembler and
 the quoting-domain separation check. Q19 closes AL-GATE3-001 from Al Kowalski's
 BQP Gate 3 review: Q17 proves esc()/escapeAttr() are CALLED at every render
 sink and cannot prove they ESCAPE anything, so Q19 lifts them out of the shipped
 artifact and RUNS them against a hostile corpus. Both REQUIRE Node — see
 gate_q18 and gate_q19 for why a skip is not acceptable in either.
+
+Q20 is MCR-SEC-020 and MCR-SEC-019 (condition E5 of Marcus Reed's D4 review):
+the flag dictionary measured against the raw captures it was extracted from, and
+every generator citation checked to show an option that generator actually
+emits. Q15 cannot see either, because it re-runs the extractor and diffs the
+output against itself — a systematically skipped option class produces a
+byte-identical re-parse and a PASS.
+
+Q21 scans TRACKED SOURCE FILES for raw control, bidi and zero-width characters,
+using the same TROJAN_RANGES table Q17 applies to the shipped artifact. Q17
+proves what crosses the air gap is clean; Q21 proves the repository is. The
+failure it exists for is not an attacker but an editor — see the block comment
+above gate_q21.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -1877,6 +1890,19 @@ def gate_q12(ctx):
             "four-version completeness is the claim on the cover of this product; with no "
             "entries it is complete the way a blank page is"))
     for e in entries:
+        if "template" in e:
+            # A generator spec (CR-T-17+) composes its command at render time from
+            # validated FORM INPUT, not from a fixed rhel_versions object — so the
+            # four-version promise is kept by spec.versions (a whole-generator gate)
+            # and each field's own .versions (a per-field gate) instead of a
+            # rhel_versions block. extract/schema.py's spec_errors() is the
+            # build-time authority for the field/template shape; this gate only
+            # confirms that IF the entry restricts itself to certain releases, it
+            # names real RHEL keys and not something that silently gates nothing.
+            vs = e.get("versions")
+            if vs is not None and (not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs)):
+                f.append("entry %s: versions %r is not a non-empty subset of %s" % (e.get("id"), vs, VERSIONS))
+            continue
         versions = e.get("rhel_versions") or {}
         if set(versions.keys()) != set(VERSIONS):
             f.append("entry %s: rhel_versions keys %s != {7,8,9,10}" % (e.get("id"), sorted(versions.keys())))
@@ -2450,6 +2476,317 @@ def gate_q19(ctx):
     """
     return escaper_failures(ctx["shell"])
 
+LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
+COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
+RAW_DIR_FOR = {"8": "rhel8", "10": "rhel10"}
+
+
+def _long_options_in_raw(raw_dir, cli):
+    """Distinct long options the committed raw capture for this tool mentions."""
+    if not os.path.isdir(raw_dir):
+        return None
+    files = sorted(f for f in os.listdir(raw_dir)
+                   if f.startswith(cli + ".") and f.endswith(".man.txt"))
+    if not files:
+        return None
+    found = set()
+    for name in files:
+        with open(os.path.join(raw_dir, name), encoding="utf-8", errors="replace") as fh:
+            found |= set(LONG_OPTION_RE.findall(fh.read()))
+    return found
+
+
+def coverage_baseline_expiry_failures(baseline, today=None):
+    """MCR-SEC-020, condition F3 — the ratchet has to be able to expire.
+
+    An accepted residual with a gate holding it steady is a good answer for a
+    fortnight and a bad one forever: the gate stops being a countdown and starts
+    being the plan. So the baseline names an owner and a date, and after that
+    date this returns a failure until someone re-dates the file — which means
+    either the extractor fix landed and the numbers came down, or a human
+    decided, in writing, to extend it.
+    """
+    import datetime
+    owner = baseline.get("_retire_owner")
+    by = baseline.get("_retire_by")
+    if not owner or not by:
+        return ["the flag-coverage baseline names no _retire_owner/_retire_by. A ratchet with no "
+                "retirement plan is not a countdown, it is the plan (MCR-SEC-020, condition F3)"]
+    try:
+        deadline = datetime.date(*[int(x) for x in by.split("-")])
+    except (ValueError, TypeError):
+        return ["the flag-coverage baseline's _retire_by %r is not an ISO date" % by]
+    now = today or datetime.date.today()
+    if now > deadline:
+        return ["the flag-coverage baseline expired on %s and has not been re-dated. Owner: %s. "
+                "Either CR-T-09's extractor fix landed (regenerate this file against the new "
+                "dictionaries) or the residual needs extending in writing — but it stops being "
+                "accepted by default (MCR-SEC-020, condition F3)" % (by, owner)]
+    return []
+
+
+def gate_q20(ctx):
+    """MCR-SEC-020 (condition E5) — dictionary coverage, and citations that point at the flag.
+
+    Marcus Reed's finding was not that the flag dictionary has a gap. It was that
+    NOTHING COULD SEE ONE: Q15 re-runs the extractor and diffs the output against
+    itself, so a systematically skipped option class produces a byte-identical
+    re-parse and a PASS. `--add-rich-rule` is absent from flags_rhel8.json and
+    flags_rhel10.json and present in the raw capture twice over, and every gate in
+    this file was green.
+
+    Two halves:
+
+    (a) COVERAGE. Distinct long options in each committed raw capture, against the
+        long option names the dictionary carries for that tool. Long options only,
+        and the gate says so rather than implying more: they are the countable
+        class in man-page text, and the option this finding was raised about is
+        one. The raw count is an upper bound — it picks up prose and per-subcommand
+        options the top-level parser never sees — so this is a REGRESSION gate
+        against content-src/flag_coverage_baseline.json, which records the gap with
+        the date it was accepted and the ticket that owns closing it (CR-T-09/10).
+        A shortfall that GROWS fails. A shortfall that shrinks reports, and asks
+        for the baseline to be tightened, because a stale baseline is a gate that
+        has stopped measuring.
+
+    (b) CITATIONS (MCR-SEC-019). A generator whose source cites a raw capture line
+        must cite a line that actually shows an option the generator EMITS.
+        gen-fw-allow-service cited firewall-cmd.man.txt#L310 — `--add-service`,
+        an option it does not emit, since it composes a rich rule — which is
+        threat-model §4's Explainer row in the provenance rather than in the panel.
+    """
+    f, d, p = [], [], []
+    data = ctx.get("data")
+
+    if not os.path.exists(COVERAGE_BASELINE):
+        f.append("content-src/flag_coverage_baseline.json is missing — MCR-SEC-020's coverage "
+                 "gate has no recorded baseline, so it cannot tell a gap from a regression")
+        return f, d, p
+    with open(COVERAGE_BASELINE, encoding="utf-8") as fh:
+        baseline = json.load(fh)
+    f.extend(coverage_baseline_expiry_failures(baseline))
+    for key in ("_accepted_on", "_accepted_by", "_ticket", "_retire_owner", "_retire_by"):
+        if not baseline.get(key):
+            f.append("the flag-coverage baseline carries no %s — E5 asks for the gap closed OR "
+                     "accepted WITH A DATE, and an undated acceptance is neither" % key)
+
+    measured, stale = 0, []
+    for rel, raw_name in sorted(RAW_DIR_FOR.items()):
+        dict_path = os.path.join(REPO, "content", "flags_rhel%s.json" % rel)
+        if not os.path.exists(dict_path):
+            f.append("content/flags_rhel%s.json is missing" % rel)
+            continue
+        with open(dict_path, encoding="utf-8") as fh:
+            dictionary = json.load(fh)
+        raw_dir = os.path.join(REPO, "content-src", "raw", raw_name)
+        rel_baseline = (baseline.get("coverage") or {}).get(rel) or {}
+        for cli, rec in sorted((dictionary.get("clis") or {}).items()):
+            raw_long = _long_options_in_raw(raw_dir, cli)
+            if raw_long is None:
+                continue                      # no committed capture for this tool on this release
+            dict_long = set()
+            for fl in rec.get("flags") or []:
+                for n in fl.get("names") or []:
+                    if n.startswith("--"):
+                        dict_long.add(n)
+            missing = sorted(raw_long - dict_long)
+            measured += 1
+            row = rel_baseline.get(cli)
+            if row is None:
+                f.append("RHEL %s / %s: the flag-coverage baseline has no row for this tool. A tool "
+                         "with no recorded coverage has never been measured" % (rel, cli))
+                continue
+            accepted = row.get("accepted_missing")
+            if not isinstance(accepted, int):
+                f.append("RHEL %s / %s: the baseline row has no accepted_missing count" % (rel, cli))
+                continue
+            if len(missing) > accepted:
+                f.append("RHEL %s / %s: the flag dictionary now misses %d long options documented in "
+                         "the raw capture, up from the accepted %d. New: %s. A dictionary that loses "
+                         "ground is an Explainer that quietly says 'unverified' about more of the "
+                         "product (MCR-SEC-020)"
+                         % (rel, cli, len(missing), accepted, ", ".join(missing[:8])))
+            elif len(missing) < accepted:
+                stale.append("RHEL %s / %s: %d missing, baseline accepts %d"
+                             % (rel, cli, len(missing), accepted))
+            if missing:
+                d.append("RHEL %s / %s: %d of %d long options in the capture are in the dictionary "
+                         "(%d missing, accepted %s)"
+                         % (rel, cli, len(raw_long) - len(missing), len(raw_long), len(missing),
+                            baseline.get("_accepted_on")))
+    if measured == 0:
+        f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
+    else:
+        d.append("flag-dictionary coverage measured for %d tool/release pairs against the baseline "
+                 "accepted on %s (%s); ratchet retires %s, owner %s"
+                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"),
+                    baseline.get("_retire_by"), baseline.get("_retire_owner")))
+    for line in stale:
+        d.append("coverage IMPROVED beyond the baseline — tighten it: " + line)
+
+    # (b) MCR-SEC-019: a cited raw line must show an option the generator emits.
+    if data is None:
+        p.append("no parsed island — the citation half of Q20 needs content/commands.json via the "
+                 "built artifact")
+        return f, d, p
+    cited = 0
+    for e in (((data.get("commands") or {}).get("entries")) or []):
+        if not e.get("template"):
+            continue
+        ref = ((e.get("source") or {}).get("url_or_man")) or ""
+        if "#L" not in ref:
+            continue
+        path_part, _, line_part = ref.partition("#L")
+        target = os.path.join(REPO, path_part)
+        if not os.path.exists(target):
+            f.append("%s cites %s, which does not exist" % (e["id"], ref))
+            continue
+        try:
+            line_no = int(line_part)
+        except ValueError:
+            f.append("%s cites %s, whose line anchor is not a number" % (e["id"], ref))
+            continue
+        with open(target, encoding="utf-8", errors="replace") as fh:
+            lines = fh.read().splitlines()
+        window = "\n".join(lines[max(0, line_no - 4):line_no + 4])
+        # The option that DEFINES this generator is the one bound to a value or
+        # to a composed rich rule, not a decoration like --permanent that half
+        # the firewall-cmd man page mentions. gen-fw-allow-service cited a line
+        # showing --add-service and --permanent; --permanent is emitted, so a
+        # laxer rule here would have passed the very citation MCR-SEC-019 raised.
+        primary = set()
+        decoration = set()
+        for tok in e["template"]:
+            flag = tok.get("flag")
+            if isinstance(flag, str) and flag.startswith("-"):
+                primary.add(flag)
+                continue
+            lit = tok.get("lit")
+            if isinstance(lit, str) and lit.startswith("-"):
+                decoration.add(lit)
+        emitted = primary or decoration
+        if not emitted:
+            d.append("%s cites %s and emits no option token of its own" % (e["id"], ref))
+            continue
+        cited += 1
+        if not any(opt in window for opt in emitted):
+            f.append("%s cites %s, and the eight lines around it show none of the options it "
+                     "actually emits (%s). An explanation that does not match the flag present is "
+                     "threat-model §4's Explainer row, landing in the provenance instead of the "
+                     "panel (MCR-SEC-019)" % (e["id"], ref, ", ".join(sorted(emitted))))
+        else:
+            d.append("%s cites %s, which shows %s" % (e["id"], ref,
+                                                      ", ".join(sorted(o for o in emitted if o in window))))
+    d.append("%d generator citations point at a raw capture line and were checked against the "
+             "options that generator emits" % cited)
+    return f, d, p
+
+
+# ---------------------------------------------------------------------------
+# Q21 — raw trojan characters in tracked SOURCE files
+#
+# Q17 scans the built artifact's shell and data island: it proves what crosses
+# the air gap is clean. This proves the REPO is, which is a different corpus and
+# a different failure mode. Most tracked files never reach the artifact — tests,
+# fixtures, docs — and the way this goes wrong is not an attacker, it is an
+# editor: tests/fixtures/hostile-inputs.json states its invisible-character
+# vectors as JSON \u escapes ON PURPOSE, so the file that describes U+202E is
+# itself readable and diffable, and a round-trip through json.dump(...,
+# ensure_ascii=False) turned eight of them into the raw characters they name.
+# That is how it happened here, at dd01ad7, by my own hand.
+#
+# Deliberately NOT folded into Q17: a Q17 failure would then mean either "the
+# shipped artifact is poisoned" or "someone's editor rewrote a fixture", and a
+# gate whose failure is ambiguous costs more than it saves. Q17 also reads
+# ctx["shell"]; this needs `git ls-files`.
+#
+# The character set is qa.py's own TROJAN_RANGES — the one Q17 already uses.
+# Two statements of the same table is one too many (MCR-SEC-006's doctrine, and
+# tests/test_schema.py already holds that line for the field-type and rich-rule
+# tables). It is strictly broader than "bidi and line separators": it carries C0
+# and C1 minus \t \n \r, soft hyphen, the zero-width run, the bidi isolates, and
+# U+2065 (MCR-SEC-009).
+#
+# NOTHING is excluded. The first cut of this gate skipped stig-src/ and
+# content-src/raw/ as pinned vendor captures; Marcus Reed asked for the narrower
+# rule (MCR-SEC-025, condition F1) and the measurement backs him: across both
+# trees, 62 files, the only hit of any kind is ONE leading byte-order mark, in
+# stig-src/U_CCI_List.xml. So the exclusion bought nothing and cost the two
+# largest directories in the repository. A U+FEFF at OFFSET 0 is file framing
+# and is allowed; a U+FEFF anywhere else is exactly the trojan this gate is for.
+# ---------------------------------------------------------------------------
+TROJAN_SCAN_EXCLUDE = ()
+
+
+def raw_trojan_failures(paths, root=None):
+    """Raw control/bidi/zero-width characters in these files. One message each.
+
+    Takes an explicit path list rather than walking anything itself, so the
+    negative control can hand it a planted file and watch it fire — a scanner
+    that has only ever been pointed at clean input is not a scanner.
+    """
+    failures = []
+    root = root or REPO
+    for rel in paths:
+        full = rel if os.path.isabs(rel) else os.path.join(root, rel)
+        try:
+            with open(full, "rb") as fh:
+                raw = fh.read()
+        except (IOError, OSError):
+            continue                                  # deleted or unreadable: not this gate's call
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue                                  # binary or non-UTF-8: nothing to say
+        for m in TROJAN_RE.finditer(text):
+            ch = m.group()
+            if m.start() == 0 and ch == "\ufeff":
+                continue                              # a leading BOM is framing, not content
+            byte = len(text[:m.start()].encode("utf-8"))
+            around = text[max(0, m.start() - 12):m.start() + 12].replace("\n", "\\n")
+            failures.append("%s: raw U+%04X at byte %d, near %r. This character must be written as "
+                            "an escape its format provides (JSON \\u%04x, a source-language escape), "
+                            "never as the character itself — a file that spells out an invisible or "
+                            "bidirectional character is a file no reviewer can read correctly"
+                            % (rel, ord(ch), byte, around, ord(ch)))
+    return failures
+
+
+def tracked_text_files():
+    """`git ls-files`, minus the pinned vendor captures. Empty if git is absent."""
+    git = shutil.which("git")
+    if not git:
+        return None
+    proc = subprocess.run([git, "ls-files", "-z"], cwd=REPO,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        return None
+    names = [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+    if not TROJAN_SCAN_EXCLUDE:
+        return names
+    return [n for n in names if not n.startswith(TROJAN_SCAN_EXCLUDE)]
+
+
+def gate_q21(ctx):
+    """No tracked source file carries a raw trojan character (see the block above)."""
+    f, d, p = [], [], []
+    paths = tracked_text_files()
+    if paths is None:
+        f.append("git ls-files is unavailable, so the tracked-file corpus cannot be enumerated. "
+                 "This gate reports FAIL rather than skipping: a scan with nothing to scan is a "
+                 "PASS that means nothing")
+        return f, d, p
+    if len(paths) < 50:
+        f.append("git ls-files returned only %d files to scan — the corpus collapsed and this gate "
+                 "would pass on an empty repository" % len(paths))
+        return f, d, p
+    f.extend(raw_trojan_failures(paths))
+    d.append("%d tracked files scanned for raw control, bidi and zero-width characters — every "
+             "file git tracks, nothing excluded. The one allowance is a U+FEFF byte-order mark at "
+             "offset 0, which only stig-src/U_CCI_List.xml uses (MCR-SEC-025, condition F1)"
+             % len(paths))
+    return f, d, p
+
 
 def gate_node_check(ctx):
     """BQP Gate 2 #1/#9 — JS syntax of the extracted app script. Node is optional."""
@@ -2542,6 +2879,8 @@ GATES = [
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
     ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
     ("Q19", "Escaper behaviour (esc/escapeAttr/escapeRegex actually escape, run under node)", gate_q19),
+    ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
+    ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -2582,7 +2921,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "Q20", "Q21", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue
