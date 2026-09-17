@@ -397,19 +397,36 @@ var STORE=(function(){
    reference in here silently turns that gate into a test of nothing.
 
    Escaping domains are never interchanged (threat-model-v1 §3.2):
-   esc()/escapeAttr() render to the DOM, shQuote() quotes for a POSIX shell.
-   qa.py Q18 fails the build if one is ever nested inside another.
+   esc()/escapeAttr() render to the DOM, shQuote() quotes for a POSIX shell,
+   yamlQuote() quotes a YAML single-quoted scalar. qa.py Q18 fails the build if
+   any one is ever nested inside any other, in either direction.
 
-   There is deliberately NO YAML quoter here yet. One existed, was correct, and
-   had no call site at all — assembleCommand() has no YAML output path, so Q18's
-   quoting-domain gate was passing on a domain that did not exist and the
-   harness's YAML invariant only asserted the function's behaviour to itself
-   (MCR-SEC-010). A dead escaper reads as "Ansible YAML output is proven safe",
-   which was not true and would have been inherited by the CR-T-25 review as a
-   false clean bill. It is removed; the quoting-domain check is SHELL-ONLY until
-   the Ansible generator lands. When the first YAML sink arrives (CR-T-17+), the
-   quoter and a YAML-parsing oracle in tests/hostile_harness.js ship in the SAME
-   commit — the harness refuses to run if a YAML quoter reappears without one.
+   MCR-SEC-010, and how it is closed. A YAML quoter existed here once, was
+   correct, and had NO CALL SITE: assembleCommand() had no YAML output path, so
+   Q18's quoting-domain gate passed on a domain that did not exist and the
+   harness's YAML invariant only asserted the function's behaviour to itself. A
+   dead escaper reads as "Ansible YAML output is proven safe", which was not
+   true. It was deleted, and the gate was narrowed to SHELL-ONLY with one
+   standing condition attached (Marcus Reed's D3): the sink, the quoter and a
+   YAML-PARSING ORACLE ship in the same commit or not at all.
+
+   This is that commit. composeDoc() below is the sink — the Ansible playbook,
+   inventory and ansible.cfg generators emit a FILE alongside their command —
+   yamlQuote() is the quoter, and tests/hostile_harness.js carries
+   parseYamlSubset()/parseIniSubset(), which parse every emitted document and
+   assert every operator value comes back out of the parser exactly as it went
+   in. Containment proven by parsing, the way parseRichRule() proves rich rules,
+   and not by looking for the value inside quotation marks.
+
+   THE TWO DOMAINS ARE NEVER SHARED. shQuote() wraps in single quotes and ends
+   the quoted run to emit an escaped quote ('it'\''s'); yamlQuote() wraps in
+   single quotes and DOUBLES the quote (''), because a YAML single-quoted scalar
+   has exactly one escape and it is not a backslash. Substituting either for the
+   other produces a string that is syntactically wrong in the other's grammar,
+   which is precisely what the harness's domain-swap control asserts. Neither
+   function is ever applied to the other's output, and no value takes both
+   paths: template[] tokens go to shQuote(), doc lines go to yamlQuote(), and
+   the INI kind takes neither (see composeDoc()).
    ========================================================================== */
 
 /* The version-gating sentence lives inside the block so the block is entirely
@@ -422,6 +439,27 @@ var GATED_COPY="Not available in RHEL ";
    The cosmetic cost is --zone='public' instead of --zone=public. */
 function shQuote(s){
   return "'"+String(s).replace(/'/g,"'\\''")+"'";
+}
+
+/* YAML single-quoted scalar quoting, applied UNIFORMLY to every operator-supplied
+   value that reaches a YAML file. Its own escaping domain, sharing no code
+   and no idiom with shQuote() above.
+
+   A YAML single-quoted scalar has exactly ONE escape sequence: '' for a literal
+   apostrophe. There is no backslash escape inside single quotes — a backslash is
+   an ordinary character there — which is why shQuote()'s '\'' idiom is not
+   merely cosmetically wrong in this domain but produces a DIFFERENT VALUE:
+   yamlQuote("it's") is 'it''s' and parses back as "it's", while shQuote("it's")
+   is 'it'\''s' and parses, in YAML, as the scalar "it" followed by junk the
+   parser rejects. That asymmetry is the whole reason these are two functions and
+   not one with a flag.
+
+   Like shQuote() there is deliberately no "this value looks harmless, leave it
+   bare" branch. The only bare scalars a file can contain come from a `bool`
+   line, whose value is a JSON boolean in the curated spec — there is no path
+   from a form field to an unquoted YAML scalar. */
+function yamlQuote(s){
+  return "'"+String(s).replace(/'/g,"''")+"'";
 }
 
 /* Characters that never belong in ANY field, checked before the per-type
@@ -806,6 +844,194 @@ function composeRichRule(map,plan,types){
   return out+" "+action;
 }
 
+/* ---- the generated FILE (MCR-SEC-010, CR-T-25) ---------------------------
+   An Ansible generator produces two things, not one: the command line the
+   operator runs, and the FILE that command runs against. `doc` is the second.
+   It is a declared line list in the spec, walked here — never a template string
+   with values interpolated into it, for the same reason template[] is a token
+   list and not a format string.
+
+   TWO GRAMMARS, ONE RULE EACH.
+
+   kind "yaml": every operator value is yamlQuote()d. Keys are either curated
+   literals matching DOC_KEY_RE (no colon, no space, no quote — a plain YAML key
+   that needs no quoting) or come from a validated field, in which case the KEY
+   is yamlQuote()d too, because a mapping key is as much a scalar as a value is.
+
+   kind "ini": ansible.cfg is an INI file and INI HAS NO ESCAPE SEQUENCE. There
+   is no encoding that makes free text safe in `key = value`: a newline ends the
+   entry, a ';' or '#' can begin a comment, an '=' is the separator. So this
+   grammar gets NO quoter — inventing a fourth escaper that cannot be written
+   correctly is exactly the mistake MCR-SEC-001 refused for rich rules. It gets
+   the same two rules rich rules got instead:
+
+     1. STRUCTURAL. An ini line may only cite a field whose declared type is in
+        INI_FIELD_TYPES, and every one of those is a closed grammar. `comment`
+        (the one free-text type) and `enum` (whose options a content author
+        writes) are deliberately absent.
+     2. CHARACTER. Every value is re-checked here, at composition time, against
+        INI_VALUE_RE, and the whole file is refused (null) if any value
+        carries anything that could end the entry or begin a comment. Rule 1
+        makes rule 2 unreachable today; rule 2 is what still holds if a future
+        type is added to rule 1's table in error.
+
+   NULL is the only answer for anything that does not compose. There is no
+   half-written file, for the same reason there is no half-built command
+   (threat-model-v1 §3.4): a playbook missing a line still runs. */
+var DOC_KINDS=["yaml","ini"];
+/* A plain YAML key / INI key: no colon, no whitespace, no quote, no comment
+   character. Curated content, checked the way template[].lit is checked. */
+var DOC_KEY_RE=/^[A-Za-z_][A-Za-z0-9_.-]*$/;
+/* A curated literal VALUE in a doc line. Closed even though the yaml kind
+   quotes it anyway — the ini kind does not, and one table for both is one
+   table to get right. */
+var DOC_LIT_RE=/^[A-Za-z0-9_./:@+-]+$/;
+/* No whitespace, no quote, no ';' or '#', no '=', no control character:
+   nothing that can end an INI entry or start a comment. */
+var INI_VALUE_RE=/^[A-Za-z0-9_./:@+-]+$/;
+/* Closed grammars only, for the reason above the function. */
+var INI_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
+                     "interface","package","unit","ipv4","ipv6","ipaddr"];
+var DOC_MAX_INDENT=8;
+var DOC_INDENT="  ";
+
+function docIndent(n){
+  var out="",i;
+  for(i=0;i<n;i++) out+=DOC_INDENT;
+  return out;
+}
+/* Is this doc line going to contribute at all on this release? Same question
+   tokenPresent() asks of a template token, asked of a line: a line with a
+   `field` needs that field resolved and available, a line with `requires` needs
+   the field it names, and a line with neither is unconditional. */
+function docLinePresent(spec,version,resolved,line){
+  var owner;
+  if(line.requires!==undefined && line.requires!==null){
+    owner=fieldFor(spec,line.requires);
+    if(!owner) return false;
+    if(!fieldAvailable(owner,version)) return false;
+    if(!Object.prototype.hasOwnProperty.call(resolved,line.requires)) return false;
+  }
+  var names=[line.field,line.keyField],i;
+  for(i=0;i<names.length;i++){
+    if(names[i]===undefined||names[i]===null) continue;
+    owner=fieldFor(spec,names[i]);
+    if(!owner) return false;
+    if(!fieldAvailable(owner,version)) return false;
+    if(!Object.prototype.hasOwnProperty.call(resolved,names[i])) return false;
+  }
+  return true;
+}
+/* A doc line's gate: the field whose presence decides whether it appears, or
+   null when it always appears. The YAML analogue of token_gate(). */
+function docLineGate(line){
+  if(!line) return null;
+  if(line.requires!==undefined && line.requires!==null) return line.requires;
+  if(line.field!==undefined && line.field!==null) return line.field;
+  if(line.keyField!==undefined && line.keyField!==null) return line.keyField;
+  return null;
+}
+/* A YAML mapping is keyed, not positional, so a dropped line promotes nothing —
+   the MCR-SEC-002 shift rule has no analogue here. What DOES have one is the
+   block: dropping `vars:` while `ansible_user:` underneath it survives leaves an
+   orphan indented under the wrong parent, which is a structural rewrite of the
+   file exactly as surely as a promoted argument is of a command line. So a
+   line that can vanish may only vanish if every DEEPER line that follows it
+   vanishes with it — which is what "gated on the same field" buys. */
+function docBlockOrphans(spec,version,resolved,lines,at){
+  var gate=docLineGate(lines[at]),out=[],j;
+  for(j=at+1;j<lines.length;j++){
+    if((lines[j].indent||0)<=(lines[at].indent||0)) break;   /* block ended */
+    if(docLineGate(lines[j])===gate) continue;               /* leaves with it */
+    if(!docLinePresent(spec,version,resolved,lines[j])) continue;
+    out.push(j);
+  }
+  return out;
+}
+
+/* composeDoc(spec, version, resolvedValues) -> {kind, filename, text} | null */
+function composeDoc(spec,version,resolved){
+  var doc=spec&&spec.doc;
+  if(!doc||!inList(DOC_KINDS,doc.kind)) return null;
+  var lines=doc.lines;
+  if(!lines||!lines.length) return null;
+  var yaml=(doc.kind==="yaml"),out=[],i;
+  if(yaml) out.push("---");
+  for(i=0;i<lines.length;i++){
+    var line=lines[i];
+    if(!line) return null;
+    if(!docLinePresent(spec,version,resolved,line)){
+      /* Same law as MCR-SEC-002: dropping is a property of the DOCUMENT, so the
+         file has to have declared it, and a declared drop may not orphan
+         the block underneath it. */
+      if(line.optional!==true) return null;
+      if(docBlockOrphans(spec,version,resolved,lines,i).length) return null;
+      continue;
+    }
+    if(yaml){
+      if(!(typeof line.indent==="number")||line.indent<0||line.indent>DOC_MAX_INDENT) return null;
+    }else if(line.indent!==undefined && line.indent!==null && line.indent!==0){
+      return null;                                /* INI has no nesting */
+    }
+    /* an INI section header: [defaults] */
+    if(line.section!==undefined && line.section!==null){
+      if(yaml) return null;
+      if(!DOC_KEY_RE.test(String(line.section))) return null;
+      out.push("["+String(line.section)+"]");
+      continue;
+    }
+    /* the key */
+    var key;
+    if(line.keyField!==undefined && line.keyField!==null){
+      if(!yaml) return null;                      /* an INI key is never operator text */
+      var kf=fieldFor(spec,line.keyField);
+      if(!kf) return null;
+      var kv=resolved[line.keyField];
+      if(typeof kv!=="string"||CTRL_RE.test(kv)||INVISIBLE_RE.test(kv)) return null;
+      key=yamlQuote(kv);
+    }else{
+      if(line.key===undefined||line.key===null) return null;
+      if(!DOC_KEY_RE.test(String(line.key))) return null;
+      key=String(line.key);
+    }
+    /* the value: a field, a curated literal, a curated boolean, or nothing */
+    var value=null;
+    if(line.field!==undefined && line.field!==null){
+      var f=fieldFor(spec,line.field);
+      if(!f) return null;
+      var v=resolved[line.field];
+      if(typeof v!=="string") return null;
+      /* CHARACTER rule, applied in BOTH grammars. The field validators already
+         refuse every one of these; this is the second, independent layer that
+         still holds if a future field type is admitted here in error. */
+      if(CTRL_RE.test(v)||INVISIBLE_RE.test(v)) return null;
+      if(yaml){
+        value=yamlQuote(v);
+      }else{
+        if(!inList(INI_FIELD_TYPES,f.type)) return null;      /* STRUCTURAL rule */
+        if(!INI_VALUE_RE.test(v)) return null;                /* CHARACTER rule */
+        value=v;
+      }
+    }else if(line.lit!==undefined && line.lit!==null){
+      if(!DOC_LIT_RE.test(String(line.lit))) return null;
+      value=yaml?yamlQuote(String(line.lit)):String(line.lit);
+    }else if(line.bool!==undefined && line.bool!==null){
+      if(line.bool!==true && line.bool!==false) return null;
+      value=line.bool?"true":"false";             /* curated JSON boolean, never operator text */
+    }
+    if(yaml){
+      out.push(docIndent(line.indent)+(line.seq===true?"- ":"")+key+":"+(value===null?"":" "+value));
+    }else{
+      if(value===null) return null;               /* a bare INI key is not a thing */
+      out.push(key+" = "+value);
+    }
+  }
+  if(out.length<=(yaml?1:0)) return null;         /* nothing emitted: not a file */
+  var name=doc.filename;
+  if(typeof name!=="string"||!/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/.test(name)) return null;
+  return {kind:doc.kind,filename:name,text:out.join("\n")+"\n"};
+}
+
 /* ---- the clipboard payload (MCR-SEC-003) ---------------------------------
    "Copy with comment" used to build its header as "# label: " + raw content
    text. None of that header is rendered anywhere — the operator sees only the
@@ -914,7 +1140,7 @@ function assembleEntry(entry,version,patterns){
   var b=blastFor(cmd,entry.blast,patterns);
   return {id:entry.id,tool:entry.tool,command:cmd,flags:flags,blast:b.blast,
           blast_reasons:b.reasons,notes:slot.notes||null,
-          resolved_from:slot.resolved_from||null,version:version};
+          resolved_from:slot.resolved_from||null,version:version,doc:null};
 }
 
 /* MCR-SEC-006. `template[].flag` and `template[].lit` are emitted UNQUOTED —
@@ -1086,9 +1312,24 @@ function assembleCommand(spec,version,values,opts){
   }
   var command=words.join(" ");
   if(command==="") return null;
-  var b=blastFor(command,spec.blast,patterns);
+  /* MCR-SEC-010. A generator that declares a `doc` emits a FILE as well as a
+     command, and the two stand or fall together: a spec with a doc that will
+     not compose returns null rather than handing back the command line with the
+     file silently missing. The operator would run `ansible-playbook site.yml`
+     against whatever site.yml happened to be there. */
+  var doc=null;
+  if(spec.doc){
+    doc=composeDoc(spec,version,v.resolved);
+    if(doc===null) return null;
+  }
+  /* The destructive table sees the file too. blastFor() over the command alone
+     would rate `ansible-playbook site.yml --check` on the command, while the
+     playbook it runs is the thing that changes hosts -- the same gap
+     MCR-SEC-003 found between the command line and the clipboard header. */
+  var b=blastFor(command+(doc?"\n"+doc.text:""),spec.blast,patterns);
   return {id:spec.id,tool:spec.tool,command:command,flags:flags,blast:b.blast,
-          blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version};
+          blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version,
+          doc:doc};
 }
 /* ===== MCR-ASSEMBLER-END ================================================== */
 
@@ -1631,6 +1872,15 @@ function withCopyPayloads(res,entry){
   res.blast_reasons=b.reasons;
   res.copy_plain=res.command;
   res.copy_comment=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
+  /* CR-T-25. The generated file is a THIRD clipboard payload, and it is the one
+     the operator actually saves to disk. It is not passed through
+     commentPayload(): that function's job is to make every line of a SHELL
+     paste inert by prefixing "# ", and a '#'-prefixed playbook is not a
+     playbook. The file's own containment is composeDoc()'s quoting, proved by
+     parsing in tests/hostile_harness.js -- and assembleCommand() already ran
+     blastFor() over the file's text as well as the command, so the banner the
+     operator acknowledged covers this payload too. */
+  res.copy_doc=res.doc?res.doc.text:null;
   return res;
 }
 
@@ -1694,6 +1944,22 @@ function doCopy(withComment){
   if(res.blast==="red" && !STATE.acked){ toast("Destructive command — tick the review box first."); return; }
   var ok=copyText(payload);
   toast(ok?("Copied to clipboard — RHEL "+res.version):"Copy failed — select the text in the editor and use your browser's copy.");
+}
+
+/* CR-T-25. Copying the generated FILE. Separate from doCopy() on purpose: the
+   payloads are different things in different grammars, and a single function
+   with a mode flag is how one of them would eventually get the other's
+   treatment. Same red-blast gate -- res.blast was computed over the command AND
+   the file's text (assembleCommand), so this is the same acknowledgement. */
+function doCopyDoc(){
+  var res=currentResult();
+  if(!res||!res.doc||res.copy_doc===null||res.copy_doc===undefined){
+    toast("Nothing to copy — this command generates no file.");
+    return;
+  }
+  if(res.blast==="red" && !STATE.acked){ toast("Destructive command — tick the review box first."); return; }
+  var ok=copyText(res.copy_doc);
+  toast(ok?("Copied "+res.doc.filename+" to clipboard"):"Copy failed — select the text in the file preview and use your browser's copy.");
 }
 
 /* ============ CR-T-28: Export as Evidence ============
@@ -2352,10 +2618,22 @@ function renderGeneratorResult(){
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export as Evidence</button>";
+  if(res.doc){
+    html+="<button type=\"button\" class=\"btn\" data-action=\"copy-doc\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy "+esc(res.doc.filename)+"</button>";
+  }
   html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
         escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
         (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
   html+="</div>";
+  /* CR-T-25. The generated file, rendered from the SAME res.doc the Copy button
+     copies -- the MCR-SEC-012 rule that the screen and the clipboard read one
+     rendered-state object, applied to the second payload as well as the first.
+     esc() renders it; composeDoc() quoted it. Two domains, neither doing the
+     other's job. */
+  if(res.doc){
+    html+="<p class=\"region-label\">"+esc(res.doc.filename)+" — the file this command runs against, exactly as it reaches the clipboard</p>";
+    html+="<pre class=\"copypreview\" aria-label=\"Generated file preview\">"+esc(res.doc.text)+"</pre>";
+  }
   if(res.copy_comment){
     html+="<p class=\"region-label\">Copy with comment — exactly what reaches the clipboard</p>";
     html+="<pre class=\"copypreview\" aria-label=\"Clipboard preview for Copy with comment\">"+
@@ -2692,6 +2970,7 @@ document.addEventListener("click",function(ev){
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="copy"){ doCopy(false); return; }
   if(action==="copy-comment"){ doCopy(true); return; }
+  if(action==="copy-doc"){ doCopyDoc(); return; }
   if(action==="export-evidence"){ exportEvidence(); return; }
   if(action==="evidence-copy"){ doCopyEvidence(); return; }
   if(action==="evidence-close"){ closeEvidenceModal(); return; }

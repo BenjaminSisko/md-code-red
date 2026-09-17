@@ -500,6 +500,145 @@ def spec_template_errors(where, template, fields_by_name):
     return errs
 
 
+# ---------------------------------------------------------------------------
+# generated-file spec (MCR-SEC-010, CR-T-25)
+#
+# A generator may declare a `doc` alongside its `template`: the FILE its command
+# runs against. These rules MIRROR composeDoc() in template.html's assembler
+# block, exactly as spec_template_errors() mirrors assembleCommand(). The runtime
+# returns null; the build refuses to ship.
+#
+# The INI half carries no quoter, here or there, and that is deliberate: an INI
+# file has no escape sequence for a value containing its own delimiters, so the
+# honest answer is a closed type allow-list and a closed character set rather
+# than a fourth escaper nobody can write correctly (MCR-SEC-001's ruling,
+# applied to a second grammar).
+# ---------------------------------------------------------------------------
+DOC_KINDS = ("yaml", "ini")
+DOC_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
+DOC_LIT_RE = re.compile(r"^[A-Za-z0-9_./:@+-]+$")
+DOC_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+INI_FIELD_TYPES = ("path", "username", "groupname", "integer", "port", "hostname",
+                   "interface", "package", "unit", "ipv4", "ipv6", "ipaddr")
+DOC_MAX_INDENT = 8
+DOC_LINE_SHAPES = ("field", "lit", "bool")
+
+
+def _doc_line_gate(line):
+    for key in ("requires", "field", "keyField"):
+        if line.get(key) is not None:
+            return line[key]
+    return None
+
+
+def doc_errors(where, doc, fields_by_name):
+    errs = []
+    if not isinstance(doc, dict):
+        return ["%s: doc is not an object" % where]
+    kind = doc.get("kind")
+    if kind not in DOC_KINDS:
+        errs.append("%s: doc.kind %r is not one of %s" % (where, kind, ", ".join(DOC_KINDS)))
+    name = doc.get("filename")
+    if not isinstance(name, str) or not DOC_FILENAME_RE.match(name):
+        errs.append("%s: doc.filename %r is not a plain file name -- it is shown on the Copy "
+                    "button and in the file preview, so it is a closed token, not free text"
+                    % (where, name))
+    lines = doc.get("lines")
+    if not isinstance(lines, list) or not lines:
+        return errs + ["%s: doc.lines must be a non-empty list" % where]
+
+    yaml = (kind == "yaml")
+    for i, line in enumerate(lines):
+        at = "%s: doc.lines[%d]" % (where, i)
+        if not isinstance(line, dict):
+            errs.append("%s is not an object" % at)
+            continue
+        if line.get("section") is not None:
+            if yaml:
+                errs.append("%s carries an INI `section` in a yaml document" % at)
+            elif not DOC_KEY_RE.match(str(line["section"])):
+                errs.append("%s section %r is emitted unquoted and must match %s"
+                            % (at, line["section"], DOC_KEY_RE.pattern))
+            continue
+        indent = line.get("indent")
+        if yaml:
+            if not isinstance(indent, int) or isinstance(indent, bool) \
+                    or indent < 0 or indent > DOC_MAX_INDENT:
+                errs.append("%s indent %r is not an integer in 0..%d" % (at, indent, DOC_MAX_INDENT))
+        elif indent not in (None, 0):
+            errs.append("%s declares indent %r, and an INI file has no nesting" % (at, indent))
+
+        has_keyfield = line.get("keyField") is not None
+        if has_keyfield:
+            if not yaml:
+                errs.append("%s uses a keyField: an INI key is never operator text" % at)
+            elif line.get("keyField") not in fields_by_name:
+                errs.append("%s keyField cites field '%s', which this spec does not declare"
+                            % (at, line.get("keyField")))
+        elif line.get("key") is None or not DOC_KEY_RE.match(str(line.get("key"))):
+            errs.append("%s has no usable key (%r) -- a key is emitted unquoted and must match %s"
+                        % (at, line.get("key"), DOC_KEY_RE.pattern))
+
+        shapes = [k for k in DOC_LINE_SHAPES if line.get(k) is not None]
+        if len(shapes) > 1:
+            errs.append("%s carries %s: a line emits exactly one value, or none"
+                        % (at, " and ".join(shapes)))
+        if not shapes and not yaml:
+            errs.append("%s has a key and no value; a bare INI key is not a thing" % at)
+        if line.get("lit") is not None and not DOC_LIT_RE.match(str(line["lit"])):
+            errs.append("%s lit %r must match %s" % (at, line["lit"], DOC_LIT_RE.pattern))
+        if line.get("bool") is not None and line["bool"] not in (True, False):
+            errs.append("%s bool %r is not true or false" % (at, line["bool"]))
+        fname = line.get("field")
+        if fname is not None:
+            f = fields_by_name.get(fname)
+            if f is None:
+                errs.append("%s cites field '%s', which this spec does not declare" % (at, fname))
+            elif not yaml and f.get("type") not in INI_FIELD_TYPES:
+                errs.append("%s fills an INI value from field '%s' of type '%s'. An INI entry has "
+                            "no escape sequence for a value carrying a newline, a ';', a '#' or an "
+                            "'=', so only a closed grammar may reach one: %s. `comment` and `enum` "
+                            "are deliberately absent, for the same reason they are absent from "
+                            "every rich-rule slot (MCR-SEC-001)"
+                            % (at, fname, f.get("type"), ", ".join(INI_FIELD_TYPES)))
+        req = line.get("requires")
+        if req is not None and req not in fields_by_name:
+            errs.append("%s requires field '%s', which this spec does not declare" % (at, req))
+
+        # droppability, and the block rule
+        gated_names = [n for n in (line.get("field"), line.get("keyField"), req) if n]
+        droppable = False
+        for n in gated_names:
+            f = fields_by_name.get(n)
+            if f is None:
+                continue
+            if (not f.get("required")) or bool(f.get("versions")):
+                droppable = True
+        if droppable and line.get("optional") is not True:
+            errs.append("%s can be absent (its field is optional or version-gated) without "
+                        "declaring optional:true. Dropping a line is a property of the DOCUMENT: "
+                        "undeclared, composeDoc() returns null rather than emit a file with a hole "
+                        "in it" % at)
+        if line.get("optional") is True and yaml:
+            gate = _doc_line_gate(line)
+            own = line.get("indent") or 0
+            for j in range(i + 1, len(lines)):
+                nxt = lines[j]
+                if not isinstance(nxt, dict):
+                    break
+                if (nxt.get("indent") or 0) <= own:
+                    break
+                if _doc_line_gate(nxt) != gate:
+                    errs.append("%s is a droppable BLOCK HEADER and doc.lines[%d] is indented "
+                                "under it on a different gate. Dropping this line would leave that "
+                                "one orphaned under the wrong parent -- a structural rewrite of the "
+                                "document, exactly as an argument promoted into the wrong slot is "
+                                "of a command line. Gate them on the same field so they leave "
+                                "together" % (at, j))
+                    break
+    return errs
+
+
 def spec_errors(where, spec):
     """A generator spec: fields[] the form renders and template[] the assembler walks."""
     errs = []
@@ -514,6 +653,8 @@ def spec_errors(where, spec):
     errs += spec_fields_errors(where, fields, names)
     fields_by_name = {f.get("name"): f for f in fields if isinstance(f, dict)}
     errs += spec_template_errors(where, template, fields_by_name)
+    if "doc" in spec:
+        errs += doc_errors(where, spec.get("doc"), fields_by_name)
 
     used = set()
     for tok in template:
@@ -525,6 +666,16 @@ def spec_errors(where, spec):
             used.update(v for v in tok["richRule"].values() if isinstance(v, str))
         if tok.get("requires"):
             used.add(tok["requires"])
+    # A `doc` line is as real a consumer of a field as a template token is: an
+    # Ansible inventory generator's group and host names reach the FILE, not the
+    # command line, and the "declared but never used" rule has to see that or it
+    # refuses the generator for asking a question it does answer.
+    for line in ((spec.get("doc") or {}).get("lines") or []):
+        if not isinstance(line, dict):
+            continue
+        for key in ("field", "keyField", "requires"):
+            if line.get(key):
+                used.add(line[key])
     for name in sorted(names - used):
         errs.append("%s: field '%s' is declared but no template token uses it — the form would ask "
                     "for a value that never reaches the command" % (where, name))

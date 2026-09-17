@@ -4,6 +4,90 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — Grey Beard content port, part 3: the Ansible generators, and MCR-SEC-010 closed
+
+`yamlQuote()` was deleted in the alpha on purpose. It was correct, it had no
+call site, and Q18's quoting-domain gate was therefore passing on a domain
+that did not exist — which read as "Ansible YAML output is proven safe" and
+was not true. It was removed with one standing condition attached (Marcus
+Reed's D3): **the sink, the quoter and a YAML-parsing oracle ship in the same
+commit, or not at all.** This is that commit.
+
+**The sink.** `composeDoc()` in the assembler block. A generator may now
+declare a `doc` alongside its `template`, and emits two things: the command
+the operator runs, and the FILE that command runs against. Three generators
+use it, ported from Grey Beard's own `wireSimpleGens()`:
+
+| generator | file | command |
+|---|---|---|
+| `gen-ansible-playbook` | `site.yml` | `ansible-playbook site.yml --limit='…' --check --diff` |
+| `gen-ansible-inventory` | `inventory.yml` | `ansible-inventory -i inventory.yml --graph` |
+| `gen-ansible-cfg` | `ansible.cfg` | `ansible-config dump --only-changed` |
+
+Grey Beard's own playbook generator quoted only the play name, and its YAML
+inventory generator interpolated group and host names into the document with
+no quoting at all. Both go through the quoter here — including the mapping
+KEYS, which is the half that was bare, because a key is a scalar too.
+
+**The quoter.** `yamlQuote()`, its own escaping domain, sharing no code and no
+idiom with `shQuote()`. A YAML single-quoted scalar has exactly one escape and
+it is `''`; there is no backslash escape, so `shQuote()`'s `'\''` is not
+merely cosmetically wrong in this grammar, it produces a different value that
+does not parse. Uniform, with no bare-value branch: the only unquoted scalars
+a file can contain come from a `bool` line, whose value is a JSON boolean in
+the curated spec. **There is no path from a form field to a bare YAML scalar.**
+
+**The oracle.** `parseYamlSubset()` and `parseIniSubset()` in
+`tests/hostile_harness.js`, built the way `parseRichRule()` was built and for
+the same reason: shell tokenisation proves a value sits inside one shell word
+and says nothing about the grammar of whatever consumes that word. Every
+emitted file is parsed and compared line for line against the operator's
+intent — every value back out exactly as it went in, **every operator value
+quoted** (a value that parses while sitting bare is not contained, it is
+lucky), every curated boolean bare, and the line count unchanged so an
+injected or absorbed line fails on the count.
+
+**`ansible.cfg` gets no quoter, on purpose.** An INI entry has no escape
+sequence for a value carrying a newline, a `;`, a `#` or an `=`. Inventing a
+fourth escaper that cannot be written correctly is the mistake MCR-SEC-001
+refused for rich rules, so this grammar gets the same two rules rich rules
+got instead: a closed field-type allow-list (`comment` and `enum` deliberately
+absent) and a closed character re-check at composition time. "There is no
+quoter here" is itself a claim, so the harness drives **every** field type
+into an INI value slot: 13 refused structurally, 12 allow-listed and parsed
+back.
+
+**What the gates do now.**
+
+- Q18's SHELL-ONLY line is gone. It states two quoting domains and one grammar
+  with none, checks no pair of `shQuote`/`yamlQuote`/`esc`/`escapeAttr` nests
+  in either direction, requires sink + quoter + both oracles to be present,
+  and **fails on a zero oracle count** — because a quoter whose oracle quietly
+  stopped running is the same finding with the call site filled in.
+- Q5's `yamlQuote(` marker is live rather than PENDING, joined by
+  `composeDoc(` and `doCopyDoc(`. 65/65 markers, 0 pending.
+- `docs/QA_GATES.md`: the Q18 row rewritten, the Q5 row says why that marker
+  was pending, and MCR-SEC-010's finding row records how it closed.
+- `extract/schema.py` gains `doc_errors()`: the build refuses what the runtime
+  would refuse to compose. `tests/test_doc_spec_schema.py` (new, 20 tests)
+  holds the two copies to each other — the INI allow-list, the key/lit
+  patterns and the indent bound are compared against `template.html` directly,
+  the way `test_schema.py` already compares `FIELD_TYPES`.
+
+**Fail-first evidence**, run before this was committed:
+
+| break | result |
+|---|---|
+| `shQuote()` substituted for `yamlQuote()` in the sink | harness: **40 failures** ("text after the closing quote") |
+| quoter removed, value emitted bare | harness: **312 failures** ("unquoted value that is not a boolean") |
+| `parseYamlSubset()` renamed away, quoter kept | harness refuses to run; **Q18 FAIL** |
+| a `comment`-typed field wired into an `ansible.cfg` value | **build FATAL** at schema time |
+
+Harness totals: 84,205 checks, 0 failures — 316 YAML-file and 60 INI-file
+oracle checks, 36 generated-file structure checks (every doc generator, every
+release, every combination of its optional fields, every enum branch), 100 INI
+type checks, 88 invariants.
+
 ### Added — Grey Beard content port, part 2: the 23 Ansible entries, and the Ansible rail goes live
 
 The Ansible rail in v1.0.0-alpha.1 rendered a paragraph beginning "This rail

@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 91
+  "entry_count": 94
  },
  "categories": [
   "firewall-cmd",
@@ -5075,6 +5075,316 @@
     "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-vault-rekey' (orbit/grey-beard-ansible, same owner); its own source line: ansible-vault --help (core 2.21.1)",
     "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-vault-rekey",
     "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-ansible-playbook",
+   "tool": "ansible-playbook",
+   "category": "Check before you run",
+   "intent": "Write a one-task package playbook, and the --check command that dry-runs it",
+   "fields": [
+    {
+     "name": "play_name",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "hosts",
+     "type": "hostname",
+     "required": true
+    },
+    {
+     "name": "task_name",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "package",
+     "type": "package",
+     "required": true
+    },
+    {
+     "name": "state",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "present",
+      "absent",
+      "latest"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "ansible-playbook"
+    },
+    {
+     "lit": "site.yml"
+    },
+    {
+     "flag": "--limit",
+     "field": "hosts"
+    },
+    {
+     "lit": "--check"
+    },
+    {
+     "lit": "--diff"
+    }
+   ],
+   "doc": {
+    "kind": "yaml",
+    "filename": "site.yml",
+    "lines": [
+     {
+      "indent": 0,
+      "seq": true,
+      "key": "name",
+      "field": "play_name"
+     },
+     {
+      "indent": 1,
+      "key": "hosts",
+      "field": "hosts"
+     },
+     {
+      "indent": 1,
+      "key": "become",
+      "bool": true
+     },
+     {
+      "indent": 1,
+      "key": "gather_facts",
+      "bool": true
+     },
+     {
+      "indent": 1,
+      "key": "tasks"
+     },
+     {
+      "indent": 2,
+      "seq": true,
+      "key": "name",
+      "field": "task_name"
+     },
+     {
+      "indent": 3,
+      "key": "ansible.builtin.package"
+     },
+     {
+      "indent": 4,
+      "key": "name",
+      "field": "package"
+     },
+     {
+      "indent": 4,
+      "key": "state",
+      "field": "state"
+     }
+    ]
+   },
+   "notes": "become and gather_facts are fixed true and are not offered as form fields. That is the quoting law, not a missing feature: a YAML boolean is a BARE scalar, and there is deliberately no path from a form field to a bare scalar - every value you type is quoted. A curated `bool` line in the spec is not operator text, so it is the one thing emitted unquoted. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible). Grey Beard built this file by concatenating strings and quoted almost none of it; here every value you type reaches the file through the assembler's YAML quoter, and a value the quoter cannot contain produces no file at all rather than a file with a hole in it.",
+   "verify": "ansible-playbook site.yml --syntax-check exits 0; the --check run reports changed= counts and changes nothing on the hosts.",
+   "undo": "Nothing to undo on a host - --check changes nothing. Delete site.yml to discard the generated file.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-generators",
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - the playbook, inventory and ansible.cfg generators in its template.html (wireSimpleGens()), re-expressed as declared specs the MD CODE RED assembler walks",
+    "url_or_man": "orbit/grey-beard-ansible template.html#wireSimpleGens",
+    "version": "Grey Beard Ansible v1.0.0; ansible-core 2.21.1",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-ansible-inventory",
+   "tool": "ansible-inventory",
+   "category": "Facts & inventory",
+   "intent": "Write a YAML inventory for one group and one host, and the command that proves it parses",
+   "fields": [
+    {
+     "name": "group",
+     "type": "hostname",
+     "required": true
+    },
+    {
+     "name": "host",
+     "type": "hostname",
+     "required": true
+    },
+    {
+     "name": "host_ip",
+     "type": "ipv4",
+     "required": false
+    },
+    {
+     "name": "remote_user",
+     "type": "username",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "ansible-inventory"
+    },
+    {
+     "lit": "-i"
+    },
+    {
+     "lit": "inventory.yml"
+    },
+    {
+     "lit": "--graph"
+    }
+   ],
+   "doc": {
+    "kind": "yaml",
+    "filename": "inventory.yml",
+    "lines": [
+     {
+      "indent": 0,
+      "key": "all"
+     },
+     {
+      "indent": 1,
+      "key": "vars",
+      "requires": "remote_user",
+      "optional": true
+     },
+     {
+      "indent": 2,
+      "key": "ansible_user",
+      "field": "remote_user",
+      "optional": true
+     },
+     {
+      "indent": 1,
+      "key": "children"
+     },
+     {
+      "indent": 2,
+      "keyField": "group"
+     },
+     {
+      "indent": 3,
+      "key": "hosts"
+     },
+     {
+      "indent": 4,
+      "keyField": "host"
+     },
+     {
+      "indent": 5,
+      "key": "ansible_host",
+      "field": "host_ip",
+      "optional": true
+     }
+    ]
+   },
+   "notes": "One group and one host per generation: this product has no multi-line free-text field and is not about to grow one to hold an inventory. Paste the generated blocks together, then run the command to prove the result parses. The group and host names are YAML KEYS, and they are quoted exactly as values are - a mapping key is a scalar too, which is the half Grey Beard's own generator left bare. localhost is deliberately not offered: a host named localhost in a group makes delegation SSH to your own control node (Grey Beard SCAR-001), and the fix is ansible_connection=local, not an inventory line. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible). Grey Beard built this file by concatenating strings and quoted almost none of it; here every value you type reaches the file through the assembler's YAML quoter, and a value the quoter cannot contain produces no file at all rather than a file with a hole in it.",
+   "verify": "ansible-inventory -i inventory.yml --graph prints the group with the host under it; --host HOST shows ansible_host and ansible_user as written.",
+   "undo": "Nothing on a host - this writes a local file and the command only reads it.",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-generators",
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - the playbook, inventory and ansible.cfg generators in its template.html (wireSimpleGens()), re-expressed as declared specs the MD CODE RED assembler walks",
+    "url_or_man": "orbit/grey-beard-ansible template.html#wireSimpleGens",
+    "version": "Grey Beard Ansible v1.0.0; ansible-core 2.21.1",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-ansible-cfg",
+   "tool": "ansible-config",
+   "category": "Check before you run",
+   "intent": "Write an ansible.cfg, and the command that shows what it actually changed",
+   "fields": [
+    {
+     "name": "inventory_path",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "remote_user",
+     "type": "username",
+     "required": false
+    },
+    {
+     "name": "forks",
+     "type": "integer",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "ansible-config"
+    },
+    {
+     "lit": "dump"
+    },
+    {
+     "lit": "--only-changed"
+    }
+   ],
+   "doc": {
+    "kind": "ini",
+    "filename": "ansible.cfg",
+    "lines": [
+     {
+      "section": "defaults"
+     },
+     {
+      "key": "inventory",
+      "field": "inventory_path"
+     },
+     {
+      "key": "remote_user",
+      "field": "remote_user",
+      "optional": true
+     },
+     {
+      "key": "forks",
+      "field": "forks"
+     },
+     {
+      "section": "ssh_connection"
+     },
+     {
+      "key": "pipelining",
+      "bool": true
+     }
+    ]
+   },
+   "notes": "ansible.cfg is INI, and INI has no escape sequence: a newline ends the entry, a ';' or '#' can begin a comment, an '=' is the separator. So this document gets no quoter at all - it gets a closed type allow-list and a closed character set, and refuses to compose rather than write a line it cannot contain. That is the same answer rich rules got (MCR-SEC-001), for the same reason. host_key_checking=False is deliberately not offered: pre-populate known_hosts instead. Precedence, unchanged from Grey Beard: $ANSIBLE_CONFIG, then ./ansible.cfg, then ~/.ansible.cfg, then /etc/ansible/ansible.cfg - and a world-writable current directory makes Ansible skip ./ansible.cfg with one quiet warning. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible). Grey Beard built this file by concatenating strings and quoted almost none of it; here every value you type reaches the file through the assembler's YAML quoter, and a value the quoter cannot contain produces no file at all rather than a file with a hole in it.",
+   "verify": "ansible --version names this file on its 'config file =' line, and ansible-config dump --only-changed lists each setting with this file as its origin.",
+   "undo": "Delete ansible.cfg, or unset $ANSIBLE_CONFIG if it points here. Nothing on a managed host changes either way.",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-generators",
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - the playbook, inventory and ansible.cfg generators in its template.html (wireSimpleGens()), re-expressed as declared specs the MD CODE RED assembler walks",
+    "url_or_man": "orbit/grey-beard-ansible template.html#wireSimpleGens",
+    "version": "Grey Beard Ansible v1.0.0; ansible-core 2.21.1",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
