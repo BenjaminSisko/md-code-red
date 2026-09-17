@@ -2935,15 +2935,26 @@ def gate_q19(ctx):
 
 LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
 COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
-RAW_DIR_FOR = {"8": "rhel8", "10": "rhel10"}
+# AL-GATE3-010: "7" was absent, so content-src/flag_coverage_baseline.json's six
+# coverage["7"] rows (chage, journalctl, systemctl, useradd, usermod, yum) were
+# read by nothing.
+RAW_DIR_FOR = {"7": "rhel7", "8": "rhel8", "10": "rhel10"}
 
 
 def _long_options_in_raw(raw_dir, cli):
-    """Distinct long options the committed raw capture for this tool mentions."""
+    """Distinct long options the committed raw capture for this tool mentions.
+
+    RHEL 8/10 raw dumps are man pages (`.man.txt`). UBI7 has no man-db (CR-T-12),
+    so every RHEL 7 dump under content-src/raw/rhel7/ is `--help` output
+    (`.help.txt`) instead. AL-GATE3-010: filtering to `.man.txt` only made this
+    return None for every RHEL 7 tool -- the raw files existed and were never
+    looked at. Both suffixes are read; the long-option regex does not care which
+    kind of text it is scanning.
+    """
     if not os.path.isdir(raw_dir):
         return None
     files = sorted(f for f in os.listdir(raw_dir)
-                   if f.startswith(cli + ".") and f.endswith(".man.txt"))
+                   if f.startswith(cli + ".") and f.endswith((".man.txt", ".help.txt")))
     if not files:
         return None
     found = set()
