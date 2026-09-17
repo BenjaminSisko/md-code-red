@@ -67,9 +67,20 @@ class HostileInputTests(unittest.TestCase):
                     + rich_fields * vectors * 4          # native sub-field types, hostile values
                     + rich_fields * types * 4            # every type substituted into every slot
                     + rich_fields * types * vectors * 4  # substituted type AND hostile value
-                    + 2 * 4)                             # benign control per rich-rule shape
+                    + 2 * 4                               # benign control per rich-rule shape
+                    # CR-T-17..25: every field of every REAL generator spec in
+                    # content/commands.json, fuzzed in its own template rather
+                    # than a synthetic analog (self.report["content_spec_checks"]
+                    # is itself computed from the entries and their declared
+                    # fields/versions, not a constant, so a new generator or
+                    # field changes this total on its own).
+                    + self.report["content_spec_checks"])
         self.assertEqual(self.report["checks"], expected,
                          "the harness did not run every field type x vector x release x shape")
+        self.assertGreater(self.report["content_spec_checks"], 0,
+                           "no real generator spec was fuzzed — CR-T-17's content-spec sweep is dead")
+        self.assertGreater(self.report["content_spec_entries"], 0,
+                           "content/commands.json has no generator (template) entries to fuzz")
 
     def test_rich_rule_slots_refuse_every_type_that_is_not_allow_listed(self):
         """MCR-SEC-001/005: the sweep richRuleSpec's signature was written for."""

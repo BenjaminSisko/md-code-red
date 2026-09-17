@@ -162,6 +162,19 @@ code,pre{font-family:var(--font-mono);}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
 .unverified{color:var(--text-muted); font-style:italic;}
+/* generator guided-form fields (CR-T-17..25) — required/optional/version-gated
+   states per UI spec v1 §4: required carries a coloured mark and "(required)"
+   in the label text (never colour alone), a gated field is disabled with its
+   reason in a .why line, exactly like a gated tool/entry row above. */
+.field{display:flex; flex-direction:column; gap:3px; margin:0 0 10px;}
+.field label{font-size:12px; color:var(--text-secondary);}
+.field .req{color:var(--danger);}
+.field input,.field select{font:inherit; font-size:13px; padding:4px 7px;
+  border:1px solid var(--border-primary); border-radius:5px;
+  background:var(--bg-app); color:var(--text-primary);}
+.field input[disabled],.field select[disabled]{color:var(--text-muted); cursor:not-allowed;
+  border-style:dashed;}
+.field .why{margin:0; font-size:11px; color:var(--text-muted);}
 @media print{
   body{display:block;}
   #rail,#sidebar,#inspector,#statusbar,#palette{display:none;}
@@ -836,9 +849,26 @@ try{
 }
 var PATTERNS=(DATASETS.DANGEROUS&&DATASETS.DANGEROUS.patterns)||[];
 
+/* ============ generator registry (CR-T-17..25, ADR-001 §8 module 4) ============
+   A generator is not authored as a second list: it IS a commands.json entry
+   whose shape is {fields[], template[]} instead of {rhel_versions}
+   (extract/schema.py's spec_errors() is the build-time authority for that
+   shape — see MCR-SEC-006's block comment above the assembler's own
+   FLAG_TOKEN_RE/LIT_TOKEN_RE). GENERATORS is simply the runtime's derived view
+   of "which content-island entries are generators", computed once at boot so
+   the tool list, the form renderer and Q5's feature-marker scan (which greps
+   the shipped shell for the literal text "var GENERATORS=") all read the same
+   list instead of each re-deriving "has a template" ad hoc. */
+var GENERATORS=(function(){
+  var entries=(DATASETS.COMMANDS&&DATASETS.COMMANDS.entries)||[],out=[];
+  for(var i=0;i<entries.length;i++){ if(entries[i].template) out.push(entries[i]); }
+  return out;
+})();
+function isGeneratorEntry(entry){ return !!(entry&&entry.template); }
+
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:"9",rail:"builder",toolId:null,entryId:null,line:0,acked:false,
-           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[]};
+           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],formValues:{}};
 (function(){
   var saved=STORE.getSession("version",null);
   if(saved && RHEL_VERSIONS.indexOf(saved)>=0) STATE.version=saved;
@@ -876,8 +906,8 @@ function toolAvailability(tool){
 /* The dictionary answer for a flag, in the SELECTED version only. Decoding a
    RHEL 9 command against a RHEL 10 dictionary would be a silent lie, so a
    version with no dictionary yields the humility copy, not a neighbour's text. */
-function flagExplain(toolId,flag){
-  var dict=(DATASETS.FLAGS||{})[STATE.version];
+function flagExplain(toolId,flag,version){
+  var dict=(DATASETS.FLAGS||{})[version||STATE.version];
   var cli=dict&&dict.clis?dict.clis[toolId]:null;
   if(!cli||!cli.flags) return null;
   for(var i=0;i<cli.flags.length;i++){
@@ -885,6 +915,26 @@ function flagExplain(toolId,flag){
     if(f.names && f.names.indexOf(flag)>=0 && f.explain) return f.explain;
   }
   return null;
+}
+/* ============ decoder — ADR-001 §8 module 7 ============
+   Grey Beard's decodeCmd() grown a version dimension: every flag an assembled
+   result carries is resolved to an explanation, curated first (a static
+   commands.json entry's own flags[].explain) and the SELECTED-VERSION flag
+   dictionary second (flagExplain() already refuses to read a neighbour
+   version's dictionary — decodeCmd() is told the version explicitly rather
+   than assuming STATE.version, so a future paste-and-decode panel can decode
+   against a version that is not the one currently on screen). Unknown or
+   uncurated stays null — the no-guess law applies here exactly as it does at
+   authoring time (CR-P0-02 AC3). */
+function decodeCmd(toolId,version,flags){
+  var out=[],i;
+  flags=flags||[];
+  for(i=0;i<flags.length;i++){
+    var f=flags[i];
+    var explain=f.explain||flagExplain(toolId,f.flag,version);
+    out.push({flag:f.flag,explain:explain||null});
+  }
+  return out;
 }
 /* ---- one rendered-state object per interaction (MCR-SEC-012) --------------
    threat-model-v1 §9 and §4 require that the copy path and the evidence
@@ -906,12 +956,28 @@ function flagExplain(toolId,flag){
    banner, the inspector, the clipboard preview, doCopy() and the CR-T-28
    exporter all read it. */
 var RESULT={key:null,value:null};
-function resultKey(){ return STATE.version+"|"+String(STATE.entryId); }
+/* A generator's assembled command depends on live form input as well as on
+   STATE.version/entryId, so its key folds STATE.formValues in too — every
+   keystroke is then a genuinely new "interaction" for MCR-SEC-012's cache,
+   computed once and reused by the gutter, the banner, the inspector and the
+   clipboard, exactly like a static entry's key never needing formValues at
+   all (a plain string concatenation is a no-op when the object is empty). */
+function resultKey(){ return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey(); }
+function formValuesKey(){
+  var keys=[],k,out=[];
+  for(k in STATE.formValues){ if(Object.prototype.hasOwnProperty.call(STATE.formValues,k)) keys.push(k); }
+  keys.sort();
+  for(var i=0;i<keys.length;i++){
+    out.push(encodeURIComponent(keys[i])+"="+encodeURIComponent(STATE.formValues[keys[i]]));
+  }
+  return out.join("&");
+}
 function computeResult(){
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
-  var res=assembleCommand(entry,STATE.version,{},{patterns:PATTERNS});
+  var values=isGeneratorEntry(entry)?STATE.formValues:{};
+  var res=assembleCommand(entry,STATE.version,values,{patterns:PATTERNS});
   if(!res) return null;
   return withCopyPayloads(res,entry);
 }
@@ -1051,6 +1117,22 @@ function renderRail(){
 
 /* The tool list is gated, never filtered: a tool that RHEL N does not ship stays
    on screen, disabled, carrying the reason and the alternative (CR-P0-01 AC2). */
+/* Is this catalog entry offered on the selected release, and why not if it
+   isn't — the same question, answered the same way, for a static curated
+   entry (gated by rhel_versions[v].unavailable) and a generator spec (gated
+   by spec.versions, CR-T-17+). Neither branch ever hides the row; both return
+   a reason the sidebar renders (CR-P0-01 AC2). */
+function entryGateInfo(e){
+  if(isGeneratorEntry(e)){
+    var gated=!!(e.versions && !inList(e.versions,STATE.version));
+    return {gated:gated,
+            reason:gated?"This generator is not offered on RHEL "+STATE.version+".":""};
+  }
+  var slot=(e.rhel_versions||{})[STATE.version]||{};
+  var gated2=!!slot.unavailable;
+  return {gated:gated2, reason:gated2?((slot.unavailable&&slot.unavailable.reason)||""):""};
+}
+
 function renderToolList(){
   var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
@@ -1073,7 +1155,9 @@ function renderToolList(){
     var open=(t.id===STATE.toolId);
     if(av.available){
       html+="<li><button type=\"button\" class=\"row\" data-tool=\""+escapeAttr(t.id)+"\" aria-current=\""+
-            (open?"true":"false")+"\">"+esc(t.label||t.id)+"</button></li>";
+            (open?"true":"false")+"\">"+esc(t.label||t.id);
+      if(av.note){ html+="<span class=\"why\">"+esc(av.note)+"</span>"; }
+      html+="</button></li>";
     }else{
       html+="<li><button type=\"button\" class=\"row\" aria-disabled=\"true\" disabled title=\""+
             escapeAttr(GATED_COPY+STATE.version+(av.reason?" — "+av.reason:""))+"\">"+esc(t.label||t.id)+
@@ -1087,15 +1171,15 @@ function renderToolList(){
     }
     for(var j=0;j<entries.length;j++){
       var e=entries[j];
-      var slot=(e.rhel_versions||{})[STATE.version]||{};
-      var gated=!!slot.unavailable;
-      if(gated){
+      var gate=entryGateInfo(e);
+      if(gate.gated){
         html+="<li><button type=\"button\" class=\"row\" aria-disabled=\"true\" disabled title=\""+
-              escapeAttr(GATED_COPY+STATE.version+" — "+((slot.unavailable&&slot.unavailable.reason)||""))+"\">"+
+              escapeAttr(GATED_COPY+STATE.version+(gate.reason?" — "+gate.reason:""))+"\">"+
               esc(e.intent||e.id)+"<span class=\"why\">"+esc(GATED_COPY+STATE.version)+"</span></button></li>";
       }else{
         html+="<li><button type=\"button\" class=\"row\" data-entry=\""+escapeAttr(e.id)+"\" aria-current=\""+
-              (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+"</button></li>";
+              (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+
+              (isGeneratorEntry(e)?"<span class=\"why\">guided form</span>":"")+"</button></li>";
       }
     }
     html+="</ul></li>";
@@ -1135,6 +1219,10 @@ function renderEditor(){
   if(!entry){
     html+="<div class=\"card\"><h2>Entry not found</h2><p class=\"muted\">This build's content island has no entry with that id. Nothing is guessed and nothing is rendered from raw text.</p></div>";
     el("editor-card").innerHTML=html;
+    return;
+  }
+  if(isGeneratorEntry(entry)){
+    renderGeneratorEditor(entry);
     return;
   }
   var res=currentResult();
@@ -1181,6 +1269,145 @@ function renderEditor(){
   el("editor-card").innerHTML=html;
 }
 
+/* ============ generator form renderer (CR-T-17..25, ADR-001 §8 module 5) ====
+   Builds the SIDEBAR-of-the-editor form from a generator's fields[] — marks
+   required fields per UI spec §4 (*, "(required)" in the label text, never
+   colour alone, aria-required), and renders a version-gated field disabled +
+   aria-disabled + aria-describedby pointing at the reason, exactly like a
+   gated tool or entry row. The form frame (this function) is rebuilt only on
+   entry selection and on a RHEL version change — never on a keystroke, so
+   typing never loses focus; renderGeneratorResult() below is the part that
+   redraws on every keystroke, into its own #gen-result sink. */
+/* One accumulator, inline, exactly like every other renderer in this file —
+   deliberately NOT split into a per-field helper that RETURNS an HTML string:
+   Q17's audit only trusts a segment reaching a sink if it is a string
+   literal, one of esc()/escapeAttr()/escapeRegex(), or an accumulator this
+   gate derived from assignments in THIS file — a bare call to a helper
+   function is none of those, so the helper's returned markup would be an
+   unaudited segment no matter how carefully the helper itself escapes it. */
+function renderGeneratorForm(entry){
+  var html="<p class=\"region-label\">Fields</p>";
+  var fields=entry.fields||[];
+  for(var i=0;i<fields.length;i++){
+    var field=fields[i];
+    var name=field.name;
+    var val=STATE.formValues[name]!==undefined?STATE.formValues[name]:"";
+    var gated=!fieldAvailable(field,STATE.version);
+    var id="genf-"+entry.id+"-"+name;
+    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc(name);
+    if(field.required){ html+=" <span class=\"req\">*</span> (required)"; }
+    else{ html+=" (optional)"; }
+    html+="</label>";
+    if(gated){
+      html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+            "\" disabled aria-disabled=\"true\" aria-describedby=\""+escapeAttr(id)+"-why\" value=\"\">";
+      html+="<p class=\"why\" id=\""+escapeAttr(id)+"-why\">"+esc(GATED_COPY+STATE.version)+"</p>";
+      html+="</div>";
+      continue;
+    }
+    /* type "enum" is the author-curated closed set (field.options); a handful
+       of built-in FIELD_TYPES are ALSO closed sets (protocol/family/action)
+       with their enum baked into the type itself — both render a <select>,
+       neither makes the operator type a value the assembler would just as
+       happily have offered as a choice. */
+    var builtinEnum=(FIELD_TYPES[field.type]||{}).enums;
+    if(field.type==="enum"||builtinEnum){
+      html+="<select id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+            "\" aria-required=\""+(field.required?"true":"false")+"\">";
+      html+="<option value=\"\">(choose)</option>";
+      var opts=field.type==="enum"?(field.options||[]):builtinEnum;
+      for(var j=0;j<opts.length;j++){
+        var o=opts[j];
+        var ov=(typeof o==="string")?o:o.value;
+        var optGated=(typeof o!=="string")&&o.versions&&!inList(o.versions,STATE.version);
+        html+="<option value=\""+escapeAttr(ov)+"\"";
+        if(ov===val){ html+=" selected"; }
+        if(optGated){ html+=" disabled"; }
+        html+=">"+esc(ov);
+        if(optGated){ html+=" ("+esc(GATED_COPY+STATE.version)+")"; }
+        html+="</option>";
+      }
+      html+="</select></div>";
+      continue;
+    }
+    html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
+          "\" aria-required=\""+(field.required?"true":"false")+"\" maxlength=\""+
+          escapeAttr(String((FIELD_TYPES[field.type]||{}).cap||200))+"\" placeholder=\""+
+          escapeAttr((FIELD_TYPES[field.type]||{}).label||field.type)+"\" value=\""+
+          escapeAttr(val)+"\"></div>";
+  }
+  el("gen-fields").innerHTML=html;
+}
+/* Fills #gen-result — the assembled command, the toolbar, the clipboard
+   preview, verify/undo/notes — from the SAME currentResult() every other
+   region reads (MCR-SEC-012). Runs on every keystroke; never touches the
+   fields above it, so a text input never loses focus mid-word. */
+function renderGeneratorResult(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  var target=el("gen-result");
+  if(!entry||!target) return;
+  var res=currentResult();
+  renderBlastBanner(res);
+  var html="";
+  if(!res){
+    if(entry.versions && !inList(entry.versions,STATE.version)){
+      html+="<div class=\"card\"><h2>"+esc(GATED_COPY+STATE.version)+"</h2>"+
+            "<p class=\"muted\">This generator is not offered on RHEL "+esc(STATE.version)+
+            ".</p></div>";
+    }else{
+      var v=validateSpec(entry,STATE.version,STATE.formValues);
+      html+="<div class=\"card\"><h2>Fill in the required fields</h2>";
+      if(v.missing.length){
+        html+="<p class=\"muted\">Still needed: "+esc(v.missing.join(", "))+"</p>";
+      }
+      for(var i=0;i<v.invalid.length;i++){
+        html+="<p class=\"muted\">"+esc(v.invalid[i].name)+": "+esc(v.invalid[i].reason)+"</p>";
+      }
+      html+="<p class=\"muted\">Copy is not rendered at all until a complete command is "
+            +"assembled — there is no dead control to tab through.</p></div>";
+    }
+    target.innerHTML=html;
+    return;
+  }
+  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+"</p>";
+  var lines=String(res.command).split("\n");
+  html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
+  for(var li=0;li<lines.length;li++){
+    html+="<div class=\"codeline\" role=\"button\" tabindex=\"0\" data-line=\""+escapeAttr(String(li))+
+          "\" aria-current=\""+(li===STATE.line?"true":"false")+
+          "\" aria-label=\"Line "+escapeAttr(String(li+1))+"\"><span class=\"ln\">"+esc(String(li+1))+
+          "</span><span class=\"lc\">"+esc(lines[li])+"</span></div>";
+  }
+  html+="</div>";
+  var blocked=(res.blast==="red"&&!STATE.acked);
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
+  html+="</div>";
+  if(res.copy_comment){
+    html+="<p class=\"region-label\">Copy with comment — exactly what reaches the clipboard</p>";
+    html+="<pre class=\"copypreview\" aria-label=\"Clipboard preview for Copy with comment\">"+
+          esc(res.copy_comment)+"</pre>";
+  }
+  if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
+  html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
+  html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  target.innerHTML=html;
+}
+function renderGeneratorEditor(entry){
+  /* The frame owns ONLY its own literal/esc() markup (Q17's audit rule: a
+     bare call to another render function is not a trusted segment, only
+     esc()/escapeAttr()/escapeRegex() and literals are) — the fields and the
+     result each write into their OWN sink below, as separate statements,
+     never concatenated into this accumulator. */
+  var html="<h2>"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"muted\">"+esc(entry.tool)+" — guided form</p>";
+  html+="<div id=\"gen-fields\"></div><div id=\"gen-result\"></div>";
+  el("editor-card").innerHTML=html;
+  renderGeneratorForm(entry);
+  renderGeneratorResult();
+}
+
 function renderInspector(){
   var html="";
   var res=currentResult();
@@ -1201,10 +1428,10 @@ function renderInspector(){
     if(cci) html+="<span class=\"badge\">"+esc(cci)+"</span>";
   }
   html+="<p class=\"region-label\">Flag by flag</p>";
-  var flags=res.flags||[];
+  var flags=decodeCmd(res.tool,res.version,res.flags||[]);
   if(!flags.length) html+="<p class=\"muted\">This command takes no flags.</p>";
   for(var j=0;j<flags.length;j++){
-    var explain=flags[j].explain||flagExplain(res.tool,flags[j].flag);
+    var explain=flags[j].explain;
     html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(flags[j].flag)+"</span>";
     if(explain){
       html+="<span class=\"mean\">"+esc(explain)+"</span>";
@@ -1358,11 +1585,11 @@ function selectTool(id,toggle){
 function selectEntry(id){
   var entry=entryById(id);
   if(!entry) return;
-  var slot=(entry.rhel_versions||{})[STATE.version]||{};
-  if(slot.unavailable) return;                    /* gated: cannot be selected at all */
+  if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
   STATE.entryId=id;
   STATE.line=0;
   STATE.acked=false;
+  STATE.formValues={};                              /* a new entry starts with a blank form */
   renderAll();
 }
 function setRail(name){
@@ -1408,20 +1635,55 @@ document.addEventListener("click",function(ev){
   var hit=t.closest("[data-hit]");
   if(hit){ activateHit(parseInt(hit.getAttribute("data-hit"),10)); return; }
   var line=t.closest("[data-line]");
-  if(line){ STATE.line=parseInt(line.getAttribute("data-line"),10); renderEditor(); renderInspector(); return; }
+  if(line){
+    STATE.line=parseInt(line.getAttribute("data-line"),10);
+    reRenderEditorAndInspector();
+    return;
+  }
   if(t===el("palette")){ closePalette(); return; }
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
   if(action==="theme"){ THEME.toggle(); return; }
-  if(action==="ack"){ STATE.acked=!!a.checked; renderEditor(); return; }
+  if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="copy"){ doCopy(false); return; }
   if(action==="copy-comment"){ doCopy(true); return; }
 });
 
+/* A line click or the red-blast ack checkbox only needs the RESULT re-drawn,
+   not the whole region: for a generator entry a full renderEditor() would
+   rebuild the field inputs from scratch (safe — they re-read STATE.formValues
+   — but pointless and a needless focus reset), so this redraws only
+   #gen-result for a generator and falls back to the ordinary full render for
+   a static entry, which has no separate form to preserve. */
+function reRenderEditorAndInspector(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(entry && isGeneratorEntry(entry)){ renderGeneratorResult(); }
+  else{ renderEditor(); }
+  renderInspector();
+}
+
+/* ============ generator field input -> STATE.formValues, no full re-render ============
+   Only #gen-result (the assembled command, banner, toolbar, inspector) redraws
+   on a keystroke; the field inputs above it are untouched, so a text input
+   never loses focus or cursor position mid-word. Both "input" (fires on every
+   keystroke, and on most engines on a <select>) and "change" (the reliable
+   event for <select>/checkbox on older engines) route through the same
+   handler; re-running it twice for one edit is idempotent. */
+function onFieldChange(ev){
+  var f=ev.target&&ev.target.closest?ev.target.closest("[data-field]"):null;
+  if(!f) return;
+  var name=f.getAttribute("data-field");
+  var val=f.value;
+  if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
+  renderGeneratorResult();
+  renderInspector();
+}
 document.addEventListener("input",function(ev){
-  if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); }
+  if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); return; }
+  onFieldChange(ev);
 });
+document.addEventListener("change",onFieldChange);
 
 /* ============ keyboard controller — ONE delegated keydown, ONE binding table ============ */
 /* UI spec §5. Every binding lives in KEYMAP; nothing in this file attaches a

@@ -1171,6 +1171,19 @@ def gate_q12(ctx):
     f, d = [], []
     entries = ctx["data"]["commands"]["entries"]
     for e in entries:
+        if "template" in e:
+            # A generator spec (CR-T-17+) composes its command at render time from
+            # validated FORM INPUT, not from a fixed rhel_versions object — so the
+            # four-version promise is kept by spec.versions (a whole-generator gate)
+            # and each field's own .versions (a per-field gate) instead of a
+            # rhel_versions block. extract/schema.py's spec_errors() is the
+            # build-time authority for the field/template shape; this gate only
+            # confirms that IF the entry restricts itself to certain releases, it
+            # names real RHEL keys and not something that silently gates nothing.
+            vs = e.get("versions")
+            if vs is not None and (not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs)):
+                f.append("entry %s: versions %r is not a non-empty subset of %s" % (e.get("id"), vs, VERSIONS))
+            continue
         versions = e.get("rhel_versions") or {}
         if set(versions.keys()) != set(VERSIONS):
             f.append("entry %s: rhel_versions keys %s != {7,8,9,10}" % (e.get("id"), sorted(versions.keys())))

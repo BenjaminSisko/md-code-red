@@ -899,6 +899,88 @@ function main() {
                         (quiet ? quiet.blast : "null") + " — the de-quoted matcher fires on anything");
   }
 
+  /* ---- CR-T-17..25: every REAL generator spec, every REAL field -----------
+     Everything above fuzzes a SYNTHETIC spec per field type — proof that the
+     assembler's allow-lists hold in general. It says nothing about whether a
+     particular generator's template wires a field to the slot its type
+     promises, or whether an author-picked "documented" flag/lit token is
+     still a closed-grammar token. This sweep loads content/commands.json
+     itself and drives the exact specs CR-T-17..25 ships: for every generator
+     entry and every field it declares, every OTHER field is held at its
+     type's benign value and the field under test takes every hostile vector
+     in turn, on every release the field is offered on. A field new to a
+     future generator is picked up automatically — nothing here names a
+     generator or a field by id. */
+  var contentSpecChecks = 0;
+  var commandsContent = JSON.parse(fs.readFileSync(path.join(REPO, "content", "commands.json"), "utf8"));
+  var specEntries = (commandsContent.entries || []).filter(function (e) { return !!e.template; });
+  if (!specEntries.length) {
+    stats.failures.push("content/commands.json carries no generator (template) entries for the " +
+                        "content-spec sweep to fuzz — CR-T-17's registry has nothing to prove itself on");
+  }
+  function benignFor(field) {
+    if (field.type === "enum") {
+      var opts = field.options || [];
+      if (!opts.length) return undefined;
+      var first = opts[0];
+      return (typeof first === "string") ? first : first.value;
+    }
+    var def = fx.field_types[field.type];
+    return def ? def.benign : undefined;
+  }
+  for (var se = 0; se < specEntries.length; se++) {
+    var centry = specEntries[se];
+    var cfields = centry.fields || [];
+    var centryVersions = centry.versions || VERSIONS;
+    for (var cf = 0; cf < cfields.length; cf++) {
+      var targetField = cfields[cf];
+      var targetBenign = benignFor(targetField);
+      if (targetBenign === undefined) {
+        stats.failures.push("content spec " + centry.id + ": field '" + targetField.name +
+                            "' has type '" + targetField.type + "', which tests/fixtures/" +
+                            "hostile-inputs.json has no benign value for — this sweep cannot fuzz it");
+        continue;
+      }
+      var baseValues = {};
+      for (var of = 0; of < cfields.length; of++) {
+        if (of === cf) continue;
+        var otherBenign = benignFor(cfields[of]);
+        if (otherBenign !== undefined) baseValues[cfields[of].name] = otherBenign;
+      }
+      var fieldVersions = targetField.versions || VERSIONS;
+      for (var cv = 0; cv < centryVersions.length; cv++) {
+        var version = centryVersions[cv];
+        if (VERSIONS.indexOf(version) < 0) continue;         /* spec.versions has to name a real release */
+        if (fieldVersions.indexOf(version) < 0) continue;    /* field itself is gated off this release */
+        for (var vv = 0; vv < vectors.length; vv++) {
+          var vec = vectors[vv];
+          /* The "empty" vector on an OPTIONAL field is not a hostile-input
+             question at all: an empty value is "not supplied" (validateSpec),
+             so the field is simply dropped and the template still assembles —
+             correct, and already the exact case the harness's own
+             never-half-formed sweep exists to prove, on every template shape.
+             Asserting "reject" here would fail on correct behaviour, not catch
+             a bug — required fields still get the empty vector, since an
+             empty REQUIRED field must be rejected. */
+          if (vec.id === "empty" && !targetField.required) continue;
+          var values = {};
+          for (var bk in baseValues) {
+            if (Object.prototype.hasOwnProperty.call(baseValues, bk)) values[bk] = baseValues[bk];
+          }
+          values[targetField.name] = vec.value;
+          var probe = { id: centry.id, tool: centry.tool, blast: centry.blast || "green",
+                        fields: centry.fields, template: centry.template, versions: centry.versions };
+          probe._hostileField = targetField.name;
+          probe._benign = targetBenign;
+          contentSpecChecks++;
+          check(centry.id + " / field " + targetField.name + " / " + vec.id + " / RHEL " + version,
+                vec["class"], probe, version, values, vec.value,
+                targetField.type === "comment" ? vec.free_text : "reject");
+        }
+      }
+    }
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -1041,6 +1123,8 @@ function main() {
     clipboard_checks: clipboardChecks,
     token_allow_list_checks: tokenChecks,
     destructive_pattern_checks: patternChecks,
+    content_spec_checks: contentSpecChecks,
+    content_spec_entries: specEntries.length,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1072,6 +1156,9 @@ function main() {
     console.log("  " + tokenChecks + " flag/lit allow-list checks and " + patternChecks +
                 " destructive-pattern checks (every row of content/dangerous.json fires on a " +
                 "synthetic assembled command)");
+    console.log("  " + contentSpecChecks + " content-spec checks: every field of every one of the " +
+                specEntries.length + " REAL generator entries in content/commands.json (CR-T-17..25), " +
+                "fuzzed with the same hostile vector set in its own template, not a synthetic analog");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();
