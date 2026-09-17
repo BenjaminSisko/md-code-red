@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 23
+  "entry_count": 24
  },
  "categories": [
   "firewall-cmd",
@@ -1397,6 +1397,44 @@
     "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 ausearch",
     "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-rsyslogd-test-config",
+   "tool": "rsyslogd",
+   "category": "rsyslog",
+   "intent": "Parse an rsyslog configuration file and report syntax errors without starting the daemon",
+   "fields": [
+    {
+     "name": "path",
+     "type": "path",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "rsyslogd"
+    },
+    {
+     "lit": "-N1"
+    },
+    {
+     "flag": "-f",
+     "field": "path",
+     "optional": true
+    }
+   ],
+   "verify": "rsyslogd -N1 exits 0 and prints no error line if the configuration is valid.",
+   "undo": "Nothing to undo — -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-rsyslogd-r8",
+    "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 rsyslogd",
+    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
