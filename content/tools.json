@@ -1,10 +1,10 @@
 {
  "_meta": {
-  "schema": "tool: id, binary, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} — ADR-001 §5.5",
+  "schema": "tool: id, binary, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} \u2014 ADR-001 \u00a75.5",
   "curated": true,
-  "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
+  "status": "CR-T-17..25 \u2014 the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 84
+  "tool_count": 100
  },
  "tools": [
   {
@@ -30,7 +30,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -56,9 +56,9 @@
     }
    },
    "source": {
-    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md) — every pinned release's check text drives the service state through systemctl",
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md) \u2014 every pinned release's check text drives the service state through systemctl",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -89,7 +89,7 @@
    "source": {
     "title": "DISA RHEL 9 V2R9 and RHEL 10 V1R2 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -120,7 +120,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -141,7 +141,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -151,7 +151,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -172,7 +172,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -182,7 +182,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -203,7 +203,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -213,7 +213,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -234,7 +234,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -244,7 +244,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -265,7 +265,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -275,7 +275,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -297,7 +297,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -307,7 +307,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -328,7 +328,7 @@
     },
     "9": {
      "available": true,
-     "note": "yum is a compatibility symlink to dnf. Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "yum is a compatibility symlink to dnf. Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -338,7 +338,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -359,7 +359,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -369,7 +369,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -390,7 +390,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -400,7 +400,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -413,7 +413,7 @@
    "availability": {
     "7": {
      "available": true,
-     "note": "Documented from the man page — RHEL 7's chage predates the CR-T-09/10 extraction hosts."
+     "note": "Documented from the man page \u2014 RHEL 7's chage predates the CR-T-09/10 extraction hosts."
     },
     "8": {
      "available": true,
@@ -421,7 +421,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -431,7 +431,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -452,7 +452,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -462,7 +462,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -483,7 +483,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -493,7 +493,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -514,7 +514,7 @@
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
@@ -524,7 +524,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -541,11 +541,11 @@
     },
     "8": {
      "available": true,
-     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10. ntpd is not in the default repositories from RHEL 8 forward — chronyd only."
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10. ntpd is not in the default repositories from RHEL 8 forward \u2014 chronyd only."
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts. chronyd only; ntpd is not available."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts. chronyd only; ntpd is not available."
     },
     "10": {
      "available": true,
@@ -555,7 +555,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -573,21 +573,21 @@
     },
     "8": {
      "available": true,
-     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10 \u2014 the podman(1) top-level page only; subcommand-specific options are documented."
     },
     "9": {
      "available": true,
-     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
     },
     "10": {
      "available": true,
-     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10 \u2014 the podman(1) top-level page only; subcommand-specific options are documented."
     }
    },
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    }
@@ -2408,6 +2408,502 @@
     "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
     "url_or_man": "man git",
     "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "pvs",
+   "binary": "pvs",
+   "label": "pvs / vgs / lvs (LVM reporting)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "findmnt",
+   "binary": "findmnt",
+   "label": "findmnt",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "chronyc",
+   "binary": "chronyc",
+   "label": "chronyc",
+   "category": "networking",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "getenforce",
+   "binary": "getenforce",
+   "label": "getenforce / sestatus",
+   "category": "selinux",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "restorecon",
+   "binary": "restorecon",
+   "label": "restorecon",
+   "category": "selinux",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "visudo",
+   "binary": "visudo",
+   "label": "visudo",
+   "category": "users & sudo",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "logrotate",
+   "binary": "logrotate",
+   "label": "logrotate",
+   "category": "logs",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "rpm",
+   "binary": "rpm",
+   "label": "rpm",
+   "category": "packages",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "createrepo_c",
+   "binary": "createrepo_c",
+   "label": "createrepo_c",
+   "category": "packages",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible",
+   "binary": "ansible",
+   "label": "ansible (ad-hoc)",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-playbook",
+   "binary": "ansible-playbook",
+   "label": "ansible-playbook",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-inventory",
+   "binary": "ansible-inventory",
+   "label": "ansible-inventory",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-doc",
+   "binary": "ansible-doc",
+   "label": "ansible-doc",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-config",
+   "binary": "ansible-config",
+   "label": "ansible-config",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-vault",
+   "binary": "ansible-vault",
+   "label": "ansible-vault",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ansible-galaxy",
+   "binary": "ansible-galaxy",
+   "label": "ansible-galaxy",
+   "category": "ansible",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "8": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "9": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    },
+    "10": {
+     "available": true,
+     "note": "A control-node command. Its availability and its options follow the ansible-core version installed on the machine you run it from, not the RHEL release of the hosts it reaches; the flag text carried here is ansible-core 2.21.1 as captured by the Grey Beard Ansible field kit (extract/extract_ansible_doc.py)."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/flags.json, generated from ansible-doc by extract/extract_ansible_doc.py",
+    "url_or_man": "orbit/grey-beard-ansible content/flags.json",
+    "version": "ansible-core 2.21.1; Grey Beard Ansible v1.0.0, content verified 2026-08-23",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    }

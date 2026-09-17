@@ -62,21 +62,46 @@ function extractAssembler(file) {
                       "' — it must stay pure, or this gate tests nothing");
     }
   }
-  /* MCR-SEC-010. The dead YAML quoter is gone and Q18's quoting-domain check is
-     shell-only until the Ansible generator lands. If a YAML sink brings a quoter
-     back, its oracle ships in the same commit as the sink — this harness refuses
-     to run otherwise, rather than proving shell containment and calling it YAML
-     containment (that mistake is MCR-SEC-005b). */
-  if (block.indexOf("yamlQuote") >= 0 && block.indexOf("PARSE_YAML_ORACLE") < 0) {
-    throw new Error("a YAML quoter is back in the assembler block with no YAML oracle in this " +
-                    "harness. MCR-SEC-010: the sink, the quoter and a YAML-parsing oracle ship " +
-                    "together or not at all");
+  /* MCR-SEC-010, Marcus Reed's standing condition D3. A YAML quoter may exist in
+     the assembler block only while this harness carries a YAML-PARSING oracle,
+     and a YAML sink may exist only while the quoter does. Both directions are
+     checked, so neither half can arrive alone: a quoter with no oracle is the
+     dead-escaper mistake this finding is named for, and a sink with no quoter is
+     the same mistake with the consequence already shipped. The INI half of
+     composeDoc() has no quoter by design (an INI entry has no escape sequence),
+     so what it needs instead is its own parser here. */
+  /* The oracle is looked for in THIS FILE, by reading this file. The check was
+     written once as block.indexOf("PARSE_YAML_ORACLE"), which asks the assembler
+     block whether the harness has an oracle — a question it can never answer
+     yes to, so the guard was a hard stop wearing a condition. It is a real
+     condition now: `have` is this harness's own source, and the two oracle
+     functions are looked for by the names they are actually defined under. */
+  var have = fs.readFileSync(__filename, "utf8");
+  var haveYamlOracle = have.indexOf("function " + PARSE_YAML_ORACLE + "(") >= 0;
+  var haveIniOracle = have.indexOf("function " + PARSE_INI_ORACLE + "(") >= 0;
+  if (block.indexOf("yamlQuote") >= 0 && !haveYamlOracle) {
+    throw new Error("a YAML quoter is in the assembler block and this harness defines no " +
+                    PARSE_YAML_ORACLE + "(). MCR-SEC-010: the sink, the quoter and a " +
+                    "YAML-parsing oracle ship together or not at all");
+  }
+  if (block.indexOf("composeDoc") >= 0) {
+    if (block.indexOf("yamlQuote") < 0) {
+      throw new Error("composeDoc() is in the assembler block with no yamlQuote() beside it — a " +
+                      "YAML sink with no quoter is MCR-SEC-010 with the consequence already " +
+                      "shipped, not avoided");
+    }
+    if (block.indexOf("\"ini\"") >= 0 && !haveIniOracle) {
+      throw new Error("composeDoc() emits an INI kind and this harness defines no " +
+                      PARSE_INI_ORACLE + "(). That grammar gets no quoter on purpose, so a parser " +
+                      "is the ONLY thing standing between a form field and an ansible.cfg entry");
+    }
   }
   var factory = new Function(
     "\"use strict\";\n" + block + "\n" +
-    "return {shQuote:shQuote,validateField:validateField," +
+    "return {shQuote:shQuote,yamlQuote:yamlQuote,validateField:validateField," +
     "validateSpec:validateSpec,assembleCommand:assembleCommand," +
-    "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES," +
+    "composeRichRule:composeRichRule,composeDoc:composeDoc,blastFor:blastFor," +
+    "FIELD_TYPES:FIELD_TYPES,INI_FIELD_TYPES:INI_FIELD_TYPES," +
     "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap," +
     "headerSafe:headerSafe,commentPayload:commentPayload};");
   return { api: factory(), bytes: block.length };
@@ -218,6 +243,271 @@ function richRuleOracle(command, plan, values) {
   if (got.action !== String(want.action)) {
     return "rich-rule ACTION is '" + got.action + "' but the operator selected '" + want.action +
            "' — the rule installed on the host would not be the rule on screen";
+  }
+  return null;
+}
+
+/* ------------------------------------------- the generated-FILE oracle -----
+ * MCR-SEC-010, and Marcus Reed's standing condition D3: no YAML sink ships
+ * without a yamlQuote() AND a YAML-parsing oracle in the same commit. This is
+ * that oracle, and PARSE_YAML_ORACLE below is the sentinel extractAssembler()
+ * looks for before it will run a block containing a YAML quoter at all.
+ *
+ * It is built the way richRuleOracle() is built, for the same reason. Shell
+ * tokenisation proves that a value sits inside one single-quoted shell word and
+ * nothing more; it says nothing about whether the value rewrote the grammar of
+ * whatever consumes that word. A playbook is such a consumer, an ansible.cfg is
+ * another, so each gets a parser here and every emitted file is PARSED and
+ * compared against what the operator asked for -- never searched for the value
+ * between quotation marks, which is the check that cannot tell containment from
+ * coincidence.
+ *
+ * Three properties are asserted per file, not one:
+ *   1. every operator value comes back out of the parser EXACTLY as it went in;
+ *   2. every operator value came back QUOTED -- a value that happens to parse
+ *      while sitting bare is not contained, it is lucky;
+ *   3. the file's line list is exactly the intended one, key for key, in order,
+ *      so an injected extra line or an absorbed one fails on the count.
+ *
+ * The parsers are deliberately strict and deliberately small: they accept the
+ * subset composeDoc() emits and reject everything else, so "the file parsed" is
+ * a real statement rather than a tolerant parser's shrug. That strictness is
+ * what catches a domain swap: shQuote("it's") is 'it'\''s', which in YAML is the
+ * scalar "it" followed by trailing junk -- a parse error, not a different value.
+ */
+/* A code point no scalar of any kind may carry: the field validators refuse
+   every one of these before a quoter is ever called, so a round-trip control
+   built on one would be asserting something no real value can reach. Written as
+   numeric comparisons rather than a character class so the table is readable and
+   cannot be mangled by a copy that loses an escape. */
+function hasUnquotableChar(s) {
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charCodeAt(i);
+    if (c <= 0x1F || (c >= 0x7F && c <= 0x9F) || c === 0x2028 || c === 0x2029) return true;
+  }
+  return false;
+}
+
+var PARSE_YAML_ORACLE = "parseYamlSubset";
+var PARSE_INI_ORACLE = "parseIniSubset";
+
+var YAML_PLAIN_KEY_RE = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
+
+/* Read a YAML single-quoted scalar starting at `i`. Returns {value, next} or
+ * null. The ONLY escape inside single quotes is '' for one apostrophe; there is
+ * no backslash escape, which is exactly why a shell-quoted string does not
+ * survive this function. */
+function readYamlSingleQuoted(s, i) {
+  if (s.charAt(i) !== "'") return null;
+  var out = "";
+  i++;
+  while (i < s.length) {
+    var c = s.charAt(i);
+    if (c !== "'") { out += c; i++; continue; }
+    if (s.charAt(i + 1) === "'") { out += "'"; i += 2; continue; }
+    return { value: out, next: i + 1 };
+  }
+  return null;                                    /* unterminated scalar */
+}
+
+/* parseYamlSubset(text) -> {lines:[{indent,seq,key,keyQuoted,value,quoted,hasValue}]} | {error}
+ *
+ * The accepted subset, in full: an optional leading "---"; then lines of
+ *   <2n spaces>["- "]<key>":"[" "<scalar>]
+ * where <key> is a plain key or a single-quoted scalar, and <scalar> is a
+ * single-quoted scalar or the bare word true/false. Nothing else: no flow
+ * collections, no block scalars, no comments, no anchors, no tabs. A file that
+ * needs any of those is a file this product does not emit.
+ */
+function parseYamlSubset(text) {
+  var raw = String(text).split("\n");
+  if (raw.length && raw[raw.length - 1] === "") raw.pop();
+  if (!raw.length) return { error: "empty file" };
+  var out = [], start = 0;
+  if (raw[0] === "---") start = 1;
+  if (!raw.length || start >= raw.length) return { error: "no content after the '---' marker" };
+  for (var i = start; i < raw.length; i++) {
+    var line = raw[i];
+    if (line.indexOf("\t") >= 0) return { error: "line " + i + " contains a tab" };
+    var m = /^( *)(- )?(.*)$/.exec(line);
+    var spaces = m[1].length;
+    if (spaces % 2 !== 0) return { error: "line " + i + " has an odd indent (" + spaces + ")" };
+    var seq = m[2] === "- ";
+    var rest = m[3];
+    if (rest === "") return { error: "line " + i + " has no key" };
+    var key, keyQuoted = false, at = 0;
+    if (rest.charAt(0) === "'") {
+      var kr = readYamlSingleQuoted(rest, 0);
+      if (kr === null) return { error: "line " + i + " has an unterminated quoted key" };
+      key = kr.value; keyQuoted = true; at = kr.next;
+    } else {
+      var colon = rest.indexOf(":");
+      if (colon < 0) return { error: "line " + i + " has no ':' after its key" };
+      key = rest.slice(0, colon);
+      if (!YAML_PLAIN_KEY_RE.test(key)) {
+        return { error: "line " + i + " has an unquoted key that is not a plain key: " + JSON.stringify(key) };
+      }
+      at = colon;
+    }
+    if (rest.charAt(at) !== ":") return { error: "line " + i + " has no ':' after its key" };
+    at++;
+    if (at === rest.length) {
+      out.push({ indent: spaces / 2 + (seq ? 1 : 0), rawIndent: spaces, seq: seq, key: key,
+                 keyQuoted: keyQuoted, value: null, quoted: false, hasValue: false });
+      continue;
+    }
+    if (rest.charAt(at) !== " ") return { error: "line " + i + " has no space after its ':'" };
+    at++;
+    var val = rest.slice(at);
+    if (val.charAt(0) === "'") {
+      var vr = readYamlSingleQuoted(val, 0);
+      if (vr === null) return { error: "line " + i + " has an unterminated quoted value" };
+      if (vr.next !== val.length) {
+        return { error: "line " + i + " has text after the closing quote of its value: " +
+                        JSON.stringify(val.slice(vr.next)) };
+      }
+      out.push({ indent: spaces / 2 + (seq ? 1 : 0), rawIndent: spaces, seq: seq, key: key,
+                 keyQuoted: keyQuoted, value: vr.value, quoted: true, hasValue: true });
+      continue;
+    }
+    if (val !== "true" && val !== "false") {
+      return { error: "line " + i + " carries an unquoted value that is not a boolean: " + JSON.stringify(val) };
+    }
+    out.push({ indent: spaces / 2 + (seq ? 1 : 0), rawIndent: spaces, seq: seq, key: key,
+               keyQuoted: keyQuoted, value: val, quoted: false, hasValue: true });
+  }
+  return { lines: out };
+}
+
+/* parseIniSubset(text) -> {lines:[{section}|{key,value}]} | {error}
+ *
+ * ansible.cfg's grammar, and the reason it gets no quoter: the accepted subset
+ * is "[section]" or "key = value", one per line, and a value may hold nothing
+ * that could end the entry or begin a comment, because there is no way to write
+ * such a character and have it mean itself. A value that does is not a quoting
+ * failure to be escaped away -- it is a file with an extra entry in it, which is
+ * what this parser reports.
+ */
+function parseIniSubset(text) {
+  var raw = String(text).split("\n");
+  if (raw.length && raw[raw.length - 1] === "") raw.pop();
+  if (!raw.length) return { error: "empty file" };
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var line = raw[i];
+    var sec = /^\[([A-Za-z_][A-Za-z0-9_.-]*)\]$/.exec(line);
+    if (sec) { out.push({ section: sec[1] }); continue; }
+    var kv = /^([A-Za-z_][A-Za-z0-9_.-]*) = (.*)$/.exec(line);
+    if (!kv) return { error: "line " + i + " is neither a section header nor 'key = value': " + JSON.stringify(line) };
+    var value = kv[2];
+    if (value === "") return { error: "line " + i + " has an empty value" };
+    if (/[;#\[\]]/.test(value)) {
+      return { error: "line " + i + " has a value carrying a comment or section character, which " +
+                      "an INI entry cannot contain and cannot escape: " + JSON.stringify(value) };
+    }
+    out.push({ key: kv[1], value: value });
+  }
+  return { lines: out };
+}
+
+/* ---- what the OPERATOR asked for ------------------------------------------
+ * The intent side of the oracle, derived from the spec and the values chosen --
+ * never from the emitted text. Mirrors composeDoc()'s presence rules, and is
+ * deliberately a SECOND statement of them: if the two ever disagree about which
+ * lines a file should have, that disagreement is a failure and not a tie.
+ */
+function docFieldOf(spec, name) {
+  var fields = (spec && spec.fields) || [];
+  for (var i = 0; i < fields.length; i++) if (fields[i].name === name) return fields[i];
+  return null;
+}
+function docFieldLive(spec, version, values, name) {
+  var f = docFieldOf(spec, name);
+  if (!f) return false;
+  if (f.versions && f.versions.indexOf(version) < 0) return false;
+  var v = values[name];
+  return !(v === null || v === undefined || v === "");
+}
+function intendedDoc(spec, version, values) {
+  var doc = spec.doc, out = [], i;
+  for (i = 0; i < doc.lines.length; i++) {
+    var line = doc.lines[i], live = true, names = ["requires", "field", "keyField"], n;
+    for (n = 0; n < names.length; n++) {
+      var who = line[names[n]];
+      if (who !== undefined && who !== null && !docFieldLive(spec, version, values, who)) live = false;
+    }
+    if (!live) continue;
+    if (line.section !== undefined && line.section !== null) { out.push({ section: line.section }); continue; }
+    var key = (line.keyField !== undefined && line.keyField !== null)
+      ? String(values[line.keyField]) : String(line.key);
+    var rec = { indent: (line.indent || 0) + (line.seq === true ? 1 : 0), seq: line.seq === true,
+                key: key, keyQuoted: !!(line.keyField !== undefined && line.keyField !== null),
+                hasValue: true, quoted: true, value: null };
+    if (line.field !== undefined && line.field !== null) {
+      rec.value = String(values[line.field]);
+    } else if (line.lit !== undefined && line.lit !== null) {
+      rec.value = String(line.lit);
+    } else if (line.bool !== undefined && line.bool !== null) {
+      rec.value = line.bool ? "true" : "false";
+      rec.quoted = false;                         /* a curated boolean is the one bare scalar */
+    } else {
+      rec.hasValue = false; rec.quoted = false;
+    }
+    out.push(rec);
+  }
+  return out;
+}
+
+/* The oracle proper. Returns a failure string, or null. */
+function docOracle(res, spec, version, values) {
+  var doc = spec.doc;
+  if (!res.doc) return "the spec declares a doc and the assembler returned a result with none";
+  if (res.doc.kind !== doc.kind) return "emitted a '" + res.doc.kind + "' file for a '" + doc.kind + "' spec";
+  if (res.doc.filename !== doc.filename) {
+    return "emitted filename " + JSON.stringify(res.doc.filename) + " != " + JSON.stringify(doc.filename);
+  }
+  var want = intendedDoc(spec, version, values);
+  var got = (doc.kind === "yaml") ? parseYamlSubset(res.doc.text) : parseIniSubset(res.doc.text);
+  if (got.error) return "the emitted file does not parse as " + doc.kind + ": " + got.error;
+  if (got.lines.length !== want.length) {
+    return "the emitted file has " + got.lines.length + " lines, the operator's has " + want.length +
+           " -- a line was injected or absorbed. Emitted: " + JSON.stringify(res.doc.text);
+  }
+  for (var i = 0; i < want.length; i++) {
+    var g = got.lines[i], w = want[i];
+    if (w.section !== undefined) {
+      if (g.section !== w.section) return "line " + i + " is section " + JSON.stringify(g.section) +
+                                          ", the operator's is " + JSON.stringify(w.section);
+      continue;
+    }
+    if (g.section !== undefined) return "line " + i + " is a section header and the operator's is not";
+    if (g.key !== w.key) {
+      return "line " + i + " key " + JSON.stringify(g.key) + " != the operator's " + JSON.stringify(w.key);
+    }
+    if (doc.kind === "yaml") {
+      if (g.indent !== w.indent) {
+        return "line " + i + " ('" + w.key + "') is at depth " + g.indent + ", the operator's at " + w.indent;
+      }
+      if (g.seq !== w.seq) return "line " + i + " ('" + w.key + "') sequence marker differs";
+      if (w.keyQuoted && !g.keyQuoted) {
+        return "line " + i + " key " + JSON.stringify(g.key) + " came from a form field and was " +
+               "emitted UNQUOTED -- a mapping key is a scalar too";
+      }
+      if (g.hasValue !== w.hasValue) {
+        return "line " + i + " ('" + w.key + "') " + (g.hasValue ? "has a value the operator's does not"
+                                                                 : "has no value and the operator's does");
+      }
+      if (w.hasValue && g.quoted !== w.quoted) {
+        return "line " + i + " ('" + w.key + "') value was emitted " + (g.quoted ? "quoted" : "BARE") +
+               " and the operator's is " + (w.quoted ? "quoted" : "bare") +
+               " -- an operator value that sits bare in YAML is not contained, it is lucky";
+      }
+    }
+    if (w.hasValue && g.value !== w.value) {
+      return "line " + i + " ('" + w.key + "') parsed back as " + JSON.stringify(g.value) +
+             ", the operator typed " + JSON.stringify(w.value) +
+             " -- the file does not say what the form said";
+    }
   }
   return null;
 }
@@ -413,7 +703,8 @@ function main() {
   var types = Object.keys(fx.field_types);
   var vectors = fx.vectors;
 
-  var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, failures: [], byClass: {}, byType: {} };
+  var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, yamlOracles: 0, iniOracles: 0,
+                failures: [], byClass: {}, byType: {} };
 
   function note(cls, outcome) {
     if (!stats.byClass[cls]) stats.byClass[cls] = { rejected: 0, quoted: 0 };
@@ -488,6 +779,18 @@ function main() {
         return;
       }
       stats.oracles++;
+    }
+    /* MCR-SEC-010: shell containment is not FILE containment either. If this
+       spec composes a generated file, the file itself gets parsed and compared
+       line for line against the operator's intent — the same discipline the
+       rich-rule oracle above applies to rich rules. */
+    if (spec.doc) {
+      var docMsg = docOracle(res, spec, version, values);
+      if (docMsg) {
+        stats.failures.push(label + ": " + spec.doc.kind + " oracle — " + docMsg);
+        return;
+      }
+      if (spec.doc.kind === "yaml") stats.yamlOracles++; else stats.iniOracles++;
     }
     stats.quoted++;
     note(cls, "quoted");
@@ -1071,7 +1374,8 @@ function main() {
           }
           values[targetField.name] = vec.value;
           var probe = { id: centry.id, tool: centry.tool, blast: centry.blast || "green",
-                        fields: centry.fields, template: centry.template, versions: centry.versions };
+                        fields: centry.fields, template: centry.template, versions: centry.versions,
+                        doc: centry.doc };
           probe._hostileField = targetField.name;
           probe._benign = targetBenign;
           contentSpecChecks++;
@@ -1130,6 +1434,18 @@ function main() {
       } catch (ge) {
         stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": assembler threw " + ge.message);
         continue;
+      }
+      /* MCR-SEC-010. The golden row is the VALIDITY oracle for the command; the
+         generated file gets the same treatment on the same benign values, on
+         every release. This is the positive control for the doc oracle: a
+         parser that rejected everything would fail here rather than pass the
+         hostile sweep by refusing it. */
+      if (gres !== null && gentry.doc) {
+        var gdoc = docOracle(gres, gentry, gver, grow.values || {});
+        if (gdoc) {
+          stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": " +
+                              gentry.doc.kind + " oracle on the benign control — " + gdoc);
+        } else if (gentry.doc.kind === "yaml") { stats.yamlOracles++; } else { stats.iniOracles++; }
       }
       var gotCommand = gres === null ? null : gres.command;
       if (gotCommand !== want) {
@@ -1612,8 +1928,208 @@ function main() {
   if (A.assembleCommand(mcr001b, "9", mcr001Values, { patterns: [] }) !== null) {
     inv.push("MCR-SEC-001 regression: a service-typed slot accepted rich-rule syntax as a value");
   }
+  /* ---- the generated-FILE sweep (MCR-SEC-010) ---------------------------
+     The hostile sweep above drives every doc generator's fields with every
+     vector, which is the containment half. This is the STRUCTURE half, and it
+     exists because the two properties fail differently: a file can contain
+     every value perfectly and still be the wrong file. Every generator with a
+     doc, on every release, with every combination of its optional fields
+     present and absent, and every branch of every enum -- because an optional
+     line that drops is a line the parser then has to NOT see, and a block
+     header that drops with a line still indented under it is a structural
+     rewrite no amount of quoting would catch. */
+  var docSweep = 0, docSpecs = specEntries.filter(function (e) { return !!e.doc; });
+  if (!docSpecs.length) {
+    stats.failures.push("no generator in content/commands.json declares a doc, so the YAML and " +
+                        "INI oracles ran on nothing — MCR-SEC-010's sink is absent and the " +
+                        "quoter beside it is dead code again");
+  }
+  for (var ds = 0; ds < docSpecs.length; ds++) {
+    var dspec = docSpecs[ds];
+    var dfields = dspec.fields || [];
+    var optional = dfields.filter(function (f) { return !f.required; });
+    var enums = dfields.filter(function (f) { return f.type === "enum"; });
+    var combos = 1 << optional.length;
+    var branches = enums.length ? (enums[0].options || []).length : 1;
+    for (var dc = 0; dc < combos; dc++) {
+      for (var db = 0; db < branches; db++) {
+        for (var dv = 0; dv < VERSIONS.length; dv++) {
+          var dversion = VERSIONS[dv];
+          if (dspec.versions && dspec.versions.indexOf(dversion) < 0) continue;
+          var dvalues = {}, df;
+          for (df = 0; df < dfields.length; df++) {
+            var fld = dfields[df];
+            var oi = optional.indexOf(fld);
+            if (oi >= 0 && !(dc & (1 << oi))) continue;          /* this combo omits it */
+            var bv = (fld.type === "enum" && enums.length && fld === enums[0])
+              ? benignFor(fld, db) : benignFor(fld);
+            if (bv === undefined) continue;
+            dvalues[fld.name] = bv;
+          }
+          docSweep++;
+          var dres = A.assembleCommand(dspec, dversion, dvalues, { patterns: realPatterns });
+          if (dres === null) {
+            stats.failures.push("doc sweep " + dspec.id + " / RHEL " + dversion + " / optional set " +
+                                dc + " / enum branch " + db + ": a benign value set produced no " +
+                                "result at all, so this generator cannot emit its file on this " +
+                                "release for this combination of supplied fields");
+            continue;
+          }
+          var dmsg = docOracle(dres, dspec, dversion, dvalues);
+          if (dmsg) {
+            stats.failures.push("doc sweep " + dspec.id + " / RHEL " + dversion + " / optional set " +
+                                dc + " / enum branch " + db + ": " + dspec.doc.kind + " oracle — " + dmsg);
+            continue;
+          }
+          if (dspec.doc.kind === "yaml") stats.yamlOracles++; else stats.iniOracles++;
+        }
+      }
+    }
+  }
+
+  /* ---- the INI TYPE sweep: the structural rule, proved --------------------
+     ansible.cfg gets no quoter, so its only structural defence is the closed
+     type allow-list. That is exactly the shape MCR-SEC-001 was: a slot allow-list
+     that was never driven with a type it should refuse, and so never proved to
+     refuse one. Every field type in the fixture goes into an INI value slot with
+     a perfectly BENIGN value for that type; a type that is not on the list must
+     produce no file, and one that is must produce a file the parser agrees with. */
+  var iniTypeChecks = 0, iniAllowed = 0, iniRefused = 0;
+  var iniAllowList = A.INI_FIELD_TYPES || [];
+  if (!iniAllowList.length) {
+    stats.failures.push("the assembler exposes no INI_FIELD_TYPES allow-list, so the INI type " +
+                        "sweep has nothing to drive — the structural rule is unproved");
+  }
+  for (var it = 0; it < types.length; it++) {
+    var itype = types[it];
+    var idef = fx.field_types[itype];
+    var ifield = { name: "v", type: itype, required: true, versions: VERSIONS };
+    if (idef.options) ifield.options = idef.options;
+    var ispec = {
+      id: "harness-ini-" + itype, tool: "harness", blast: "green",
+      fields: [ifield],
+      template: [{ lit: "probe" }],
+      doc: { kind: "ini", filename: "ansible.cfg",
+             lines: [{ section: "defaults" }, { key: "setting", field: "v" }] }
+    };
+    for (var iv = 0; iv < VERSIONS.length; iv++) {
+      iniTypeChecks++;
+      var ires = A.assembleCommand(ispec, VERSIONS[iv], { v: idef.benign }, { patterns: [] });
+      var iok = iniAllowList.indexOf(itype) >= 0;
+      if (!iok) {
+        if (ires !== null) {
+          stats.failures.push("ini type sweep [" + itype + "] / RHEL " + VERSIONS[iv] + ": a field " +
+                              "type that is NOT on the INI allow-list composed a file — " +
+                              JSON.stringify(ires.doc && ires.doc.text));
+        } else { iniRefused++; }
+        continue;
+      }
+      if (ires === null) {
+        stats.failures.push("ini type sweep [" + itype + "] / RHEL " + VERSIONS[iv] + ": an " +
+                            "allow-listed closed-grammar type was refused with a benign value — " +
+                            "the allow-list is too narrow to be usable");
+        continue;
+      }
+      var imsg = docOracle(ires, ispec, VERSIONS[iv], { v: idef.benign });
+      if (imsg) {
+        stats.failures.push("ini type sweep [" + itype + "] / RHEL " + VERSIONS[iv] + ": ini oracle — " + imsg);
+        continue;
+      }
+      iniAllowed++; stats.iniOracles++;
+    }
+  }
+
   if (A.shQuote("it's") !== "'it'\\''s'") inv.push("shQuote() does not use the POSIX '\\'' idiom");
   if (A.shQuote("plain") !== "'plain'") inv.push("shQuote() has a bare-value bypass — quoting must be uniform");
+
+  /* ---- MCR-SEC-010: the two quoting domains, and the oracle that tells them
+     apart. Everything above proves the assembler does the right thing. These
+     prove the doc ORACLE would notice if it stopped — a parser that accepts
+     whatever it is handed is a gate that passes on a broken build, which is
+     the shape MCR-SEC-010 was in the first place.
+
+     Every case below is built BY HAND, as text, and fed to the parser. None of
+     it comes out of composeDoc(): an oracle checked only against its own
+     producer's output is a transcript, not an oracle. */
+  if (A.yamlQuote("it's") !== "'it''s'") {
+    inv.push("yamlQuote() does not double the apostrophe — a YAML single-quoted scalar has exactly " +
+             "one escape and it is ''");
+  }
+  if (A.yamlQuote("plain") !== "'plain'") {
+    inv.push("yamlQuote() has a bare-value bypass — quoting must be uniform in this domain too");
+  }
+  if (A.yamlQuote("a\\b") !== "'a\\b'") {
+    inv.push("yamlQuote() treated a backslash as an escape — inside YAML single quotes it is an " +
+             "ordinary character, and treating it otherwise is shQuote()'s rule leaking in");
+  }
+  if (A.yamlQuote("it's") === A.shQuote("it's")) {
+    inv.push("yamlQuote() and shQuote() produce the same string for a value containing an " +
+             "apostrophe — the two domains have collapsed into one");
+  }
+  /* the DOMAIN SWAP control: a file whose value was shell-quoted instead of
+     YAML-quoted must not survive the YAML parser. This is the exact seam a
+     reviewer attacks, so it is asserted rather than argued. */
+  var swapped = parseYamlSubset("---\nname: " + A.shQuote("it's") + "\n");
+  if (!swapped.error) {
+    inv.push("the YAML parser accepted a SHELL-quoted value (" + JSON.stringify(A.shQuote("it's")) +
+             ") — the oracle cannot tell the two escaping domains apart, so it would pass a build " +
+             "where one was substituted for the other");
+  }
+  /* the round-trip control, in the honest direction: a YAML-quoted value must
+     come back exactly, for every hostile vector the comment type admits. */
+  var rtChecks = 0;
+  for (var rv2 = 0; rv2 < vectors.length; rv2++) {
+    var rvv = String(vectors[rv2].value);
+    /* the vectors this control can speak about: a value the FIELD VALIDATORS
+       would refuse outright never reaches a quoter, so round-tripping it proves
+       nothing about the quoter. Control characters and the two line separators
+       are that set (CTRL_RE / INVISIBLE_RE), plus the empty vector. */
+    if (rvv === "" || hasUnquotableChar(rvv)) continue;
+    var rt = parseYamlSubset("---\nname: " + A.yamlQuote(rvv) + "\n");
+    rtChecks++;
+    if (rt.error || rt.lines.length !== 1 || rt.lines[0].value !== rvv || !rt.lines[0].quoted) {
+      inv.push("yamlQuote()/parseYamlSubset() do not round-trip vector " + vectors[rv2].id + ": " +
+               (rt.error || JSON.stringify(rt.lines && rt.lines[0])));
+    }
+  }
+  if (!rtChecks) inv.push("the YAML round-trip control ran on zero vectors — it proves nothing");
+  /* a value sitting BARE must be reported as bare, not silently accepted: that
+     is the property docOracle() leans on to say "contained, not lucky". */
+  var bare = parseYamlSubset("---\nname: hello\n");
+  if (!bare.error) {
+    inv.push("the YAML parser accepted a bare non-boolean scalar — the subset this product emits " +
+             "has exactly one bare form, and it is true/false");
+  }
+  var boolLine = parseYamlSubset("---\nbecome: true\n");
+  if (boolLine.error || boolLine.lines[0].quoted !== false || boolLine.lines[0].value !== "true") {
+    inv.push("the YAML parser does not read a bare boolean as a bare boolean — the one scalar " +
+             "composeDoc() emits unquoted is the one it cannot describe");
+  }
+  /* an injected extra line changes the line count, which is what makes the
+     count comparison in docOracle() load-bearing rather than decorative. */
+  var injected = parseYamlSubset("---\nname: 'a'\nextra: 'b'\n");
+  if (injected.error || injected.lines.length !== 2) {
+    inv.push("the YAML parser does not report an injected second line as a second line");
+  }
+  /* INI: the grammar with no escape. A value carrying a newline is not a
+     quoting failure to be escaped away, it is an extra entry, and the parser
+     has to see it as one. */
+  var iniSplit = parseIniSubset("[defaults]\nforks = 5\nremote_user = evil\n");
+  if (iniSplit.error || iniSplit.lines.length !== 3) {
+    inv.push("the INI parser does not read an injected 'key = value' line as its own entry — the " +
+             "only thing standing between a form field and an ansible.cfg entry is this parser");
+  }
+  var iniComment = parseIniSubset("[defaults]\nforks = 5 ; rm -rf /\n");
+  if (!iniComment.error) {
+    inv.push("the INI parser accepted a value carrying a comment character, which an INI entry " +
+             "can neither contain nor escape");
+  }
+  /* and the positive INI control, so the two above are not a parser that says no
+     to everything. */
+  var iniOk = parseIniSubset("[defaults]\ninventory = /etc/ansible/inventory.yml\n");
+  if (iniOk.error || iniOk.lines.length !== 2 || iniOk.lines[1].value !== "/etc/ansible/inventory.yml") {
+    inv.push("the INI parser rejected a correct ansible.cfg entry: " + (iniOk.error || "shape"));
+  }
 
   /* a required field left empty must yield null on every version */
   for (var iv = 0; iv < VERSIONS.length; iv++) {
@@ -1663,6 +2179,12 @@ function main() {
     rejected: stats.rejected,
     quoted_safe: stats.quoted,
     rich_rule_oracles: stats.oracles,
+    yaml_oracle_checks: stats.yamlOracles,
+    ini_oracle_checks: stats.iniOracles,
+    doc_sweep_checks: docSweep,
+    ini_type_checks: iniTypeChecks,
+    ini_types_refused: iniRefused,
+    ini_types_allowed: iniAllowed,
     half_formed_checks: halfFormed,
     clipboard_checks: clipboardChecks,
     token_allow_list_checks: tokenChecks,
@@ -1683,8 +2205,12 @@ function main() {
        (1) + empty-required, version gating and gated enums (3 per release)
        + 2 tokeniser negative controls + 2 rich-rule-oracle negative controls
        + 2 blast invariants + the MCR-SEC-001 regression (1 vector check + 1 per
-       release + 1 typed) */
-    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length) + 3,
+       release + 1 typed) + MCR-SEC-010's quoting-domain block: 4 yamlQuote
+       behaviour checks, the domain-swap control, the bare-scalar and bare-boolean
+       controls, the injected-line control, 3 INI parser controls, and one
+       round-trip check per vector the comment type admits */
+    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length) + 3
+                + 4 + 1 + 2 + 1 + 3 + rtChecks,
     failures: stats.failures
   };
   if (asJson) {
@@ -1727,8 +2253,19 @@ function main() {
                 "every enum field of every generator on every release, asserted for validity and " +
                 "for blast — a destructive branch must come out at least yellow, and a green " +
                 "generator must still have a green branch)");
+    console.log("  " + report.yaml_oracle_checks + " YAML-file oracle checks and " +
+                report.ini_oracle_checks + " INI-file oracle checks (MCR-SEC-010: every generated " +
+                "file is PARSED and compared line for line to the operator's intent -- every value " +
+                "back out exactly as it went in, every operator value quoted, every curated boolean " +
+                "bare, and the line count unchanged)");
+    console.log("  " + docSweep + " generated-file structure checks (every doc generator, every " +
+                "release, every combination of its optional fields and every enum branch) and " +
+                iniTypeChecks + " INI type checks: " + iniRefused + " field types refused an " +
+                "ansible.cfg value slot structurally, " + iniAllowed + " allow-listed closed " +
+                "grammars composed and parsed back");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
-                report.invariants + " invariants");
+                report.invariants + " invariants (including the domain-swap control: a " +
+                "shell-quoted value must NOT parse as a YAML scalar)");
     var classes = Object.keys(stats.byClass).sort();
     for (var c = 0; c < classes.length; c++) {
       console.log("    " + classes[c] + ": " + stats.byClass[classes[c]].rejected + " rejected, " +
