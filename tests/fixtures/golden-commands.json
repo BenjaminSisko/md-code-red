@@ -313,19 +313,19 @@
    }
   },
   "gen-chage-list": {
-   "pins": "chage(1): -l is bare and the user name is positional",
+   "pins": "chage(1): -l is bare and the user name is positional. Benign value 'adm-linux' (J1, VER-001 exposure): 'svcacct' does not exist on either lab host, so the receipted capture ran 'adm-linux' instead (documented in the capture's field_substitutions) \u2014 the golden row is pinned to the value that was actually, verifiably run.",
    "values": {
-    "username": "svcacct"
+    "username": "adm-linux"
    },
    "blast": "green",
    "flags": [
     "-l"
    ],
    "commands": {
-    "7": "chage -l 'svcacct'",
-    "8": "chage -l 'svcacct'",
-    "9": "chage -l 'svcacct'",
-    "10": "chage -l 'svcacct'"
+    "7": "chage -l 'adm-linux'",
+    "8": "chage -l 'adm-linux'",
+    "9": "chage -l 'adm-linux'",
+    "10": "chage -l 'adm-linux'"
    }
   },
   "gen-chage-set-aging": {

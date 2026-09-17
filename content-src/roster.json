@@ -1,0 +1,10 @@
+{
+ "_doc": "J2 (VER-002) — the closed roster behind the two-person rule. qa.py's gate_q16() normalises a receipt's 'by' and a capture's 'captured_by' (casefold, collapsed whitespace incl. NBSP, one stripped trailing parenthetical — qa.normalize_person_name()) and then requires BOTH names to resolve against this list, 'by' holding the QA role and 'captured_by' holding the SME role.",
+ "_why_a_roster_and_not_just_normalisation": "Marcus Reed's VER-002: normalisation alone closes only the ACCIDENTAL bypass (case, padding, doubled/NBSP whitespace, a '(SME)' suffix). It cannot close a DELIBERATE alias — no comparison of free-text names catches someone who chooses to write a different name ('C. Stone'). That half is closed structurally: a name not on this list does not resolve, full stop, regardless of whose alias it might be.",
+ "_extend_this_list": "New SMEs/QA as intake lands (Milo Vance's task framing, HL-tranche J1-J3). Add a person, then extend their 'roles' — never delete a historical name a shipped receipt still points at, or that receipt's normalise-and-lookup starts failing retroactively.",
+ "people": [
+  {"name": "Caleb Stone", "roles": ["SME"]},
+  {"name": "Renata Osei", "roles": ["SME"]},
+  {"name": "Riley Park", "roles": ["QA"]}
+ ]
+}

@@ -16,6 +16,32 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-18** — Q16 closes J1/J2/J3 (VER-001/002/003), branch `salm/milo/receipt-guards`
+  (Milo Vance). Marcus Reed's Verified-per-version review approved the per-version receipt
+  schema with three conditions. **J1**: 12 of the 18 shipped receipts sat on generator entries,
+  exempt from Q16's command-drift check (`if "template" not in e:`) — a template edit could not
+  invalidate the receipts describing its old behaviour. The generator half now diffs a receipt's
+  `capture.command_as_run` against `tests/fixtures/golden-commands.json`, the same hand-authored
+  validity oracle the harness already uses — closing content debt this exposed along the way:
+  `gen-chage-list`'s golden row was pinned to a username (`svcacct`) that does not exist on
+  either lab host, while its real, receipted capture ran `adm-linux`; the golden row is now
+  pinned to the value actually, verifiably run. **J2**: the two-person rule was byte-for-byte
+  string equality — eight of Marcus's nine hostile variants (case, padding, doubled/NBSP
+  whitespace, a `(SME)` suffix) bypassed it, and a deliberate alias (`"C. Stone"`) cannot be
+  closed by any string comparison at all. Both names are now normalised
+  (`normalize_person_name()`) and checked against a new closed roster,
+  `content-src/roster.json` (Caleb Stone and Renata Osei as SMEs, Riley Park as QA) — `by` must
+  hold the QA role, `captured_by` the SME role — and the gate's own PASS diagnostics state the
+  residual plainly: the deliberate-alias path is closed by roster membership, not by string
+  matching. **J3**: `host` and `capture` had no closed grammar; both are now regex-bound
+  (`RECEIPT_HOST_RE`, `RECEIPT_CAPTURE_PATH_RE`), and a receipt's `host` must equal its own
+  capture's `host`. Fail-first throughout: `tests/test_q16_receipts.py` grew from 4 to 21 cases,
+  each shown red against the pre-fix gate before the fix landed. Full gate green
+  (`rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests &&
+  node tests/hostile_harness.js`); artifact sha256 unchanged at
+  `bb950d9088060ed619c5e1178cc128b9b91d69d9240e9847001d1963573a9f06` (QA-gate and content-src
+  work only — the shell, the assembler and the data island are untouched). See
+  `docs/CHANGELOG.md` for the full breakdown.
 - **2026-09-18** — `verified` is per RHEL version, branch `salm/milo/verified-per-version`
   (Milo Vance). CEO ruling closing Riley Park's first capture review
   (`capture-review-run1-2026-09-18.md` RILEY-F1): a single whole-entry `verified` flag could not

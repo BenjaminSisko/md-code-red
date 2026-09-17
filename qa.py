@@ -2289,6 +2289,85 @@ CAPTURE_REQUIRED_FIELDS = (
 VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
 
 
+# J3 (VER-003): closed grammars for the two receipt fields that had none.
+# `host` gets an RFC-1123-ish hostname shape — the app already has this exact
+# rule for the `hostname` field type, reused here rather than restated. The
+# capture path is closed to the shape import_captures.py / build.py actually
+# write: tests/captures/<release>/<slug>.json, no traversal, no case tricks.
+RECEIPT_HOST_RE = re.compile(r"^[a-z0-9][a-z0-9.-]{1,62}$")
+RECEIPT_CAPTURE_PATH_RE = re.compile(r"^tests/captures/(7|8|9|10)/[a-z0-9-]+\.json$")
+
+
+def load_golden_commands():
+    """Load tests/fixtures/golden-commands.json, the hand-authored validity
+    oracle (MCR-SEC-015/021). gate_q16() binds generator receipts to it (J1,
+    VER-001): a generator entry has no rhel_versions[v].command to diff a
+    capture against, so without this table a template edit can never
+    invalidate the receipts that describe its old behaviour. Returns
+    (dict_or_None, error_string_or_None); reads REPO fresh on every call
+    (never cached at import time) so a test that patches qa.REPO — see
+    tests/test_q16_receipts.py — sees its own fixture copy, not the real one.
+    """
+    path = os.path.join(REPO, "tests", "fixtures", "golden-commands.json")
+    if not os.path.isfile(path):
+        return None, "tests/fixtures/golden-commands.json is missing"
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh), None
+    except (ValueError, OSError) as exc:
+        return None, "tests/fixtures/golden-commands.json could not be read: %s" % exc
+
+
+# trailing parenthetical, e.g. "Caleb Stone (SME)" -> "Caleb Stone" — stripped
+# BEFORE whitespace collapse so a name can never smuggle whitespace through it.
+_TRAILING_PAREN_RE = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def normalize_person_name(s):
+    """J2 (VER-002): casefold, collapse ALL Unicode whitespace (incl. NBSP) to
+    a single space, strip, after removing one trailing parenthetical. This
+    closes the accidental bypass (case, padding, doubled/NBSP whitespace,
+    "(SME)" suffix) — it does NOT and cannot close a deliberate alias like
+    "C. Stone"; that half is closed by the roster lookup, not by this
+    function, and the gate says so (see gate_q16's own diagnostic line)."""
+    if not isinstance(s, str):
+        return ""
+    s = _TRAILING_PAREN_RE.sub("", s)
+    s = "".join(" " if ch.isspace() else ch for ch in s)
+    s = re.sub(r" +", " ", s).strip()
+    return s.casefold()
+
+
+def load_roster():
+    """Load content-src/roster.json, the closed two-person-rule roster (J2,
+    VER-002): {"people": [{"name": ..., "roles": [...]}, ...]}. Returns
+    (dict_or_None, error_string_or_None) where the dict maps a NORMALISED
+    name (normalize_person_name) to its set of roles. Same REPO-fresh-read
+    rule as load_golden_commands(), for the same test-patching reason.
+    """
+    path = os.path.join(REPO, "content-src", "roster.json")
+    if not os.path.isfile(path):
+        return None, "content-src/roster.json is missing"
+    try:
+        with open(path, encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except (ValueError, OSError) as exc:
+        return None, "content-src/roster.json could not be read: %s" % exc
+    people = raw.get("people") if isinstance(raw, dict) else None
+    if not isinstance(people, list) or not people:
+        return None, "content-src/roster.json has no non-empty 'people' list"
+    roster = {}
+    for person in people:
+        if not isinstance(person, dict):
+            continue
+        name = person.get("name")
+        roles = person.get("roles")
+        if not isinstance(name, str) or not name or not isinstance(roles, list):
+            continue
+        roster[normalize_person_name(name)] = set(roles)
+    return roster, None
+
+
 def load_capture_file(rel_path):
     """Read+parse a capture record by its REPO-relative path (a receipt's own
     `capture` field). Returns (cap_dict_or_None, error_string_or_None)."""
@@ -2324,6 +2403,11 @@ def gate_q16(ctx):
        resolved them). Content edited since capture drifts this check red.
        Finally, the receipt's `by` must not equal the capture's `captured_by`
        — SME captures, QA verifies; the same name cannot do both.
+
+    3. Closed grammars (J3, VER-003) for `host` (RFC-1123-ish hostname,
+       cross-checked against the capture's own `host`) and `capture` (must
+       be a literal tests/captures/<release>/<slug>.json path — no
+       traversal, no other shape).
     """
     f, d = [], []
     data = ctx["data"]
@@ -2361,7 +2445,20 @@ def gate_q16(ctx):
             for field in VERIFIED_RECEIPT_FIELDS:
                 if not receipt.get(field):
                     f.append("entry %s verified['%s']: receipt has no '%s'" % (eid, v, field))
+
+            # J3 (VER-003) — closed grammar on the receipt's own fields,
+            # independent of whether the capture they name can even be
+            # loaded. `by`'s grammar is the roster itself, enforced below.
+            host = receipt.get("host")
+            if host is not None and not RECEIPT_HOST_RE.match(host or ""):
+                f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
+                         "closed hostname grammar %s"
+                         % (eid, v, host, RECEIPT_HOST_RE.pattern))
             cap_path = receipt.get("capture")
+            if cap_path is not None and not RECEIPT_CAPTURE_PATH_RE.match(cap_path or ""):
+                f.append("entry %s verified['%s']: receipt's capture path ('%s') does not match "
+                         "the closed grammar %s"
+                         % (eid, v, cap_path, RECEIPT_CAPTURE_PATH_RE.pattern))
             cap, err = load_capture_file(cap_path)
             if err:
                 f.append("entry %s verified['%s']: %s" % (eid, v, err))
@@ -2385,6 +2482,11 @@ def gate_q16(ctx):
                     f.append("entry %s verified['%s']: capture '%s' command_hash_at_capture does "
                              "not match sha256(command_as_run) — tampered or hand-edited capture "
                              "record" % (eid, v, cap_path))
+            if host and cap.get("host") and host != cap.get("host"):
+                f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
+                         "capture's own host ('%s') — a receipt's host claims where it was "
+                         "verified, and that must be the machine the capture says it ran on"
+                         % (eid, v, host, cap.get("host")))
             if "template" not in e:
                 current = ((e.get("rhel_versions") or {}).get(v) or {}).get("command")
                 run_as = cap.get("command_as_run")
@@ -2393,18 +2495,72 @@ def gate_q16(ctx):
                              "matches the RHEL %s command this build assembles today ('%s') — "
                              "content changed since capture; re-capture before re-verifying"
                              % (eid, v, run_as, v, current))
+            else:
+                # J1 (VER-001): a generator has no rhel_versions[v].command to
+                # diff against, so bind the receipt to the hand-authored
+                # validity oracle instead — the golden table already states
+                # the exact command this generator must emit per release.
+                golden, golden_err = load_golden_commands()
+                if golden_err:
+                    f.append("entry %s verified['%s']: %s — a generator receipt cannot be bound "
+                             "to a command with nothing to diff it against" % (eid, v, golden_err))
+                else:
+                    grow = (golden.get("generators") or {}).get(eid)
+                    if grow is None:
+                        f.append("entry %s verified['%s']: no golden-table row for generator "
+                                 "'%s' in tests/fixtures/golden-commands.json — a template edit "
+                                 "to this generator cannot be detected without one" % (eid, v, eid))
+                    else:
+                        golden_cmd = (grow.get("commands") or {}).get(v)
+                        run_as = cap.get("command_as_run")
+                        if golden_cmd and run_as is not None and run_as != golden_cmd:
+                            f.append("entry %s verified['%s']: capture's command_as_run ('%s') no "
+                                     "longer matches the golden-table command generator '%s' "
+                                     "emits on RHEL %s ('%s') — the template changed since "
+                                     "capture; re-capture before re-verifying"
+                                     % (eid, v, run_as, eid, v, golden_cmd))
+            # J2 (VER-002) — the two-person rule, normalised and roster-closed.
             by = receipt.get("by")
             captured_by = cap.get("captured_by")
-            if by and captured_by and by == captured_by:
-                f.append("entry %s verified['%s']: receipt's by ('%s') is the same person as the "
-                         "capture's captured_by — SME captures, QA verifies; one name cannot do "
-                         "both for the same receipt" % (eid, v, by))
+            by_norm = normalize_person_name(by) if by else None
+            captured_norm = normalize_person_name(captured_by) if captured_by else None
+            roster, roster_err = load_roster()
+            if roster_err:
+                if by or captured_by:
+                    f.append("entry %s verified['%s']: %s — the two-person rule cannot be "
+                             "enforced with no roster to check names against" % (eid, v, roster_err))
+            else:
+                if by:
+                    by_roles = roster.get(by_norm)
+                    if by_roles is None or "QA" not in by_roles:
+                        f.append("entry %s verified['%s']: receipt's by ('%s') is not a QA-roled "
+                                 "member of the roster (content-src/roster.json) — QA verifies, "
+                                 "and only a roster member holding the QA role may sign as 'by'"
+                                 % (eid, v, by))
+                if captured_by:
+                    cap_roles = roster.get(captured_norm)
+                    if cap_roles is None or "SME" not in cap_roles:
+                        f.append("entry %s verified['%s']: capture's captured_by ('%s') is not "
+                                 "an SME-roled member of the roster (content-src/roster.json) — "
+                                 "SME captures, and only a roster member holding the SME role "
+                                 "may sign as 'captured_by'" % (eid, v, captured_by))
+            if by_norm and captured_norm and by_norm == captured_norm:
+                f.append("entry %s verified['%s']: receipt's by ('%s') and capture's captured_by "
+                         "('%s') normalise to the same person — SME captures, QA verifies; one "
+                         "person cannot do both for the same receipt" % (eid, v, by, captured_by))
     if not f:
         d.append("%d expected_output blocks, %d capture records — expected output is captured, never typed "
                  "(content validation protocol runs are CR-T-34)" % (n_exp, len(captures)))
         d.append("%d per-version verified receipt(s), each backed by its own capture file for that "
-                 "exact entry/version pair, hash-matched against the currently assembled command, "
-                 "and captured by someone other than the receipt's own 'by'" % n_receipts)
+                 "exact entry/version pair, hash-matched against the currently assembled command "
+                 "(golden-table-bound for generators, J1), roster-checked by role (J2), and "
+                 "grammar-closed on host/capture (J3)" % n_receipts)
+        d.append("two-person rule residual (J2, VER-002): normalisation (casefold + collapsed "
+                 "whitespace incl. NBSP + one stripped trailing parenthetical) closes only the "
+                 "ACCIDENTAL bypass. A deliberate alias (e.g. 'C. Stone') is NOT closable by any "
+                 "string comparison of names; it is refused here because it does not resolve "
+                 "against the closed roster in content-src/roster.json, not because it is "
+                 "detected as an alias of a real roster member.")
     return f, d
 
 
