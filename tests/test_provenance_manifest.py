@@ -94,17 +94,32 @@ class ProvenanceManifestTests(unittest.TestCase):
         self.assertTrue(self.manifest.get("git_commit"))
 
     def test_manifest_is_deterministic_except_the_commit_field(self):
-        proc = subprocess.run([sys.executable, SCRIPT, "--commit", "deadbeef" * 5],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
-        self.assertEqual(proc.returncode, 0, proc.stderr.decode("utf-8", "replace"))
-        with open(self.manifest_path, encoding="utf-8") as f:
-            second = json.load(f)
-        first = dict(self.manifest)
-        first.pop("git_commit")
-        second.pop("git_commit")
-        self.assertEqual(first, second,
-                         "two runs of make_provenance.py against the same build produced "
-                         "different output in a field other than git_commit")
+        # make_provenance.py always writes to the same path (derived from
+        # build.py's APP_VERSION), so this second invocation overwrites the
+        # exact file setUpClass already wrote and that other test methods in
+        # this class read. Restore the original bytes afterward no matter
+        # what -- a test that leaves dist/*.provenance.json mutated with a
+        # throwaway "deadbeef..." commit hash would poison the working tree
+        # for whatever runs next (a later gate, or `git add` at commit time),
+        # which is exactly the kind of self-inflicted drift this repo's own
+        # gates (Q21) exist to catch.
+        with open(self.manifest_path, "rb") as f:
+            original_bytes = f.read()
+        try:
+            proc = subprocess.run([sys.executable, SCRIPT, "--commit", "deadbeef" * 5],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
+            self.assertEqual(proc.returncode, 0, proc.stderr.decode("utf-8", "replace"))
+            with open(self.manifest_path, encoding="utf-8") as f:
+                second = json.load(f)
+            first = dict(self.manifest)
+            first.pop("git_commit")
+            second.pop("git_commit")
+            self.assertEqual(first, second,
+                             "two runs of make_provenance.py against the same build produced "
+                             "different output in a field other than git_commit")
+        finally:
+            with open(self.manifest_path, "wb") as f:
+                f.write(original_bytes)
 
 
 if __name__ == "__main__":
