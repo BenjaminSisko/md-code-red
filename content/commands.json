@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 82
+  "entry_count": 90
  },
  "categories": [
   "firewall-cmd",
@@ -31,7 +31,8 @@
   "coreutils",
   "text-processing",
   "filesystem",
-  "process"
+  "process",
+  "network"
  ],
  "entries": [
   {
@@ -5226,6 +5227,569 @@
     "title": "man page for systemd-analyze, as installed on the reference host",
     "url_or_man": "man systemd-analyze(1)",
     "version": "systemd 219-257",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ss-socket-statistics",
+   "tool": "ss",
+   "category": "network",
+   "intent": "See what is listening on which port and what is connected right now, without the parsing overhead netstat has",
+   "rhel_versions": {
+    "7": {
+     "command": "ss -tulpn",
+     "notes": "-t/-u select TCP/UDP sockets, -l restricts to listening sockets, -p shows the owning process, -n skips DNS/service-name resolution so it returns instantly. ss reads netlink sockets directly instead of /proc line-by-line, which is why RHEL's own guidance has moved to it as netstat's replacement -- netstat still exists on RHEL 7/8/9 (via the separate net-tools package on 8/9) but is not installed on RHEL 10 by default at all."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-t",
+     "explain": "Show TCP sockets.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Show UDP sockets.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "Restrict to listening sockets.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "Show the process (pid/name) that owns each socket -- needs root to see other users' processes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Skip DNS and service-name resolution; show raw addresses and port numbers.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "Show every socket, listening and established.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed listening ports and their owning processes match what the operator expects to be bound on this host.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ss",
+    "title": "man page for ss, as installed on the reference host",
+    "url_or_man": "man ss(8)",
+    "version": "iproute 4.11-6.x",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ip-address-route-link",
+   "tool": "ip",
+   "category": "network",
+   "intent": "Show or change network interfaces, addresses, and routes -- the single tool that replaced ifconfig/route/arp",
+   "explain_tool": "ip",
+   "rhel_versions": {
+    "7": {
+     "command": "ip addr show",
+     "notes": "ip is present and works identically to later releases; RHEL 7-era documentation and habit lean toward ifconfig, which is why it is filed as a separate deprecated entry rather than folded into this one."
+    },
+    "8": {
+     "command": "ip addr show"
+    },
+    "9": {
+     "same_as": "8"
+    },
+    "10": {
+     "same_as": "8"
+    }
+   },
+   "flags": [
+    {
+     "flag": "addr",
+     "explain": "Show or manage IP addresses on interfaces (ip addr show / ip addr add|del).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "link",
+     "explain": "Show or manage network interfaces themselves -- up/down state, MTU, MAC address (ip link show / ip link set).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "route",
+     "explain": "Show or manage the routing table (ip route show / ip route add|del).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Show extra statistics (packet/byte counters, errors) alongside the normal output.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ip addr show` (or route/link) reports the expected addresses, routes, or interface state.",
+   "undo": "A read-only `show` has nothing to undo. A change made with `ip addr add`/`ip route add` etc. is undone with the matching `del` -- and, like ifconfig before it, nothing set this way survives a reboot unless it is also written into the persistent network configuration (NetworkManager/nmcli or a keyfile), which is a separate, deliberate step.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ip",
+    "title": "man page for ip, as installed on the reference host",
+    "url_or_man": "man ip(8)",
+    "version": "iproute 4.11-6.x",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ping-reachability",
+   "tool": "ping",
+   "category": "network",
+   "intent": "Confirm basic network reachability to a host before troubleshooting anything higher up the stack",
+   "rhel_versions": {
+    "7": {
+     "command": "ping -c 4 10.0.0.1",
+     "notes": "-c limits ping to a fixed count so it terminates on its own (with no -c, ping runs forever until Ctrl-C). Sends ICMP echo requests only; a host with ICMP blocked by policy can be fully reachable over TCP/UDP and still not answer ping, so a failure here is evidence, not proof, of a network problem."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Stop after sending this many packets, instead of running until interrupted.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Interval in seconds between packets (default 1).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-W",
+     "explain": "Timeout in seconds to wait for each reply.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-4",
+     "explain": "Force IPv4.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-6",
+     "explain": "Force IPv6.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported packet loss and round-trip time match what the operator expects for that path.",
+   "undo": "Nothing to undo -- read-only, generates only transient ICMP traffic.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ping",
+    "title": "man page for ping, as installed on the reference host",
+    "url_or_man": "man ping(8)",
+    "version": "iputils 20180629-20240905",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "curl-transfer-url",
+   "tool": "curl",
+   "category": "network",
+   "intent": "Fetch or post to a URL from the command line -- HTTP status, headers, and body, or a file download",
+   "rhel_versions": {
+    "7": {
+     "command": "curl -sS -o output.bin https://example.invalid/file",
+     "notes": "-s silences the progress meter, -S still shows an error if one occurs, -o writes the response body to a file instead of stdout. On an air-gapped or network-segmented host, curl against anything outside the lab's own segment will simply time out or fail to resolve -- that is the network boundary working as designed, not a curl problem, and is not something to route around by relaxing firewall or DNS controls without going through change control."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-s",
+     "explain": "Silent mode: suppress the progress meter (but not errors).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-S",
+     "explain": "Show an error message on failure even with -s.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-o",
+     "explain": "Write output to the named file instead of stdout.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-I",
+     "explain": "Fetch headers only (HTTP HEAD), for checking status without downloading the body.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-X",
+     "explain": "Set the HTTP method explicitly (e.g. -X POST).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-k",
+     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee and should not be used to work around a certificate problem that needs its own fix.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The expected HTTP status is returned and, for a download, the output file's size/checksum matches what was expected.",
+   "undo": "For a plain fetch, nothing to undo -- read-only against the remote. A downloaded file can simply be deleted; curl itself makes no change on the local host beyond the file it was told to write.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-curl",
+    "title": "man page for curl, as installed on the reference host",
+    "url_or_man": "man 1 curl",
+    "version": "curl 7.29-8.x",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "wget-download-url",
+   "tool": "wget",
+   "category": "network",
+   "intent": "Download a file (or mirror a small site) from a URL, with built-in retry and resume that curl leaves to the caller",
+   "rhel_versions": {
+    "7": {
+     "command": "wget -q -O output.bin https://example.invalid/file",
+     "notes": "-q suppresses the normal progress/status chatter; -O sets the output filename (- means stdout). wget resumes an interrupted download with -c and retries transient failures on its own, which is why it is often preferred over curl for one-shot large-file pulls. Same air-gap caveat as curl: a lab host with no route to the target network will simply fail here, by design."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-q",
+     "explain": "Quiet mode: suppress the normal status output.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-O",
+     "explain": "Write output to the named file (or - for stdout) instead of deriving a name from the URL.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Continue/resume a partially downloaded file instead of starting over.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--no-check-certificate",
+     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee; do not use to work around a certificate problem that needs its own fix.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The downloaded file's size/checksum matches what was expected.",
+   "undo": "Delete the downloaded file -- wget makes no other change on the local host.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-wget",
+    "title": "man page for wget, as installed on the reference host",
+    "url_or_man": "man wget(1)",
+    "version": "wget 1.14-1.24",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ssh-remote-shell",
+   "tool": "ssh",
+   "category": "network",
+   "intent": "Open an interactive shell, or run one command, on a remote host over an encrypted channel",
+   "rhel_versions": {
+    "7": {
+     "command": "ssh -i ~/.ssh/id_ed25519 user@host",
+     "notes": "With no trailing command, opens an interactive login shell on the remote host; given a command after the host, runs just that command and returns. -i selects a specific private key instead of the agent/default identity files. The remote host's own STIG posture (pam_faillock, banner, key vs password auth policy) governs what happens on repeated failed attempts -- this entry does not change that policy, only connects to whatever it already is."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-i",
+     "explain": "Use a specific private key file for authentication instead of the default identity files.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "Connect to a non-default port.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Verbose: print connection/negotiation diagnostics, useful when a connection fails and the reason is not obvious.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-L",
+     "explain": "Local port forward: bind a local port that tunnels to a destination reachable from the remote host.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-o",
+     "explain": "Set an ssh_config option for just this invocation (e.g. -o StrictHostKeyChecking=no, which should be used deliberately, not as a default habit).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "A shell prompt (or the command's output) returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
+   "undo": "Exit the remote shell (Ctrl-D or `exit`) to return to the local session; ssh itself changes nothing on either host beyond the transient connection.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ssh",
+    "title": "man page for ssh, as installed on the reference host",
+    "url_or_man": "man ssh(1)",
+    "version": "openssh 7.4-9.x",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "scp-secure-copy",
+   "tool": "scp",
+   "category": "network",
+   "intent": "Copy a file to or from a remote host over the same encrypted channel ssh uses",
+   "rhel_versions": {
+    "7": {
+     "command": "scp -p /etc/app/config.yml user@host:/etc/app/config.yml",
+     "notes": "-p preserves modification time, access time, and mode from the source. Like mv/cp locally, scp overwrites an existing destination file with no prompt -- there is no built-in dry-run or confirmation step. rsync (below) is generally the better tool for anything larger than a one-off file, since it can resume and only transfers changed data."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-p",
+     "explain": "Preserve the source file's modification time, access time, and permission mode.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Recurse into directories, copying a whole tree.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Use a specific private key file for authentication.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-C",
+     "explain": "Compress data during the transfer.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The file exists at the destination with the expected size/checksum.",
+   "undo": "Delete the copy at the destination (or restore the destination's own prior version from a backup, if it was overwritten and something was already there).",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-scp",
+    "title": "man page for scp, as installed on the reference host",
+    "url_or_man": "man scp(1)",
+    "version": "openssh 7.4-9.x",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "rsync-sync-files",
+   "tool": "rsync",
+   "category": "network",
+   "intent": "Synchronize a file tree to a local path or a remote host over ssh, transferring only what changed",
+   "rhel_versions": {
+    "7": {
+     "command": "rsync -avh --dry-run /etc/app/ user@host:/etc/app/",
+     "notes": "-a (archive) preserves permissions/ownership/timestamps/symlinks and recurses; -v is verbose, -h human-readable sizes. --dry-run reports exactly what WOULD be transferred, added, or deleted without touching anything -- always worth running once before the real sync, especially before adding --delete (which removes destination files that no longer exist on the source and is otherwise the one flag that turns this into a red-rated deletion, not a copy)."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Archive mode: recursive, and preserve permissions/ownership/timestamps/symlinks.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Verbose: list each file as it is transferred.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Dry run: report what would happen without changing anything (same as --dry-run).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-z",
+     "explain": "Compress data during transfer.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--delete",
+     "explain": "Delete files at the destination that no longer exist at the source -- turns a copy into a synchronized mirror, and is where rsync stops being purely additive.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
+   "undo": "Without --delete, rsync only adds/updates files, so undo is the same as cp: remove or restore the files it wrote. With --delete, anything it removed at the destination is gone the same way rm's targets are, unless backed up first -- treat --delete with the same caution as rm -rf.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-rsync",
+    "title": "man page for rsync, as installed on the reference host",
+    "url_or_man": "man rsync(1)",
+    "version": "rsync 3.1-3.2",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
