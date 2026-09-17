@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 19
+  "tool_count": 41
  },
  "tools": [
   {
@@ -590,6 +590,688 @@
     "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "lsblk",
+   "binary": "lsblk",
+   "label": "lsblk",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "df",
+   "binary": "df",
+   "label": "df",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "du",
+   "binary": "du",
+   "label": "du",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "pvs",
+   "binary": "pvs",
+   "label": "pvs / vgs / lvs (LVM reporting)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "findmnt",
+   "binary": "findmnt",
+   "label": "findmnt",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "mount",
+   "binary": "mount",
+   "label": "mount (NFS and local)",
+   "category": "storage",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ip",
+   "binary": "ip",
+   "label": "ip (iproute2)",
+   "category": "networking",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ss",
+   "binary": "ss",
+   "label": "ss (socket statistics)",
+   "category": "networking",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "chronyc",
+   "binary": "chronyc",
+   "label": "chronyc",
+   "category": "networking",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "getenforce",
+   "binary": "getenforce",
+   "label": "getenforce / sestatus",
+   "category": "selinux",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "restorecon",
+   "binary": "restorecon",
+   "label": "restorecon",
+   "category": "selinux",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "id",
+   "binary": "id",
+   "label": "id",
+   "category": "users & sudo",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "last",
+   "binary": "last",
+   "label": "last / lastb",
+   "category": "users & sudo",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "visudo",
+   "binary": "visudo",
+   "label": "visudo",
+   "category": "users & sudo",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "logrotate",
+   "binary": "logrotate",
+   "label": "logrotate",
+   "category": "logs",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "rpm",
+   "binary": "rpm",
+   "label": "rpm",
+   "category": "packages",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "createrepo_c",
+   "binary": "createrepo_c",
+   "label": "createrepo_c",
+   "category": "packages",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ps",
+   "binary": "ps",
+   "label": "ps",
+   "category": "processes",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "kill",
+   "binary": "kill",
+   "label": "kill",
+   "category": "processes",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "find",
+   "binary": "find",
+   "label": "find",
+   "category": "files",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "tar",
+   "binary": "tar",
+   "label": "tar",
+   "category": "files",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "stat",
+   "binary": "stat",
+   "label": "stat",
+   "category": "files",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "8": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    },
+    "10": {
+     "available": true,
+     "note": "Documented from the Grey Beard Ansible field kit, which was authored and used on RHEL 9; not part of the CR-T-09/10 host extraction, so no flag dictionary covers this binary yet."
+    }
+   },
+   "source": {
+    "title": "Grey Beard Ansible field kit (orbit/grey-beard-ansible, same owner) - content/commands.json and content/rhel_flags.json, curated from RHEL 9 manual pages",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json",
+    "version": "Grey Beard Ansible v1.0.0, content verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
    }
   }
  ]

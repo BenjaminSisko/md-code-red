@@ -4,6 +4,67 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — Grey Beard content port, part 1: the 41 RHEL entries (CR-T-33 tranche)
+
+The Founder's verdict on v1.0.0-alpha.1 was that the daily ground is not
+there. It was not: the alpha forked the Grey Beard Ansible field kit's ENGINE
+and left its CONTENT behind. This is the first half of bringing it across --
+41 RHEL entries from `orbit/grey-beard-ansible` `content/commands.json`, the
+same owner's own curated, Founder-used catalog.
+
+- Ten categories the catalog had nothing in: **Disks & LVM** (7), **systemd &
+  services** (5), **Networking** (4, plus chrony), **SELinux** (5),
+  **firewalld** (2), **Users & sudo** (4), **Logs & journald** (3),
+  **Packages** (4), **Processes & performance** (2), **Files & permissions**
+  (4).
+- 22 new `content/tools.json` records for the binaries those entries invoke
+  (`lsblk`, `df`, `du`, `pvs`, `findmnt`, `mount`, `ip`, `ss`, `chronyc`,
+  `getenforce`, `restorecon`, `id`, `last`, `visudo`, `logrotate`, `rpm`,
+  `createrepo_c`, `ps`, `kill`, `find`, `tar`, `stat`). Every one declares
+  availability on all four releases and says, in its note, that it was NOT
+  part of the CR-T-09/10 host extraction -- so no flag dictionary covers it
+  and none is implied.
+- **Versions, honestly.** Grey Beard is single-version and was authored and
+  used on RHEL 9, so RHEL 9 holds the concrete row and the other three point
+  at it with `same_as` -- which, by `extract/schema.py`'s own rule, can never
+  carry a verified receipt. `verified` is `false` on all four keys of all 41
+  entries; nothing here has been run on a host by this project yet. Three
+  releases are marked `unavailable` with a stated reason rather than guessed:
+  `dnf` on RHEL 7 (it is yum's release), and `findmnt --verify` and
+  `createrepo_c` on RHEL 7, where no staged RHEL 7 source and no RHEL 7 host
+  establishes the invocation.
+- **Flags are carried, never invented.** A flag token gets a curated
+  `explain` only when Grey Beard's own `content/rhel_flags.json` carried one;
+  otherwise it is `explain: null` and resolves through the shipped
+  `flags_rhel8`/`flags_rhel10` dictionaries, or it is a non-option subcommand
+  marked with a `license_class`. An option-shaped token with neither was
+  DROPPED from the panel rather than given prose this port made up -- Q22's
+  three honest shapes, and no fourth.
+- **Licence class follows the citation.** Where this repository already
+  stages the manual page, the entry cites `content-src/raw/rhel8/<bin>.man.txt`
+  as `paraphrase-only` and Q14's 8-gram check runs against the real bytes.
+  Where it does not, the entry cites the Grey Beard entry itself as
+  `verbatim-ok` -- the same owner's own prose in his own repository, which is
+  what it actually is, rather than a `paraphrase-only` claim pointed at a
+  corpus this repository does not hold (`qa.py attestation_failures()` would
+  then want a human receipt, and a receipt signed on someone else's behalf is
+  worth less than an honest licence class).
+- Five Grey Beard entries shipped as multi-line shell blocks
+  (`r-nfs-mount`, `r-journal-cap`, `r-localrepo`, `r-tar-restore`,
+  `r-kill`). Each is now one command, with the rest of the sequence written
+  out in its notes: a multi-line command cannot compose a clipboard payload
+  (`commentPayload()` returns null on a control character), and a
+  `<placeholder>` in shipped text is a placeholder someone runs. `r-tar` lost
+  its `$(date +%F)` for the same reason -- the command on screen is the
+  command on the clipboard.
+- `tests/fixtures/evidence/firewalld-service-active.rhel9.txt` regenerated:
+  its content-fingerprint line moves because the data island did.
+
+`dist/` is deliberately NOT re-cut on this branch. The committed artifact is
+the released v1.0.0-alpha.1; re-cutting it belongs to a release commit, and
+the gate order (`rm -rf dist && python3 build.py` first) builds it fresh
+anyway.
+
 ## v1.0.0-alpha.1 — 2026-09-18 (lab-only alpha)
 
 First internal alpha, released to SALM-controlled lab pilot hosts only.
