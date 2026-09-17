@@ -33,6 +33,10 @@ CASES = [
     # MCR-SEC-003: a header-bound string that is not single-line fails the BUILD,
     # so it can never reach the clipboard comment header in the first place.
     ("commands_multiline_intent.json", "intent contains the control character U+000D"),
+    # MCR-SEC-006: template flag and lit tokens reach the command line unquoted, so
+    # the generator/spec shape is validated at build time as well as at run time.
+    ("commands_spec_flag_injection.json", "is not an option token"),
+    ("commands_spec_lit_injection.json", "reaches the command line unquoted"),
 ]
 
 

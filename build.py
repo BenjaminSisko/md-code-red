@@ -119,6 +119,16 @@ def assemble(data):
     """Resolve same_as, join captures, build reverse links, seed the search index."""
     errs = []
     for e in data["commands"]["entries"]:
+        if "template" in e:
+            # A generator spec composes its command at render time from validated
+            # field values, so there is no same_as chain to resolve (MCR-SEC-006).
+            # schema.spec_errors() has already validated its shape.
+            for s in (e.get("stig") or []):
+                key = "%s|%s|%s" % (e["id"], s.get("stig_id"), s.get("rhel_version"))
+                cap = (data["expected_output"].get("captures") or {}).get(key)
+                if cap:
+                    s["expected_output"] = cap
+            continue
         versions = e["rhel_versions"]
         resolved = {}
         for v in VERSIONS:

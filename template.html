@@ -642,19 +642,47 @@ function commentPayload(lines,command){
 }
 
 var BLAST_RANK={green:0,yellow:1,red:2};
+
+/* The semantic form of an assembled command: the same string with the quoting
+   shQuote() added taken back off, token boundaries intact.
+
+   MCR-SEC-008. The destructive-pattern table is matched against the fully
+   assembled, post-quoting command (threat-model-v1 §3.3) — correct, and it
+   interacts badly with uniform quoting: shQuote() inserts a ' at every
+   literal->value boundary, so a pattern that spans one can never match.
+   `rm -rf /` against `rm -rf '/etc/pki'` is the case, and the table is data
+   precisely so a content reviewer can add exactly that row. Patterns are now
+   matched against BOTH forms; a row that matched before still matches. */
+function unquoteCommand(s){
+  var out="",inQ=false,i=0,str=String(s);
+  while(i<str.length){
+    var c=str.charAt(i);
+    if(inQ){
+      if(c==="'") inQ=false; else out+=c;
+      i++; continue;
+    }
+    if(c==="'"){ inQ=true; i++; continue; }
+    if(c==="\\" && i+1<str.length){ out+=str.charAt(i+1); i+=2; continue; }
+    out+=c; i++;
+  }
+  return out;
+}
+
 /* The destructive-pattern table is matched against the FULLY ASSEMBLED,
-   post-quoting command, and a content entry's own blast:"red" trips the banner
-   independently — two ways in, in case the pattern table has a gap
-   (threat-model-v1 §3.3). */
+   post-quoting command AND its unquoted projection, and a content entry's own
+   blast:"red" trips the banner independently — two ways in, in case the pattern
+   table has a gap (threat-model-v1 §3.3). */
 function blastFor(command,base,patterns){
   var blast=(base in BLAST_RANK)?base:"green";
   var rank=BLAST_RANK[blast], reasons=[];
   var hay=String(command).toLowerCase();
+  var bare=unquoteCommand(command).toLowerCase();
   patterns=patterns||[];
   for(var i=0;i<patterns.length;i++){
     var p=patterns[i];
     if(!p||!p.match) continue;
-    if(hay.indexOf(String(p.match).toLowerCase())<0) continue;
+    var needle=String(p.match).toLowerCase();
+    if(hay.indexOf(needle)<0 && bare.indexOf(needle)<0) continue;
     reasons.push({id:p.id,label:p.label,why:p.why,floor:p.blast_floor});
     var r=BLAST_RANK[p.blast_floor];
     if(r>rank){ rank=r; blast=p.blast_floor; }
@@ -677,6 +705,18 @@ function assembleEntry(entry,version,patterns){
           resolved_from:slot.resolved_from||null,version:version};
 }
 
+/* MCR-SEC-006. `template[].flag` and `template[].lit` are emitted UNQUOTED —
+   that is the design, they are curated content, not user input — but "trusted"
+   and "unchecked" are not the same word. A template is content, content is a
+   file, and a file can be wrong: `{flag:"--zone; rm -rf /etc; #"}` assembled
+   into a working command line with nothing to stop it at build time or at run
+   time. These two allow-lists are the run-time half (extract/schema.py's
+   spec_errors() is the build-time half), and they admit no whitespace, no
+   quote, and no shell metacharacter. A token that does not match makes the
+   whole template null — never "emit the parts that are fine". */
+var FLAG_TOKEN_RE=/^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$/;
+var LIT_TOKEN_RE=/^[A-Za-z0-9_.\/=:,+-]+$/;
+
 /* assembleCommand(specOrEntry, version, values) -> {command, flags[], blast} | null
    NULL is the only answer for an incomplete or invalid input. There is no
    second return shape carrying a half-built string, because a half-formed root
@@ -696,7 +736,9 @@ function assembleCommand(spec,version,values,opts){
   for(i=0;i<spec.template.length;i++){
     var tok=spec.template[i];
     if(!tok) return null;
+    if(tok.flag!==undefined && tok.flag!==null && !FLAG_TOKEN_RE.test(String(tok.flag))) return null;
     if(tok.lit!==undefined && tok.lit!==null){
+      if(!LIT_TOKEN_RE.test(String(tok.lit))) return null;
       /* A literal may belong to a field — '--add-forward-port=...toaddr=' belongs
          to the toaddr value that follows it. requires: names that field, so the
          literal disappears WITH it and can never be left dangling. */
