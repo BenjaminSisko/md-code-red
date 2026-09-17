@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 17
+  "entry_count": 19
  },
  "categories": [
   "firewall-cmd",
@@ -1082,6 +1082,120 @@
     "9",
     "10"
    ]
+  },
+  {
+   "id": "gen-setsebool-set",
+   "tool": "setsebool",
+   "category": "semanage / setsebool",
+   "intent": "Turn an SELinux boolean on or off, optionally persisting the change across reboot",
+   "fields": [
+    {
+     "name": "boolean",
+     "type": "selinux_boolean",
+     "required": true
+    },
+    {
+     "name": "state",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "on",
+      "off"
+     ]
+    },
+    {
+     "name": "persist",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "setsebool"
+    },
+    {
+     "lit": "-P",
+     "requires": "persist"
+    },
+    {
+     "field": "boolean"
+    },
+    {
+     "field": "state"
+    }
+   ],
+   "verify": "getsebool <boolean> reports the new state; without -P the change reverts on reboot.",
+   "undo": "Run this generator again with the reverse state.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-setsebool-r8",
+    "title": "setsebool(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 setsebool",
+    "version": "RHEL 8 — content-src/raw/rhel8/setsebool.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-semanage-port-add",
+   "tool": "semanage",
+   "category": "semanage / setsebool",
+   "intent": "Label a non-default port with an SELinux port type so a policy that expects the type on that port stops denying it",
+   "fields": [
+    {
+     "name": "porttype",
+     "type": "selinux_boolean",
+     "required": true
+    },
+    {
+     "name": "proto",
+     "type": "protocol",
+     "required": true
+    },
+    {
+     "name": "port",
+     "type": "portrange",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "semanage"
+    },
+    {
+     "lit": "port"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-t",
+     "field": "porttype"
+    },
+    {
+     "flag": "-p",
+     "field": "proto"
+    },
+    {
+     "field": "port"
+    }
+   ],
+   "verify": "semanage port -l | grep <porttype> lists the new port in the type's port range.",
+   "undo": "semanage port -d -t <porttype> -p <proto> <port> removes the mapping.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-semanage-port-r8",
+    "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 8 semanage-port",
+    "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
   }
  ]
 }
