@@ -177,6 +177,56 @@ IDENT_RE = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
 JOIN_RE = re.compile(r"^([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*join\s*\(")
 
 # ---------------------------------------------------------------------------
+# Computed member access (Q17, MCR-SEC-014).
+#
+# Every rule above is written against the DOT spelling of a property, so
+# `el("x")["innerHTML"] = raw` was not a sink at all as far as this gate was
+# concerned, and `el("x")["inner"+"HTML"] = raw` never spells the name in the
+# source for any regex to find. Marcus Reed recorded the second one as an
+# obfuscation residual — nobody splices a property name by accident — and said
+# either closing it or writing the residual down was acceptable, but describing
+# the gate as unbypassable was not.
+#
+# It is closed, because the check turns out to be mechanical and has no false
+# positive on the code it guards. The gate does not try to search harder for a
+# name that was deliberately taken apart; it refuses a computed property
+# assignment whose property expression it cannot READ:
+#
+#   allowed   obj[i]  obj[key]  obj[0]  out[fields[i].name]  seen[seen.length]
+#             — an identifier, a number, or a dotted/indexed chain. None of
+#               these spells a sink name in the source, and all of them are
+#               shapes template.html actually writes (fieldTypeMap(),
+#               validateSpec()), so the rule costs the product nothing.
+#   refused   obj["innerHTML"]        the sink, by its other spelling
+#             obj["inner"+"HTML"]     a property expression built from pieces
+#             obj[k] where k = "inner"+"HTML"   — the splice is caught where it
+#               is written, by the fusion rule below, and again by following the
+#               assignments to `k` the way accumulators are followed, which also
+#               catches the name built across two statements.
+#
+# What this does NOT catch, said plainly rather than left for the next reviewer
+# to find: a property name produced at run time from something that is not a
+# string literal — characters from a code-point array, a value read out of the
+# content island. No scan of the source can see those, and this gate does not
+# claim to. Q17 exists so the next render path somebody writes by hand during
+# CR-T-25/26/27/30 cannot become an XSS path by accident, over code CODEOWNERS
+# reviews; it is not a sandbox and a determined author with commit rights was
+# never inside its threat model (MCR-SEC-014, condition D2).
+# ---------------------------------------------------------------------------
+PROPERTY_SINK_NAME_RE = re.compile(
+    r"^(innerHTML|outerHTML|srcdoc|href|src|style|action|formaction|xlink:href|on[a-z]+)$", re.I)
+# A property expression the gate can read: identifier, number, or a dotted /
+# bracketed chain of them. No string literal, no template literal, no operator.
+READABLE_PROPERTY_RE = re.compile(r"^[A-Za-z_$0-9][A-Za-z0-9_$.\[\]]*$")
+STRING_LIT_RE = re.compile(r'"(?:[^"\\\n]|\\.)*"' + r"|'(?:[^'\\\n]|\\.)*'")
+_TERM = r"""(?:"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|[A-Za-z_$][A-Za-z0-9_$.]*)"""
+CONCAT_CHAIN_RE = re.compile(r"%s(?:\s*\+\s*%s)+" % (_TERM, _TERM))
+# What a spliced name is not allowed to spell, once the non-literal terms are
+# dropped and the literal pieces are fused together.
+SPLICED_SINK_RE = re.compile(r"(innerHTML|outerHTML|srcdoc|insertAdjacentHTML|createContextualFragment)",
+                             re.I)
+
+# ---------------------------------------------------------------------------
 # Trojan-source scan (Q17). Raw C0/C1 controls and invisible or bidirectional
 # formatting characters do not belong in hand-written source: they are how a
 # reviewer is shown one thing while the engine compiles another, and they are
@@ -387,6 +437,92 @@ def derive_accumulators(src):
     return seen
 
 
+def computed_property_expressions(src):
+    """Every `<expr>[<prop>] = ...` / `+= ...` in src, as (prop, context).
+
+    The property expression is recovered by walking back from the `]` that
+    precedes the `=`, matching brackets, so a nested index (`a[b[i]] = x`) is
+    read whole rather than by a regex that stops at the first `[`.
+    """
+    out = []
+    for m in re.finditer(r"\]\s*\+?=(?!=)", src):
+        depth, j = 0, m.start()
+        while j >= 0:
+            if src[j] == "]":
+                depth += 1
+            elif src[j] == "[":
+                depth -= 1
+                if depth == 0:
+                    break
+            j -= 1
+        if j < 0:
+            continue                       # unbalanced: not an assignment we can read
+        out.append((src[j + 1:m.start()].strip(), src[max(0, j - 30):m.end()].strip()))
+    return out
+
+
+def fused_literal_concatenations(src):
+    """Every `+` chain containing a string literal, fused with the non-literal
+    terms dropped: `"inner" + x + "HTML"` -> `innerHTML`.
+
+    This is what makes a spliced property name visible at the place it is
+    written, rather than at the place it is used (MCR-SEC-014).
+    """
+    out = []
+    for m in CONCAT_CHAIN_RE.finditer(src):
+        chunk = m.group(0)
+        lits = STRING_LIT_RE.findall(chunk)
+        if len(lits) < 2:
+            continue
+        out.append(("".join(l[1:-1] for l in lits), chunk))
+    return out
+
+
+def computed_sink_failures(src):
+    """Q17's computed-member rule (MCR-SEC-014). Returns (failures, inspected)."""
+    f, inspected = [], 0
+    for prop, context in computed_property_expressions(src):
+        inspected += 1
+        if is_literal(prop):
+            name = prop[1:-1]
+            if PROPERTY_SINK_NAME_RE.match(name):
+                f.append("computed member assignment to %r — `obj[\"innerHTML\"] = x` is the same "
+                         "sink as `obj.innerHTML = x`, written the other way round, and every other "
+                         "rule here reads the dotted spelling (MCR-SEC-014): %s"
+                         % (name, context[:70]))
+            continue
+        if IDENT_RE.match(prop):
+            # The property is a plain identifier — the shape ordinary map and
+            # array code uses, so the form is not the problem. Follow what the
+            # source assigns to it, the way derive_accumulators() follows an
+            # accumulator, and fuse the literal pieces: a name built across two
+            # statements (`k = "inner"; k += "HTML"`) is the last place this
+            # splice had left to hide.
+            lits = []
+            for expr in assignments_to(src, prop):
+                lits.extend(l[1:-1] for l in STRING_LIT_RE.findall(expr))
+            hit = SPLICED_SINK_RE.search("".join(lits))
+            if hit:
+                f.append("computed member assignment `[%s]` where the source builds %s into '%s' "
+                         "from string literals — a render-sink name assembled across statements is "
+                         "still a render-sink name (MCR-SEC-014): %s"
+                         % (prop, hit.group(0), prop, context[:70]))
+            continue
+        if not READABLE_PROPERTY_RE.match(prop):
+            f.append("computed member assignment whose property expression this gate cannot read "
+                     "(%s) — a property name built from pieces is how a render sink is reached "
+                     "without ever spelling its name. Write the property out, or use an identifier "
+                     "or index (MCR-SEC-014): %s" % (prop[:40], context[:70]))
+    for fused, chunk in fused_literal_concatenations(src):
+        inspected += 1
+        hit = SPLICED_SINK_RE.search(fused)
+        if hit:
+            f.append("a concatenation of string literals spells %r (%s) — the render-sink names are "
+                     "not assembled from pieces in this product (MCR-SEC-014)"
+                     % (hit.group(0), chunk[:70]))
+    return f, inspected
+
+
 def render_sink_failures(src):
     """The whole Q17 render-safety audit over a piece of JS. Returns (failures, audited).
 
@@ -423,6 +559,12 @@ def render_sink_failures(src):
         if SETATTR_FORBIDDEN_RE.match(name):
             f.append("setAttribute(%r, ...) — href/src/srcdoc/style/action/on* turn a string into a "
                      "URL, a stylesheet or a handler; this product sets data-* and ARIA only" % name)
+
+    # computed member access: the other spelling of a property, and the spliced
+    # name that spelling makes possible (MCR-SEC-014)
+    computed_f, computed_n = computed_sink_failures(src)
+    f.extend(computed_f)
+    audited += computed_n
 
     accumulators = derive_accumulators(src)
 
@@ -1454,6 +1596,17 @@ def gate_q17(ctx):
         d.append("derived accumulators: %s" % (", ".join(sorted(derive_accumulators(shell))) or "none"))
         d.append("forbidden sinks absent: %s"
                  % ", ".join(label for _rx, label in FORBIDDEN_SINKS))
+        computed = computed_property_expressions(shell)
+        d.append("computed member assignments read: %d (%s) — every property expression is an "
+                 "identifier, a number or a dotted/indexed chain; no bracketed sink name, no "
+                 "property name built from string literals here or anywhere else in the shell "
+                 "(MCR-SEC-014)"
+                 % (len(computed), ", ".join("[%s]" % p for p, _c in computed) or "none"))
+        d.append("residual, stated rather than claimed away: this rule reads names built from "
+                 "STRING LITERALS. A property name produced at run time from data — a character "
+                 "array, an index into the content island — is not visible to any scan of the "
+                 "source, and no regex gate can be. Q17 is an accident-prevention gate over "
+                 "hand-written code that CODEOWNERS reviews, not a sandbox (MCR-SEC-014)")
         for k, why in sorted(INNERHTML_ALLOWLIST.items()):
             d.append("allow-list: %s — %s" % (k, why))
     return f, d

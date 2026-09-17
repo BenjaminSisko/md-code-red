@@ -79,7 +79,7 @@ class EveryBypassIsCaught(unittest.TestCase):
 
     def test_every_bypass_fixture_fails(self):
         names = fixtures("bypass_")
-        self.assertGreaterEqual(len(names), 14, "the bypass fixture set has shrunk")
+        self.assertGreaterEqual(len(names), 15, "the bypass fixture set has shrunk")
         for name in names:
             with self.subTest(fixture=name):
                 failures, _ = qa.render_sink_failures(read(name))

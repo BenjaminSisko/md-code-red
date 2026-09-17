@@ -15,10 +15,10 @@ asserts:
 | `unsafe_control_*.js` | at least one failure — the case that always fired |
 | `bypass_*.js` | at least one failure — the case that did not |
 
-`bypass_12`..`bypass_14` and `safe_control_computed_index.js` come from Marcus
+`bypass_12`..`bypass_15` and `safe_control_computed_index.js` come from Marcus
 Reed's re-review finding **MCR-SEC-014**: the sink reached through bracket
-notation, with the property name written as a literal, spliced inline, or
-spliced into a variable first. They are a pair with the safe control, because the
+notation, with the property name written as a literal, spliced inline, spliced
+into a variable, or built across two statements. They come with the safe control, because the
 rule that closes them has to let `out[fields[i].name] = ...` — real code in
 `template.html` — through untouched. A gate with a false positive on the code it
 guards is a gate somebody switches off.

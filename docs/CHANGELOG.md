@@ -4,6 +4,59 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — re-review conditions D1/D2: MCR-SEC-013, MCR-SEC-014 (2026-09-17, branch `salm/milo/sec-013-014`)
+
+Marcus Reed's re-review of `ac087c3` returned **APPROVE WITH CONDITIONS**: all three HIGH findings
+closed, `block_flag` cleared, two new findings — one LOW, one INFORMATIONAL — carried as conditions
+D1 and D2. Both are addressed here. The fixtures were committed FIRST, in a commit that fails the
+gates (`93a0cbf`), and the fix follows in the commit that turns them green: D1 asks for the gate to
+be shown to fail before it is shown to pass, which is the standard the CR-T-08 harness set.
+
+**MCR-SEC-013 (LOW) — a conditional positional literal still shifted arguments.** The MCR-SEC-002
+fix reasons about argument slots through `isPositionalToken(tok)`, which was `tok.field && !tok.flag`
+— so a `lit` was never positional. A literal made conditional with `requires` could therefore vanish
+without the later-positional check that every field token gets:
+
+```js
+fields:  [{name:"mode",type:"integer",required:false},{name:"p",type:"path",required:true}]
+template:[{lit:"chmod"},{lit:"0644",requires:"mode"},{field:"p"}]
+```
+
+with `mode` absent assembled `chmod '/etc/foo'` — the path promoted into the mode slot — and
+`spec_errors()` accepted the spec. Both halves now count a `requires`-carrying literal as positional.
+At run time `tokenPresent()` answers the presence question for `requires` as well as for `field`, and
+one shared `laterPositionalSurvives()` states the shift rule once for both callers. At build time
+`positional_indexes()` and `shift_unsafe_after()` do the same, and `spec_template_errors()` refuses
+a conditional literal that has a surviving positional after it. An *unconditional* literal stays out
+of the positional set deliberately: it can never vanish, so it can never shift anything, and counting
+it would refuse correct templates. The legal shape MCR-SEC-002 shipped — `{lit:"…toaddr=",
+requires:"toaddr"}` followed by `{field:"toaddr", optional:true}`, both gated on the same field so
+they leave together — is still accepted, and `tests/fixtures/schema/valid/` now holds it there so a
+future tightening cannot quietly take it away.
+
+**MCR-SEC-014 (INFORMATIONAL) — computed member access reached a render sink.** `el("x")["inner"+
+"HTML"] = raw` was rated safe with `audited = 0`: every Q17 rule reads the dotted spelling, and the
+spliced name never appears in the source for a regex to find. Marcus accepted either closing it or
+recording it, provided the gate was not described as unbypassable. **Closed**, because the check is
+mechanical and has no false positive on the code it guards. Q17 now reads the property expression of
+every computed member assignment and refuses three things: a bracketed render-sink name
+(`obj["innerHTML"]`), a property expression it cannot read (built from literals or operators), and a
+sink name fused out of string literals — inline, through a variable, or across two statements
+(`k = "inner"; k += "HTML"`). Identifiers, numbers and dotted/indexed chains are allowed, which is
+what `out[fields[i].name] = …` in `fieldTypeMap()` and `out.resolved[f.name] = …` in
+`validateSpec()` are; a gate with a false positive on the code it guards is a gate somebody switches
+off, so a safe control fixture holds that line. The residual the rule genuinely cannot see — a
+property name produced at run time from data rather than from string literals — is printed in Q17's
+own PASS output instead of being left for the next reviewer to discover, and written into
+`docs/CODE_STANDARDS.md` §1.
+
+**Tests.** Four new render-bypass fixtures (`bypass_12`..`bypass_15`) plus
+`safe_control_computed_index.js`; an invalid and a valid schema fixture for the conditional literal;
+four new never-half-formed harness vectors across all four releases (60 → 76 checks). Gates after the
+fix: `python3 qa.py` **QA GATE: PASS**, `python3 -m unittest discover -s tests` **51 tests OK**,
+`node tests/hostile_harness.js` **63,536 checks, 0 FAILED**, byte-identical rebuild
+(`5fb9b7adfd8b60fe…`).
+
 ### Fixed — security review MCR-SEC-001..012 (2026-09-17, branch `salm/milo/shell-assembler`)
 
 Marcus Reed's security review of `4184ea8` returned **DENY with `block_flag`** — 3 HIGH, 5 MEDIUM,

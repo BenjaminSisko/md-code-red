@@ -16,6 +16,29 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — Re-review conditions D1 and D2: MCR-SEC-013 and MCR-SEC-014, branch
+  `salm/milo/sec-013-014` (Milo Vance). Marcus Reed's re-review of the fix tranche returned
+  **APPROVE WITH CONDITIONS** — no CRITICAL, no HIGH — with two new findings held as conditions.
+  **MCR-SEC-013 (LOW)** — the never-half-formed rule reasoned about argument slots with
+  `isPositionalToken()`, which asked `tok.field && !tok.flag`, so a *literal* was never positional.
+  A literal made conditional with `requires` could therefore vanish while a later positional stayed:
+  `[{lit:"chmod"},{lit:"0644",requires:"mode"},{field:"p"}]` with `mode` absent assembled to
+  `chmod '/etc/foo'`, the path sitting in the mode slot — MCR-SEC-002 again, through the one path
+  its rule did not cover. A conditional literal is now positional in both halves: it may only drop
+  if every later positional drops with it (run time), and `spec_errors()` refuses the construct at
+  build time. The shape MCR-SEC-002 shipped — literal and value gated on the *same* field, dropping
+  together — stays legal and now has a valid fixture holding it there. **MCR-SEC-014 (INFO)** —
+  `el("x")["inner"+"HTML"] = raw` evaded the Q17 sink inventory, because every rule was written
+  against the dotted spelling and the spliced name never appears in the source. **Closed rather than
+  recorded:** Q17 now refuses a computed member assignment whose property expression it cannot read,
+  refuses a bracketed sink name, and refuses a sink name fused out of string literals — inline, via a
+  variable, or across two statements. It costs the product nothing: the two computed assignments
+  `template.html` actually contains (`out[fields[i].name]`, `out.resolved[f.name]`) pass untouched,
+  and a safe control fixture proves it. What the rule cannot see — a property name built at run time
+  from data rather than from literals — is printed by the gate itself rather than claimed away.
+  Four new bypass fixtures, one safe control, one invalid and one valid schema fixture, and 16 more
+  never-half-formed harness checks (60 → 76). Gates: `qa.py` Q1–Q18 PASS, 51 unit tests OK, harness
+  63,536 checks / 0 failed, byte-identical rebuild.
 - **2026-09-17** — Security review fixes MCR-SEC-001..012, branch `salm/milo/shell-assembler`
   (Milo Vance). **Marcus Reed reviewed the assembler tranche and returned DENY with `block_flag`:
   three HIGH, five MEDIUM, two LOW, two INFORMATIONAL. All twelve are addressed on this branch.**
