@@ -54,6 +54,16 @@ CAPTURE_TEMPLATE = {
     "verify_result": "PASS",
 }
 
+# The real roster (content-src/roster.json) shape, reused as a fixture so
+# these tests exercise the same names/roles production data uses.
+ROSTER_FIXTURE = {
+    "people": [
+        {"name": "Caleb Stone", "roles": ["SME"]},
+        {"name": "Renata Osei", "roles": ["SME"]},
+        {"name": "Riley Park", "roles": ["QA"]},
+    ]
+}
+
 GOLDEN_FIXTURE = {
     "generators": {
         "fixture-gen-q16": {
@@ -130,7 +140,8 @@ class Q16TestCase(unittest.TestCase):
     file reads (qa.REPO-relative, exactly like a real build) resolve against
     a fixture, never the real repo."""
 
-    def run_q16(self, data, cap, entry_id="fixture-q16", version="8", golden=None):
+    def run_q16(self, data, cap, entry_id="fixture-q16", version="8", golden=None,
+               roster=ROSTER_FIXTURE):
         tmp = tempfile.mkdtemp(prefix="mcr-q16-")
         try:
             capdir = os.path.join(tmp, "tests", "captures", version)
@@ -142,6 +153,11 @@ class Q16TestCase(unittest.TestCase):
                 os.makedirs(fixdir, exist_ok=True)
                 with open(os.path.join(fixdir, "golden-commands.json"), "w", encoding="utf-8") as f:
                     json.dump(golden, f)
+            if roster is not None:
+                rosterdir = os.path.join(tmp, "content-src")
+                os.makedirs(rosterdir, exist_ok=True)
+                with open(os.path.join(rosterdir, "roster.json"), "w", encoding="utf-8") as f:
+                    json.dump(roster, f)
             with mock.patch.object(qa, "REPO", tmp):
                 return qa.gate_q16({"data": data})
         finally:
@@ -231,6 +247,87 @@ class Q16GoldenTableBinding(Q16TestCase):
         data, cap = make_gen_ctx_data()
         f, _d = self.run_q16(data, cap, entry_id="fixture-gen-q16", golden=GOLDEN_FIXTURE)
         self.assertEqual([], f, "\n  ".join(f))
+
+
+class Q16TwoPersonRoster(Q16TestCase):
+    """J2 (VER-002): normalise both names, then require BOTH to resolve
+    against the closed roster (content-src/roster.json) with the right role
+    — 'by' as QA, 'captured_by' as SME. Marcus's nine variants, all of which
+    used to pass Q16 against plain string equality."""
+
+    ACCIDENTAL_VARIANTS = [
+        ("exact match", "Caleb Stone"),
+        ("lowercase", "caleb stone"),
+        ("uppercase", "CALEB STONE"),
+        ("leading space", " Caleb Stone"),
+        ("trailing space", "Caleb Stone "),
+        ("double space", "Caleb  Stone"),
+        ("non-breaking space", "Caleb Stone"),
+        ("parenthetical suffix", "Caleb Stone (SME)"),
+    ]
+
+    def test_all_eight_accidental_variants_fail(self):
+        for label, by in self.ACCIDENTAL_VARIANTS:
+            with self.subTest(label=label, by=by):
+                data, cap = make_ctx_data(receipt_by=by)  # capture's captured_by is "Caleb Stone"
+                f, _d = self.run_q16(data, cap)
+                self.assertTrue(f, "variant %r (%s) must fail — it normalises to the capture's "
+                                "captured_by, and/or is not QA-roled" % (by, label))
+
+    def test_deliberate_alias_not_closed_by_equality_but_by_roster(self):
+        """Fail-first #9: 'C. Stone' does not normalise to 'Caleb Stone' by
+        any string rule — it must still fail, but for roster non-membership,
+        not for equality. This is the residual Marcus named explicitly."""
+        data, cap = make_ctx_data(receipt_by="C. Stone")
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(f, "'C. Stone' must fail even though it is not string-equal to 'Caleb Stone'")
+        self.assertTrue(any("is not a QA-roled member of the roster" in x for x in f),
+                        "wrong reason — must be a roster-membership failure, not an equality "
+                        "failure:\n  " + "\n  ".join(f))
+
+    def test_off_roster_name_fails_even_if_distinct_from_captured_by(self):
+        """A name that is nobody's alias and simply is not on the roster
+        (distinct from captured_by, so the equality check alone would have
+        waved it through) must still fail."""
+        data, cap = make_ctx_data(receipt_by="Nobody Onrecord")
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("is not a QA-roled member of the roster" in x for x in f), "\n  ".join(f))
+
+    def test_captured_by_off_roster_fails(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park",
+                                  capture_overrides={"captured_by": "Nobody Onrecord"})
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("is not an SME-roled member of the roster" in x for x in f), "\n  ".join(f))
+
+    def test_sme_named_as_by_fails_role_check(self):
+        """A real roster member in the wrong ROLE (Caleb is SME-only) must
+        fail even though he IS on the roster — role, not mere membership."""
+        data, cap = make_ctx_data(receipt_by="Caleb Stone",
+                                  capture_overrides={"captured_by": "Renata Osei"})
+        f, _d = self.run_q16(data, cap)
+        self.assertTrue(any("is not a QA-roled member of the roster" in x for x in f), "\n  ".join(f))
+
+    def test_missing_roster_file_fails_rather_than_silently_passing(self):
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        f, _d = self.run_q16(data, cap, roster=None)
+        self.assertTrue(any("roster.json is missing" in x for x in f), "\n  ".join(f))
+
+    def test_valid_receipt_still_passes_with_roster_enforced(self):
+        """Control, repeated under the roster: real QA 'by', real SME
+        'captured_by', both on the roster in the right role — must pass."""
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        f, _d = self.run_q16(data, cap)
+        self.assertEqual([], f, "\n  ".join(f))
+
+    def test_residual_stated_in_diagnostics(self):
+        """The gate's own PASS output must say, in words, that the
+        deliberate-alias case is closed by the roster and not by string
+        comparison — the same discipline Q17/Q20 already hold themselves to."""
+        data, cap = make_ctx_data(receipt_by="Riley Park")
+        f, d = self.run_q16(data, cap)
+        self.assertEqual([], f)
+        self.assertTrue(any("C. Stone" in x and "NOT closable by any string comparison" in x for x in d),
+                        "residual not stated in diagnostics:\n  " + "\n  ".join(d))
 
 
 if __name__ == "__main__":
