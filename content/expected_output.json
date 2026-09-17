@@ -1,0 +1,9 @@
+{
+ "_meta": {
+  "generator": "extract/import_captures.py",
+  "status": "pending — no capture files under content-src/captures/ (CR-T-34)",
+  "keyed_by": "entry_id|stig_id|rhel_version",
+  "capture_count": 0
+ },
+ "captures": {}
+}

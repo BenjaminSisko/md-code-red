@@ -1,10 +1,22 @@
-# MD CODE RED CI — HTML profile. Every PR and every push to main. Worker branches never trigger on push.
+# MD CODE RED CI — BQP HTML profile (ADR-001 §10, threat-model-v1 §11).
+#
+# Seven steps, in order, stopping at the first failure:
+#   1 build            2 QA gate            3 STIG accuracy re-check
+#   4 gitleaks         5 size report        6 drift check (reproducible build)
+#   7 artifact upload (with the .sha256 sidecar)
+#
+# PROTECTED: .forgejo/workflows/** has a CODEOWNERS entry (today @benny; ADR-001 §10
+# names Devon Park as the platform owner of this path). A change to this file needs
+# that owner's review, so the gate cannot be edited by whoever is trying to get past
+# it (threat-model-v1 §10, "workflow files protected").
+#
+# Size is REPORTED, never enforced: the Founder ruled the ceiling UNLIMITED on
+# 2026-09-17, which supersedes ADR-001 §7.2's 8 MB line. No step here fails on size.
+# Node is NOT required: qa.py runs node --check only if a runner happens to have it.
 name: CI
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   build-and-gate:
@@ -12,34 +24,63 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - name: Build single file from sources (never patch an assembled file)
+
+      - name: Schema tests (build.py must fail loud on broken content)
+        run: python3 tests/test_build_fails_on_broken.py
+
+      # ---- 1 ----------------------------------------------------------------
+      - name: Build the single file from sources (never patch an assembled file)
         run: python3 build.py
-      - name: QA gate (air-gap law, provenance, schema, decoder humility, leaks)
+
+      # ---- 2 ----------------------------------------------------------------
+      - name: QA gate (Q1-Q17)
         run: python3 qa.py
-      - name: STIG source pins intact
-        run: cd stig-src && shasum -a 256 -c SHA256SUMS
-      - name: Size report (informational — Founder ruled no ceiling, 2026-09-17)
+
+      # ---- 3 ----------------------------------------------------------------
+      - name: STIG and CCI accuracy re-check against the pinned XCCDF (Q10, Q11)
         run: |
-          for f in *.html dist/*.html; do [ -f "$f" ] && printf "%s\t%s bytes\n" "$f" "$(stat -c %s "$f")"; done; true
-      - name: Upload artifact
+          cd stig-src && sha256sum -c SHA256SUMS && cd ..
+          python3 qa.py --accuracy
+
+      # ---- 4 ----------------------------------------------------------------
+      # .gitleaks.toml keeps the default rule set and exempts exactly one pattern:
+      # the example GRUB 2 password hash quoted inside the pinned DISA check text.
+      # The four XCCDF files are still scanned in full by every other rule.
+      - name: gitleaks (secret scan, full history and working tree)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      # ---- 5 ----------------------------------------------------------------
+      - name: Size report (informational — Founder ruled the ceiling unlimited, 2026-09-17)
+        run: python3 qa.py --size
+
+      # ---- 6 ----------------------------------------------------------------
+      - name: Drift check (a build must be reproducible from the same sources)
+        run: |
+          set -eu
+          first=$(sha256sum dist/md-code-red_*.html | awk '{print $1}')
+          sidecar=$(awk '{print $1}' dist/md-code-red_*.html.sha256)
+          rm -f dist/md-code-red_*.html dist/md-code-red_*.html.sha256
+          python3 build.py >/dev/null
+          second=$(sha256sum dist/md-code-red_*.html | awk '{print $1}')
+          echo "build 1: $first"
+          echo "sidecar: $sidecar"
+          echo "build 2: $second"
+          test "$first" = "$sidecar" || { echo "FAIL: sha256 sidecar does not match its own artifact"; exit 1; }
+          test "$first" = "$second"  || { echo "FAIL: two builds of the same sources differ — the build is not reproducible"; exit 1; }
+          echo "OK: rebuild is byte-identical"
+
+      # ---- 7 ----------------------------------------------------------------
+      - name: Upload artifact and sha256 sidecar
         uses: actions/upload-artifact@v4
         with:
           name: md-code-red-build
           path: |
-            *.html
-            dist/*.html
-          if-no-files-found: ignore
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: gitleaks (full history)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Workflow files are protected
-        run: echo "Changes to .forgejo/workflows/** require Devon Park review (branch protection pattern)."
+            dist/md-code-red_*.html
+            dist/md-code-red_*.html.sha256
+          if-no-files-found: error

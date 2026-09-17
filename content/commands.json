@@ -1,76 +1,256 @@
 {
  "_meta": {
-  "schema": "entry: id, world(ansible|rhel), category, intent, command, notes, mentor_note(optional), verify, undo, blast(green|yellow|red), tags[], source, verified",
-  "blast_legend": {"green": "read-only", "yellow": "changes one host / local state", "red": "can touch the fleet or destroy data"}
+  "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "curated": true,
+  "status": "CR-T-02 skeleton — 3 entries, all STIG-sourced, all verified:false. Catalog authoring is CR-T-33.",
+  "rhel_version_value_shapes": [
+   "{command, notes, changed_in_note}",
+   "{same_as: \"<other version key>\", changed_in_note?}",
+   "{unavailable: {reason, alternative}}"
+  ],
+  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
+  "entry_count": 3
  },
- "categories": {
-  "ansible": ["Check before you run", "Target fewer hosts", "Debug a failure", "Vault & secrets", "Facts & inventory", "Run & operate"],
-  "rhel": ["Disks & LVM", "systemd & services", "Networking", "SELinux", "firewalld", "Users & sudo", "Logs & journald", "Packages", "Processes & performance", "Files & permissions"]
- },
+ "categories": [
+  "firewall-cmd",
+  "nmcli",
+  "journalctl",
+  "lvm",
+  "ssh / sshd config",
+  "useradd / usermod",
+  "systemctl",
+  "dnf / yum",
+  "semanage / setsebool",
+  "chage",
+  "auditctl / ausearch",
+  "rsyslog",
+  "chronyd",
+  "podman"
+ ],
  "entries": [
-  {"id": "a-syntax-check", "world": "ansible", "category": "Check before you run", "intent": "Check a playbook for syntax errors without running it", "command": "ansible-playbook site.yml --syntax-check", "notes": "Parses the playbook and its includes; catches YAML and playbook-keyword mistakes. Does NOT catch bad module arguments or missing files on targets.", "mentor_note": "This is the authoritative YAML check — trust it over any offline linter, including this tool's.", "verify": "Exit code 0 and the line 'playbook: site.yml' with no error output.", "undo": "none — read-only", "blast": "green", "tags": ["playbook", "lint", "preflight"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-check-diff", "world": "ansible", "category": "Check before you run", "intent": "See what a playbook WOULD change without changing anything", "command": "ansible-playbook site.yml --check --diff", "notes": "Check mode predicts changed/ok per task; --diff shows file content changes. Modules with full check_mode support are accurate; command/shell tasks are skipped, so a --check run that looks clean can still change things for real.", "mentor_note": "Trust it about 90%. The other 10% is command/shell tasks — read those by hand.", "verify": "Output shows predicted changed= counts; nothing on the targets actually changed (spot-check one).", "undo": "none — read-only (but see notes: not all modules honor check mode)", "blast": "green", "tags": ["dry-run", "check", "diff", "preflight"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-list-hosts", "world": "ansible", "category": "Check before you run", "intent": "See exactly which hosts a play or pattern will hit", "command": "ansible-playbook site.yml --list-hosts", "notes": "Expands the hosts: pattern of every play against your inventory and prints the matched hosts. Run this before anything red.", "verify": "The printed host list matches what you intended — no extras.", "undo": "none — read-only", "blast": "green", "tags": ["inventory", "pattern", "preflight", "blast-radius"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-list-tasks", "world": "ansible", "category": "Check before you run", "intent": "See every task a playbook would run, in order", "command": "ansible-playbook site.yml --list-tasks", "notes": "Prints plays and task names without executing. Pair with --list-tags to see what's skippable.", "verify": "Task list prints; nothing executes.", "undo": "none — read-only", "blast": "green", "tags": ["playbook", "preflight"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-lint-config", "world": "ansible", "category": "Check before you run", "intent": "See which config file is loaded and what differs from defaults", "command": "ansible --version && ansible-config dump --only-changed", "notes": "ansible --version prints the winning config file (precedence: $ANSIBLE_CONFIG, ./ansible.cfg, ~/.ansible.cfg, /etc/ansible/ansible.cfg). dump --only-changed shows every setting you've overridden and where it came from.", "mentor_note": "A world-writable current directory makes Ansible silently skip ./ansible.cfg. If 'config file =' isn't what you expect, check directory permissions first.", "verify": "'config file =' points at the file you intend; each changed setting names its origin.", "undo": "none — read-only", "blast": "green", "tags": ["config", "precedence", "debug", "scar-001"], "source": "ansible-config --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-limit", "world": "ansible", "category": "Target fewer hosts", "intent": "Run a playbook against only some of its hosts", "command": "ansible-playbook site.yml --limit web01", "notes": "--limit (or -l) intersects the play's hosts: pattern with your subset. Accepts names, groups, globs (web*), and comma lists. THE damage-containment flag: test on one host before the fleet.", "mentor_note": "New change? --limit one host, verify, then widen. Every time. No exceptions, including Fridays.", "verify": "Recap shows only the limited host(s).", "undo": "n/a — limits scope; the tasks themselves still change state per their own undo", "blast": "yellow", "tags": ["limit", "containment", "rollout"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-patterns", "world": "ansible", "category": "Target fewer hosts", "intent": "Target hosts with patterns: groups, exclusions, intersections", "command": "ansible 'webservers:!web03' -m ping", "notes": "Patterns: 'a:b' union, 'a:!b' exclude, 'a:&b' intersection, 'web*' glob, 'all' everything. Quote the pattern — ! and & are shell characters.", "verify": "Run with --list-hosts first to see the expansion.", "undo": "none — pattern selection itself is read-only", "blast": "green", "tags": ["pattern", "inventory", "targeting"], "source": "ansible --help / patterns docs (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-start-at", "world": "ansible", "category": "Target fewer hosts", "intent": "Resume a long playbook at a specific task", "command": "ansible-playbook site.yml --start-at-task 'Deploy config'", "notes": "Skips everything before the named task. Dangerous if earlier tasks set facts or prerequisites the later tasks assume — know what you're skipping.", "verify": "First executed task in output is the one you named.", "undo": "n/a — depends on the tasks run", "blast": "yellow", "tags": ["resume", "playbook"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-step", "world": "ansible", "category": "Target fewer hosts", "intent": "Confirm each task interactively before it runs", "command": "ansible-playbook site.yml --step", "notes": "Prompts y/n/c per task (c = continue without asking). Slow but surgical — good for a first run of someone else's playbook.", "verify": "You get a (y/n/c) prompt before each task.", "undo": "n/a — you control each step", "blast": "yellow", "tags": ["interactive", "careful"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-tags", "world": "ansible", "category": "Target fewer hosts", "intent": "Run only tasks with a given tag", "command": "ansible-playbook site.yml --tags config --list-tasks", "notes": "Drop --list-tasks to actually run. --skip-tags inverts. See available tags with --list-tags.", "verify": "--list-tasks preview shows only the tagged tasks.", "undo": "n/a — depends on the tasks run", "blast": "yellow", "tags": ["tags", "partial-run"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-ping", "world": "ansible", "category": "Debug a failure", "intent": "Test that Ansible can reach and run Python on hosts", "command": "ansible all -m ping", "notes": "Not ICMP — it SSHes in and runs a tiny Python module. SUCCESS means transport AND Python module execution both work. If raw works but ping fails, the problem is Python-side (interpreter, temp dir), not SSH.", "mentor_note": "This distinction — transport vs module execution — solved our first outage. Learn it cold.", "verify": "Each host reports SUCCESS with \"ping\": \"pong\".", "undo": "none — read-only", "blast": "green", "tags": ["connectivity", "ping", "scar-002"], "source": "ansible-doc ansible.builtin.ping (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-vvv", "world": "ansible", "category": "Debug a failure", "intent": "See exactly what Ansible is doing under the hood", "command": "ansible-playbook site.yml -vvv --limit web01", "notes": "-v result data, -vvv connection commands (the actual ssh/sftp invocations), -vvvv adds connection plugin debugging. Look for 'ESTABLISH SSH CONNECTION' vs 'ESTABLISH LOCAL CONNECTION' to see how a host is really being reached.", "mentor_note": "A hang at a task usually means an invisible prompt — password, host key, or sudo. -vvv shows you the exact command it's stuck on; run that command yourself and you'll see the prompt.", "verify": "Output includes ESTABLISH ... CONNECTION lines per task.", "undo": "none — verbosity only; the run itself still changes state", "blast": "yellow", "tags": ["verbose", "debug", "hang", "scar-001"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-inv-host", "world": "ansible", "category": "Debug a failure", "intent": "See every variable Ansible has resolved for one host", "command": "ansible-inventory --host web01", "notes": "Prints the merged variables (connection settings included) for that host as JSON. THE tool for 'why is it connecting like that?'. For localhost: if this returns anything without ansible_connection=local, delegation to localhost will SSH to your own box.", "verify": "JSON shows the vars you expect; for localhost expect ansible_connection: local or no entry at all (implicit localhost).", "undo": "none — read-only", "blast": "green", "tags": ["inventory", "vars", "localhost", "scar-001"], "source": "ansible-inventory --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-inv-graph", "world": "ansible", "category": "Facts & inventory", "intent": "See the whole inventory as a group tree", "command": "ansible-inventory --graph", "notes": "ASCII tree of groups and members. Add --vars to include variables (verbose). First command to run on an unfamiliar control node.", "verify": "Tree prints; groups match expectations.", "undo": "none — read-only", "blast": "green", "tags": ["inventory", "recon", "day-one"], "source": "ansible-inventory --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-setup-filter", "world": "ansible", "category": "Facts & inventory", "intent": "See facts (OS, IPs, memory) Ansible gathers about a host", "command": "ansible web01 -m setup -a 'filter=ansible_distribution*'", "notes": "setup is the fact-gathering module. filter= narrows the firehose. Common: ansible_default_ipv4, ansible_distribution*, ansible_memtotal_mb, ansible_mounts.", "verify": "Facts print for the host.", "undo": "none — read-only", "blast": "green", "tags": ["facts", "setup"], "source": "ansible-doc ansible.builtin.setup (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-adhoc-become", "world": "ansible", "category": "Run & operate", "intent": "Run one privileged command on hosts (ad-hoc)", "command": "ansible webservers -m command -a 'systemctl status sshd' --become -K", "notes": "-m command runs without a shell (no pipes/redirects; use -m shell if you need them). --become elevates, -K prompts for the sudo password. Without -K a sudo password requirement = silent hang.", "mentor_note": "Forgetting -K is the #1 'Ansible is frozen' cause after host-key prompts.", "verify": "Each host returns rc=0 and the command output.", "undo": "depends on the command — prefer read-only commands ad-hoc", "blast": "red", "tags": ["ad-hoc", "become", "sudo", "hang"], "source": "ansible --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-forks", "world": "ansible", "category": "Run & operate", "intent": "Control how many hosts run in parallel", "command": "ansible-playbook site.yml --forks 5", "notes": "Default forks is 5. Raise for speed on big fleets; LOWER it (even to 1, or use serial: in the play) for risky rolling changes so failures stop early.", "verify": "With forks 1, hosts complete strictly one at a time in output.", "undo": "n/a — execution control only", "blast": "yellow", "tags": ["forks", "serial", "rollout"], "source": "ansible-playbook --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-vault-create", "world": "ansible", "category": "Vault & secrets", "intent": "Create or edit an encrypted secrets file", "command": "ansible-vault create group_vars/all/vault.yml", "notes": "Opens $EDITOR, encrypts on save (AES256). Edit later with ansible-vault edit, view with ansible-vault view. At run time supply the password: --ask-vault-pass or --vault-password-file.", "mentor_note": "Name encrypted files 'vault.yml' and reference their vars from a plain vars file — greppability without decryption.", "verify": "File starts with $ANSIBLE_VAULT;1.1;AES256. ansible-vault view shows the plaintext.", "undo": "ansible-vault decrypt <file> (permanently removes encryption — rarely what you want)", "blast": "yellow", "tags": ["vault", "secrets", "encrypt"], "source": "ansible-vault --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-vault-string", "world": "ansible", "category": "Vault & secrets", "intent": "Encrypt a single value to paste into a vars file", "command": "ansible-vault encrypt_string --stdin-name 'db_password'", "notes": "Emits a !vault-tagged YAML block you paste inline; --stdin-name prompts for the secret so it never lands in shell history. (Passing the secret as an argument leaves it in ~/.bash_history — the real leak risk of this command.)", "mentor_note": "If you already typed a secret on the command line: history -d that line, and rotate the secret if the box is shared.", "verify": "Output is a db_password: !vault | block; a playbook using it decrypts correctly with the vault password. history | tail shows no plaintext secret.", "undo": "replace the block with a plain value (and rotate the secret if it was exposed anywhere, including shell history)", "blast": "green", "tags": ["vault", "secrets", "history"], "source": "ansible-vault --help (core 2.21.1)", "verified": "2026-08-24"},
-  {"id": "a-vault-rekey", "world": "ansible", "category": "Vault & secrets", "intent": "Change the vault password on encrypted files", "command": "ansible-vault rekey group_vars/all/vault.yml", "notes": "Prompts for old and new passwords. Do this on personnel change — the vault password is a shared secret.", "verify": "ansible-vault view works with the new password and fails with the old.", "undo": "rekey again back to a known password", "blast": "yellow", "tags": ["vault", "rotation"], "source": "ansible-vault --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "a-doc", "world": "ansible", "category": "Debug a failure", "intent": "Read the official docs for any module, offline, on the box", "command": "ansible-doc ansible.builtin.lineinfile", "notes": "Full vendor documentation with examples, right on the control node. ansible-doc -l lists everything installed. -s prints a playbook-ready snippet skeleton.", "mentor_note": "This is the authority this tool defers to. When my dictionaries and ansible-doc disagree, ansible-doc wins — it ships with your exact version.", "verify": "Doc page renders in your pager.", "undo": "none — read-only", "blast": "green", "tags": ["docs", "offline", "self-serve"], "source": "ansible-doc --help (core 2.21.1)", "verified": "2026-08-23"},
-  {"id": "r-lsblk", "world": "rhel", "category": "Disks & LVM", "intent": "See all disks, partitions, and mount points at a glance", "command": "lsblk -f", "notes": "Tree of block devices; -f adds filesystem type, label, UUID, and mountpoint. First command for any storage question.", "verify": "Tree prints; devices match hardware expectations.", "undo": "none — read-only", "blast": "green", "tags": ["storage", "recon", "day-one"], "source": "man lsblk (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-df", "world": "rhel", "category": "Disks & LVM", "intent": "See how full each filesystem is", "command": "df -hT", "notes": "-h human sizes, -T shows filesystem type. A filesystem at 100% breaks services in weird ways (logs, PID files, sockets). Check /var and /tmp specifically.", "verify": "Use% column readable; nothing unexpectedly at 100%.", "undo": "none — read-only", "blast": "green", "tags": ["storage", "disk-full", "triage"], "source": "man df (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-du-top", "world": "rhel", "category": "Disks & LVM", "intent": "Find what is eating the disk", "command": "du -xh /var 2>/dev/null | sort -rh | head -20", "notes": "-x stays on one filesystem (won't cross mounts), sort -rh ranks biggest first. Start at the mount df said was full.", "verify": "Top offenders listed with sizes.", "undo": "none — read-only", "blast": "green", "tags": ["storage", "disk-full", "triage"], "source": "man du (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-lvs", "world": "rhel", "category": "Disks & LVM", "intent": "See LVM layout: physical volumes, volume groups, logical volumes", "command": "pvs && vgs && lvs", "notes": "Three quick tables: disks in LVM (pvs), pools (vgs — check VFree for growth room), volumes (lvs). The LVM mental model: PV -> VG -> LV -> filesystem.", "verify": "Tables print; VFree in vgs shows available headroom.", "undo": "none — read-only", "blast": "green", "tags": ["lvm", "storage", "recon"], "source": "man lvm (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-lvextend", "world": "rhel", "category": "Disks & LVM", "intent": "Grow a logical volume AND its filesystem in one step", "command": "lvextend -r -L +5G /dev/vg_data/lv_var", "notes": "-r (--resizefs) resizes the filesystem (xfs_growfs/resize2fs) in the same operation — the safe modern way. Requires free space in the VG (check vgs first). XFS can only grow, never shrink.", "mentor_note": "Always -r. The classic outage is extending the LV, forgetting the filesystem, and wondering why df didn't change.", "verify": "df -h shows the new size on the mount.", "undo": "none for XFS (cannot shrink). Plan sizes carefully; ext4 shrink requires unmount and is expert territory.", "blast": "yellow", "tags": ["lvm", "grow", "disk-full"], "source": "man lvextend (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-findmnt", "world": "rhel", "category": "Disks & LVM", "intent": "Verify what is mounted where, with options", "command": "findmnt --verify", "notes": "Tree of mounts; --verify checks /etc/fstab for errors WITHOUT rebooting — run it after every fstab edit, before the reboot finds your typo for you.", "verify": "No [E] error lines in --verify output.", "undo": "none — read-only", "blast": "green", "tags": ["mount", "fstab", "preflight"], "source": "man findmnt (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-sysstatus", "world": "rhel", "category": "systemd & services", "intent": "See why a service is dead or unhappy", "command": "systemctl status sshd --no-pager -l", "notes": "State, PID, recent log lines. Loaded line shows the unit file path and enabled/disabled. Follow with journalctl -u sshd for full logs.", "verify": "Active: line shows expected state.", "undo": "none — read-only", "blast": "green", "tags": ["systemd", "service", "triage"], "source": "man systemctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-enable-now", "world": "rhel", "category": "systemd & services", "intent": "Start a service now AND on every boot", "command": "systemctl enable --now httpd", "notes": "enable wires the boot symlink; --now also starts it immediately. 'start' alone does NOT survive reboot — the classic gap.", "mentor_note": "Quick check I give every student: systemctl start works but the service is dead after reboot — what did you forget? This flag.", "verify": "systemctl is-enabled httpd -> enabled; systemctl is-active httpd -> active.", "undo": "systemctl disable --now httpd", "blast": "yellow", "tags": ["systemd", "enable", "boot"], "source": "man systemctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-failed", "world": "rhel", "category": "systemd & services", "intent": "List everything that failed on this box", "command": "systemctl list-units --failed", "notes": "One-line health check. Follow each failure with systemctl status <unit> and journalctl -u <unit>. reset-failed clears the flag after you fix it.", "verify": "'0 loaded units listed' when healthy.", "undo": "none — read-only", "blast": "green", "tags": ["systemd", "health", "day-one", "triage"], "source": "man systemctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-daemon-reload", "world": "rhel", "category": "systemd & services", "intent": "Make systemd re-read unit files after editing one", "command": "systemctl daemon-reload", "notes": "Required after creating or editing any unit file. systemd warns about it but people miss the warning; symptoms are 'my edit did nothing'.", "verify": "systemctl cat <unit> shows your edited content.", "undo": "n/a — re-reads files only", "blast": "yellow", "tags": ["systemd", "unit-file"], "source": "man systemctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-sys-edit", "world": "rhel", "category": "systemd & services", "intent": "Override a vendor unit file without editing it in place", "command": "systemctl edit httpd", "notes": "Creates a drop-in override in /etc/systemd/system/httpd.service.d/ — survives package updates, unlike editing /usr/lib/systemd/system directly. --full copies the whole unit instead.", "verify": "systemctl cat httpd shows the drop-in appended.", "undo": "systemctl revert httpd (removes overrides)", "blast": "yellow", "tags": ["systemd", "override", "drop-in"], "source": "man systemctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-nmcli-status", "world": "rhel", "category": "Networking", "intent": "See network devices and their connection state", "command": "nmcli device status && nmcli connection show", "notes": "NetworkManager is the RHEL network authority; nmcli is its CLI. Devices = hardware, connections = config profiles. A device 'disconnected' with a profile present usually means the profile isn't set to autoconnect.", "verify": "Expected device shows 'connected' with the right profile.", "undo": "none — read-only", "blast": "green", "tags": ["network", "nmcli", "recon", "day-one"], "source": "man nmcli (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-ipa", "world": "rhel", "category": "Networking", "intent": "See IP addresses, routes, and DNS quickly", "command": "ip -br a && ip route && resolvectl status 2>/dev/null | head -20", "notes": "-br is brief mode — one line per interface. ip route shows the default gateway; resolvectl shows DNS (on systemd-resolved systems; otherwise cat /etc/resolv.conf).", "verify": "Addresses, default route, and DNS servers all present and sane.", "undo": "none — read-only", "blast": "green", "tags": ["network", "ip", "dns", "triage"], "source": "man ip / man resolvectl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-ss", "world": "rhel", "category": "Networking", "intent": "See what is listening on which port, and who owns it", "command": "ss -tulpn", "notes": "t TCP, u UDP, l listening, p process (needs root), n numeric. The modern netstat. 'Is the service actually listening?' answered in one line.", "verify": "Expected daemon listed on expected port.", "undo": "none — read-only", "blast": "green", "tags": ["network", "ports", "listening", "triage"], "source": "man ss (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-getenforce", "world": "rhel", "category": "SELinux", "intent": "Check whether SELinux is enforcing", "command": "getenforce && sestatus", "notes": "Enforcing/Permissive/Disabled. Permissive logs denials without blocking — the diagnostic mode. Never 'fix' a problem by disabling SELinux; find the denial and fix the label or boolean.", "mentor_note": "If turning SELinux off 'fixes' it, you've found the cause, not the fix. Now go fix it properly.", "verify": "Mode matches site policy (Enforcing in this shop).", "undo": "none — read-only", "blast": "green", "tags": ["selinux", "recon", "day-one"], "source": "RHEL 9 Using SELinux (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-avc", "world": "rhel", "category": "SELinux", "intent": "Find recent SELinux denials and what they blocked", "command": "ausearch -m AVC -ts recent", "notes": "Reads the audit log for Access Vector Cache denials. Each record names the process (comm=), target, and contexts. Pipe a denial through audit2why for an explanation, audit2allow to draft a policy (review before applying!).", "verify": "Denials print with timestamps, or 'no matches' when clean.", "undo": "none — read-only", "blast": "green", "tags": ["selinux", "avc", "audit", "triage"], "source": "RHEL 9 Using SELinux (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-restorecon", "world": "rhel", "category": "SELinux", "intent": "Fix wrong SELinux labels on files", "command": "restorecon -Rv /var/www/html", "notes": "Resets contexts to policy defaults. The #1 cause of 'service can't read its own files' after files were moved (mv preserves the old context; cp inherits the target's).", "verify": "ls -Z shows expected contexts; the denial stops appearing in ausearch.", "undo": "contexts return to policy defaults — if you needed a custom context, define it with semanage fcontext first", "blast": "yellow", "tags": ["selinux", "labels", "restorecon"], "source": "RHEL 9 Using SELinux (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-semanage-fcontext", "world": "rhel", "category": "SELinux", "intent": "Permanently set the right SELinux context for a custom path", "command": "semanage fcontext -a -t httpd_sys_content_t '/srv/site(/.*)?' && restorecon -Rv /srv/site", "notes": "semanage records the rule in policy; restorecon applies it. chcon alone is temporary — a relabel wipes it. This pair is the permanent fix.", "verify": "ls -Z /srv/site shows httpd_sys_content_t; survives touch /.autorelabel + reboot (or a restorecon).", "undo": "semanage fcontext -d '/srv/site(/.*)?' && restorecon -Rv /srv/site", "blast": "yellow", "tags": ["selinux", "fcontext", "permanent"], "source": "RHEL 9 Using SELinux (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-setsebool", "world": "rhel", "category": "SELinux", "intent": "Flip an SELinux boolean (e.g. let httpd make network connections)", "command": "setsebool -P httpd_can_network_connect on", "notes": "-P persists across reboots. List candidates with getsebool -a | grep <service>. Booleans are the vendor-sanctioned tuning knobs — prefer them over custom policy.", "verify": "getsebool httpd_can_network_connect -> on; the denial stops.", "undo": "setsebool -P httpd_can_network_connect off", "blast": "yellow", "tags": ["selinux", "boolean"], "source": "RHEL 9 Using SELinux (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-fw-list", "world": "rhel", "category": "firewalld", "intent": "See the current firewall rules and active zones", "command": "firewall-cmd --state && firewall-cmd --get-active-zones && firewall-cmd --list-all", "notes": "--list-all shows the default zone's services, ports, and rich rules. Add --zone=<z> for others. Runtime and permanent configs are SEPARATE — what you see running may not survive reload.", "verify": "State 'running'; rules match expectations.", "undo": "none — read-only", "blast": "green", "tags": ["firewalld", "recon", "day-one"], "source": "RHEL 9 Security Hardening (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-fw-add", "world": "rhel", "category": "firewalld", "intent": "Open a service or port, permanently and now", "command": "firewall-cmd --add-service=https --permanent && firewall-cmd --reload", "notes": "--permanent writes config but does NOT change the running firewall; --reload applies it. Without --permanent the rule vanishes at reload/reboot. The pair is the idiom. Ports: --add-port=8443/tcp.", "mentor_note": "Every firewalld surprise in history is runtime-vs-permanent confusion. Say the pair out loud as one command.", "verify": "firewall-cmd --list-services shows it; survives firewall-cmd --reload.", "undo": "firewall-cmd --remove-service=https --permanent && firewall-cmd --reload", "blast": "yellow", "tags": ["firewalld", "open-port"], "source": "RHEL 9 Security Hardening (Red Hat), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-id", "world": "rhel", "category": "Users & sudo", "intent": "See a user's UID, groups, and SELinux context", "command": "id alice", "notes": "Groups shown are current; a user added to a group mid-session must log out/in (or newgrp) to pick it up — the classic 'I added them to the group but it doesn't work'.", "verify": "Expected groups listed.", "undo": "none — read-only", "blast": "green", "tags": ["users", "groups", "recon"], "source": "man id (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-usermod-ag", "world": "rhel", "category": "Users & sudo", "intent": "Add a user to a group without destroying their other groups", "command": "usermod -aG wheel alice", "notes": "-a APPENDS; -G alone REPLACES the supplementary group list — the most destructive missing letter in Linux administration. wheel = sudo rights on RHEL.", "mentor_note": "usermod -G without -a has ended careers. The tool's generator will never emit it bare.", "verify": "id alice shows wheel plus all previous groups.", "undo": "gpasswd -d alice wheel", "blast": "yellow", "tags": ["users", "groups", "sudo", "forbidden-adjacent"], "source": "man usermod (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-visudo-c", "world": "rhel", "category": "Users & sudo", "intent": "Validate sudoers syntax before it locks everyone out", "command": "visudo -c", "notes": "Checks /etc/sudoers and /etc/sudoers.d/*. A syntax error in sudoers can disable sudo for the whole box. Always edit with visudo (it validates on save), never a bare editor.", "verify": "'parsed OK' for every file.", "undo": "none — read-only", "blast": "green", "tags": ["sudo", "sudoers", "preflight"], "source": "man visudo (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-last", "world": "rhel", "category": "Users & sudo", "intent": "See who logged in recently, and failed attempts", "command": "last -n 20 && lastb -n 20", "notes": "last reads /var/log/wtmp (successes), lastb reads btmp (failures, needs root). Failed-login spikes are your first breach indicator.", "verify": "Entries print; investigate anything unfamiliar.", "undo": "none — read-only", "blast": "green", "tags": ["users", "security", "audit", "day-one"], "source": "man last (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-jctl-unit", "world": "rhel", "category": "Logs & journald", "intent": "Read the logs for one service", "command": "journalctl -u sshd --since '1 hour ago'", "notes": "journald is the structured log store; -u filters by unit. --since/--until take natural-ish dates ('yesterday', '2026-08-23 14:00'). Add -f to follow live.", "verify": "Log lines for the unit print in the window requested.", "undo": "none — read-only", "blast": "green", "tags": ["journald", "logs", "triage"], "source": "man journalctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-jctl-err", "world": "rhel", "category": "Logs & journald", "intent": "See every error since the last boot", "command": "journalctl -p err -b", "notes": "-p err filters priority error and worse; -b limits to this boot (-b -1 = previous boot — gold after an unexplained reboot). -xe adds explanations and jumps to the end.", "verify": "Errors print or the list is empty (healthy).", "undo": "none — read-only", "blast": "green", "tags": ["journald", "errors", "triage", "day-one"], "source": "man journalctl (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-dnf-install", "world": "rhel", "category": "Packages", "intent": "Install a package", "command": "dnf install httpd", "notes": "Resolves dependencies from configured repos (dnf repolist to see them; air-gapped boxes point at a local mirror). -y skips the confirm — leave it OFF for anything you haven't read.", "verify": "rpm -q httpd shows the installed version.", "undo": "dnf history undo last (see r-dnf-history)", "blast": "yellow", "tags": ["dnf", "packages", "install"], "source": "man dnf (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-dnf-history", "world": "rhel", "category": "Packages", "intent": "See what package operations happened, and roll one back", "command": "dnf history && dnf history undo <id>", "notes": "Every transaction is numbered. undo reverses installs/removals of that transaction (config edits stay). 'What changed on this box last Tuesday?' — dnf history info <id>.", "verify": "dnf history info <id> shows the undo transaction; affected packages back at prior versions.", "undo": "dnf history undo of the undo itself", "blast": "yellow", "tags": ["dnf", "rollback", "history", "audit"], "source": "man dnf (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-rpm-qf", "world": "rhel", "category": "Packages", "intent": "Find which package owns a file", "command": "rpm -qf /etc/ssh/sshd_config", "notes": "Reverse lookup: file -> package. Pair with rpm -V <pkg> to check whether packaged files were modified (config drift/tamper check), and dnf provides '*/somefile' to find not-yet-installed owners.", "verify": "Package name prints.", "undo": "none — read-only", "blast": "green", "tags": ["rpm", "packages", "forensics"], "source": "man rpm (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-ps-sort", "world": "rhel", "category": "Processes & performance", "intent": "Find what is eating CPU or memory", "command": "ps aux --sort=-%mem | head -15", "notes": "Sort by -%mem or -%cpu. For live view: top (shift-M sorts by memory). free -h for the memory headline — remember 'available', not 'free', is the number that matters (buff/cache gives memory back on demand).", "verify": "Top consumers listed; investigate surprises.", "undo": "none — read-only", "blast": "green", "tags": ["processes", "memory", "cpu", "triage"], "source": "man ps / man free (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-kill", "world": "rhel", "category": "Processes & performance", "intent": "Stop a runaway process, gently then firmly", "command": "kill <pid>       # then, only if ignored:  kill -9 <pid>", "notes": "Plain kill sends SIGTERM — a polite 'clean up and exit'. -9 (SIGKILL) is uncatchable: no cleanup, possible corrupted state. If it's a service, systemctl stop is the right door, not kill.", "mentor_note": "kill -9 first is like unplugging the server to close a program. It's on the Forbidden List as a habit; as a last resort it's a tool.", "verify": "ps -p <pid> returns nothing.", "undo": "restart the process/service; check for leftover lock/PID files if it was -9'd", "blast": "yellow", "tags": ["processes", "kill", "signals"], "source": "man kill / man 7 signal (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-find", "world": "rhel", "category": "Files & permissions", "intent": "Find files by name, age, or size", "command": "find /var/log -name '*.log' -mtime +30 -size +100M", "notes": "-mtime +30 = modified >30 days ago; -size +100M = bigger than 100MB. ALWAYS run bare (printing matches) before adding -delete or -exec — see the Forbidden List.", "verify": "The printed list is exactly what you expect before acting on it.", "undo": "none for the search; -delete is unrecoverable — that's why we look first", "blast": "green", "tags": ["find", "files", "cleanup"], "source": "man find (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-tar", "world": "rhel", "category": "Files & permissions", "intent": "Archive a directory (backup before you touch it)", "command": "tar -czf /root/etc-backup-$(date +%F).tar.gz /etc", "notes": "c create, z gzip, f file. Verify with tar -tzf <file> (list) before trusting it. Extract with tar -xzf, add -C /target to choose destination.", "mentor_note": "The pre-change /etc tarball has saved me more times than every monitoring system combined. Cheap insurance, take it.", "verify": "tar -tzf lists the expected contents; file size is non-trivial.", "undo": "rm the archive (it's a copy; the originals were never touched)", "blast": "yellow", "tags": ["tar", "backup", "preflight"], "source": "man tar (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "r-stat", "world": "rhel", "category": "Files & permissions", "intent": "See a file's exact permissions, owner, and timestamps", "command": "stat /etc/ssh/sshd_config && ls -laZ /etc/ssh/", "notes": "stat gives octal mode, owner, and all three timestamps; ls -Z adds SELinux context. The full identity card of a file — check before AND after permission changes.", "verify": "Mode/owner/context match the vendor or STIG expectation.", "undo": "none — read-only", "blast": "green", "tags": ["permissions", "stat", "selinux", "audit"], "source": "man stat (RHEL 9), paraphrased", "verified": "2026-08-23"},
-  {"id": "a-galaxy-offline", "world": "ansible", "category": "Run & operate", "intent": "Install a collection offline (air-gapped, from a carried tarball)", "command": "ansible-galaxy collection install /media/transfer/ansible-posix-2.2.0.tar.gz", "notes": "Collections (ansible.posix, community.general...) are NOT part of ansible-core — they install separately, and on an air-gapped box the tarball must be carried across. Download low-side with 'ansible-galaxy collection download <name>', transfer, install from the file path. Installs to ~/.ansible/collections by default.", "mentor_note": "Two snippets in this kit (authorized_key, firewalld module) need ansible.posix — check for it on day one, not mid-change.", "verify": "ansible-galaxy collection list shows the collection and version; ansible-doc ansible.posix.firewalld renders.", "undo": "remove the collection directory from ~/.ansible/collections/ansible_collections/<namespace>/<name>", "blast": "yellow", "tags": ["galaxy", "collections", "offline", "air-gap"], "source": "ansible-galaxy --help (core 2.21.1)", "verified": "2026-08-24"},
-  {"id": "a-fetch", "world": "ansible", "category": "Debug a failure", "intent": "Pull a file OFF remote hosts for evidence (compare configs across the fleet)", "command": "ansible webservers -m ansible.builtin.fetch -a 'src=/etc/ssh/sshd_config dest=evidence/ flat=no'", "notes": "fetch is copy in reverse: grabs src from every matched host into dest/<hostname>/<path> locally. THE evidence-gathering move — pull the suspect config from 50 hosts and diff them before pushing any fix. For a quick in-memory peek at one file, -m slurp returns it base64-encoded instead.", "mentor_note": "Diagnose with fetch before you treat with copy. Reading the fleet's actual state has saved me from 'fixing' the wrong thing more times than I can count.", "verify": "evidence/<host>/etc/ssh/sshd_config exists per host; diff -r evidence/web01 evidence/web02 shows the drift you're hunting.", "undo": "rm -r evidence/ locally — targets were never written to", "blast": "green", "tags": ["fetch", "slurp", "evidence", "drift"], "source": "ansible-doc fetch/slurp (core 2.21.1)", "verified": "2026-08-24"},
-  {"id": "r-localrepo", "world": "rhel", "category": "Packages", "intent": "Stand up or repair a local dnf repository (air-gapped)", "command": "createrepo_c /srv/repo/rhel9-baseos\nprintf '[local-baseos]\\nname=Local BaseOS\\nbaseurl=file:///srv/repo/rhel9-baseos\\nenabled=1\\ngpgcheck=1\\n' > /etc/yum.repos.d/local.repo\ndnf clean all && dnf repolist", "notes": "createrepo_c builds/refreshes the repodata metadata over a directory of RPMs; the .repo file points dnf at it (file:// for local, http:// for a mirror host). Re-run createrepo_c after adding RPMs. gpgcheck=1 with the imported RH GPG key keeps package integrity honest even offline.", "mentor_note": "When 'Failed to download metadata' strikes on an air-gapped box, it's almost always this layer: stale repodata or a wrong baseurl path. This block is the repair kit.", "verify": "dnf repolist shows the repo with a package count; dnf --disablerepo='*' --enablerepo=local-baseos install <pkg> resolves.", "undo": "rm /etc/yum.repos.d/local.repo && dnf clean all", "blast": "yellow", "tags": ["dnf", "repo", "createrepo", "air-gap", "mirror"], "source": "man createrepo_c / man dnf.conf (RHEL 9), paraphrased", "verified": "2026-08-24"},
-  {"id": "r-chrony", "world": "rhel", "category": "Networking", "intent": "Check time sync health (chrony)", "command": "chronyc tracking && chronyc sources", "notes": "tracking shows the current offset and which source the clock is disciplined to; sources lists candidates (the * marks the selected one). On air-gapped enclaves the source is a local NTP server or GPS clock — drift breaks Kerberos, TLS, 2FA, and makes cross-host log timelines lie.", "verify": "Leap status 'Normal'; System time offset well under a second; one source marked with *.", "undo": "none — read-only", "blast": "green", "tags": ["chrony", "ntp", "time", "day-one"], "source": "man chronyc (RHEL 9), paraphrased", "verified": "2026-08-24"},
-  {"id": "r-journal-cap", "world": "rhel", "category": "Logs & journald", "intent": "Cap the journal's disk usage permanently (after a cleanup)", "command": "journalctl --disk-usage\nmkdir -p /etc/systemd/journald.conf.d\nprintf '[Journal]\\nSystemMaxUse=500M\\n' > /etc/systemd/journald.conf.d/size.conf\nsystemctl restart systemd-journald", "notes": "The disk-full tree says it: don't just delete — cap. --vacuum-size=500M does the one-time cleanup; the drop-in makes the cap permanent so the appointment never recurs. Drop-in beats editing journald.conf directly (survives updates).", "verify": "journalctl --disk-usage stays at or under the cap over the following days.", "undo": "rm /etc/systemd/journald.conf.d/size.conf && systemctl restart systemd-journald", "blast": "yellow", "tags": ["journald", "disk-full", "cap", "drop-in"], "source": "man journald.conf (RHEL 9), paraphrased", "verified": "2026-08-24"},
-  {"id": "r-logrotate", "world": "rhel", "category": "Logs & journald", "intent": "Check or debug log rotation for classic /var/log files", "command": "logrotate -d /etc/logrotate.conf 2>&1 | head -40", "notes": "-d is dry-run debug: shows every log file logrotate manages and what it WOULD do, changing nothing. Per-service policies live in /etc/logrotate.d/. A service spamming /var/log with no rotation policy is the other half of every disk-full story.", "verify": "The runaway log file appears in the -d output with a sane rotate/size policy; after the daily timer runs, dated/compressed siblings exist.", "undo": "none — -d is a dry run", "blast": "green", "tags": ["logrotate", "logs", "disk-full"], "source": "man logrotate (RHEL 9), paraphrased", "verified": "2026-08-24"},
-  {"id": "r-tar-restore", "world": "rhel", "category": "Files & permissions", "intent": "Restore from a tar backup — safely, to a staging area first", "command": "tar -tzf etc-backup-2026-08-24.tar.gz | head\nmkdir -p /tmp/restore-test\ntar -xzf etc-backup-2026-08-24.tar.gz -C /tmp/restore-test\ndiff -r /tmp/restore-test/etc/ssh /etc/ssh | head", "notes": "List first (-t), extract into a STAGING directory (-C), diff against live, then copy over only what you mean to restore. Never extract an absolute-path archive as root onto / — one wrong archive overwrites the living system. --strip-components=N trims leading path levels when needed.", "mentor_note": "A backup that has never been restore-tested is a rumor. This staging pattern IS the restore test — run it before you need it.", "verify": "Staged tree matches expectations; the specific files you copy back diff clean afterward.", "undo": "rm -r /tmp/restore-test (staging is disposable; live files only change when you copy them, deliberately)", "blast": "yellow", "tags": ["tar", "restore", "backup", "staging"], "source": "man tar (RHEL 9), paraphrased", "verified": "2026-08-24"},
-  {"id": "r-nfs-mount", "world": "rhel", "category": "Disks & LVM", "intent": "Mount an NFS share, now and at boot", "command": "showmount -e 192.168.1.117\nmkdir -p /mnt/vault\nmount -t nfs 192.168.1.117:/srv/shares/vault /mnt/vault\necho '192.168.1.117:/srv/shares/vault /mnt/vault nfs defaults,_netdev 0 0' >> /etc/fstab\nfindmnt --verify", "notes": "showmount -e lists what the server exports (needs nfs-utils). _netdev in fstab makes boot wait for the network before mounting — without it, boots race the network and land in emergency mode. SELinux gotcha: services reading NFS content often need a boolean (getsebool -a | grep nfs).", "verify": "findmnt /mnt/vault shows the mount; findmnt --verify passes; after reboot the mount returns.", "undo": "umount /mnt/vault && remove the fstab line && findmnt --verify", "blast": "yellow", "tags": ["nfs", "mount", "fstab", "_netdev", "selinux"], "source": "man nfs / man fstab (RHEL 9), paraphrased", "verified": "2026-08-24"}
+  {
+   "id": "firewalld-service-active",
+   "tool": "firewall-cmd",
+   "category": "firewall-cmd",
+   "intent": "Prove the host firewall is running before claiming the boundary control is in place",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl status firewalld",
+     "notes": "The RHEL 7 STIG check reads the full unit status rather than a one-word answer; is-active exists on RHEL 7 but the pinned V3R15 check text is the status form, so this entry follows the check text it cites.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl is-active firewalld",
+     "notes": "The RHEL 8 STIG check narrows to the one-word service state. Reads only; it does not start, enable, or reload anything.",
+     "changed_in_note": null
+    },
+    "9": {"same_as": "8", "changed_in_note": null},
+    "10": {"same_as": "9", "changed_in_note": null}
+   },
+   "flags": [
+    {"flag": "status", "explain": null, "source_ref": null, "license_class": "paraphrase-only"},
+    {"flag": "is-active", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+   ],
+   "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-07-040520",
+     "rule_id": "SV-204604r991589_rule",
+     "rhel_version": "7",
+     "cci": ["CCI-000366"],
+     "nist": ["CM-6 b"],
+     "check_cmd": "systemctl status firewalld",
+     "fix_cmd": "yum install firewalld && systemctl start firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-08-040101",
+     "rule_id": "SV-244544r958672_rule",
+     "rhel_version": "8",
+     "cci": ["CCI-002314"],
+     "nist": ["AC-17 (1)"],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-09-251015",
+     "rule_id": "SV-257936r1044995_rule",
+     "rhel_version": "9",
+     "cci": ["CCI-000382", "CCI-002314"],
+     "nist": ["CM-7 b", "AC-17 (1)"],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable --now firewalld",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-200531",
+     "rule_id": "SV-280956r1165223_rule",
+     "rhel_version": "10",
+     "cci": ["CCI-000382", "CCI-002314"],
+     "nist": ["CM-7 b", "AC-17 (1)"],
+     "check_cmd": "systemctl is-active firewalld",
+     "fix_cmd": "sudo systemctl enable --now firewalld",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "ctrl-alt-del-target-masked",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Show whether an operator at the console can reboot the box with Ctrl-Alt-Delete",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "RHEL 7 wants the target both masked and inactive; the pinned V3R15 check treats an active target as a finding on its own.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "The RHEL 8 check reads the same unit status and looks for \"Loaded: masked\".",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 9. The pinned V2R9 fix uses disable --now and mask --now, which the RHEL 8 fix text does not.",
+     "changed_in_note": null
+    },
+    "10": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 10 under the pinned V1R2 benchmark.",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {"flag": "status", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+   ],
+   "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
+   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-07-020230",
+     "rule_id": "SV-204455r991589_rule",
+     "rhel_version": "7",
+     "cci": ["CCI-000366"],
+     "nist": ["CM-6 b"],
+     "check_cmd": "systemctl status ctrl-alt-del.target",
+     "fix_cmd": "systemctl disable ctrl-alt-del.target && systemctl mask ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-08-040170",
+     "rule_id": "SV-230529r1017289_rule",
+     "rhel_version": "8",
+     "cci": ["CCI-000366"],
+     "nist": ["CM-6 b"],
+     "check_cmd": "sudo systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable ctrl-alt-del.target && sudo systemctl mask ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-09-211050",
+     "rule_id": "SV-257785r1044833_rule",
+     "rhel_version": "9",
+     "cci": ["CCI-002235"],
+     "nist": ["AC-6 (10)"],
+     "check_cmd": "sudo systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-700960",
+     "rule_id": "SV-281299r1166849_rule",
+     "rhel_version": "10",
+     "cci": ["CCI-002235"],
+     "nist": ["AC-6 (10)"],
+     "check_cmd": "systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "journald-service-active",
+   "tool": "journalctl",
+   "category": "journalctl",
+   "intent": "Prove the systemd journal is running before trusting anything journalctl prints",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "No rule in the pinned RHEL 7 V3R15 benchmark maps to the journal service, so this row carries no STIG mapping and no RHEL 7 capture. The query itself is the same systemd read.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "No rule in the pinned RHEL 8 V2R8 benchmark maps to the journal service; the mapping starts at RHEL 9. The query itself is the same systemd read.",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "systemctl is-active systemd-journald",
+     "notes": "RHEL 9 is the first pinned benchmark that requires the journal service to be active, as RHEL-09-211040.",
+     "changed_in_note": null
+    },
+    "10": {"same_as": "9", "changed_in_note": null}
+   },
+   "flags": [
+    {"flag": "is-active", "explain": null, "source_ref": null, "license_class": "paraphrase-only"}
+   ],
+   "verify": "The command prints \"active\".",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-09-211040",
+     "rule_id": "SV-257783r991562_rule",
+     "rhel_version": "9",
+     "cci": ["CCI-001665"],
+     "nist": ["SC-24"],
+     "check_cmd": "systemctl is-active systemd-journald",
+     "fix_cmd": "sudo systemctl enable --now systemd-journald",
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-500000",
+     "rule_id": "SV-281096r1165643_rule",
+     "rhel_version": "10",
+     "cci": ["CCI-001665"],
+     "nist": ["SC-24"],
+     "check_cmd": "systemctl is-active systemd-journald",
+     "fix_cmd": "sudo systemctl enable --now systemd-journald",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  }
  ]
 }

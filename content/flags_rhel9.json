@@ -1,0 +1,19 @@
+{
+ "_meta": {
+  "rhel_version": "9",
+  "host": null,
+  "patch_level": null,
+  "captured_on": null,
+  "generator": "extract/extract_rhel_flags.py",
+  "status": "pending — no RHEL 9 host read yet (CR-T-09/10/11/12)",
+  "license_class": "paraphrase-only",
+  "source": {
+   "title": "man pages and --help output of the installed binaries on a RHEL 9 host",
+   "url_or_man": "man -P cat <section> <tool>; <tool> --help",
+   "version": "not captured",
+   "retrieved_on": null,
+   "license_class": "paraphrase-only"
+  }
+ },
+ "clis": {}
+}
