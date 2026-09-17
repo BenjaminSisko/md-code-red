@@ -10,11 +10,47 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules)  
+**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules + STIG panel, evidence exporter, typed search, favorites/recent, print view, About panel (CR-T-26/28/29/30))  
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-17
 
 ## Recent changes
+
+- **2026-09-17** — CR-T-26/28/29/30, branch `salm/milo/panels` (Milo Vance). Four renderer/index
+  modules landed on top of `0ba8cf5`, all consuming the existing rendered-state object — the
+  `MCR-ASSEMBLER` block and the field validators were not touched. **CR-T-26 STIG panel:**
+  `renderStigPanel()` now owns the Inspector's STIG display — badge (STIG ID, CAT), every cited CCI
+  with the CCI → NIST SP 800-53 crosswalk (`nistForCci()`, against `content/cci_nist.json`),
+  expandable Check text / Fix text (verbatim DISA text through `esc()`), expected compliant output
+  when a capture exists or the honest "no capture yet" state when it does not, the RHEL 7 sunset
+  banner from `rules_rhel7._meta.sunset`, and the entry's "changed in RHEL X" note. The badge renders
+  only when `stig[]` is non-empty. A STIG rule reached via search with no command in the catalog opens
+  on its own (`selectStigRule()`), with the same panel and an honest "no command yet" message in the
+  editor. **CR-T-28 evidence exporter:** `Ctrl+E` / the Export as Evidence button opens a deterministic
+  plain-text SCTM-ready block — tool version, the new content fingerprint, STIG ID/version/benchmark
+  date, CAT, CCI → NIST controls, check/fix text, expected output (or "not captured"), the assembled
+  command exactly as `currentResult()` produced it (never recomputed), source citation, capture
+  metadata when present, and the operator's own date line — previewed in an escaped `<pre>` that is
+  byte-for-byte what Copy puts on the clipboard. Two exports of the same entry are identical except
+  that one line (`tests/test_evidence_export.js`). **Content fingerprint**, defined once for both
+  CR-T-28 and CR-T-30: sha256 of the embedded data island, computed by `build.py` before the payload
+  is substituted into the template and embedded as the `CONTENT_FINGERPRINT` constant — `qa.py`'s Q1
+  gate now independently re-hashes the shipped island and fails the build if the two disagree.
+  **CR-T-29 search:** the palette's index is now a lazily built, typed index (`buildIndex()` /
+  `queryIndex()`) over tools, flags (curated and per-release dictionaries), STIG IDs and titles, CCIs
+  and NIST controls — built once, on first use, grouped by kind in the results, with an explicit
+  no-match state. Build and query both measure well under the 100 ms budget on the full ~4,000-record
+  embedded dataset (`tests/test_search_index.js`). **CR-T-30:** favorites and recent — entry IDs only,
+  under the existing schema-versioned storage guard, never rendering stored text
+  (`sanitizeIdList()`, `tests/test_favorites_store.js`); a print stylesheet extension so
+  `Ctrl+P` prints the current entry and its STIG panel (mirrored into a `.print-only` element,
+  identical content, hidden on screen) with no other chrome; an About panel with tool version, build
+  date, content fingerprint, per-release STIG versions/dates, the embedded source families and their
+  license classes, and the SALM Content Licensing Ruling v1 attribution block, reproduced verbatim
+  (hyphens in place of the source's em dashes, so no hand-typed non-ASCII glyph enters a tracked
+  file). All 21 QA gates + `JS` pass, 167 unit tests pass (159 existing + 8 new), and the hostile-input
+  harness reports 0 failures over 81,577 checks — none of it touched, since nothing here reaches into
+  the assembler.
 
 - **2026-09-17** — D4 review fixes MCR-SEC-015..023, conditions E1–E7, branch
   `salm/milo/generators` (Milo Vance). Marcus Reed's D4 review of the generator tranche returned

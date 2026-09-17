@@ -215,11 +215,26 @@ def build():
         sys.exit("FATAL: template.html has no /*__DATA__*/ placeholder")
 
     payload = escape_island(json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
+
+    # CR-T-28. The evidence exporter and the About panel (CR-T-30) both print a
+    # content fingerprint OFFLINE, on a jump box with no way to hash the file
+    # against anything else. It is defined as the sha256 of exactly the bytes
+    # that sit inside <script id="mcr-data">...</script> in the SHIPPED file —
+    # the same bytes qa.py's build_ctx() extracts as `island` — computed here,
+    # before the payload is substituted into the template, so the fingerprint
+    # is never a hash of a string that contains itself. It is embedded as a
+    # plain constant (CONTENT_FINGERPRINT, alongside APP_VERSION and friends),
+    # NOT inside the JSON data island: a hash inside the thing it hashes is
+    # circular, and qa.py Q1 checks the two independently — re-hash ctx["island"]
+    # and compare it to the constant it finds in the shell.
+    content_fingerprint = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
     out = tpl.replace("/*__DATA__*/", payload)
     out = (out.replace("__APP_NAME__", APP_NAME)
               .replace("__VERSION__", APP_VERSION)
               .replace("__BUILT_DATE__", APP_BUILD_DATE)
-              .replace("__CLASSIFICATION__", CLASSIFICATION))
+              .replace("__CLASSIFICATION__", CLASSIFICATION)
+              .replace("__CONTENT_FINGERPRINT__", content_fingerprint))
 
     dist = os.path.join(REPO, "dist")
     if not os.path.isdir(dist):
@@ -238,6 +253,7 @@ def build():
     print("  size: %.2f MB (%d bytes) — REPORT ONLY, no ceiling (Founder ruling 2026-09-17)"
           % (size / 1024.0 / 1024.0, size))
     print("  sha256: %s" % digest)
+    print("  content fingerprint (data island sha256): %s" % content_fingerprint)
     print("  %d command entries, %d tools, %d embedded STIG rules (%s), %d CCI mappings"
           % (len(data["commands"]["entries"]),
              len(data["tools"].get("tools", [])),
