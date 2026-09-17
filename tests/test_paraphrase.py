@@ -90,7 +90,27 @@ def a_real_sentence(n_words=12):
     return None
 
 
-def entry(entry_id, source, notes=None, explain=None):
+def a_sentence_from(rel_path, n_words=12, offset=200):
+    """n consecutive words lifted out of ONE named staged raw source.
+
+    Unlike a_real_sentence() (first file found, alphabetical), this pulls
+    from a specific file — needed to plant into an entry that names that file
+    as its own source, the way gen-chronyd-one-shot-check cites
+    content-src/raw/rhel8/chronyd.man.txt directly (the H1 near miss this
+    fixture class re-creates: Milo Vance pasted chronyd(8) text into a
+    curated field during H1 and caught it by hand before this gate existed
+    to catch it for him).
+    """
+    import re
+    path = os.path.join(REPO, rel_path)
+    with open(path, encoding="utf-8", errors="replace") as f:
+        toks = re.sub(r"[^a-z0-9\s-]", " ", f.read().lower()).split()
+    assert len(toks) > offset + n_words, "%s too short to plant a fixture from" % rel_path
+    return " ".join(toks[offset:offset + n_words])
+
+
+def entry(entry_id, source, notes=None, explain=None, intent=None, verify=None,
+          undo=None, fields=None, stig=None, flag_license_class=None):
     e = {
         "id": entry_id,
         "source": dict(source),
@@ -100,7 +120,20 @@ def entry(entry_id, source, notes=None, explain=None):
     if notes:
         e["rhel_versions"]["9"]["notes"] = notes
     if explain:
-        e["flags"] = [{"flag": "-n", "explain": explain}]
+        fl = {"flag": "-n", "explain": explain}
+        if flag_license_class:
+            fl["license_class"] = flag_license_class
+        e["flags"] = [fl]
+    if intent:
+        e["intent"] = intent
+    if verify:
+        e["verify"] = verify
+    if undo:
+        e["undo"] = undo
+    if fields:
+        e["fields"] = fields
+    if stig:
+        e["stig"] = stig
     return e
 
 
@@ -162,6 +195,204 @@ class ThePlantedSentenceIsCaught(unittest.TestCase):
         """Stated, so the next reader knows why the coverage check below exists."""
         self.assertEqual([], qa.paraphrase_failures(
             [entry("e7", PARAPHRASE_SOURCE, notes=self.lifted)], set()))
+
+
+class TheWidenedFieldsAreCaught(unittest.TestCase):
+    """H1 gap (Milo Vance, self-flagged): Q14 scanned rhel_versions[].notes,
+    .changed_in_note.what and flags[].explain, and nothing else. `intent`,
+    `verify` and `undo` are copied into the clipboard comment header right
+    alongside notes and explain (extract/schema.py HEADER_BOUND_FIELDS) —
+    exactly the kind of field a paraphrase-only sentence gets pasted into —
+    and a generator's fields[].label/.help never had a check at all. Every
+    method here fails on the pre-widening curated_texts(); that is the point.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.grams = qa.raw_shingles(REPO)
+        cls.lifted = a_real_sentence()
+
+    def test_lifted_into_intent(self):
+        failures = qa.paraphrase_failures([entry("w1", PARAPHRASE_SOURCE, intent=self.lifted)],
+                                          self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside `intent`")
+        self.assertIn("w1", " ".join(failures))
+
+    def test_lifted_into_verify(self):
+        failures = qa.paraphrase_failures([entry("w2", PARAPHRASE_SOURCE, verify=self.lifted)],
+                                          self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside `verify`")
+
+    def test_lifted_into_undo(self):
+        failures = qa.paraphrase_failures([entry("w3", PARAPHRASE_SOURCE, undo=self.lifted)],
+                                          self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside `undo`")
+
+    def test_lifted_into_a_generator_fields_label(self):
+        failures = qa.paraphrase_failures(
+            [entry("w4", PARAPHRASE_SOURCE, fields=[{"name": "x", "type": "comment",
+                                                       "label": self.lifted}])],
+            self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside a generator's "
+                                  "fields[].label — the UI copy on a `template` entry's form")
+
+    def test_lifted_into_a_generator_fields_help(self):
+        failures = qa.paraphrase_failures(
+            [entry("w5", PARAPHRASE_SOURCE, fields=[{"name": "x", "type": "comment",
+                                                       "help": self.lifted}])],
+            self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside a generator's "
+                                  "fields[].help")
+
+    def test_lifted_into_a_stig_row_note(self):
+        """Schema does not define stig[].notes today; a future one must not be a silent hole."""
+        failures = qa.paraphrase_failures(
+            [entry("w6", PARAPHRASE_SOURCE, stig=[{"stig_id": "X", "rhel_version": "9",
+                                                     "notes": self.lifted}])],
+            self.grams)
+        self.assertTrue(failures, "a lifted sentence survived Q14 inside a stig[] row's notes")
+
+    def test_honest_paraphrase_in_every_widened_field_still_passes(self):
+        """A gate that flags honest paraphrase in the new fields is as useless as one that
+        flags it in the old ones — same rule from ThePlantedSentenceIsCaught, re-run here."""
+        e = entry("w7", PARAPHRASE_SOURCE, intent=CLEAN, verify=CLEAN, undo=CLEAN,
+                  fields=[{"name": "x", "type": "comment", "label": CLEAN, "help": CLEAN}],
+                  stig=[{"stig_id": "X", "rhel_version": "9", "notes": CLEAN}])
+        self.assertEqual([], qa.paraphrase_failures([e], self.grams),
+                         "Q14 flagged prose written from scratch in a widened field")
+
+
+class TheFlagLicenseClassOverride(unittest.TestCase):
+    """The real gap this tranche found while auditing the 27 shipped entries:
+    firewalld-service-active, journald-service-active and ctrl-alt-del-target-
+    masked all cite a verbatim-ok DISA STIG at entry.source, but carry
+    individual flags[] marked license_class: paraphrase-only (systemctl's
+    `status`/`is-active` behaviour is documented, not STIG text). Under the
+    old entry-level gate — `if entry.source.license_class != "paraphrase-
+    only": continue` before curated_texts() ever ran — none of those flags'
+    `explain` text was checked at all. The fix makes the check per-field: a
+    flag's own license_class overrides the entry's.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.grams = qa.raw_shingles(REPO)
+        cls.lifted = a_real_sentence()
+
+    def test_a_paraphrase_only_flag_is_caught_even_under_a_verbatim_ok_entry(self):
+        e = entry("o1", VERBATIM_SOURCE, explain=self.lifted, flag_license_class="paraphrase-only")
+        failures = qa.paraphrase_failures([e], self.grams)
+        self.assertTrue(failures, "a flag explicitly marked license_class: paraphrase-only was "
+                                  "not checked because its entry's own source is verbatim-ok — "
+                                  "this is the exact shape of firewalld-service-active's `status` "
+                                  "and `is-active` flags")
+
+    def test_a_verbatim_ok_flag_is_exempt_even_under_a_paraphrase_only_entry(self):
+        """The inverse case, so the override is proven to cut both ways, not just widen scope."""
+        e = entry("o2", PARAPHRASE_SOURCE, explain=self.lifted, flag_license_class="verbatim-ok")
+        failures = qa.paraphrase_failures([e], self.grams)
+        self.assertEqual([], failures, "a flag explicitly marked license_class: verbatim-ok was "
+                                       "flagged anyway — the entry's paraphrase-only source must "
+                                       "not override a flag's own, more specific, license_class")
+
+
+class TheChronydNearMiss(unittest.TestCase):
+    """The H1 incident this whole tranche is named for, re-created as a fixture.
+
+    gen-chronyd-one-shot-check cites content-src/raw/rhel8/chronyd.man.txt
+    directly (source.url_or_man = "content-src/raw/rhel8/chronyd.man.txt#L68")
+    and is paraphrase-only. Milo Vance pasted a run of that man page's text
+    into a curated field during H1 and caught it by hand before Q14 covered
+    that field. This fixture plants the same shape of mistake — a real,
+    deterministic run of words out of that exact file — into `notes` (already
+    covered before this tranche; a locked-in regression check) and into
+    `intent` (the field that was actually blind).
+    """
+
+    CHRONYD_MAN = "content-src/raw/rhel8/chronyd.man.txt"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.grams = qa.raw_shingles(REPO)
+        cls.lifted = a_sentence_from(cls.CHRONYD_MAN)
+
+    def test_lifted_from_chronyd_man_into_notes(self):
+        failures = qa.paraphrase_failures([entry("h1-notes", PARAPHRASE_SOURCE, notes=self.lifted)],
+                                          self.grams)
+        self.assertTrue(failures, "text lifted verbatim from chronyd(8) survived Q14 inside `notes`")
+
+    def test_lifted_from_chronyd_man_into_intent(self):
+        failures = qa.paraphrase_failures([entry("h1-intent", PARAPHRASE_SOURCE, intent=self.lifted)],
+                                          self.grams)
+        self.assertTrue(failures, "text lifted verbatim from chronyd(8) survived Q14 inside "
+                                  "`intent` — the field the real gen-chronyd-one-shot-check entry "
+                                  "carries its paraphrased explanation in")
+
+    def test_the_real_entry_is_clean(self):
+        """gen-chronyd-one-shot-check itself, exactly as shipped: proves Milo's hand-fix holds,
+        not just that a synthetic fixture works."""
+        with open(os.path.join(REPO, "content", "commands.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        real = [e for e in data["entries"] if e["id"] == "gen-chronyd-one-shot-check"]
+        self.assertTrue(real, "gen-chronyd-one-shot-check is missing from content/commands.json")
+        failures = qa.paraphrase_failures(real, self.grams)
+        self.assertEqual([], failures, "the real gen-chronyd-one-shot-check entry now collides "
+                                       "with its own cited source: %s" % failures)
+
+
+class TheGuideAttestationReceipt(unittest.TestCase):
+    """The offline-mechanism decision for a guide-cited entry (task framing: 'decide whether
+    Q14 can check against the guides offline ... or whether entries that cite a guide must
+    carry a paraphrase_attested_by receipt instead'). Chosen: the second one. Guide prose is
+    not staged under content-src/raw/ (staging it would itself be the verbatim copy the
+    licensing ruling exists to prevent — see qa.source_is_offline_checkable's docstring), so
+    Q14 cannot shingle-check a guide citation at all; it requires a human receipt instead,
+    reusing the roster/two-person-rule infrastructure gate_q16 already has.
+    """
+
+    GUIDE_SOURCE = dict(PARAPHRASE_SOURCE, title="RHEL 9 Security Hardening Guide",
+                        url_or_man="https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/security_hardening")
+
+    def test_a_guide_citation_with_no_receipt_fails(self):
+        e = entry("g1", self.GUIDE_SOURCE)
+        failures = qa.attestation_failures([e])
+        self.assertTrue(failures, "a paraphrase-only entry citing a Red Hat guide URL, with no "
+                                  "paraphrase_attested_by receipt, was not flagged")
+        self.assertIn("g1", " ".join(failures))
+
+    def test_a_guide_citation_with_a_valid_qa_receipt_passes(self):
+        src = dict(self.GUIDE_SOURCE, paraphrase_attested_by={"by": "Riley Park", "on": "2026-09-17"})
+        failures = qa.attestation_failures([entry("g2", src)])
+        self.assertEqual([], failures, "a valid QA-role receipt on content-src/roster.json was "
+                                       "not accepted: %s" % failures)
+
+    def test_a_receipt_from_someone_off_the_roster_fails(self):
+        src = dict(self.GUIDE_SOURCE, paraphrase_attested_by={"by": "Nobody Nowhere", "on": "2026-09-17"})
+        failures = qa.attestation_failures([entry("g3", src)])
+        self.assertTrue(failures, "a paraphrase_attested_by.by name not on content-src/roster.json "
+                                  "was accepted")
+
+    def test_a_receipt_from_a_non_qa_role_fails(self):
+        """Caleb Stone and Renata Osei are SME, not QA, on content-src/roster.json."""
+        src = dict(self.GUIDE_SOURCE, paraphrase_attested_by={"by": "Caleb Stone", "on": "2026-09-17"})
+        failures = qa.attestation_failures([entry("g4", src)])
+        self.assertTrue(failures, "an SME-only name was accepted as a paraphrase_attested_by.by — "
+                                  "this receipt names who reviews the paraphrase, the QA role")
+
+    def test_a_man_page_citation_needs_no_receipt(self):
+        """Control: every one of the 27 shipped entries cites a man page or DISA STIG, never a
+        guide URL, so none of them should need this receipt at all."""
+        src = dict(PARAPHRASE_SOURCE, url_or_man="content-src/raw/rhel8/chronyd.man.txt#L68")
+        failures = qa.attestation_failures([entry("g5", src)])
+        self.assertEqual([], failures, "a man-page citation staged under content-src/raw/ was "
+                                       "told it needed a receipt Q14 can already check offline")
+
+    def test_the_27_shipped_entries_need_no_receipt(self):
+        with open(os.path.join(REPO, "content", "commands.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        failures = qa.attestation_failures(data["entries"])
+        self.assertEqual([], failures, "a shipped entry now needs a paraphrase_attested_by "
+                                       "receipt this repo has never carried: %s" % failures)
 
 
 class TheCorpusMustCoverWhatShipped(unittest.TestCase):
