@@ -1,0 +1,23 @@
+# gitleaks configuration — MD CODE RED
+#
+# The default rule set is kept in full. The one allowlist below exists because the
+# pinned DISA XCCDF sources quote an EXAMPLE GRUB 2 password hash in their own check
+# text (GRUB2_PASSWORD=grub.pbkdf2.sha512...), which the generic-api-key rule reads as
+# a secret. It is not one: it is public-domain U.S. Government documentation text, the
+# files are hash-pinned in stig-src/SHA256SUMS and verified by CI before every parse,
+# and stig-src/ is never edited by this project (ADR-001 §5, SOURCES.md).
+#
+# Scope is deliberately narrow: the exemption is the PATTERN, not the file. Every byte
+# of stig-src/ is still scanned by every other rule, and nothing else in the repository
+# is exempt — least of all content-src/captures/, which is scanned precisely because
+# real host output goes there. (A paths= allowlist would have skipped the four XCCDF
+# files entirely, ~4.9 MB of unscanned text; that is why this block has none.)
+title = "MD CODE RED"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Example GRUB 2 password hash quoted in the pinned DISA XCCDF check text"
+regexTarget = "line"
+regexes = ['''GRUB2_PASSWORD=grub\.pbkdf2\.sha512''']

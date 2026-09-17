@@ -3,3 +3,11 @@ __pycache__/
 .DS_Store
 content-src/raw/
 tests/captures/**/*.tmp
+
+# Built artifacts. ADR-001 §9 wants a release artifact committed to dist/ and CI
+# proving the committed file equals a rebuild. That drift check cannot hold day to
+# day while the artifact embeds its own build date, so on working branches dist/ is
+# local-only and CI proves reproducibility by building twice in the same run. The
+# release commit that pins a version is where a dist/ artifact gets committed —
+# open question for Devon/Al, noted in README "Recent changes" 2026-09-17.
+dist/
