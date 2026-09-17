@@ -18,7 +18,7 @@
    "disable",
    "off"
   ],
-  "_not_listed": "'restart' and 'reload' are disruptive but not destructive: they are offered only by gen-systemctl-manage, which is DECLARED yellow, so listing them here would assert nothing the declaration does not already carry. The list is for branches whose rating has to be EARNED \u2014 'dnf remove' and 'yum remove' are declared green and must be raised to yellow by dp-dnf-remove / dp-yum-remove firing on the de-quoted command, which is MCR-SEC-008's fix load-bearing on real content.",
+  "_not_listed": "'restart' and 'reload' are disruptive but not destructive: they are offered only by gen-systemctl-manage, which is DECLARED yellow, so listing them here would assert nothing the declaration does not already carry. The list is for branches whose rating has to be EARNED on a generator declared green \u2014 as of G4(d) (Eli Cross's ruling raising gen-dnf-package/gen-yum-package's declared blast to yellow, closing exactly this gap), no shipped generator with a 'remove'/'stop'/'disable'/'off' branch is declared green any more, so the _control assertion below has nothing to check against today and is kept for the day a new destructive-branch generator lands declared green, rather than earning its own raise.",
   "_control": "For a generator declared green with a destructive branch, the sweep also requires that some branch comes out GREEN. A pattern table that rated everything yellow would satisfy the destructive assertion while proving nothing."
  },
  "generators": {
@@ -250,7 +250,7 @@
     "action": "install",
     "pkg": "firewalld"
    },
-   "blast": "green",
+   "blast": "yellow",
    "flags": [],
    "commands": {
     "7": null,
@@ -265,7 +265,7 @@
     "action": "install",
     "pkg": "firewalld"
    },
-   "blast": "green",
+   "blast": "yellow",
    "flags": [],
    "commands": {
     "7": "yum 'install' 'firewalld'",

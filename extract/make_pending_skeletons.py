@@ -19,11 +19,12 @@ WHAT THIS PRODUCES, AND WHY IT IS EMPTY
                                rather than filled with anything we cannot pin to a
                                running binary.
 
-  content/expected_output.json the capture index — EMPTY.
-                               ADR-001 §6.5: expected output is captured, never
-                               typed. extract/import_captures.py (CR-T-34) folds
-                               capture files from content-src/captures/ into this
-                               index. None have been captured.
+  content/expected_output.json is NO LONGER this script's responsibility
+                               (CR-T-34). extract/import_captures.py folds real
+                               capture files from tests/captures/ into that
+                               index now, and is qa.py Q15's authority for it;
+                               this script only emits the per-version flag
+                               dictionaries below.
 
 Every emitted file carries a _meta.status that says in words why it is empty and
 which task fills it, and _meta.generator names the extractor that will own it
@@ -74,19 +75,6 @@ def flags_skeleton(version):
     }
 
 
-def expected_output_skeleton():
-    """Expected output is captured, never typed (ADR-001 §6.5). None captured yet."""
-    return {
-        "_meta": {
-            "generator": "extract/import_captures.py",
-            "status": "pending — no capture files under content-src/captures/ (CR-T-34)",
-            "keyed_by": "entry_id|stig_id|rhel_version",
-            "capture_count": 0,
-        },
-        "captures": {},
-    }
-
-
 def write_json(path, obj):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, indent=1, ensure_ascii=False, sort_keys=False)
@@ -99,9 +87,6 @@ def generate(dest_dir):
         path = os.path.join(dest_dir, "flags_rhel%s.json" % version)
         write_json(path, flags_skeleton(version))
         written.append(path)
-    path = os.path.join(dest_dir, "expected_output.json")
-    write_json(path, expected_output_skeleton())
-    written.append(path)
     return written
 
 

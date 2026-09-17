@@ -1,6 +1,8 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
+  "privilege_rule": "Optional, one of extract/schema.py's PRIVILEGES (\"root\" today). Set when the entry's OWN assembled command needs elevated privilege to run on a STIG'd host that the command text itself never requests (no sudo/su in the template) -- distinct from blast, which rates what the command DOES once it runs, not what it takes to run it. The UI shows a privilege badge next to blast and the evidence exporter records a Requires: line, so the content validation protocol's safety rule (no sudo used during a capture run) can defer the entry correctly instead of silently skipping it (G4(e); gen-sshd-test-config, sshd_config not world-readable on defiant/saratoga, CR-T-34).",
   "curated": true,
   "status": "CR-T-02 skeleton (3 curated entries) + CR-T-17..25 generator specs (24 entries): guided forms for firewall-cmd, nmcli, journalctl, lvm, sshd, useradd/usermod, systemctl, dnf/yum, semanage/setsebool, chage, auditctl/ausearch, rsyslog, chronyd, podman. Full catalog authoring is still CR-T-33.",
   "rhel_version_value_shapes": [
@@ -31,6 +33,7 @@
   {
    "id": "firewalld-service-active",
    "tool": "firewall-cmd",
+   "explain_tool": "systemctl",
    "category": "firewall-cmd",
    "intent": "Prove the host firewall is running before claiming the boundary control is in place",
    "rhel_versions": {
@@ -251,6 +254,7 @@
   {
    "id": "journald-service-active",
    "tool": "journalctl",
+   "explain_tool": "systemctl",
    "category": "journalctl",
    "intent": "Prove the systemd journal is running before trusting anything journalctl prints",
    "rhel_versions": {
@@ -746,7 +750,8 @@
    "id": "gen-sshd-test-config",
    "tool": "sshd",
    "category": "ssh / sshd config",
-   "intent": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon",
+   "privilege": "root",
+   "intent": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon -- requires root: sshd_config is not world-readable on a STIG'd host",
    "fields": [
     {
      "name": "path",
@@ -1018,7 +1023,7 @@
    ],
    "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
    "undo": "Run this generator again with the reverse action.",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
@@ -1067,7 +1072,7 @@
    ],
    "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
    "undo": "Run this generator again with the reverse action.",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
@@ -1444,7 +1449,7 @@
    "id": "gen-chronyd-one-shot-check",
    "tool": "chronyd",
    "category": "chronyd",
-   "intent": "Run a single NTP correction against a server or pool and exit, without touching the running chronyd service or its configuration",
+   "intent": "Print the current NTP offset from a server or pool as a one-shot check -- unlike -q, this flag never changes the system clock, and because it never needs to touch server ports it can run without root on most configurations (chronyd(8), content-src/raw/rhel8/chronyd.man.txt#L68-L74, identical at rhel10#L68-L74).",
    "fields": [
     {
      "name": "directive",
@@ -1461,8 +1466,8 @@
      "field": "directive"
     }
    ],
-   "verify": "chronyd -Q exits 0 and prints the step it applied, or an error if the server is unreachable.",
-   "undo": "Nothing to undo — -Q performs one correction and exits; it does not modify the running chronyd service, its configuration, or start anything persistent.",
+   "verify": "chronyd -Q exits 0 and prints the measured offset, or an error if the server is unreachable; it applies no correction, so there is no clock change to confirm.",
+   "undo": "Nothing to undo -- -Q only prints the measured offset (chronyd(8)); it applies no correction, modifies no running chronyd service or its configuration, and starts nothing persistent.",
    "blast": "green",
    "source": {
     "id": "src-man-chronyd-r8",
@@ -1473,7 +1478,7 @@
     "license_class": "paraphrase-only"
    },
    "verified": false,
-   "notes": "MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (content-src/raw/rhel8/chronyd.man.txt#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
+   "notes": "H1 correction (Marcus Reed): this entry was wrongly raised to blast yellow at G4(d) on a misreading of -Q as clock-stepping (Caleb Stone's CR-T-34 note read -Q for -q; Eli Cross's ruling and this branch's previous commit both repeated it). chronyd(8) draws a clear line between the two: -q is the mode that actually adjusts the system time and then quits (content-src/raw/rhel8/chronyd.man.txt#L64-L66, identical at rhel10#L64-L66); -Q behaves the same way except for that one adjustment -- it reports the measured offset and, because it skips opening network ports entirely, can run as a non-root user as long as nothing in the config needs elevated access (#L68-L74, identical at rhel10#L68-L74). This toolkit only ever generates -Q. blast restored to green. MCR-SEC-025: chronyd(8) SYNOPSIS is `chronyd [OPTION]... [DIRECTIVE]...` (#L7, identical at rhel10#L7), so configuration directives are OPERANDS accepted after the options, and -Q itself takes no argument (#L68). The directive is a separate word after -Q, never -Q's value. RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) -- chronyd is the only NTP daemon this toolkit generates commands for."
   },
   {
    "id": "gen-podman-ps",

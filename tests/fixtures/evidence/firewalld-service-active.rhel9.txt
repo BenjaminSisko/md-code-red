@@ -1,0 +1,37 @@
+MD CODE RED — Evidence Export
+Tool version: v1.0.0-dev  built 2026-09-17
+Content fingerprint (sha256 of the embedded data island): 8398108de97a5e9981a64a28903bf6a30f13173f2e86583e9a2ab03452a3ebd9
+
+STIG ID: RHEL-09-251015
+STIG version: V2R9  benchmark date: 01 Jul 2026
+Rule title: The firewalld service on RHEL 9 must be active.
+CAT: II
+CCI: CCI-000382, CCI-002314
+NIST SP 800-53 controls: CM-7 b, AC-17 (1)
+
+Check command / check text:
+Verify that "firewalld" is active with the following command:
+
+$ systemctl is-active firewalld 
+
+active
+
+If the firewalld service is not active, this is a finding.
+
+Fix command / fix text:
+To enable the firewalld service run the following command:
+
+$ sudo systemctl enable --now firewalld
+
+Expected output: not captured yet — no capture record exists for this STIG ID/RHEL version pair (content/expected_output.json).
+
+Assembled command (RHEL 9, blast green):
+systemctl is-active firewalld
+
+Flags:
+  status — unverified — see man page
+  is-active — unverified — see man page
+
+Source citation: DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md) — stig-src/SOURCES.md (version RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2, retrieved 2026-09-17)
+
+Operator date: 2026-09-17

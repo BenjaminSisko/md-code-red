@@ -159,6 +159,7 @@ code,pre{font-family:var(--font-mono);}
 .badge.cat1{border-color:var(--badge-critical); background:var(--badge-critical-fill); color:var(--danger);}
 .badge.cat2{border-color:var(--danger); color:var(--danger);}
 .badge.cat3{border-color:var(--warning); color:var(--warning);}
+.badge.privilege{border-color:var(--warning); color:var(--warning); margin-left:6px;}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
@@ -424,6 +425,18 @@ var CTRL_RE=/[\u0000-\u001F\u007F-\u009F]/;
    family as MCR-SEC-003. The 2060-206F range is now closed end to end rather
    than in two pieces with 2065 sitting between them. */
 var INVISIBLE_RE=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\u3164\uFE00-\uFE0F\uFEFF\uFFA0]/;
+/* H2 (Marcus Reed). The one shared range table for "this character is
+   invisible, a bidi override/isolate, or a variation selector \u2014 it has no
+   business in curated content OR in anything derived from it", used
+   everywhere that class of character is stripped rather than merely
+   detected: headerSafe() below (MCR-SEC-003's clipboard comment header) and
+   MCR-EVIDENCE's evidenceHeaderSafe()/evidenceLineSafe() (the evidence
+   export, condition G2) both replace() against this global-flagged twin of
+   INVISIBLE_RE instead of each keeping \u2014 or worse, re-deriving \u2014 their own
+   copy of the codepoint list. It drifted once already (G2's first cut had
+   its own hand-rolled numeric table that missed U+061C, U+00AD, U+206A-
+   U+206F and U+FE0F); one definition is the fix, not a wider second one. */
+var INVISIBLE_RE_G=new RegExp(INVISIBLE_RE.source,"g");
 var ASCII_RE=/^[\x20-\x7E]+$/;
 
 function inList(arr,v){
@@ -805,7 +818,13 @@ function composeRichRule(map,plan,types){
 var HEADER_UNSAFE_G=/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g;
 var HEADER_UNSAFE_RE=/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/;
 function headerSafe(s){
-  return String(s).replace(HEADER_UNSAFE_G," ").replace(/ {2,}/g," ").replace(/^ +| +$/g,"");
+  /* H2: widened to also strip INVISIBLE_RE_G's range (bidi overrides/
+     isolates, zero-width, variation selectors, soft hyphen, etc. -- see the
+     shared table's own comment above) ahead of the existing control-
+     character/whitespace treatment. A strict superset of the previous
+     behaviour: nothing that passed through clean before is treated any
+     differently now. */
+  return String(s).replace(HEADER_UNSAFE_G," ").replace(INVISIBLE_RE_G,"").replace(/ {2,}/g," ").replace(/^ +| +$/g,"");
 }
 function commentPayload(lines,command){
   var cmd=String(command);
@@ -1210,10 +1229,54 @@ function queryIndex(index,q){
    — command, flags, blast — never reassembled here. Everything else
    (STIG row, rule text, source citation, capture metadata, fingerprint,
    versions) is content-island data or app identity, handed in by the caller. */
+/* Line-safety for the evidence export (Marcus Reed's Panels review,
+   PANEL-002 / condition G2, range table shared per condition H2). esc()
+   only neutralises HTML metacharacters for the <pre> preview, correctly --
+   it is not a sanitiser (MCR-SEC-009) -- but a bidi override or a raw NUL in
+   a rule title or check/fix text would still reach this PLAIN-TEXT export
+   unchanged, and this text crosses trust boundary 5 into an SCTM/ATO
+   package.
+
+   evidenceHeaderSafe()/evidenceLineSafe() strip MCR-ASSEMBLER's own
+   INVISIBLE_RE_G range (bidi overrides/isolates, zero-width, variation
+   selectors, soft hyphen -- the exact class MCR-SEC-004 already refuses in
+   curated FIELD VALUES) and neutralise HEADER_UNSAFE_G's control-character
+   range the same way headerSafe() does for the clipboard header
+   (MCR-SEC-003) -- H2: ONE shared range table read from MCR-ASSEMBLER, not
+   a second hand-rolled copy. The first cut of this function (G2) kept its
+   own numeric range table "to stay independently liftable" and that copy
+   had already drifted from INVISIBLE_RE (missing U+061C, U+00AD,
+   U+206A-U+206F, U+FE0F) by the time H2 caught it --
+   tests/test_evidence_export_real.js and tests/test_evidence_invisible_
+   coverage.js both already lift MCR-ASSEMBLER and MCR-EVIDENCE together, so
+   "this block must never reach outside itself" was solving a problem the
+   test suite had already stopped having; a live, correct, shared table beats
+   a "pure" one that quietly stops being true.
+
+   NOT identical to headerSafe(), even so: headerSafe() collapses run-on
+   whitespace and trims each line, which is safe for a single clipboard
+   comment line but not for this export's own content -- "STIG version: V2R8
+   benchmark date: 01 Jul 2026" relies on a real double space, and the
+   pre-existing CR-T-28 test asserts that line survives byte-for-byte.
+   evidenceHeaderSafe() leaves ordinary spaces alone; it only ever touches
+   characters that are actually hostile.
+
+   Runs per PHYSICAL LINE (split on CR/LF first, rejoined after), so
+   multi-paragraph check/fix text keeps its line breaks -- only what is
+   hostile WITHIN a line is touched. '<', '"' and the apostrophe are left
+   exactly as authored: this is a plain-text export, not markup. */
+function evidenceHeaderSafe(s){
+  return String(s).replace(HEADER_UNSAFE_G," ").replace(INVISIBLE_RE_G,"");
+}
+function evidenceLineSafe(v){
+  var s=String(v==null?"":v),parts=s.split(/\r\n|\r|\n/),i;
+  for(i=0;i<parts.length;i++) parts[i]=evidenceHeaderSafe(parts[i]);
+  return parts.join("\n");
+}
 function formatEvidenceText(opts){
   opts=opts||{};
   var lines=[],res=opts.res,entry=opts.entry,stigRow=opts.stigRow,rule=opts.rule;
-  function push(s){ lines.push(String(s==null?"":s)); }
+  function push(s){ lines.push(evidenceLineSafe(s)); }
   function kv(label,val){ push(label+": "+(val===null||val===undefined||val===""?"not captured":val)); }
   push("MD CODE RED — Evidence Export");
   push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
@@ -1235,12 +1298,19 @@ function formatEvidenceText(opts){
     push("Fix command / fix text:");
     push(rule&&rule.fix?rule.fix:"(no fix text embedded for this rule)");
     push("");
+    /* Capture records are content validation protocol §7 shape (Eli Cross
+       ruling, CR-T-34): redhat_release, not os_release/patch_level; a nested
+       stig_compliance.compliant, not a flat compliant. cap.text/cap.compliant
+       stay as defensive fallbacks for a differently-shaped record; they are
+       never how a real capture answers these lines. */
     var cap=stigRow.expected_output;
     if(cap&&(cap.stdout!==undefined||cap.text!==undefined)){
+      var compliant=(cap.stig_compliance&&cap.stig_compliance.compliant!==undefined)?
+                     cap.stig_compliance.compliant:cap.compliant;
       push("Expected output (captured): "+(cap.stdout!==undefined?cap.stdout:cap.text));
-      push("Compliant: "+(cap.compliant===true?"yes":(cap.compliant===false?"no":"not recorded")));
+      push("Compliant: "+(compliant===true?"yes":(compliant===false?"no":"not recorded")));
       push("Capture host: "+(cap.host||"not captured"));
-      push("Capture release: "+(cap.os_release||cap.patch_level||"not captured"));
+      push("Capture release: "+(cap.redhat_release||cap.os_release||cap.patch_level||"not captured"));
       push("Capture kernel: "+(cap.kernel||"not captured"));
       push("Captured on: "+(cap.captured_on||"not captured"));
     }else{
@@ -1252,6 +1322,7 @@ function formatEvidenceText(opts){
   if(res){
     push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
     push(res.command||"");
+    if(entry&&entry.privilege) push("Requires: "+entry.privilege);
     push("");
     var flags=res.flags||[],fi;
     if(flags.length){
@@ -2043,7 +2114,8 @@ function renderEditor(){
   }
   html+="<h2>"+esc(entry.intent||entry.id)+"</h2>";
   html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+"</p>";
+        (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+
+        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -2177,7 +2249,8 @@ function renderGeneratorResult(){
     target.innerHTML=html;
     return;
   }
-  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+"</p>";
+  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
+        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
@@ -2239,7 +2312,13 @@ function renderInspector(){
   }
   var entry=entryById(res.id);
   html+="<p class=\"region-label\">Flag by flag</p>";
-  var flags=decodeCmd(res.tool,res.version,res.flags||[]);
+  /* PANEL-001/G1: entry.tool is the subject the sidebar rail groups this entry
+     under (firewalld-service-active stays findable under "firewall-cmd"), but
+     when the assembled command actually invokes a different binary, the flag
+     dictionary that binary owns is the one that can answer this panel.
+     explain_tool names that binary; entry.tool never changes. */
+  var explainTool=(entry&&entry.explain_tool)||res.tool;
+  var flags=decodeCmd(explainTool,res.version,res.flags||[]);
   if(!flags.length) html+="<p class=\"muted\">This command takes no flags.</p>";
   for(var j=0;j<flags.length;j++){
     var explain=flags[j].explain;

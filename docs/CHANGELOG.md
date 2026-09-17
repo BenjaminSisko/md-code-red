@@ -4,6 +4,282 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — H1/H2/H3: pre-merge corrections from Marcus Reed (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Three conditions raised before this branch merges, all against work already on it.
+
+#### H1 — `gen-chronyd-one-shot-check` was wrongly raised to yellow
+
+G4(d) raised `gen-chronyd-one-shot-check` to `blast: "yellow"` on Caleb Stone's CR-T-34 capture
+run note that `chronyd -Q` "steps the system clock" — a misreading of `chronyd(8)` that an
+earlier ruling repeated and this branch then encoded into content, intent and notes.
+
+**Correction, from the pinned man page itself** (identical text on RHEL 8 and RHEL 10,
+`content-src/raw/rhel{8,10}/chronyd.man.txt#L64-L74`):
+
+> `-q` — When run in this mode, chronyd will set the system clock once and exit.
+> `-Q` — This option is similar to the `-q` option, except it only prints the offset without
+> making any corrections of the clock and disables server ports to allow chronyd to be started
+> without root privileges.
+
+This toolkit only ever generates `-Q`. `blast` reverts to `"green"`; `intent`, `verify`, `undo`
+and `notes` are rewritten to say what the man page actually says, with the lines cited (`verify`
+and `undo` were ALSO wrong before this branch ever touched the entry — both said "the step it
+applied"/"performs one correction", the same `-Q`/`-q` conflation, predating G4(d)).
+`tests/fixtures/golden-commands.json`'s `blast` field matches.
+
+New assertions in `tests/test_blast_state_change_labels.py`
+(`test_chronyd_one_shot_check_is_not_matched_and_stays_green`): the entry is not matched by the
+state-changing sweep, declares green, and none of `intent`/`notes`/`verify`/`undo` claim `-Q`
+steps the clock. Committed failing first (content still said yellow with the wrong claim), then
+the content fix.
+
+#### H3 — anchor the state-changing pattern table
+
+The same file's `STATE_CHANGE_RE` matched its bare words (`install`, `remove`, `add`, `del`,
+etc.) as a plain substring — which meant `gen-nmcli-static-ipv4` was flagged only because
+`ipv4.addresses` contains the letters "add", and `gen-useradd-create` only because `useradd`
+does. Neither command has a real `add` token; both entries stayed correctly labeled by accident
+(already yellow for other fields), but the sweep was never proving what it claimed to for them.
+
+`STATE_CHANGE_RE` now matches the bare-word entries with `\b` word boundaries and keeps
+`--permanent` as a literal substring (distinctive enough that a false hit inside another flag is
+not a realistic risk the way a 3-letter bare word is). `-Q` is also removed per H1. New negative-
+case tests (`test_word_boundary_anchoring_excludes_substring_false_positives`) prove `del`/`add`
+no longer fire inside `--delete`, `userdel`, `--address`, or `ipv4.addresses`; a companion
+positive-case test (`test_word_boundary_anchoring_still_matches_real_tokens`) proves the
+anchoring did not overcorrect into matching nothing.
+
+#### H2 — one shared invisible-character range table
+
+G2's evidence-export line-safety treatment (`evidenceHeaderSafe()`/`evidenceLineSafe()`) kept its
+own hand-rolled numeric range table instead of sharing `MCR-ASSEMBLER`'s existing `INVISIBLE_RE`
+(the range `MCR-SEC-004` already refuses in curated field values) — and that copy had already
+drifted, missing `U+061C` (Arabic Letter Mark), `U+00AD` (soft hyphen), `U+206A`–`U+206F`
+(deprecated text-direction/digit-shaping controls — it only went to `U+2069`), and all of
+`U+FE00`–`U+FE0F` (variation selectors — it covered none).
+
+**Fix: one shared table.** New `INVISIBLE_RE_G` — a global-flagged twin of `INVISIBLE_RE`,
+defined once, immediately after it. `headerSafe()` (`MCR-SEC-003`'s clipboard comment header) is
+widened to also strip it, applied AFTER the existing control-character pass so `\n`/`\r`/
+`U+2028`/`U+2029` keep becoming a space exactly as before (`INVISIBLE_RE` also lists those two in
+its own class; stripping first would have removed them outright instead of spacing them, and
+`tests/hostile_harness.js` already has an invariant pinning the old behavior —
+`headerSafe("a\nb\r\nc\u2028d") === "a b c d"` — which this fix keeps true by ordering, not by
+exception). `evidenceHeaderSafe()` drops its own range tables entirely and does the same two
+replacements minus the whitespace-collapsing step this export's own content needs to keep.
+
+New `tests/test_evidence_invisible_coverage.js`/`.py`: lifts `INVISIBLE_RE` and
+`evidenceLineSafe()` together out of the built file and enumerates every BMP codepoint
+(`U+0000`–`U+FFFF`, surrogates excluded) against it — the codepoint list is read fresh from the
+shipped regex every run, never hand-copied, so the two tables cannot silently diverge again
+without this test catching it. Committed failing (35 of 58 codepoints `INVISIBLE_RE` rejects
+survived `evidenceHeaderSafe()` unchanged), now 0.
+
+`tests/test_evidence_export.js` is updated to lift `MCR-ASSEMBLER` alongside `MCR-EVIDENCE` —
+`evidenceHeaderSafe()` now depends on `INVISIBLE_RE_G`/`HEADER_UNSAFE_G` from the assembler block,
+so `MCR-EVIDENCE` is no longer self-sufficient lifted alone, on purpose (both
+`tests/test_evidence_export_real.js` and the new coverage test already lifted both blocks
+together, so liftability-alone was never a reason to keep two copies of the same table).
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS, 176 unit tests PASS (171 + 5 new), hostile
+harness 81,577 checks / 0 FAILED, including the `MCR-SEC-003` line-terminator invariant and the
+140 enum-branch control checks (Marcus Reed's sweep, MCR-SEC-021, still green against the
+corrected labels).
+
+### Added/Fixed — G4: capture import, blast labels, privilege field (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Continuing on the same branch after G1-G3, from Caleb Stone's first content validation run
+(`tests/captures/README.md`, branch `salm/caleb/captures-green`, cherry-picked `1db0b97`/`924f589`
+to keep his authorship — his branch itself was not touched). Four rulings from Eli Cross.
+
+#### (a) Canonical capture path
+
+Three documents disagreed on where a capture record lives: `extract/make_pending_skeletons.py`'s
+own docstring said `content-src/captures/` (written before any real extractor existed for this
+file family); the content validation protocol document
+(`07_QA_Test/MD_CODE_RED/test-plan-skeleton-v1.md` Part B §7/Appendix) proposed a separate
+`07_QA_Test/MD_CODE_RED/captures/` tree; Caleb's actual run task instructions put the files at
+`tests/captures/<rhel_version>/<entry_id>.json`, which is where they actually are.
+
+**Ruling: `tests/captures/<rhel_version>/<entry_id>.json`, in the `md-code-red` repo, is
+canonical.** `extract/make_pending_skeletons.py`'s docstring is fixed. The protocol document's
+"Record format" paragraph and Appendix file-layout diagram are fixed to state the repo path
+explicitly and describe themselves as a company-record pointer to it, not a second storage
+location — capture records live next to the extractor and the gate that read them, reviewable
+in the same PR as the content entry they validate.
+
+#### (b) Capture record field names
+
+`qa.py`'s `gate_q16` checked capture records for fields
+(`host`, `os_release`, `kernel`, `patch_level`, `command_run`, `exit_code`, `stdout`,
+`captured_on`, `captured_by`) that no real capture record — Caleb's or the protocol's own worked
+example — has ever carried.
+
+**Ruling: the content validation protocol's own §7 schema is the field-name authority; `qa.py`
+adapts to it, not the reverse.** New `CAPTURE_REQUIRED_FIELDS` in `qa.py` (also
+`extract/import_captures.py`'s `REQUIRED_FIELDS`, kept textually identical across the two files):
+`entry_id`, `rhel_version`, `host`, `redhat_release`, `kernel`, `pkg_versions`, `command_as_run`,
+`exit_code`, `stdout`, `stderr`, `captured_on`, `captured_by`, `blast_confirmed`,
+`undo_executed`, plus `command_hash_at_capture` and `verify_result` — present on every real
+capture file though not in the written protocol text, folded into the authoritative set by the
+same ruling. `template.html`'s `formatEvidenceText()` (MCR-EVIDENCE) and the STIG panel are
+fixed to read these real names (`cap.redhat_release`, `cap.stig_compliance.compliant`) instead
+of a shape no capture record ever had — without this fix, Caleb's real captures would have
+rendered "not captured"/"not recorded" for release and compliance even with Q16 green.
+
+#### (c) `extract/import_captures.py`
+
+The extractor `content/expected_output.json`'s own `_meta.generator` had always named — and
+that Caleb's run reported as `WADE_BLOCKED` because it did not exist — is now written.
+
+Walks `tests/captures/`, validates every record against the §7/`command_hash_at_capture` field
+set. **Integrity rule** ("so an edited command resets to uncaptured"): `command_hash_at_capture`
+must equal a fresh `sha256(command_as_run)`, and for an entry whose command is a FIXED
+`content/commands.json` `rhel_versions[version].command` (never a generator's — MCR-SEC-006, a
+generator composes its command from validated form input, so there is no single "current"
+command to diff a capture against), that command must equal `command_as_run` byte-for-byte,
+resolved the same way `build.py`'s `assemble()` resolves a `same_as` pointer. A capture that
+fails either check is refused outright. Regenerates `content/expected_output.json`, keyed
+`entry_id|stig_id|rhel_version` (unchanged shape, `build.py`'s `assemble()` still joins onto
+`stig[]` rows this way) — a capture for an entry/version with no STIG mapping (most generator
+entries) is validated but not indexed, since there is no `stig[]` row to join it onto.
+`extract/make_pending_skeletons.py` drops `expected_output_skeleton()`: this file is now solely
+`extract/import_captures.py`'s, registered in `qa.py`'s `GENERATORS` and Q15.
+
+Tested with Caleb's 18 real files: 5 fold into the keyed index (the five real STIG rows his run
+documents — `firewalld-service-active`/`ctrl-alt-del-target-masked` on RHEL 8 and 10,
+`journald-service-active` on RHEL 10 only, no RHEL 8 STIG mapping exists for it), 13 validated
+but unindexed (six generator entries × two releases, no STIG mapping). `qa.py` Q16 now passes
+WITH real captures (5 expected_output blocks, 5 capture records — always empty before this
+branch). Verified by hand: the evidence exporter for `firewalld-service-active` RHEL 8 now
+renders `Compliant: yes`, `Capture host: defiant-rhel8`, `Capture release: Red Hat Enterprise
+Linux release 8.10 (Ootpa)`, `Capture kernel: 4.18.0-553.163.1.el8_10.x86_64` — Caleb's real
+capture, not a placeholder.
+
+#### (d) Three mislabeled blast ratings
+
+`gen-dnf-package` and `gen-yum-package` declared `blast: "green"` covering BOTH enum branches
+of their `action` field (`install`/`remove`) — installing a package changes host state exactly
+as much as removing one does, and unlike remove (which `content/dangerous.json`'s
+`dp-dnf-remove`/`dp-yum-remove` already escalate to yellow dynamically), install had nothing to
+raise it. `gen-chronyd-one-shot-check` also declared green: `chronyd -Q` retrieves the offset
+from an NTP source and STEPS THE SYSTEM CLOCK before exiting (`chronyd(8)`) — a state change
+even though it touches no file, which the entry's own notes cited without ever calling it one.
+
+New `tests/test_blast_state_change_labels.py`: a static sweep over
+`tests/fixtures/golden-commands.json`'s own commands against a state-changing pattern table
+(`install|remove|erase|-Q|--permanent|enable|start|stop|add|del`, Eli Cross's ruling verbatim,
+matched as a plain substring) on every RHEL release the golden table gives a command for; every
+generator entry whose golden command matches must declare `blast >= "yellow"`. Deliberately
+coarser than and independent from `tests/hostile_harness.js`'s enum-branch sweep (which computes
+the REAL blast via `assembleCommand()`/`blastFor()` and only ever raises the bar above the
+DECLARED label) — this test asks whether the declared label even admits the command is
+state-changing in the first place. Committed failing on exactly the three named entries (six
+other matched generators already declared yellow and passed); content and the golden fixture's
+own `blast` field both raised to `"yellow"`, now green. `tests/hostile_harness.js`'s enum-branch
+sweep (Marcus Reed, MCR-SEC-021) still passes unchanged — its own `_not_listed` comment is
+updated to note that no shipped generator with a destructive enum branch is declared green any
+more, so its "a green-declared generator must still have one green branch" assertion has nothing
+to check against today (kept for the next one).
+
+#### (e) `privilege` field for `gen-sshd-test-config`
+
+Caleb's real capture run hit this directly: `sshd -T -f '/etc/ssh/sshd_config'` returned
+"Permission denied" on both `defiant` and `saratoga` — `sshd_config` is not world-readable on a
+STIG'd host — and the run correctly deferred it (no `sudo` used, no capture written). The content
+had no way to say that in advance.
+
+New `extract/schema.py` `PRIVILEGES = ("root",)` — a small closed set, matching how `BLASTS`
+already works, not a free string. `content/commands.json`'s `gen-sshd-test-config` gets
+`privilege: "root"`, and its `intent` now states why in plain language. `template.html`'s
+`renderEditor()` and `renderGeneratorResult()` both show a "requires root" badge next to blast;
+`formatEvidenceText()` adds a `Requires: root` line. Built as three parallel ternaries (open tag
+/ `esc()`'d value / close tag) rather than one ternary whose branch mixes literal markup and an
+escaped value — Q17's static innerHTML auditor accepts one literal, one `esc()` call or an
+accumulator per ternary branch, not a concatenation of the three inside one branch.
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS (unchanged gate count from G1-G3; Q22 from
+G1 already covers the new fields' referential integrity), 171 unit tests PASS (168 + 3 new: the
+blast-label sweep), hostile harness 81,577 checks / 0 FAILED, including the 140 enum-branch
+control checks and 96 golden-command checks green against the new declared labels.
+
+### Fixed — Panels review conditions G1/G2/G3 (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Closes Marcus Reed's APPROVE WITH CONDITIONS on `636fd7f` (Panels review, CR-T-26/28/29/30).
+
+#### G1 (MED, PANEL-001) — declared tool was not the invoked binary
+
+`firewalld-service-active` (`tool: "firewall-cmd"`) and `journald-service-active`
+(`tool: "journalctl"`) both emit `systemctl` commands on every RHEL release. The Inspector's
+flag-by-flag panel resolves an explanation with `decodeCmd(res.tool, res.version, res.flags)`,
+which reads `FLAGS[version].clis[toolId]` — the wrong binary's dictionary, so `status`/`is-active`
+could never resolve there even after CR-T-09/10 populated real flag dictionaries.
+
+- `content/commands.json` gains `explain_tool: "systemctl"` on both entries. Chosen over re-filing
+  `tool: "systemctl"` because `tool` also drives the sidebar Tools rail (`entriesForTool()`) — both
+  entries would become undiscoverable from the firewalld/journald tool page they belong on.
+  `tool` is unchanged everywhere else (navigation, category, the evidence export's tool label).
+- `template.html`'s `renderInspector()` resolves the flag dictionary through
+  `entry.explain_tool || res.tool` — the one call site that mattered. `MCR-ASSEMBLER` untouched.
+- `content/tools.json` gains a `binary` field per tool (id already equalled the real binary for
+  all 19; now recorded explicitly).
+- `extract/schema.py` and `qa.py` Q13 validate `explain_tool` resolves to a real `tools.json` id,
+  the same rule `tool` already follows.
+- New `qa.py` **Q22** gate: every entry's `rhel_versions` commands' first word (after one leading
+  `sudo`) must match its declared tool's binary, and every `flags[].flag` must resolve in a
+  populated flag dictionary, carry a curated `explain`, or be honestly marked (not option-shaped,
+  i.e. a subcommand like `is-active` that can never appear in an OPTIONS dictionary, with a
+  `license_class` on record). Committed failing first (8 FAILs, both entries × all 4 RHEL
+  versions), then the content/template fix landed and it went green.
+
+#### G2 (LOW, PANEL-002) — bidi overrides and NUL survived into the evidence export
+
+`esc()` correctly stays an HTML-entity escaper, not a sanitiser — but a `U+202E` bidi override or a
+raw NUL in a rule title or check/fix text still reached `formatEvidenceText()`'s plain-text output
+unchanged, and that text crosses trust boundary 5 into an SCTM/ATO package.
+
+- `template.html`'s `MCR-EVIDENCE` block gains `evidenceHeaderSafe()`/`evidenceLineSafe()`, and
+  `push()` now routes every pushed value through them. Reimplemented rather than calling
+  `MCR-ASSEMBLER`'s `headerSafe()` directly, so the block stays independently liftable and pure on
+  its own (its purity check forbids reaching outside itself) and `MCR-ASSEMBLER` stays untouched.
+  Deliberately not identical to `headerSafe()`: it does not collapse run-on whitespace, because this
+  export's own content relies on it (`"STIG version: V2R8  benchmark date: ..."`), where
+  `headerSafe()`'s single clipboard comment line does not.
+- Removes bidi override/isolate and zero-width ranges (`U+200B`–`U+200F`, `U+202A`–`U+202E`,
+  `U+2060`–`U+2069`, `U+FEFF`) outright; C0/C1 controls, NUL and line separators become a space —
+  applied per physical line so multi-paragraph check/fix text keeps its structure. `<`, `"` and `'`
+  are left exactly as authored: this is plain text, not markup.
+- Fail-first hostile fixture added to `tests/test_evidence_export.js`: a rule title carrying
+  `U+202E`/`U+200E`, check text carrying a raw NUL, fix text carrying literal `<`/`"`/`'`. Committed
+  failing (all three hostile characters survived), then the fix landed and it went green.
+
+#### G3 — where the CR-T-28 report's sample export citation actually came from
+
+The CR-T-28 report pasted a sample export citing *"man firewall-cmd(1) … retrieved 2026-09-01"*
+for `firewalld-service-active`. That line has never existed in this repository at any revision —
+`content/commands.json`'s real `source` for that entry has always been the DISA STIG pin
+(`retrieved_on: 2026-09-17`), and `renderEvidenceModal()` takes `src` from `ctx.entry.source`, so
+the shipped export path cannot produce it. Traced to `tests/test_evidence_export.js`'s own
+hand-written determinism fixture (`fixtureOpts()`) — a synthetic illustration built to prove two
+calls are byte-identical, never meant to represent real content — pasted into the report as if it
+were a real run.
+
+- New `tests/test_evidence_export_real.js`/`.py`: lifts `MCR-ASSEMBLER` and `MCR-EVIDENCE`
+  verbatim out of the built artifact and runs them against the REAL data island —
+  `entryById("firewalld-service-active")` → `assembleCommand()` → `withCopyPayloads()` →
+  `formatEvidenceText()`, never a fixture — and snapshots the result against
+  `tests/fixtures/evidence/firewalld-service-active.rhel9.txt`, byte-for-byte except the
+  `Operator date:` line, plus an explicit assertion the output can never reproduce the
+  hand-written sample's citation. The report sample and the shipped artifact can no longer diverge.
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS (new **Q22**), 168 unit tests PASS (167 + 1
+new), hostile harness 81,577 checks / 0 FAILED, byte-identical to Marcus Reed's review count
+(`MCR-ASSEMBLER` genuinely untouched).
+
 ### Added — CR-T-26/28/29/30, STIG panel, evidence exporter, typed search, favorites/recent/print/about (2026-09-17, branch `salm/milo/panels`)
 
 Four renderer/index modules, all consuming the existing rendered-state object (`RESULT` /

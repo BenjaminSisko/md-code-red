@@ -23,6 +23,16 @@ import re
 VERSIONS = ("7", "8", "9", "10")
 BLASTS = ("green", "yellow", "red")
 LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
+# G4(e): an entry's OWN command needs elevated privilege to run on a STIG'd
+# host that the shipped command itself never requests (sudo/su) -- distinct
+# from blast, which rates what the command DOES once it runs, not what it
+# takes to run it. gen-sshd-test-config (`sshd -T -f <path>`) is the first:
+# sshd_config is not world-readable on a STIG'd host (content validation
+# protocol run CR-T-34, Caleb Stone, both defiant and saratoga: "Permission
+# denied", deferred, no capture written). Optional; absent means no elevated
+# privilege is declared. A small closed set, not a free string, so a future
+# author cannot invent a fourth privilege level the UI has no copy for.
+PRIVILEGES = ("root",)
 
 # ---------------------------------------------------------------------------
 # Header-bound strings must be single-line (MCR-SEC-003).
@@ -509,6 +519,17 @@ def entry_errors(e, ctx):
         errs.append("commands entry %s: category '%s' not in commands.json categories" % (eid, e["category"]))
     if e.get("tool") and e["tool"] not in ctx["tool_ids"]:
         errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e["tool"]))
+    # explain_tool (Marcus Reed Panels review PANEL-001 / condition G1): optional
+    # override telling the inspector's flag dictionary lookup which BINARY the
+    # rhel_versions commands actually invoke, when that differs from `tool` (the
+    # subject `tool` stays what the sidebar rail groups by). Same existence rule
+    # as `tool` — it names a real tool, never a guess.
+    if "explain_tool" in e and e["explain_tool"] not in ctx["tool_ids"]:
+        errs.append("commands entry %s: explain_tool '%s' does not exist in tools.json"
+                    % (eid, e.get("explain_tool")))
+    if "privilege" in e and e["privilege"] not in PRIVILEGES:
+        errs.append("commands entry %s: privilege '%s' is not one of %s"
+                    % (eid, e.get("privilege"), ", ".join(PRIVILEGES)))
     # MCR-SEC-003: everything that reaches the clipboard comment header is
     # checked here, at build time, as well as being '# '-prefixed at render time.
     for field in HEADER_BOUND_FIELDS:
