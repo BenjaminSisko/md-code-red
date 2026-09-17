@@ -30,7 +30,11 @@
   --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#f59e0b;
   --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-  --rail-w:48px; --sidebar-w:240px; --inspector-w:320px; --statusbar-h:28px;
+  /* --rail-w was 48px (icon-only, label revealed on hover/focus). Problem 3
+     (2026-09-17): the rail now shows its label text unconditionally, so the
+     column needs to be wide enough for "Command Builder" at 12px, not just
+     one glyph — see .railbtn/.railbtn .lbl. */
+  --rail-w:160px; --sidebar-w:240px; --inspector-w:320px; --statusbar-h:28px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -73,7 +77,7 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
 :focus{outline:2px solid var(--focus-ring); outline-offset:1px;}
 :focus-visible{outline:2px solid var(--focus-ring); outline-offset:1px;}
 #rail{grid-area:rail; background:var(--bg-surface); border-right:1px solid var(--border-primary);
-  display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;}
+  display:flex; flex-direction:column; align-items:stretch; gap:2px; padding:6px 6px;}
 #sidebar{grid-area:sidebar; background:var(--bg-surface); border-right:1px solid var(--border-primary);
   overflow:auto; padding:10px;}
 #editor{grid-area:editor; background:var(--bg-editor); overflow:auto; padding:14px 16px; min-width:0;}
@@ -91,18 +95,23 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   background:var(--bg-editor); border:1px solid var(--border-primary); border-radius:5px;}
 .region-label{font-size:11px; letter-spacing:.08em; text-transform:uppercase;
   color:var(--text-muted); margin:0 0 8px;}
-.railbtn{position:relative; width:34px; height:34px; border:1px solid transparent; border-radius:6px;
+.railbtn{position:relative; width:100%; height:34px; border:1px solid transparent; border-radius:6px;
   background:transparent; color:var(--text-secondary); font-family:var(--font-mono);
-  font-size:13px; cursor:pointer;}
+  font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; padding:0 8px;
+  text-align:left;}
 .railbtn:hover{border-color:var(--border-primary); color:var(--text-primary);}
 .railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);}
-/* icon-only rail, but the text label is never absent — it is revealed on focus
-   and on hover so a keyboard user reads the same word a mouse user does. */
-.railbtn .lbl{position:absolute; left:38px; top:4px; white-space:nowrap; z-index:60;
-  background:var(--bg-surface); border:1px solid var(--border-primary); border-radius:4px;
-  padding:2px 7px; font-family:var(--font-ui); font-size:12px; color:var(--text-primary);
-  opacity:0; pointer-events:none;}
-.railbtn:focus .lbl,.railbtn:hover .lbl{opacity:1;}
+/* Founder alpha feedback (2026-09-17), problem 3: "the left rail's icons [...]
+   read as bare symbols with no meaning." The glyph (">", "$", etc.) and the
+   aria-label/title always named each rail item, but .lbl used to sit
+   absolutely positioned with opacity:0, shown only on :hover/:focus — so a
+   sighted mouse user saw nothing but the bare glyph until they happened to
+   point at it. The label is now ordinary, always-visible button content,
+   laid out next to the glyph instead of overlaid on hover; the glyph keeps
+   its fixed width so every row's label still lines up in a column. */
+.railbtn .glyph{display:inline-block; width:16px; text-align:center; flex:none;}
+.railbtn .lbl{font-family:var(--font-ui); font-size:12px; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;}
 .seg{display:flex; gap:4px; margin:0 0 10px;}
 .seg button{flex:1; padding:4px 0; border:1px solid var(--border-primary); border-radius:5px;
   background:transparent; color:var(--text-secondary); font:inherit; cursor:pointer;}
@@ -232,13 +241,15 @@ code,pre{font-family:var(--font-mono);}
 </head>
 <body data-sidebar="on" data-inspector="on">
 
-<!-- RAIL — activity rail, icon-only glyphs with focus-revealed text labels (UI spec §2) -->
+<!-- RAIL — activity rail. Founder alpha feedback (2026-09-17): the glyph plus
+     label is now always visible, not revealed only on hover/focus (UI spec §2
+     as amended, problem 3) -- see .railbtn/.railbtn .lbl in the stylesheet. -->
 <nav id="rail" role="navigation" aria-label="Activity rail">
-  <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)">&gt;<span class="lbl">Command Builder</span></button>
-  <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)">$<span class="lbl">STIG Search</span></button>
-  <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)">Y<span class="lbl">Ansible</span></button>
-  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+4)">*<span class="lbl">Favorites</span></button>
-  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+5)">i<span class="lbl">About</span></button>
+  <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Command Builder</span></button>
+  <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
+  <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
+  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
+  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
 </nav>
 
 <!-- SIDEBAR — context panel for the active rail tool -->
@@ -315,6 +326,18 @@ var APP_CLASSIFICATION="__CLASSIFICATION__";
    constant independently. */
 var CONTENT_FINGERPRINT="__CONTENT_FINGERPRINT__";
 var RHEL_VERSIONS=["7","8","9","10"];
+/* Founder alpha feedback (2026-09-17): the version selector opened on RHEL 9,
+   the one release with no host captures and no extraction, so the first
+   screen was a column of "Documented, not host-verified" notes under every
+   tool. build.py's compute_default_version() derives this from the SAME
+   per-version verified receipts the inspector and status bar already read
+   (extract/schema.py's entry_has_any_receipt shape) -- the release with the
+   most real receipts wins, ties broken toward the lower RHEL version number
+   for a stable, explainable result -- and writes it here as a plain
+   constant, the same as the four identity constants above. Never a literal
+   "8": if a future capture run shifts the lead to RHEL 9 or 10, this token
+   follows the data on the next build with no line to remember to change. */
+var DEFAULT_VERSION="__DEFAULT_VERSION__";
 /* CR-T-30. The About panel's attribution block, verbatim from
    05_Compliance_Legal/MD_CODE_RED/content-licensing-ruling-v1.md, "Attribution
    Block (Required in MD CODE RED About Panel)". Content and source list are
@@ -1438,7 +1461,8 @@ var GENERATORS=(function(){
 function isGeneratorEntry(entry){ return !!(entry&&entry.template); }
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
-var STATE={version:"9",rail:"builder",toolId:null,entryId:null,line:0,acked:false,
+var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
+           rail:"builder",toolId:null,entryId:null,line:0,acked:false,
            toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],paletteGroups:[],
            formValues:{},
            /* CR-T-26: a STIG rule opened from search with no associated command. */
@@ -1513,6 +1537,51 @@ function entriesForTool(id){
 function toolAvailability(tool){
   var a=(tool&&tool.availability)||{};
   return a[STATE.version]||{available:false,reason:"no availability recorded for RHEL "+STATE.version};
+}
+/* Founder alpha feedback (2026-09-17), problem 3: on RHEL 9 (no host captures
+   for that release), most tools' availability.note for that version is the
+   IDENTICAL "Documented, not host-verified — RHEL 9 is between the two
+   extraction hosts." string, repeated under every one of them in the sidebar
+   — a column of noise, not a column of information. This is the version's
+   OVERALL caveat state: the note text shared by more tools on this version
+   than any other single note (including no note at all). A tool whose own
+   note differs still says something the overall line does not (journalctl's
+   STIG-specific note, nmcli's guide citation, yum's compatibility-symlink
+   remark) and keeps showing it per row.
+   Never touches whether the honest label is available — the tool's own
+   toolAvailability(tool).note is unchanged; only renderToolList()'s decision
+   to print it a second time, next to text that already said the same thing
+   once at the top of the list, is what this removes. The inspector (region
+   "Verification") and the status bar's per-entry badge both read
+   verificationStatusForVersion() directly and are untouched by this function
+   entirely — the full per-command label still renders there every time. */
+function versionOverallCaveat(version){
+  var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
+  var counts={},bestNote=null,bestCount=0,notedTotal=0,i,t,a,note;
+  for(i=0;i<tools.length;i++){
+    t=tools[i];
+    a=(t.availability||{})[version];
+    /* A tool with nothing to say for this version (no note at all — every
+       new coreutils/git tool this tranche added, on every version) is not a
+       vote either way: counting it as part of "how many tools have nothing
+       in common with the majority note" would let a pile of unrelated
+       silent tools mask a genuine wall of repeated STIG-tool notes, which is
+       exactly the case this function exists to catch (13 of the original 19
+       tools sharing one identical RHEL 9 sentence). Only tools that DO carry
+       a note for this version get a vote. */
+    if(!a||!a.available||!a.note){ continue; }
+    note=a.note;
+    notedTotal++;
+    counts[note]=(counts[note]||0)+1;
+    if(counts[note]>bestCount){ bestCount=counts[note]; bestNote=note; }
+  }
+  /* Require a genuine majority of the tools that said ANYTHING for this
+     version, not just a plurality — two notes tied at 2-of-17 (RHEL 7's
+     four distinct "System Administrator's Guide chapter" notes) each stay
+     rendered per-row rather than one of them getting arbitrarily promoted
+     to "the" overall state. */
+  if(bestNote!==null && bestCount>1 && bestCount*2>notedTotal) return bestNote;
+  return null;
 }
 /* The dictionary answer for a flag, in the SELECTED version only. Decoding a
    RHEL 9 command against a RHEL 10 dictionary would be a silent lie, so a
@@ -2045,6 +2114,10 @@ function renderToolList(){
     el("sidebar-body").innerHTML=html;
     return;
   }
+  var overallCaveat=versionOverallCaveat(STATE.version);
+  if(overallCaveat){
+    html+="<p class=\"muted\">Most tools on RHEL "+esc(STATE.version)+": "+esc(overallCaveat)+"</p>";
+  }
   html+="<ul class=\"list\" data-listnav=\"tools\">";
   for(var i=0;i<tools.length;i++){
     var t=tools[i];
@@ -2053,7 +2126,10 @@ function renderToolList(){
     if(av.available){
       html+="<li><button type=\"button\" class=\"row\" data-tool=\""+escapeAttr(t.id)+"\" aria-current=\""+
             (open?"true":"false")+"\">"+esc(t.label||t.id);
-      if(av.note){ html+="<span class=\"why\">"+esc(av.note)+"</span>"; }
+      /* Show the per-tool caveat only when it says something the line above
+         (the version's own overall caveat, printed once) does not already
+         say -- the honest text itself is never hidden, only its repeat. */
+      if(av.note && av.note!==overallCaveat){ html+="<span class=\"why\">"+esc(av.note)+"</span>"; }
       html+="</button></li>";
     }else{
       html+="<li><button type=\"button\" class=\"row\" aria-disabled=\"true\" disabled title=\""+

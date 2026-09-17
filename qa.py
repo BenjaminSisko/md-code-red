@@ -1435,7 +1435,8 @@ def gate_q1(ctx):
         f.append("unbalanced <script> open/close counts")
     if "/*__DATA__*/" in html:
         f.append("template placeholder /*__DATA__*/ was not replaced")
-    for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__"):
+    for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__",
+                  "__DEFAULT_VERSION__"):
         if token in html:
             f.append("template token %s was not substituted" % token)
     data = ctx["data"]
@@ -1509,6 +1510,46 @@ def gate_q1(ctx):
         else:
             d.append("content fingerprint matches a fresh sha256 of the shipped data island: %s"
                      % got_fp[:32])
+
+    # Milo Vance, daily-commands tranche (2026-09-17), problem 3: the version
+    # selector used to open on a hard-coded "9" -- the one RHEL release with no
+    # host captures, so the first screen was a wall of "Documented, not
+    # host-verified" notes under every tool. build.py's compute_default_version()
+    # derives the default from the SAME per-version verified receipts the
+    # inspector already reads and writes it into the shell as a plain constant,
+    # exactly like CONTENT_FINGERPRINT above. This is the independent re-check:
+    # recompute the expected version from ctx["data"] with the identical rule
+    # (most {by,on,host,capture} receipts wins, ties toward the lower RHEL
+    # version number) and compare it to what the shell actually carries, so a
+    # future content change can never silently leave the selector opening on a
+    # release nothing verifies.
+    dv_m = re.search(r'var DEFAULT_VERSION="([^"]*)"', html)
+    if not dv_m or not dv_m.group(1) or dv_m.group(1) == "__DEFAULT_VERSION__":
+        f.append("DEFAULT_VERSION constant is missing or unsubstituted in the shipped shell")
+    elif ctx["data"] is None:
+        f.append("default version cannot be checked — the data island did not parse")
+    else:
+        counts = {v: 0 for v in VERSIONS}
+        for e in ctx["data"].get("commands", {}).get("entries", []):
+            verified = e.get("verified")
+            if not isinstance(verified, dict):
+                continue
+            for v in VERSIONS:
+                if isinstance(verified.get(v), dict):
+                    counts[v] += 1
+        want_dv = sorted(VERSIONS, key=lambda v: (-counts[v], int(v)))[0]
+        got_dv = dv_m.group(1)
+        if got_dv not in VERSIONS:
+            f.append("DEFAULT_VERSION '%s' is not one of %s" % (got_dv, ", ".join(VERSIONS)))
+        elif got_dv != want_dv:
+            f.append("DEFAULT_VERSION is RHEL %s but the shipped verified-receipt counts (%s) say "
+                     "RHEL %s has the most host-verified content — the selector default and the "
+                     "content it is supposed to follow have drifted"
+                     % (got_dv, ", ".join("%s=%d" % (v, counts[v]) for v in VERSIONS), want_dv))
+        else:
+            d.append("default version selector (RHEL %s) matches the release with the most "
+                     "verified receipts (%s)"
+                     % (got_dv, ", ".join("%s=%d" % (v, counts[v]) for v in VERSIONS)))
     return f, d
 
 
@@ -3540,7 +3581,15 @@ def gate_q22(ctx):
             if not cmd:
                 continue                  # unavailable on this release — nothing to check
             words = cmd.split()
-            if words and words[0] == "sudo":
+            # A leading "sudo" is ordinarily privilege-elevation noise in front of
+            # the real subject binary and is stripped before comparison -- EXCEPT
+            # when the entry's own declared binary IS sudo (the daily-commands
+            # tranche's su/sudo entry, Milo Vance, 2026-09-17): there the command
+            # legitimately starts and ends with "sudo" as the subject itself
+            # (e.g. "sudo -l"), and stripping it would compare sudo's OWN flag
+            # against the binary name and always fail. No existing entry has
+            # binary "sudo" today, so this changes nothing else.
+            if words and words[0] == "sudo" and binary != "sudo":
                 words = words[1:]
             first = words[0] if words else ""
             if first != binary:
