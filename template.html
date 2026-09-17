@@ -1090,6 +1090,729 @@ function assembleCommand(spec,version,values,opts){
   return {id:spec.id,tool:spec.tool,command:command,flags:flags,blast:b.blast,
           blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version};
 }
+
+/* ---- the pipeline composer (CR-T-31) -------------------------------------
+   Founder requirement, verbatim: "I need to be able to pipe commands
+   together as well."
+
+   THE DESIGN CONSTRAINT, and the reason this code is shaped the way it is:
+
+     A PIPELINE IS STRUCTURE THE TOOL OWNS, NEVER A VALUE THE USER SUPPLIES.
+
+   `|` is precisely the metacharacter the hostile harness rejects tens of
+   thousands of times over -- 80,525 rejections in the single-command sweep on
+   the day this was written, and the pipeline sweeps below add their own.
+   The moment an operator can be TYPED, every allow-list in this block is
+   void: a `comment` field carrying "| sh" would be perfectly shQuote'd, pass
+   every containment check, and still be a pipe the instant the quoting is
+   stripped by any future sink. So the user never supplies an operator. The user
+   supplies a KEY, the key is looked up in a closed table, and the table's own
+   string literal is what is emitted.
+
+   What that makes UNEXPRESSIBLE (as opposed to merely policed):
+
+     - There is no code path that copies operator text out of a stage. Every
+       operator word in the output came from PIPE_OPERATORS, which is a literal
+       in this file. A stage object has no field whose contents reach the
+       command as an operator; `op` is consumed by hasOwnProperty lookup and
+       then discarded.
+     - A command stage must carry a TEMPLATE -- a token list this assembler
+       emits word by word. A spec whose command is a STRING it was handed
+       (`rhel_versions[v].command`, which is how every static entry and every
+       mined REFERENCE record carries its command) cannot be a stage at all.
+       Two things follow from one rule, which is why it is the rule:
+         (a) PROVENANCE. ADR-002: joining two vendor strings produces a command
+             the vendor never published while the citation still claims they
+             did. That false attribution would travel into an accreditation
+             package through Export as Evidence, which prints every stage's
+             source. A mined record is structurally incapable of being a stage
+             -- not filtered out of the picker, which a future picker could
+             forget to do.
+         (b) OPERATORS FROM DATA. A handed string is text this assembler did
+             not compose, so it cannot know the string contains no `|`. DISA's
+             own check text is full of them: 625 top-level pipes across the
+             1,492 embedded rules. A mined record reaching a stage would carry
+             an operator the user never composed, straight past the closed set.
+             Requiring a template means every word of every stage came from a
+             LIT_TOKEN_RE/FLAG_TOKEN_RE token or a shQuote'd validated value,
+             and neither admits a shell metacharacter.
+     - A redirect TARGET is a `path`-typed field run through validateField() and
+       shQuote()d like every other value, so it is a quoted word and not a
+       filename fragment concatenated into a redirection.
+     - The xargs replace string is emitted by this function, never typed:
+       `{}` is not admitted by ANY field type's allow-list or by LIT_TOKEN_RE,
+       so it could not be authored even in curated content.
+
+   What is merely POLICED, honestly labelled:
+
+     - pipeOperator() re-checks the table's own `emit` against a closed list of
+       the ten legal emissions. Today that check is unreachable, exactly like
+       composeRichRule()'s character rule: the table is the control. It is what
+       still holds if a future author adds a row saying {emit:"| sh"}.
+     - stageCommandClean() re-checks that a stage's OWN assembled text carries
+       no bare operator word and no unquoted shell metacharacter. Unreachable
+       today for the same reason -- a template cannot emit one -- and it is the
+       check that still holds if a future token type is added to the assembler
+       without this file being read.
+     - The shell-stage refusal and the blast composition rules below are
+       policy over an assembled command's first bare word. A tool set that
+       one day ships /bin/sh as an entry would be caught by the refusal, not
+       made impossible by it.
+
+   assemblePipeline() is PURE and lives inside MCR-ASSEMBLER on purpose: the
+   hostile harness lifts this block verbatim and drives the pipeline oracle
+   through it, so the pipe composer is proved by the same gate as the command
+   assembler, on the shipped artifact.
+
+   A PIPELINE OF ONE STAGE EQUALS assembleCommand() BYTE FOR BYTE. That is not
+   a coincidence to be maintained: every command stage IS an assembleCommand()
+   call, and a one-stage pipeline pushes exactly that string and joins nothing
+   to it. The harness asserts it anyway, on every generator and every release,
+   because "structurally guaranteed" is a claim and a gate is a proof. */
+
+/* Eight is a shell command line an operator can still read on one screen and
+   still reason about before running it as root. There is no technical limit
+   being approximated here; it is a refusal to render something nobody reviews. */
+var MAX_PIPELINE_STAGES=8;
+
+/* The closed operator set. `emit` is the ONLY source of an operator word in an
+   assembled pipeline. `takes` says what the stage carrying this operator may
+   also carry, and is the whole of the stage-shape rule:
+     "stage" - a command (or an xargs stage) follows
+     "path"  - a validated absolute path follows, and nothing else
+     "none"  - nothing follows; the operator is the entire stage */
+var PIPE_OPERATORS={
+  pipe:        {emit:"|",         takes:"stage",label:"pipe stdout into the next command"},
+  and:         {emit:"&&",        takes:"stage",label:"run the next command only if this one succeeds"},
+  or:          {emit:"||",        takes:"stage",label:"run the next command only if this one fails"},
+  seq:         {emit:";",         takes:"stage",label:"run the next command either way"},
+  redirect:    {emit:">",         takes:"path", label:"write stdout to a file, replacing it"},
+  append:      {emit:">>",        takes:"path", label:"append stdout to a file"},
+  redirect_err:{emit:"2>",        takes:"path", label:"write stderr to a file, replacing it"},
+  err_to_out:  {emit:"2>&1",      takes:"none", label:"send stderr wherever stdout is going"},
+  tee:         {emit:"| tee",     takes:"path", label:"write stdout to a file and keep it flowing"},
+  tee_append:  {emit:"| tee -a",  takes:"path", label:"append stdout to a file and keep it flowing"}
+};
+/* The key order the UI offers, stated once so a <select> never has to iterate
+   an object and inherit whatever the engine's key order happens to be. The
+   harness asserts this list and the table's own keys are the same set: a key
+   in one and not the other is either an operator nobody can pick or a picker
+   for an operator that does not exist. */
+var PIPE_OPERATOR_KEYS=["pipe","and","or","seq","redirect","append","redirect_err",
+                        "err_to_out","tee","tee_append"];
+/* Rule 2 (see the block comment): the emissions this product will ever write,
+   as a closed list, re-checked at emit time. RICHRULE_VALUE_RE's sibling. */
+var PIPE_OPERATOR_EMITS=["|","&&","||",";",">",">>","2>","2>&1","| tee","| tee -a"];
+
+function pipeOperator(key){
+  if(typeof key!=="string") return null;
+  if(!Object.prototype.hasOwnProperty.call(PIPE_OPERATORS,key)) return null;  /* own keys only:
+      "constructor", "toString" and "__proto__" are not operators */
+  var op=PIPE_OPERATORS[key];
+  if(!op||typeof op.emit!=="string") return null;
+  if(!inList(PIPE_OPERATOR_EMITS,op.emit)) return null;   /* fail closed on a bad table row */
+  if(!inList(["stage","path","none"],op.takes)) return null;
+  return op;
+}
+
+/* The words of an assembled command, split the way a POSIX shell would, each
+   carrying whether ANY part of it was single-quoted. Used for exactly two
+   questions, both of which must be asked of BARE text only: "what binary does
+   this stage invoke" and "does this stage emit NUL-delimited output". A value
+   is always a quoted word, so neither question can ever be answered by one. */
+function commandWords(s){
+  var str=String(s),words=[],cur="",quoted=false,started=false,inQ=false,i=0;
+  function flush(){ if(started) words.push({text:cur,quoted:quoted}); cur="";quoted=false;started=false; }
+  while(i<str.length){
+    var c=str.charAt(i);
+    if(inQ){
+      if(c==="'") inQ=false; else cur+=c;
+      i++; started=true; continue;
+    }
+    if(c==="'"){ inQ=true; quoted=true; started=true; i++; continue; }
+    /* shQuote()'s embedded-quote idiom is 'a'\''b': the backslash-escaped quote
+       sits OUTSIDE the single quotes and is one escaped, inert character. It is
+       protected text, not bare text, so it marks the word quoted -- exactly the
+       rule tests/hostile_harness.js's own tokeniser applies. Reading it as bare
+       would make every value containing an apostrophe unreadable. */
+    if(c==="\\"&&i+1<str.length){ cur+=str.charAt(i+1); quoted=true; started=true; i+=2; continue; }
+    if(c==="\\") return null;                     /* a trailing backslash is malformed */
+    if(c===" "){ flush(); i++; continue; }
+    cur+=c; i++; started=true;
+  }
+  if(inQ) return null;                          /* unbalanced quoting: unreadable, refuse */
+  flush();
+  return words;
+}
+/* The binary a command invokes, as a bare basename, or null if the command does
+   not start with a bare word (which no assembleCommand() output ever does -- the
+   first token of every template is a `lit`). */
+function invokedBinary(command){
+  var words=commandWords(command);
+  if(words===null||!words.length) return null;
+  if(words[0].quoted) return null;
+  var base=words[0].text,cut=base.lastIndexOf("/");
+  if(cut>=0) base=base.slice(cut+1);
+  return base===""?null:base;
+}
+
+/* ---- rule 4, stated as a CLASS (threat model v2, condition PL2) ----------
+   The class is "AN INTERPRETER IS THE FINAL CONSUMER", not "the command is
+   spelled sh". A name list catches the obvious shape and misses two that matter
+   just as much, so all three are named here and all three are REFUSED:
+
+     (1) a stage whose binary reads a PROGRAM from standard input
+         (`| sh`, `| bash`, `| python`, `| perl`, ...),
+     (2) an xargs stage whose CHILD is one of those -- the interpreter is one
+         level down and the pipe operator in front of it says `xargs`, which is
+         why a name check on the stage's own binary misses it, and
+     (3) an EXECUTION SINK reached by REDIRECT rather than by pipe: a write into
+         a directory whose contents the system later executes is arbitrary
+         execution with a delay on it. `> /etc/cron.d/x` and `| tee
+         /etc/profile.d/x.sh` are `| sh` with a timer.
+
+   REFUSED, not rated, and here is the choice stated plainly: the product's
+   promise is that every command it emits can be explained flag by flag, rated,
+   cited and undone. A command whose text will only exist at run time keeps none
+   of those. A red banner over an unreviewable command is theatre -- it trains
+   the operator to click through red -- so the composer will not build one.
+
+   sed and awk are deliberately NOT interpreters for this purpose. They take
+   their program as an ARGUMENT, which is a validated field like any other; they
+   do not execute standard input. The line is "does stdin or a written file
+   become code", not "is it powerful". */
+var SHELL_TOOLS=["sh","bash","dash","zsh","ksh","ksh93","csh","tcsh","ash","busybox",
+                 "python","python2","python3","perl","ruby","php","node","lua","tclsh",
+                 "expect","source","eval"];
+
+/* ---- TM2-F8: nested quoting domains --------------------------------------
+   `su -c '...'`, `sh -c '...'`, `find ... -exec ... {} \;` and every wrapper
+   that takes another command as its argument RE-PARSE that argument with their
+   own rules. A value correctly single-quoted for the outer shell is then
+   re-interpreted by an inner one, and shQuote() -- which is a POSIX SHELL
+   quoter and nothing else -- is the wrong escaper for that second domain.
+
+   This is exactly the shape the dead YAML quoter was deleted to stop
+   pretending about (MCR-SEC-010): a second escaping domain with no sink, no
+   oracle and a comment claiming it was safe. A second domain gets its own quoter AND its own
+   parsing oracle in the same commit, or it does not exist.
+
+   It does not exist in this tranche. Every wrapper below is REFUSED as a stage
+   binary, and find's -exec family is refused as a bare token, so this composer
+   cannot emit a stage whose argument a child re-parses. Refusing is the
+   acceptable answer; a half-closed second domain is not.
+
+   xargs is the one re-parser that is here on purpose, and the reason it is safe
+   is worth writing down: xargs re-parses its INPUT STREAM, not its argv, and
+   that stream is the producing stage's output -- filenames on a disk -- never a
+   value from a form. Nothing this composer emits enters that domain. The `-0`
+   rule below is what keeps the domain honest for the data that DOES enter it. */
+var WRAPPER_TOOLS=["su","runuser","sudo","env","nohup","setsid","timeout","nice","ionice",
+                   "chroot","stdbuf","systemd-run","watch","script","strace","ltrace",
+                   "unshare","nsenter","flock","setpriv","doas","xargs"];
+var EXEC_OPTION_TOKENS=["-exec","-execdir","-ok","-okdir"];
+
+function isShellInvocation(tool,command){
+  if(tool!==undefined&&tool!==null&&inList(SHELL_TOOLS,String(tool))) return true;
+  var base=invokedBinary(command);
+  if(base===null) return true;                  /* unreadable first word: refuse, never guess */
+  return inList(SHELL_TOOLS,base);
+}
+/* TM2-F8's predicate: does this stage hand its argument to a child parser? */
+function reparsesItsArgument(tool,command){
+  if(tool!==undefined&&tool!==null&&inList(WRAPPER_TOOLS,String(tool))) return true;
+  var base=invokedBinary(command);
+  if(base===null) return true;
+  if(inList(WRAPPER_TOOLS,base)) return true;
+  var words=commandWords(command);
+  if(words===null) return true;
+  for(var i=1;i<words.length;i++){
+    if(!words[i].quoted && inList(EXEC_OPTION_TOKENS,words[i].text)) return true;
+  }
+  return false;
+}
+/* One question for every stage, asked once, so rule 4 is a class and not a
+   list: may this assembled command stand as a stage at all? */
+function stageRefused(tool,command){
+  if(isShellInvocation(tool,command)) return true;
+  if(reparsesItsArgument(tool,command)) return true;
+  return false;
+}
+
+/* Rule 2 for the stage text itself (see the block comment). Every word of an
+   assembleCommand() output is a LIT_TOKEN_RE/FLAG_TOKEN_RE token or a
+   shQuote'd value, so no bare operator and no unquoted metacharacter can occur
+   in one -- this cannot fail today. It is what still holds if a future token
+   type emits something wider, and it is the single assertion that makes
+   "every operator in the pipeline came from the closed table" true by CHECK as
+   well as by construction. The harness's pipeline oracle asserts the same
+   property from the outside; this is the inside half. */
+var PIPE_BARE_WORD_RE=/^[A-Za-z0-9_.\/=:,+@%-]+$/;
+function stageCommandClean(command){
+  var words=commandWords(command);
+  if(words===null) return false;                /* unbalanced quoting */
+  if(!words.length) return false;
+  for(var i=0;i<words.length;i++){
+    if(words[i].quoted) continue;               /* a value: contained by definition */
+    if(inList(PIPE_OPERATOR_EMITS,words[i].text)) return false;
+    if(!PIPE_BARE_WORD_RE.test(words[i].text)) return false;
+  }
+  return true;
+}
+/* A stage's spec must be a TEMPLATE spec -- a token list this assembler emits
+   word by word -- never a spec carrying a handed command string. See (a) and
+   (b) in the block comment: one rule, two reasons. */
+function isComposableSpec(spec){
+  if(!spec||typeof spec!=="object") return false;
+  if(spec.rhel_versions!==undefined&&spec.rhel_versions!==null) return false;
+  if(!spec.template||typeof spec.template.length!=="number"||!spec.template.length) return false;
+  return true;
+}
+
+/* xargs -0 is only correct behind a producer that actually emits NUL-delimited
+   records. Fed anything else it silently treats the whole stream as one
+   argument, and `find . -name '*.conf' | xargs -0 rm` deletes something nobody
+   named. The producer test reads BARE words only, so a user value of -print0
+   (already impossible: validateField refuses a leading dash on every type)
+   could not satisfy it even if it existed. */
+var NUL_PRODUCERS={find:["-print0"],grep:["-Z","--null","-z"],
+                   egrep:["-Z","--null","-z"],fgrep:["-Z","--null","-z"]};
+function producesNulDelimited(command){
+  var base=invokedBinary(command);
+  if(base===null) return false;
+  if(!Object.prototype.hasOwnProperty.call(NUL_PRODUCERS,base)) return false;
+  var toks=NUL_PRODUCERS[base],words=commandWords(command);
+  if(words===null) return false;
+  for(var i=1;i<words.length;i++){
+    if(!words[i].quoted && inList(toks,words[i].text)) return true;
+  }
+  return false;
+}
+
+/* Tools whose whole job is destruction, so `| xargs <tool>` is RED whatever the
+   arguments are: the operator is handing a list they have not read to something
+   that does not ask twice. The derived half of the same rule is below -- an
+   xargs stage whose CHILD assembles red is red, whether or not its binary is
+   named here. */
+var XARGS_RED_TOOLS=["rm","unlink","rmdir","kill","pkill","killall","shred","dd",
+                     "wipefs","mkfs","truncate","chattr"];
+
+/* ---- where a redirect may point (conditions PL3 and PL4) -----------------
+   Three classes, and the third is the one that matters most:
+
+     SCRATCH   /tmp, /var/tmp, /home, /root -- the ordinary case. Green.
+     SYSTEM    /etc, /boot, /dev, /usr, /var/lib -- RED. `> /etc/passwd`
+               truncates the file before the command it redirects has produced
+               a single byte, so the damage is done whether or not the command
+               works.
+     UNRATED   everything else. NOT green, and not silently yellow either.
+               PL4: green is a HUMAN CLAIM in this product -- somebody curated
+               an entry and said so. A write to a path nobody classified is not
+               a safe write; it is an unclassified one, and the operator is
+               entitled to see the difference between "reviewed and low blast"
+               and "nobody has ever looked at this path". It ranks as yellow for
+               gating (never green, never below a stage's own rating) and it
+               RENDERS as `unrated`, which is what it is.
+
+   EXECUTION SINKS are a separate answer again: a directory whose contents the
+   system later executes is not a write to be rated, it is `| sh` with a timer,
+   and it is REFUSED by the same rule-4 class that refuses `| bash` (PL2). Most
+   of these sit under /etc or /usr and would be red anyway; /var/spool/cron,
+   /usr/local and /opt are the ones that would not, which is the whole reason
+   this list is written out rather than assumed.
+
+   Matched as "is this the directory, or is it under it" -- never as a
+   substring, so /tmpfoo is not /tmp and /etcetera is not /etc. */
+var PIPE_SYSTEM_DIRS=["/etc","/boot","/dev","/usr","/var/lib","/sys","/proc"];
+var PIPE_SCRATCH_DIRS=["/tmp","/var/tmp","/home","/root"];
+var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/etc/cron.weekly",
+                         "/etc/cron.monthly","/etc/crontab","/var/spool/cron","/etc/profile.d",
+                         "/etc/profile","/etc/bashrc","/etc/bash.bashrc","/etc/sudoers.d",
+                         "/etc/sudoers","/etc/systemd/system","/usr/lib/systemd/system",
+                         "/etc/init.d","/etc/rc.d","/etc/ld.so.conf.d","/etc/ld.so.preload",
+                         "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
+                         "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
+                         "/usr/libexec","/etc/xdg/autostart"];
+function underDir(target,dir){
+  var t=String(target);
+  return t===dir || t.indexOf(dir+"/")===0;
+}
+/* PL2 rule-4 class, redirect half: is this target somewhere the system executes? */
+function isExecutionSink(target){
+  for(var i=0;i<PIPE_EXEC_SINK_DIRS.length;i++){
+    if(underDir(target,PIPE_EXEC_SINK_DIRS[i])) return true;
+  }
+  return false;
+}
+/* PL3: this function takes a STRING and nothing else. It does not consult the
+   `path` field type, the stage shape, or anything the form did. The field type
+   is a VALIDATOR; this is the blast rule, and it has to stand on its own if a
+   target ever arrives by some other road -- which is exactly what the de-quoted
+   whole-pipeline projection below feeds it. */
+function redirectTargetBlast(target){
+  var t=String(target),i;
+  for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
+  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){ if(underDir(t,PIPE_SCRATCH_DIRS[i])) return "green"; }
+  return "unrated";                             /* PL4: never green by default */
+}
+/* `unrated` is not a fourth blast colour: it is a rating the product declines to
+   make, and it is ranked with the writes so it can never rate BELOW one. */
+var PIPE_TARGET_RANK={green:0,unrated:1,red:2};
+
+var BLAST_NAMES=["green","yellow","red"];
+
+/* PL3, the half that does not trust the form. The de-quoted projection of the
+   WHOLE pipeline is scanned for redirections the way MCR-SEC-008 scans it for
+   destructive patterns, and every target found is classified by the same
+   redirectTargetBlast() above. A structurally composed target is found twice,
+   by two independent roads, which is the point: if a target ever reaches the
+   command without passing validateField -- a future stage kind, a spec that
+   emits one, a value that contains one -- the rating still fires.
+
+   This RAISES and never lowers. A `comment` field that merely mentions
+   "> /etc/passwd" will raise the rating of a harmless command, and that is the
+   correct direction to be wrong in: an over-rated command costs a second look,
+   an under-rated one costs the host. */
+function projectedRedirectTargets(dequoted){
+  var w=String(dequoted).split(/[ \t]+/),out=[],i,t,j;
+  for(i=0;i<w.length;i++){
+    t=w[i];
+    if(t==="") continue;
+    if(t===">"||t===">>"||t==="2>"){ if(i+1<w.length&&w[i+1]!=="") out.push(w[i+1]); continue; }
+    if(t.indexOf("2>")===0&&t.length>2&&t.charAt(2)!=="&"){ out.push(t.slice(2)); continue; }
+    if(t.indexOf(">>")===0&&t.length>2){ out.push(t.slice(2)); continue; }
+    if(t.charAt(0)===">"&&t.length>1&&t.charAt(1)!==">"){ out.push(t.slice(1)); continue; }
+    if(t==="tee"){
+      j=i+1;
+      if(j<w.length&&w[j]==="-a") j++;
+      if(j<w.length&&w[j]!=="") out.push(w[j]);
+      continue;
+    }
+  }
+  return out;
+}
+
+/* assemblePipeline(stages, version, opts) -> {command, stages[], flags[], blast} | null
+
+   `stages` is an ordered list. Stage 0 carries no operator; every later stage
+   carries `op`, a KEY of PIPE_OPERATORS. A stage is one of:
+
+     command   {op, spec, values}                assembled by assembleCommand()
+     xargs     {op:"pipe", kind:"xargs", xargs:{nul,maxArgs,replace}, spec, values}
+     path      {op, target}                      for an operator whose takes is "path"
+     operator  {op}                              for an operator whose takes is "none"
+
+   NULL is the only answer for anything incomplete, invalid, gated off the
+   selected release, or outside the closed operator set -- the same rule
+   assembleCommand() keeps, for the same reason (threat-model-v1 section 3.4).
+   There is no partial pipeline return shape. */
+function assemblePipeline(stages,version,opts){
+  opts=opts||{};
+  var patterns=opts.patterns||[];
+  if(!stages||typeof stages.length!=="number"||!stages.length) return null;
+  if(stages.length>MAX_PIPELINE_STAGES) return null;
+  if(!inList(["7","8","9","10"],version)) return null;
+  var words=[],flags=[],stageRecords=[],rank=0,i,j;
+  var prevOpKey=null,prevKind=null,prevCommand=null;
+
+  for(i=0;i<stages.length;i++){
+    var st=stages[i];
+    if(!st||typeof st!=="object") return null;
+    var opKey=(st.op===undefined||st.op===null)?null:st.op;
+    var op=null;
+    if(i===0){
+      if(opKey!==null) return null;             /* the first stage joins nothing */
+    }else{
+      op=pipeOperator(opKey);
+      if(op===null) return null;                /* not in the closed set: the whole seam */
+      /* stdout is already spoken for: a pipe or a tee after `>`/`>>` receives
+         nothing at all, which looks like it worked. 2> is fine -- stderr is a
+         different stream and stdout still flows. */
+      if((opKey==="pipe"||opKey==="tee"||opKey==="tee_append")&&
+         (prevOpKey==="redirect"||prevOpKey==="append")) return null;
+      words.push(op.emit);
+    }
+    var takes=(op===null)?"stage":op.takes;
+    var kind=(st.kind===undefined||st.kind===null)?"command":String(st.kind);
+
+    if(takes==="none"){
+      if(st.spec!==undefined&&st.spec!==null) return null;
+      if(st.values!==undefined&&st.values!==null) return null;
+      if(st.target!==undefined&&st.target!==null) return null;
+      if(st.kind!==undefined&&st.kind!==null) return null;
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      stageRecords.push({index:i,op:opKey,kind:"operator",command:null,target:null,
+                  blast:"green",spec:null});
+      prevOpKey=opKey; prevKind="operator";
+      continue;
+    }
+
+    if(takes==="path"){
+      if(st.spec!==undefined&&st.spec!==null) return null;
+      if(st.values!==undefined&&st.values!==null) return null;
+      if(st.kind!==undefined&&st.kind!==null) return null;
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      var tgt=validateField("path",st.target,null);
+      if(!tgt.ok) return null;                  /* a target is a FIELD, never free text */
+      /* PL2, rule-4 class: a write into a directory the system executes is
+         arbitrary execution with a delay on it, and is refused exactly like
+         `| sh` -- never rated, because a rating implies it could be copied. */
+      if(isExecutionSink(tgt.value)) return null;
+      words.push(shQuote(tgt.value));
+      var tb=redirectTargetBlast(tgt.value);
+      if(PIPE_TARGET_RANK[tb]>rank) rank=PIPE_TARGET_RANK[tb];
+      stageRecords.push({index:i,op:opKey,kind:"redirect",command:null,target:tgt.value,
+                  blast:tb,spec:null});
+      prevOpKey=opKey; prevKind="redirect";
+      continue;
+    }
+
+    /* takes === "stage": a command, or an xargs stage */
+    if(st.target!==undefined&&st.target!==null) return null;
+    if(kind==="command"){
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      if(!isComposableSpec(st.spec)) return null;   /* a handed string is not a stage */
+      var res=assembleCommand(st.spec,version,st.values||{},{patterns:patterns});
+      if(res===null) return null;               /* incomplete, invalid, or gated off */
+      if(stageRefused(st.spec&&st.spec.tool,res.command)) return null;   /* PL2 / TM2-F8 */
+      if(!stageCommandClean(res.command)) return null;
+      words.push(res.command);
+      for(j=0;j<(res.flags||[]).length;j++) flags.push(res.flags[j]);
+      if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
+      stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
+                  blast:res.blast,spec:st.spec});
+      prevOpKey=opKey; prevKind="command"; prevCommand=res.command;
+      continue;
+    }
+
+    if(kind==="xargs"){
+      if(i===0) return null;                    /* xargs with nothing feeding it */
+      if(opKey!=="pipe") return null;           /* only a pipe feeds xargs */
+      if(prevKind!=="command") return null;     /* the producer must be the stage before it */
+      var x=st.xargs||{};
+      var xw=["xargs"];
+      var nul=(x.nul===undefined||x.nul===null)?false:x.nul;
+      var replace=(x.replace===undefined||x.replace===null)?false:x.replace;
+      var maxArgs=(x.maxArgs===undefined||x.maxArgs===null)?"":x.maxArgs;
+      if(nul!==true&&nul!==false) return null;
+      if(replace!==true&&replace!==false) return null;
+      if(nul===true){
+        if(prevCommand===null||!producesNulDelimited(prevCommand)) return null;
+        xw.push("-0");
+      }
+      /* -I implies -L1 in xargs(1), so -n alongside it is a contradiction the
+         tool resolves silently in whichever order the flags happen to land.
+         A contradiction is refused here rather than guessed at. */
+      if(maxArgs!==""&&replace===true) return null;
+      if(maxArgs!==""){
+        var mv=validateField("integer",maxArgs,null);
+        if(!mv.ok) return null;
+        if(mv.value==="0") return null;         /* -n 0 is not a batch size */
+        xw.push("-n");                          /* MCR-SEC-015: a short option takes a SPACE */
+        xw.push(shQuote(mv.value));
+      }
+      if(replace===true){
+        xw.push("-I");                          /* short option, space-joined, same rule */
+        xw.push(shQuote("{}"));                 /* the replace string is EMITTED, never typed:
+                                                   no field type and no LIT_TOKEN_RE admits a brace */
+      }
+      if(!isComposableSpec(st.spec)) return null;   /* a handed string is not a stage */
+      var child=assembleCommand(st.spec,version,st.values||{},{patterns:patterns});
+      if(child===null) return null;
+      /* PL2 shape (2): the interpreter is one level down, behind `xargs`, and
+         with or without -0. The class predicate is asked of the CHILD, which is
+         the command that actually runs. */
+      if(stageRefused(st.spec&&st.spec.tool,child.command)) return null;
+      if(!stageCommandClean(child.command)) return null;
+      xw.push(child.command);
+      if(replace===true) xw.push(shQuote("{}"));
+      var xcmd=xw.join(" ");
+      var childBase=invokedBinary(child.command);
+      var xrank=BLAST_RANK[child.blast];
+      /* composition rule: xargs feeding a destructive tool, or feeding anything
+         that already assembles red, is RED whatever the child's own rating says.
+         `find / -name core | xargs rm` is not the blast radius of `rm` on one
+         path the operator typed and read. */
+      if((childBase!==null&&inList(XARGS_RED_TOOLS,childBase))||child.blast==="red"){
+        xrank=BLAST_RANK.red;
+      }
+      if(xrank>rank) rank=xrank;
+      words.push(xcmd);
+      flags.push({flag:"xargs",explain:null});
+      if(nul===true) flags.push({flag:"-0",explain:null});
+      if(maxArgs!=="") flags.push({flag:"-n",explain:null});
+      if(replace===true) flags.push({flag:"-I",explain:null});
+      for(j=0;j<(child.flags||[]).length;j++) flags.push(child.flags[j]);
+      stageRecords.push({index:i,op:opKey,kind:"xargs",command:xcmd,target:null,
+                  blast:BLAST_NAMES[xrank],spec:st.spec});
+      prevOpKey=opKey; prevKind="xargs"; prevCommand=xcmd;
+      continue;
+    }
+    return null;                                /* an unknown stage kind is never guessed */
+  }
+
+  var command=words.join(" ");
+  if(command==="") return null;
+  /* MCR-SEC-008, composed: the destructive table is matched against the WHOLE
+     pipeline and its de-quoted projection, not stage by stage, so a pattern that
+     spans an operator ("rm -rf /" reached through `| xargs rm -rf '/etc/pki'`)
+     still fires. blastFor() already matches both forms; what changes here is
+     that it is handed the entire line. */
+  /* PL3: the second, independent road to the same rule. Every redirect target
+     visible in the DE-QUOTED projection of the whole pipeline is classified by
+     redirectTargetBlast() again, whether or not it came through a validated
+     `path` field. Raises only. */
+  var projected=projectedRedirectTargets(unquoteCommand(command)),pi;
+  for(pi=0;pi<projected.length;pi++){
+    var ptb=redirectTargetBlast(projected[pi]);
+    if(PIPE_TARGET_RANK[ptb]>rank) rank=PIPE_TARGET_RANK[ptb];
+  }
+  var b=blastFor(command,BLAST_NAMES[rank],patterns);
+  var ops=[];
+  for(i=0;i<stageRecords.length;i++){ if(stageRecords[i].op!==null) ops.push(stageRecords[i].op); }
+  return {id:"pipeline",tool:"pipeline",command:command,flags:flags,
+          blast:b.blast,blast_reasons:b.reasons,notes:null,resolved_from:null,
+          version:version,stages:stageRecords,operators:ops};
+}
+
+/* ---- validatePipeline() -- condition PL6 ---------------------------------
+   assemblePipeline() answers one question, null or a pipeline, and that is
+   correct: a half-formed pipeline is worse than a blocked button. But a
+   composer that refuses without saying WHICH STAGE is wrong is a usability
+   failure, and a usability failure on a gate gets worked around -- an operator
+   who cannot see why stage 3 will not compose assembles the line by hand in a
+   text editor, which is the outcome this whole product exists to prevent. A
+   worked-around gate is worse than no gate.
+
+   So this is the pipeline's validateSpec(): the UI's window into the same
+   decision, per stage, naming the stage and the reason. It NEVER returns a
+   command, partial or otherwise -- the only producer of a command string is
+   assemblePipeline(), and `ok` here is assemblePipeline()'s own answer rather
+   than a second opinion that could drift from it. */
+function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey){
+  var out={index:index,kind:"command",ok:true,reason:null,missing:[],invalid:[]};
+  if(!st||typeof st!=="object"){ out.ok=false; out.reason="this stage is not a stage"; return out; }
+  var opKey=(st.op===undefined||st.op===null)?null:st.op;
+  var op=null;
+  if(index===0){
+    if(opKey!==null){ out.ok=false; out.reason="the first stage joins nothing, so it carries no operator"; return out; }
+  }else{
+    op=pipeOperator(opKey);
+    if(op===null){
+      out.ok=false;
+      out.reason="the operator is not one of the "+PIPE_OPERATOR_KEYS.length+" this tool composes";
+      return out;
+    }
+    if((opKey==="pipe"||opKey==="tee"||opKey==="tee_append")&&
+       (prevOpKey==="redirect"||prevOpKey==="append")){
+      out.ok=false;
+      out.reason="standard output is already redirected to a file, so this stage would receive nothing";
+      return out;
+    }
+  }
+  var takes=(op===null)?"stage":op.takes;
+  out.kind=(takes==="none")?"operator":(takes==="path"?"redirect":
+            ((st.kind===undefined||st.kind===null)?"command":String(st.kind)));
+  if(takes==="none"){
+    if(st.spec||st.target||st.values||st.kind||st.xargs){
+      out.ok=false; out.reason="this operator stands alone and carries nothing else";
+    }
+    return out;
+  }
+  if(takes==="path"){
+    if(st.spec||st.kind||st.xargs){ out.ok=false; out.reason="a redirect carries a target, not a command"; return out; }
+    var tv=validateField("path",st.target,null);
+    if(!tv.ok){ out.ok=false; out.reason="the file to write: "+tv.reason; return out; }
+    if(isExecutionSink(tv.value)){
+      out.ok=false;
+      out.reason="writing into a directory the system executes is arbitrary execution with a "+
+                 "delay on it, and this tool will not compose it";
+      return out;
+    }
+    return out;
+  }
+  if(out.kind!=="command"&&out.kind!=="xargs"){
+    out.ok=false; out.reason="unknown stage kind"; return out;
+  }
+  if(out.kind==="xargs"){
+    if(index===0){ out.ok=false; out.reason="xargs needs a command in front of it to read from"; return out; }
+    if(opKey!=="pipe"){ out.ok=false; out.reason="only a pipe feeds xargs"; return out; }
+    if(prevKind!=="command"){ out.ok=false; out.reason="the stage feeding xargs must be a command"; return out; }
+    var x=st.xargs||{};
+    if(x.nul===true&&(prevCommand===null||!producesNulDelimited(prevCommand))){
+      out.ok=false;
+      out.reason="-0 reads NUL-delimited records, and the stage in front of it does not produce "+
+                 "them (find -print0, grep -Z)";
+      return out;
+    }
+    if(x.replace===true&&x.maxArgs!==undefined&&x.maxArgs!==null&&x.maxArgs!==""){
+      out.ok=false; out.reason="-I and -n contradict each other; xargs resolves that silently"; return out;
+    }
+    if(x.maxArgs!==undefined&&x.maxArgs!==null&&x.maxArgs!==""){
+      var mv=validateField("integer",x.maxArgs,null);
+      if(!mv.ok){ out.ok=false; out.reason="arguments per run: "+mv.reason; return out; }
+      if(mv.value==="0"){ out.ok=false; out.reason="arguments per run: 0 is not a batch size"; return out; }
+    }
+  }
+  if(!isComposableSpec(st.spec)){
+    out.ok=false;
+    out.reason="only a guided form composes into a pipeline. A reference command is a quoted "+
+               "vendor string, and joining two of them would produce a command the vendor never "+
+               "published while the citation still says they did";
+    return out;
+  }
+  if(st.spec.versions && !inList(st.spec.versions,version)){
+    out.ok=false; out.reason=GATED_COPY+version; return out;
+  }
+  var v=validateSpec(st.spec,version,st.values||{});
+  out.missing=v.missing;
+  out.invalid=v.invalid;
+  if(!v.ok){
+    out.ok=false;
+    out.reason=v.missing.length?("still needed: "+v.missing.join(", ")):"a value is not valid for its field";
+    return out;
+  }
+  var res=assembleCommand(st.spec,version,st.values||{},{patterns:[]});
+  if(res===null){ out.ok=false; out.reason="this command cannot be completed on RHEL "+version; return out; }
+  if(stageRefused(st.spec.tool,res.command)){
+    out.ok=false;
+    out.reason="this command hands its argument to another interpreter, which re-parses it -- "+
+               "a second quoting domain this tool does not compose into";
+    return out;
+  }
+  out.command=res.command;
+  out.blast=res.blast;
+  return out;
+}
+function validatePipeline(stages,version,opts){
+  var out={ok:false,stages:[],reason:null};
+  if(!stages||typeof stages.length!=="number"||!stages.length){
+    out.reason="the pipeline is empty";
+    return out;
+  }
+  if(stages.length>MAX_PIPELINE_STAGES){
+    out.reason="a pipeline is capped at "+MAX_PIPELINE_STAGES+" stages so it stays reviewable";
+    return out;
+  }
+  var prevKind=null,prevCommand=null,prevOpKey=null,i;
+  for(i=0;i<stages.length;i++){
+    var d=pipelineStageReason(stages[i],i,version,prevKind,prevCommand,prevOpKey);
+    out.stages.push(d);
+    prevKind=d.kind;
+    prevOpKey=(stages[i]&&stages[i].op!==undefined&&stages[i].op!==null)?stages[i].op:null;
+    if(d.kind==="command"||d.kind==="xargs") prevCommand=d.command||null;
+  }
+  /* `ok` is assemblePipeline()'s own answer, not a second opinion: one decision,
+     explained here, made there (MCR-SEC-012's rule applied to the composer). */
+  out.ok=assemblePipeline(stages,version,opts||{})!==null;
+  if(!out.ok&&out.reason===null){
+    for(i=0;i<out.stages.length;i++){
+      if(!out.stages[i].ok){ out.reason="stage "+(i+1)+": "+out.stages[i].reason; break; }
+    }
+  }
+  return out;
+}
+
 /* ===== MCR-ASSEMBLER-END ================================================== */
 
 /* ===== MCR-INDEX-BEGIN =====================================================

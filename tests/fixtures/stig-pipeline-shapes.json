@@ -1,0 +1,93 @@
+{
+ "_note": "ADR-002. Measured from the 1,492 STIG rules embedded in this build (content/rules_rhel{7,8,9,10}.json), chk and fix text, over lines that begin with a $ or # prompt and then a command. Operators are counted at TOP LEVEL only: text inside single quotes, double quotes, backticks, $( ) and after a backslash is skipped, so awk's ($3>=1000)&&(...) and find's -exec ... \\; are not miscounted as shell operators. Regenerate with tests/test_pipeline_stig_shapes.py, which re-derives every number here from the same content and fails if this file has gone stale.",
+ "_why": "A command corpus that cannot compose cannot express the checks the corpus itself contains. If the closed operator set cannot express a common DISA check, that is a finding about the operator set -- reported here -- and never a reason to widen the set quietly.",
+ "command_lines_scanned": 3086,
+ "lines_with_a_top_level_operator": 462,
+ "lines_fully_expressible": 457,
+ "min_expressible_ratio": 0.98,
+ "corpus_operators": [
+  {
+   "token": "|",
+   "count": 625,
+   "expressible": true
+  },
+  {
+   "token": "2>&1",
+   "count": 52,
+   "expressible": true
+  },
+  {
+   "token": ";",
+   "count": 22,
+   "expressible": true
+  },
+  {
+   "token": "2>",
+   "count": 21,
+   "expressible": true
+  },
+  {
+   "token": "&&",
+   "count": 6,
+   "expressible": true
+  },
+  {
+   "token": ">",
+   "count": 5,
+   "expressible": true
+  }
+ ],
+ "corpus_shapes": [
+  {
+   "shape": "|",
+   "count": 343
+  },
+  {
+   "shape": "2>&1 | | | |",
+   "count": 52
+  },
+  {
+   "shape": "| |",
+   "count": 36
+  },
+  {
+   "shape": "2>",
+   "count": 21
+  },
+  {
+   "shape": ">",
+   "count": 5
+  },
+  {
+   "shape": "; ; ; && && ; ; ; ; ; ;",
+   "count": 2
+  },
+  {
+   "shape": "&&",
+   "count": 2
+  },
+  {
+   "shape": "; ; | | ; ;",
+   "count": 1
+  }
+ ],
+ "out_of_scope": [
+  {
+   "name": "command substitution",
+   "count": 5,
+   "why": "$( ) and backticks execute a command to produce an argument. That is arbitrary execution by another name, and it is the same refusal as | sh: the product cannot explain, rate or cite a command it will only learn at run time. No operator set will ever express it."
+  },
+  {
+   "name": "shell loop or function",
+   "count": 3,
+   "why": "for/while/function bodies are a shell PROGRAM, not a pipeline. Composing one would mean shipping a shell, which is the thing the tool exists not to be."
+  }
+ ],
+ "known_findings": [
+  {
+   "id": "PIPE-F1",
+   "finding": "/dev/null is the single most common redirect target in the corpus (26 of 31 absolute redirect targets), and the blast rule as specified rates any target under /dev/** RED. Implemented as specified and reported rather than carved out: /dev holds both the most harmless target (/dev/null) and the most catastrophic (/dev/sda), so a blanket RED errs safe. A carve-out for /dev/null specifically is a Founder/Marcus decision, not an implementation choice, and quietly adding one would be exactly the declared-discriminator mistake MCR-SEC-022 names.",
+   "status": "open"
+  }
+ ]
+}

@@ -78,7 +78,13 @@ function extractAssembler(file) {
     "validateSpec:validateSpec,assembleCommand:assembleCommand," +
     "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES," +
     "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap," +
-    "headerSafe:headerSafe,commentPayload:commentPayload};");
+    "headerSafe:headerSafe,commentPayload:commentPayload," +
+    "assemblePipeline:assemblePipeline,PIPE_OPERATORS:PIPE_OPERATORS," +
+    "PIPE_OPERATOR_KEYS:PIPE_OPERATOR_KEYS,PIPE_OPERATOR_EMITS:PIPE_OPERATOR_EMITS," +
+    "MAX_PIPELINE_STAGES:MAX_PIPELINE_STAGES,commandWords:commandWords," +
+    "isComposableSpec:isComposableSpec,validatePipeline:validatePipeline," +
+    "redirectTargetBlast:redirectTargetBlast,isExecutionSink:isExecutionSink," +
+    "stageRefused:stageRefused};");
   return { api: factory(), bytes: block.length };
 }
 
@@ -1525,6 +1531,1048 @@ function main() {
     }
   }
 
+
+  /* ---- CR-T-31: the PIPELINE ORACLE ------------------------------------
+   * Everything above proves one command. A pipeline adds the one thing this
+   * product exists to refuse: a shell OPERATOR in the emitted string. The
+   * design constraint is that an operator is structure the tool owns and never
+   * a value the user supplies, so the oracle's job is to prove exactly that
+   * sentence about the emitted text.
+   *
+   * THE ORACLE, in three sentences.
+   * (1) It builds the expected WORD LAYOUT of the pipeline from the user's own
+   *     composition -- the operator keys they picked, expanded through the
+   *     closed table, and each command stage's word count taken from
+   *     assembleCommand(), the single-command path already proved by the
+   *     80,525-check sweep above and by the golden table -- so the expectation
+   *     is derived from the user's intent and from independently-proved code,
+   *     never from assemblePipeline()'s own output.
+   * (2) It then tokenises the emitted pipeline under POSIX single-quote rules
+   *     and asserts that the word at every expected operator INDEX is that
+   *     exact operator, fully unquoted, and that no OTHER word in the line is
+   *     an operator token or carries a shell metacharacter in its unquoted
+   *     part -- so an operator the user did not compose, an operator absorbed
+   *     into a value, and a value that broke out of its quotes are three
+   *     different failures and all three are caught.
+   * (3) Because the expected count is exact, a stage that contributed the
+   *     wrong number of words fails before any position is compared, which is
+   *     what stops a "clever" injection from paying for an extra operator by
+   *     deleting a word somewhere else.
+   *
+   * The negative controls below hand it pipelines that are wrong in each of
+   * those ways and FAIL if it reports agreement.
+   */
+  var SHELL_OP_WORDS = ["|", "&&", "||", ";", ">", ">>", "2>", "2>&1"];
+
+  /* The expected word layout, computed from the COMPOSITION, not the output. */
+  function pipelineLayout(stages, version) {
+    var words = 0, ops = [], i, j;
+    for (i = 0; i < stages.length; i++) {
+      var st = stages[i];
+      var kind = st.kind || "command";
+      if (i > 0) {
+        if (!Object.prototype.hasOwnProperty.call(A.PIPE_OPERATORS, st.op)) return null;
+        var op = A.PIPE_OPERATORS[st.op];
+        var emitted = op.emit.split(" ");
+        for (j = 0; j < emitted.length; j++) {
+          if (SHELL_OP_WORDS.indexOf(emitted[j]) >= 0) ops.push({ at: words, text: emitted[j] });
+          words++;
+        }
+        if (op.takes === "path") { words++; continue; }     /* the quoted target */
+        if (op.takes === "none") continue;
+      }
+      var child = A.assembleCommand(st.spec, version, st.values || {}, { patterns: [] });
+      if (child === null) return null;
+      var cw = tokenize(child.command);
+      if (cw === null) return null;
+      if (kind === "xargs") {
+        var x = st.xargs || {};
+        words += 1;                                          /* xargs */
+        if (x.nul === true) words += 1;                      /* -0 */
+        if (x.maxArgs !== undefined && x.maxArgs !== null && x.maxArgs !== "") words += 2;   /* -n N */
+        if (x.replace === true) words += 2;                  /* -I '{}' */
+        words += cw.length;
+        if (x.replace === true) words += 1;                  /* the trailing '{}' */
+      } else {
+        words += cw.length;
+      }
+    }
+    return { count: words, ops: ops };
+  }
+
+  function pipelineOracle(command, stages, version) {
+    var want = pipelineLayout(stages, version);
+    if (want === null) {
+      return "the oracle cannot state an expectation for this composition, yet a pipeline was " +
+             "emitted -- assemblePipeline() accepted something assembleCommand() and the closed " +
+             "operator table between them cannot account for";
+    }
+    var got = tokenize(command);
+    if (got === null) return "the emitted pipeline does not tokenise as balanced shell words";
+    if (got.length !== want.count) {
+      return "the pipeline is " + got.length + " words, the operator's composition is " +
+             want.count + " -- " + JSON.stringify(command);
+    }
+    var expectedAt = {}, i;
+    for (i = 0; i < want.ops.length; i++) {
+      var at = want.ops[i].at, w = got[at];
+      expectedAt[at] = true;
+      if (w.quoted) {
+        return "operator " + i + " should be " + JSON.stringify(want.ops[i].text) + " at word " +
+               at + ", but that word is QUOTED -- an operator that is part of a value is not an " +
+               "operator: " + JSON.stringify(command);
+      }
+      if (w.raw !== want.ops[i].text) {
+        return "operator " + i + " at word " + at + " is " + JSON.stringify(w.raw) +
+               ", the operator composed " + JSON.stringify(want.ops[i].text) + " -- " +
+               JSON.stringify(command);
+      }
+    }
+    for (i = 0; i < got.length; i++) {
+      if (expectedAt[i]) continue;
+      if (SHELL_OP_WORDS.indexOf(got[i].raw) >= 0) {
+        return "word " + i + " is the operator " + JSON.stringify(got[i].raw) + ", which the " +
+               "operator never composed -- an operator reached the command from somewhere other " +
+               "than the closed table: " + JSON.stringify(command);
+      }
+      if (!UNQUOTED_OK.test(got[i].bare)) {
+        return "word " + i + " leaves " + JSON.stringify(got[i].bare) + " outside every quote -- " +
+               "a shell metacharacter in a pipeline is an operator by another name: " +
+               JSON.stringify(command);
+      }
+    }
+    return null;
+  }
+
+  /* ---- the pipeline sweeps ---------------------------------------------- */
+  var pipeChecks = 0, pipeOracles = 0, pipeNegatives = 0, oneStageInvariants = 0;
+  var pipeRejected = 0, pipeComposed = 0;
+
+  function benignValuesFor(type, def) { return { v: def.benign }; }
+
+  /* One pipeline composition, with the same two-outcome rule the single-command
+     sweep uses: REJECTED (null) or COMPOSED-AND-CONTAINED (the value is inside a
+     single-quoted token, the shape matches the benign control, and the pipeline
+     oracle agrees with the operator's composition, word for word). */
+  function pcheck(label, cls, stages, version, hostileValue, expect, benignStages) {
+    pipeChecks++; stats.checks++;
+    var res;
+    try {
+      res = A.assemblePipeline(stages, version, { patterns: [] });
+    } catch (e) {
+      stats.failures.push("pipeline " + label + ": assemblePipeline threw " + e.message);
+      return;
+    }
+    if (res === null) {
+      if (expect !== "reject") {
+        stats.failures.push("pipeline " + label + ": refused a composition that is legitimate for " +
+                            "these field types -- a composer that refuses everything proves nothing");
+        return;
+      }
+      pipeRejected++; stats.rejected++; note(cls, "rejected");
+      return;
+    }
+    if (expect === "reject") {
+      stats.failures.push("pipeline " + label + ": composed " + JSON.stringify(res.command) +
+                          " from a value its field type's allow-list must refuse");
+      return;
+    }
+    var words = tokenize(res.command);
+    if (words === null) {
+      stats.failures.push("pipeline " + label + ": does not tokenise as balanced shell words -- " +
+                          JSON.stringify(res.command));
+      return;
+    }
+    var bare = bareText(words);
+    /* the operators the user composed ARE bare text, so the metacharacter rule
+       is asked of the oracle (word by word, operator positions excluded) rather
+       than of the whole line here. What IS asked here is the rule that has
+       nothing to do with operators: the VALUE never reaches unquoted text. */
+    if (hostileValue !== "" && bare.indexOf(hostileValue) >= 0) {
+      stats.failures.push("pipeline " + label + ": the value itself reached unquoted text in " +
+                          JSON.stringify(res.command));
+      return;
+    }
+    if (benignStages) {
+      var ref = A.assemblePipeline(benignStages, version, { patterns: [] });
+      if (ref === null) {
+        stats.failures.push("pipeline " + label + ": the benign control composition was itself refused");
+        return;
+      }
+      var refWords = tokenize(ref.command);
+      if (refWords === null || skeleton(words) !== skeleton(refWords)) {
+        stats.failures.push("pipeline " + label + ": shell-visible shape differs from the benign " +
+                            "control -- " + JSON.stringify(skeleton(words)) + " vs " +
+                            JSON.stringify(refWords ? skeleton(refWords) : "(control does not tokenise)"));
+        return;
+      }
+    }
+    var msg = pipelineOracle(res.command, stages, version);
+    if (msg) {
+      stats.failures.push("pipeline " + label + ": PIPELINE ORACLE -- " + msg);
+      return;
+    }
+    pipeOracles++;
+    pipeComposed++; stats.quoted++; note(cls, "quoted");
+  }
+
+  /* (1) every hostile vector into every field of every stage of a multi-stage
+         pipeline. Three shapes, so the hostile value is driven at the head, at
+         the tail and in the middle of a three-stage composition -- a position
+         rule that only held at one end would show up here. */
+  var PIPE_SHAPES = ["head", "tail", "middle"];
+  function pipeStagesFor(shape, type, def, hostile) {
+    var H = { v: hostile }, B = benignValuesFor(type, def);
+    if (shape === "head") {
+      return [{ spec: flagSpec(type, def), values: H },
+              { op: "pipe", spec: argSpec(type, def), values: B }];
+    }
+    if (shape === "tail") {
+      return [{ spec: flagSpec(type, def), values: B },
+              { op: "pipe", spec: argSpec(type, def), values: H }];
+    }
+    return [{ spec: flagSpec(type, def), values: B },
+            { op: "pipe", spec: argSpec(type, def), values: H },
+            { op: "seq", spec: spacedFlagSpec(type, def), values: B }];
+  }
+  for (var pt2 = 0; pt2 < types.length; pt2++) {
+    var ptype = types[pt2];
+    var pdef2 = fx.field_types[ptype];
+    for (var pv2 = 0; pv2 < vectors.length; pv2++) {
+      var pvec = vectors[pv2];
+      for (var pr2 = 0; pr2 < VERSIONS.length; pr2++) {
+        for (var psh = 0; psh < PIPE_SHAPES.length; psh++) {
+          pcheck(PIPE_SHAPES[psh] + "[" + ptype + "] / " + pvec.id + " / RHEL " + VERSIONS[pr2],
+                 pvec["class"],
+                 pipeStagesFor(PIPE_SHAPES[psh], ptype, pdef2, pvec.value),
+                 VERSIONS[pr2], pvec.value,
+                 ptype === "comment" ? pvec.free_text : "reject",
+                 pipeStagesFor(PIPE_SHAPES[psh], ptype, pdef2, pdef2.benign));
+        }
+      }
+    }
+  }
+
+  /* (2) every hostile vector into a redirect TARGET. The target is the stage
+         that carries the least structure -- an operator and a filename -- and
+         it is a validated `path` FIELD, never free text, enforced at assembly.
+         A vector that happens to be a legal absolute path composes and is
+         checked like any other value; everything else is refused. */
+  var pathDef = fx.field_types.path;
+  for (var rv2 = 0; rv2 < vectors.length; rv2++) {
+    for (var rr2 = 0; rr2 < VERSIONS.length; rr2++) {
+      var rvec = vectors[rv2];
+      var expectTarget = A.validateField("path", rvec.value, null).ok ? "accept" : "reject";
+      pcheck("redirect-target / " + rvec.id + " / RHEL " + VERSIONS[rr2], rvec["class"],
+             [{ spec: flagSpec("path", pathDef), values: { v: pathDef.benign } },
+              { op: "redirect", target: rvec.value }],
+             VERSIONS[rr2], rvec.value, expectTarget,
+             [{ spec: flagSpec("path", pathDef), values: { v: pathDef.benign } },
+              { op: "redirect", target: pathDef.benign }]);
+    }
+  }
+
+  /* (3) THE SEAM. Every hostile vector, and every prototype-chain key, driven
+         into `op` itself -- the one field of a stage whose value selects
+         structure. Every one must be null: an operator is a KEY into a closed
+         table, and a key that is not an own property of that table is not an
+         operator no matter what it spells. */
+  var opSeamChecks = 0;
+  var opSeamValues = [];
+  for (var ov2 = 0; ov2 < vectors.length; ov2++) opSeamValues.push(vectors[ov2].value);
+  /* the prototype chain, which hasOwnProperty is the reason this file uses */
+  opSeamValues = opSeamValues.concat(["__proto__", "constructor", "toString", "valueOf",
+                                      "hasOwnProperty", "prototype", "isPrototypeOf",
+                                      "propertyIsEnumerable", "toLocaleString"]);
+  /* and the operator text itself, which is the whole point: the emission is
+     NOT the key, so typing the operator selects nothing */
+  opSeamValues = opSeamValues.concat(["|", "&&", "||", ";", ">", ">>", "2>", "2>&1",
+                                      "| tee", "| sh", "|sh", " pipe", "pipe ", "PIPE",
+                                      "Pipe", "pipe|sh", "0", "1", "true"]);
+  var seamBase = flagSpec("zone", fx.field_types.zone);
+  for (var os2 = 0; os2 < opSeamValues.length; os2++) {
+    for (var or2 = 0; or2 < VERSIONS.length; or2++) {
+      opSeamChecks++;
+      pipeChecks++; stats.checks++;
+      var seamRes = A.assemblePipeline(
+        [{ spec: seamBase, values: { v: "public" } },
+         { op: opSeamValues[os2], spec: argSpec("zone", fx.field_types.zone), values: { v: "public" } }],
+        VERSIONS[or2], { patterns: [] });
+      if (seamRes !== null) {
+        stats.failures.push("pipeline operator seam / RHEL " + VERSIONS[or2] + ": op=" +
+                            JSON.stringify(opSeamValues[os2]) + " composed " +
+                            JSON.stringify(seamRes.command) + " -- an operator came from DATA. " +
+                            "The closed table is the only source of an operator word");
+      } else {
+        pipeRejected++; stats.rejected++; note("pipeline operator seam", "rejected");
+      }
+    }
+  }
+  /* control: the ten real keys DO compose, so the seam sweep above is not
+     passing because the composer refuses every op it is ever handed. */
+  var opKeyControls = 0;
+  for (var ok2 = 0; ok2 < A.PIPE_OPERATOR_KEYS.length; ok2++) {
+    var okey = A.PIPE_OPERATOR_KEYS[ok2];
+    var okOp = A.PIPE_OPERATORS[okey];
+    for (var okr = 0; okr < VERSIONS.length; okr++) {
+      opKeyControls++;
+      pipeChecks++; stats.checks++;
+      var okStage = { op: okey };
+      if (okOp.takes === "stage") { okStage.spec = argSpec("zone", fx.field_types.zone); okStage.values = { v: "public" }; }
+      if (okOp.takes === "path") { okStage.target = "/tmp/mcr-out.txt"; }
+      var okStages = [{ spec: seamBase, values: { v: "public" } }, okStage];
+      var okRes = A.assemblePipeline(okStages, VERSIONS[okr], { patterns: [] });
+      if (okRes === null) {
+        stats.failures.push("pipeline operator control / RHEL " + VERSIONS[okr] + ": the closed-set " +
+                            "key " + JSON.stringify(okey) + " did not compose -- the seam sweep " +
+                            "above would pass on a composer that refuses everything");
+        continue;
+      }
+      if (okRes.command.indexOf(okOp.emit) < 0) {
+        stats.failures.push("pipeline operator control / RHEL " + VERSIONS[okr] + ": key " +
+                            JSON.stringify(okey) + " did not emit " + JSON.stringify(okOp.emit) +
+                            " -- " + JSON.stringify(okRes.command));
+        continue;
+      }
+      var okMsg = pipelineOracle(okRes.command, okStages, VERSIONS[okr]);
+      if (okMsg) {
+        stats.failures.push("pipeline operator control / " + okey + " / RHEL " + VERSIONS[okr] +
+                            ": PIPELINE ORACLE -- " + okMsg);
+        continue;
+      }
+      pipeOracles++; pipeComposed++; stats.quoted++; note("pipeline operator control", "quoted");
+    }
+  }
+
+  /* (4) the closed table's own integrity: the picker list and the table are the
+         same set, every emission is on the closed emission list, and the set is
+         the ten operators the product documents. A table that grew a row
+         nobody documented is a wider product than the one that was reviewed. */
+  var tableChecks = 0;
+  (function () {
+    var tableKeys = Object.keys(A.PIPE_OPERATORS).sort();
+    var pickerKeys = A.PIPE_OPERATOR_KEYS.slice().sort();
+    tableChecks++;
+    if (tableKeys.join(",") !== pickerKeys.join(",")) {
+      stats.failures.push("pipeline operator table: PIPE_OPERATOR_KEYS is [" + pickerKeys.join(", ") +
+                          "] but the table's own keys are [" + tableKeys.join(", ") + "] -- a key in " +
+                          "one and not the other is either an operator nobody can pick or a picker " +
+                          "for an operator that does not exist");
+    }
+    tableChecks++;
+    if (tableKeys.length !== 10) {
+      stats.failures.push("pipeline operator table: " + tableKeys.length + " operators, the " +
+                          "documented closed set is 10 (| && || ; > >> 2> 2>&1 | tee, | tee -a)");
+    }
+    for (var tk = 0; tk < tableKeys.length; tk++) {
+      tableChecks++;
+      var temit = A.PIPE_OPERATORS[tableKeys[tk]].emit;
+      if (A.PIPE_OPERATOR_EMITS.indexOf(temit) < 0) {
+        stats.failures.push("pipeline operator table: " + tableKeys[tk] + " emits " +
+                            JSON.stringify(temit) + ", which is not on the closed emission list");
+      }
+    }
+  })();
+
+  /* (5) THE ONE-STAGE INVARIANT, on every REAL generator and every release.
+         A pipeline of one stage is assembleCommand(), byte for byte -- command,
+         blast and the inspector's flag list alike. Where assembleCommand()
+         returns null the pipeline must be null too: a composer that succeeds
+         where the assembler refused is a second, weaker assembler. */
+  for (var osg = 0; osg < specEntries.length; osg++) {
+    var osEntry = specEntries[osg];
+    var osRow = goldenRows[osEntry.id];
+    if (!osRow) continue;                        /* already reported by the golden sweep */
+    for (var osv = 0; osv < VERSIONS.length; osv++) {
+      oneStageInvariants++;
+      var osVer = VERSIONS[osv];
+      var direct = A.assembleCommand(osEntry, osVer, osRow.values || {}, { patterns: realPatterns });
+      var piped = A.assemblePipeline([{ spec: osEntry, values: osRow.values || {} }], osVer,
+                                     { patterns: realPatterns });
+      if (direct === null) {
+        if (piped !== null) {
+          stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
+                              ": assembleCommand() refused but assemblePipeline() produced " +
+                              JSON.stringify(piped.command) + " -- the composer must never be the " +
+                              "weaker of the two");
+        }
+        continue;
+      }
+      if (piped === null) {
+        stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
+                            ": assembleCommand() produced " + JSON.stringify(direct.command) +
+                            " and assemblePipeline() refused it");
+        continue;
+      }
+      if (piped.command !== direct.command) {
+        stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer + ": " +
+                            JSON.stringify(piped.command) + " != " + JSON.stringify(direct.command) +
+                            " -- a pipeline of one stage must be the command, byte for byte");
+        continue;
+      }
+      if (piped.blast !== direct.blast) {
+        stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
+                            ": blast is '" + piped.blast + "' piped and '" + direct.blast +
+                            "' direct -- composition may only ever RAISE, and there is nothing " +
+                            "composed here to raise it");
+        continue;
+      }
+      var dflags = [], pflags = [], fi2;
+      for (fi2 = 0; fi2 < direct.flags.length; fi2++) dflags.push(direct.flags[fi2].flag);
+      for (fi2 = 0; fi2 < piped.flags.length; fi2++) pflags.push(piped.flags[fi2].flag);
+      if (dflags.join(" ") !== pflags.join(" ")) {
+        stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
+                            ": the inspector's flag list is [" + pflags.join(", ") + "] piped and [" +
+                            dflags.join(", ") + "] direct (MCR-SEC-023)");
+        continue;
+      }
+      var osMsg = pipelineOracle(piped.command, [{ spec: osEntry, values: osRow.values || {} }], osVer);
+      if (osMsg) {
+        stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
+                            ": PIPELINE ORACLE -- " + osMsg);
+        continue;
+      }
+      pipeOracles++;
+    }
+  }
+
+  /* (6) BLAST COMPOSITION. Blast radius is NOT the max of the stages: a
+         redirect target and an xargs child change the rating of a pipeline
+         whose stages are individually harmless. One case per rule, on every
+         release, with the control that proves the rule is not firing on
+         everything. */
+  var GREEN_SPEC = { id: "pipe-green", tool: "grep", blast: "green",
+                     fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                     template: [{ lit: "grep" }, { lit: "-r" }, { field: "p" }] };
+  var FIND_NUL = { id: "pipe-find0", tool: "find", blast: "green",
+                   fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                   template: [{ lit: "find" }, { field: "p" }, { lit: "-print0" }] };
+  var FIND_PLAIN = { id: "pipe-find", tool: "find", blast: "green",
+                     fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                     template: [{ lit: "find" }, { field: "p" }] };
+  var RM_SPEC = { id: "pipe-rm", tool: "rm", blast: "yellow", fields: [],
+                  template: [{ lit: "rm" }, { lit: "-f" }] };
+  var KILL_SPEC = { id: "pipe-kill", tool: "kill", blast: "yellow", fields: [],
+                    template: [{ lit: "kill" }, { lit: "-TERM" }] };
+  var WC_SPEC = { id: "pipe-wc", tool: "wc", blast: "green", fields: [],
+                  template: [{ lit: "wc" }, { lit: "-l" }] };
+  var RED_SPEC = { id: "pipe-red", tool: "wipefs", blast: "red", fields: [],
+                   template: [{ lit: "wipefs" }, { lit: "-a" }] };
+  var YELLOW_SPEC = { id: "pipe-yellow", tool: "systemctl", blast: "yellow", fields: [],
+                      template: [{ lit: "systemctl" }, { lit: "restart" }] };
+  var SH_SPEC = { id: "pipe-sh", tool: "sh", blast: "green", fields: [],
+                  template: [{ lit: "sh" }] };
+  var BASH_SPEC = { id: "pipe-bash", tool: "bash", blast: "green", fields: [],
+                    template: [{ lit: "bash" }, { lit: "-s" }] };
+  var PY_SPEC = { id: "pipe-py", tool: "python3", blast: "green", fields: [],
+                  template: [{ lit: "python3" }] };
+  var PERL_SPEC = { id: "pipe-perl", tool: "perl", blast: "green", fields: [],
+                    template: [{ lit: "perl" }] };
+  var HEAD = { spec: GREEN_SPEC, values: { p: "/etc/ssh" } };
+
+  var blastChecks = 0;
+  /* PL5: a structural blast row must be ASSERTED TO FIRE, the discipline that
+     caught MCR-SEC-008 (a pattern table full of rows that could never match
+     across a quote boundary). `raises` says this row's rating must be STRICTLY
+     ABOVE the max of its own stages' ratings -- otherwise the row proves only
+     that the composer agrees with the stages, which every row does, including
+     the ones that do nothing. Each rule id is then asserted to have been
+     observed firing at least once, so deleting a rule's implementation fails
+     this gate rather than silently passing it. */
+  var RANK2 = { green: 0, yellow: 1, red: 2 };
+  function maxStageBlastRank(stages, version) {
+    var m = 0;
+    for (var i = 0; i < stages.length; i++) {
+      var st = stages[i];
+      if (!st.spec) continue;
+      var c = A.assembleCommand(st.spec, version, st.values || {}, { patterns: realPatterns });
+      if (c && RANK2[c.blast] > m) m = RANK2[c.blast];
+    }
+    return m;
+  }
+  var blastRuleFired = {};
+  var blastCases = [
+    ["a `>` into a scratch path stays the max of the stages (control)",
+     [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }], "green", "R-MAX", false],
+    ["a `>` OUTSIDE scratch is a WRITE and is at least yellow",
+     [HEAD, { op: "redirect", target: "/srv/shares/out.txt" }], "yellow", "R-WRITE", true],
+    ["a `>>` outside scratch is a WRITE and is at least yellow",
+     [HEAD, { op: "append", target: "/srv/shares/out.txt" }], "yellow", "R-WRITE", true],
+    ["a `2>` outside scratch is a WRITE and is at least yellow",
+     [HEAD, { op: "redirect_err", target: "/srv/shares/err.txt" }], "yellow", "R-WRITE", true],
+    ["a `| tee` outside scratch is a WRITE and is at least yellow",
+     [HEAD, { op: "tee", target: "/srv/shares/out.txt" }], "yellow", "R-WRITE", true],
+    ["a `| tee -a` outside scratch is a WRITE and is at least yellow",
+     [HEAD, { op: "tee_append", target: "/srv/shares/out.txt" }], "yellow", "R-WRITE", true],
+    ["a redirect into /etc is RED",
+     [HEAD, { op: "redirect", target: "/etc/passwd" }], "red", "R-SYSTEM", true],
+    ["a redirect into /boot is RED",
+     [HEAD, { op: "redirect", target: "/boot/grub2/grub.cfg" }], "red", "R-SYSTEM", true],
+    ["a redirect into /dev is RED",
+     [HEAD, { op: "redirect", target: "/dev/sda" }], "red", "R-SYSTEM", true],
+    ["a redirect into /usr is RED",
+     [HEAD, { op: "append", target: "/usr/share/applications/x.desktop" }], "red", "R-SYSTEM", true],
+    ["a redirect into /var/lib is RED",
+     [HEAD, { op: "redirect", target: "/var/lib/rpm/Packages" }], "red", "R-SYSTEM", true],
+    ["a `| tee` into /etc is RED",
+     [HEAD, { op: "tee", target: "/etc/motd" }], "red", "R-SYSTEM", true],
+    ["`;` carries the MAX of its stages, not the first",
+     [HEAD, { op: "seq", spec: YELLOW_SPEC, values: {} }], "yellow", "R-MAX", false],
+    ["`&&` carries the MAX of its stages, not the first",
+     [HEAD, { op: "and", spec: YELLOW_SPEC, values: {} }], "yellow", "R-MAX", false],
+    ["`||` carries the MAX of its stages, not the first",
+     [HEAD, { op: "or", spec: RED_SPEC, values: {} }], "red", "R-MAX", false],
+    ["`|` carries the MAX of its stages",
+     [HEAD, { op: "pipe", spec: WC_SPEC, values: {} }], "green", "R-MAX", false],
+    ["`| xargs rm` is RED even though `rm` alone is yellow",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: RM_SPEC, values: {} }], "red", "R-XARGS", true],
+    ["`| xargs kill` is RED even though `kill` alone is yellow",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: KILL_SPEC, values: {} }], "red", "R-XARGS", true],
+    ["`| xargs -0 rm` behind find -print0 is RED",
+     [{ spec: FIND_NUL, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: RM_SPEC, values: {} }], "red",
+     "R-XARGS", true],
+    ["`| xargs <a red-blast tool>` is RED",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: RED_SPEC, values: {} }], "red", "R-MAX", false],
+    ["`| xargs <a green tool>` is NOT raised -- the xargs rule is not firing on everything",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: WC_SPEC, values: {} }], "green", "R-MAX", false],
+    ["a green pipeline with no redirect and no xargs stays green (control)",
+     [HEAD, { op: "pipe", spec: WC_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} }],
+     "green", "R-MAX", false]
+  ];
+  for (var bc2 = 0; bc2 < blastCases.length; bc2++) {
+    for (var bv2 = 0; bv2 < VERSIONS.length; bv2++) {
+      blastChecks++;
+      var bres2 = A.assemblePipeline(blastCases[bc2][1], VERSIONS[bv2], { patterns: realPatterns });
+      if (bres2 === null) {
+        stats.failures.push("blast composition / RHEL " + VERSIONS[bv2] + " / " + blastCases[bc2][0] +
+                            ": the composition was refused, so the rule it demonstrates was never " +
+                            "exercised");
+        continue;
+      }
+      if (bres2.blast !== blastCases[bc2][2]) {
+        stats.failures.push("blast composition / RHEL " + VERSIONS[bv2] + " / " + blastCases[bc2][0] +
+                            ": rated '" + bres2.blast + "', expected '" + blastCases[bc2][2] +
+                            "' -- " + JSON.stringify(bres2.command));
+        continue;
+      }
+      /* PL5: the row must be seen RAISING, not merely agreeing with its stages */
+      var stageMax = maxStageBlastRank(blastCases[bc2][1], VERSIONS[bv2]);
+      var didRaise = RANK2[bres2.blast] > stageMax;
+      if (blastCases[bc2][4] === true) {
+        if (!didRaise) {
+          stats.failures.push("blast composition / RHEL " + VERSIONS[bv2] + " / " + blastCases[bc2][0] +
+                              ": rated '" + bres2.blast + "', which is only the MAX OF ITS STAGES. " +
+                              "This row exists to prove a composition rule fires; agreeing with the " +
+                              "stages proves nothing (PL5)");
+          continue;
+        }
+        blastRuleFired[blastCases[bc2][3]] = true;
+      } else if (didRaise) {
+        stats.failures.push("blast composition / RHEL " + VERSIONS[bv2] + " / " + blastCases[bc2][0] +
+                            ": rated '" + bres2.blast + "', ABOVE the max of its stages. This row " +
+                            "is a control: a composition rule that fires on it fires on everything");
+      }
+    }
+  }
+  /* PL5, the inventory: every structural rule must have been observed firing */
+  var STRUCTURAL_RULES = ["R-WRITE", "R-SYSTEM", "R-XARGS"];
+  for (var sr2 = 0; sr2 < STRUCTURAL_RULES.length; sr2++) {
+    blastChecks++;
+    if (!blastRuleFired[STRUCTURAL_RULES[sr2]]) {
+      stats.failures.push("blast composition: the structural rule " + STRUCTURAL_RULES[sr2] +
+                          " was never observed raising a pipeline above the max of its stages. A " +
+                          "rule nobody proved fires is a rule that does not exist (PL5)");
+    }
+  }
+  /* PL4: a target nobody classified renders `unrated`, never green. The
+     PIPELINE is still rated yellow for gating -- unrated can never sit below a
+     write -- but the STAGE says what it is. */
+  for (var ur2 = 0; ur2 < VERSIONS.length; ur2++) {
+    blastChecks++;
+    var urStages = [HEAD, { op: "redirect", target: "/srv/shares/out.txt" }];
+    var urRes = A.assemblePipeline(urStages, VERSIONS[ur2], { patterns: realPatterns });
+    if (urRes === null || urRes.stages.length !== 2) {
+      stats.failures.push("unrated target / RHEL " + VERSIONS[ur2] + ": the composition was refused");
+      continue;
+    }
+    if (urRes.stages[1].blast !== "unrated") {
+      stats.failures.push("unrated target / RHEL " + VERSIONS[ur2] + ": a write to a path nobody " +
+                          "classified renders '" + urRes.stages[1].blast + "'. Green is a HUMAN " +
+                          "CLAIM in this product; an unclassified write must say so (PL4)");
+    }
+    blastChecks++;
+    var scStages = [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }];
+    var scRes = A.assemblePipeline(scStages, VERSIONS[ur2], { patterns: realPatterns });
+    if (scRes === null || scRes.stages[1].blast !== "green") {
+      stats.failures.push("unrated target control / RHEL " + VERSIONS[ur2] + ": a scratch target " +
+                          "rendered '" + (scRes ? scRes.stages[1].blast : "null") + "' -- if every " +
+                          "target is unrated the rating says nothing");
+    }
+  }
+  /* PL3: the blast rule stands on the DE-QUOTED projection of the whole
+     pipeline and does not depend on the `path` field type for its correctness.
+     Driven here through a free-text `comment` value carrying a redirection: no
+     validated target exists anywhere in this composition, and the rating must
+     still fire. It raises and never lowers, which is the correct direction to
+     be wrong in. */
+  var PROJ_SPEC = { id: "pipe-proj", tool: "probe", blast: "green",
+                    fields: [{ name: "c", type: "comment", required: true, versions: VERSIONS }],
+                    template: [{ lit: "probe" }, { field: "c" }] };
+  for (var pj2 = 0; pj2 < VERSIONS.length; pj2++) {
+    blastChecks++;
+    var pjRes = A.assemblePipeline([{ spec: PROJ_SPEC, values: { c: "note > /etc/passwd" } }],
+                                   VERSIONS[pj2], { patterns: [] });
+    if (pjRes === null) {
+      stats.failures.push("projected redirect / RHEL " + VERSIONS[pj2] + ": the composition was refused");
+      continue;
+    }
+    if (pjRes.blast !== "red") {
+      stats.failures.push("projected redirect / RHEL " + VERSIONS[pj2] + ": " +
+                          JSON.stringify(pjRes.command) + " rated '" + pjRes.blast + "'. The " +
+                          "redirect rule must be matched on the de-quoted projection of the whole " +
+                          "pipeline and must not depend on the `path` field type for its " +
+                          "correctness (PL3)");
+    }
+    blastChecks++;
+    var pjOk = A.assemblePipeline([{ spec: PROJ_SPEC, values: { c: "an ordinary note" } }],
+                                  VERSIONS[pj2], { patterns: [] });
+    if (pjOk === null || pjOk.blast !== "green") {
+      stats.failures.push("projected redirect control / RHEL " + VERSIONS[pj2] + ": an ordinary " +
+                          "comment rated '" + (pjOk ? pjOk.blast : "null") + "' -- the projection " +
+                          "scan is firing on anything");
+    }
+  }
+
+  /* PL2: rule 4 tested as a CLASS -- "an interpreter is the final consumer" --
+     across all three shapes, including the two a name list misses. Every row
+     must be REFUSED (null), and the control below proves the class predicate is
+     not simply refusing every stage. */
+  var interpreterChecks = 0;
+  var interpreterClass = [
+    ["shape 1: a pipe into an interpreter (sh)", [HEAD, { op: "pipe", spec: SH_SPEC, values: {} }]],
+    ["shape 1: a pipe into an interpreter (bash)", [HEAD, { op: "pipe", spec: BASH_SPEC, values: {} }]],
+    ["shape 1: a pipe into an interpreter (python3)", [HEAD, { op: "pipe", spec: PY_SPEC, values: {} }]],
+    ["shape 1: a pipe into an interpreter (perl)", [HEAD, { op: "pipe", spec: PERL_SPEC, values: {} }]],
+    ["shape 1: an interpreter as the FIRST stage",
+     [{ spec: SH_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["shape 1: an interpreter behind && rather than a pipe",
+     [HEAD, { op: "and", spec: BASH_SPEC, values: {} }]],
+    ["shape 2: xargs whose CHILD is an interpreter",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: SH_SPEC, values: {} }]],
+    ["shape 2: xargs -0 whose CHILD is an interpreter, behind a real -print0 producer",
+     [{ spec: FIND_NUL, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: BASH_SPEC, values: {} }]],
+    ["shape 2: xargs -0 -I whose CHILD is an interpreter",
+     [{ spec: FIND_NUL, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true, replace: true }, spec: PY_SPEC, values: {} }]],
+    ["shape 3: an execution sink reached by REDIRECT, not by pipe (/etc/cron.d)",
+     [HEAD, { op: "redirect", target: "/etc/cron.d/mcr" }]],
+    ["shape 3: an execution sink reached by redirect (/etc/profile.d)",
+     [HEAD, { op: "append", target: "/etc/profile.d/mcr.sh" }]],
+    ["shape 3: an execution sink reached by redirect (/usr/local/bin, which is NOT under the system-path rule)",
+     [HEAD, { op: "redirect", target: "/usr/local/bin/mcr" }]],
+    ["shape 3: an execution sink reached by redirect (/var/spool/cron, which is NOT under the system-path rule)",
+     [HEAD, { op: "redirect", target: "/var/spool/cron/root" }]],
+    ["shape 3: an execution sink reached by TEE",
+     [HEAD, { op: "tee", target: "/etc/sudoers.d/mcr" }]],
+    ["shape 3: an execution sink reached by 2>",
+     [HEAD, { op: "redirect_err", target: "/etc/systemd/system/mcr.service" }]],
+    ["TM2-F8: a wrapper that re-parses its argument (su)",
+     [HEAD, { op: "pipe", spec: { id: "w-su", tool: "su", blast: "green", fields: [],
+                                  template: [{ lit: "su" }, { lit: "-c" }] }, values: {} }]],
+    ["TM2-F8: a wrapper that re-parses its argument (runuser)",
+     [HEAD, { op: "pipe", spec: { id: "w-ru", tool: "runuser", blast: "green", fields: [],
+                                  template: [{ lit: "runuser" }, { lit: "-l" }] }, values: {} }]],
+    ["TM2-F8: a wrapper that re-parses its argument (timeout)",
+     [HEAD, { op: "pipe", spec: { id: "w-to", tool: "timeout", blast: "green", fields: [],
+                                  template: [{ lit: "timeout" }, { lit: "10" }] }, values: {} }]],
+    ["TM2-F8: find with -exec, which re-parses everything up to the terminator",
+     [{ spec: { id: "w-fe", tool: "find", blast: "green",
+                fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                template: [{ lit: "find" }, { field: "p" }, { lit: "-exec" }, { lit: "ls" }] },
+        values: { p: "/var/log" } },
+      { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["TM2-F8: a wrapper as an xargs child",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", spec: { id: "w-x", tool: "env", blast: "green", fields: [],
+                                           template: [{ lit: "env" }] }, values: {} }]]
+  ];
+  for (var ic2 = 0; ic2 < interpreterClass.length; ic2++) {
+    for (var icv = 0; icv < VERSIONS.length; icv++) {
+      interpreterChecks++;
+      var icRes = A.assemblePipeline(interpreterClass[ic2][1], VERSIONS[icv], { patterns: realPatterns });
+      if (icRes !== null) {
+        stats.failures.push("interpreter class / RHEL " + VERSIONS[icv] + " / " +
+                            interpreterClass[ic2][0] + ": composed " + JSON.stringify(icRes.command) +
+                            " -- an interpreter as the final consumer is refused, not rated (PL2)");
+      }
+    }
+  }
+  /* the class predicate's control: sed and awk take their program as an
+     ARGUMENT and do not execute stdin, so they must still compose. A predicate
+     that refused them would make the class rule "refuse anything powerful",
+     which is a different and much less useful product. */
+  var CLASS_CONTROLS = [
+    ["sed", { id: "cc-sed", tool: "sed", blast: "green", fields: [], template: [{ lit: "sed" }, { lit: "-n" }] }],
+    ["awk", { id: "cc-awk", tool: "awk", blast: "green", fields: [], template: [{ lit: "awk" }, { lit: "-F:" }] }],
+    ["grep", { id: "cc-grep", tool: "grep", blast: "green", fields: [], template: [{ lit: "grep" }, { lit: "-c" }] }],
+    ["sort", { id: "cc-sort", tool: "sort", blast: "green", fields: [], template: [{ lit: "sort" }, { lit: "-u" }] }],
+    ["stat with -c, which is a FORMAT and not a command",
+     { id: "cc-stat", tool: "stat", blast: "green", fields: [], template: [{ lit: "stat" }, { lit: "-c" }] }]
+  ];
+  for (var cc2 = 0; cc2 < CLASS_CONTROLS.length; cc2++) {
+    for (var ccv = 0; ccv < VERSIONS.length; ccv++) {
+      interpreterChecks++;
+      var ccRes = A.assemblePipeline([HEAD, { op: "pipe", spec: CLASS_CONTROLS[cc2][1], values: {} }],
+                                     VERSIONS[ccv], { patterns: realPatterns });
+      if (ccRes === null) {
+        stats.failures.push("interpreter class control / RHEL " + VERSIONS[ccv] + ": " +
+                            CLASS_CONTROLS[cc2][0] + " was refused as a stage. The class is " +
+                            "\"stdin or a written file becomes code\", not \"the tool is powerful\" " +
+                            "-- a predicate that refuses everything proves nothing");
+      }
+    }
+  }
+
+  /* PL6: null on every incomplete-stage case, AND the diagnostic NAMES the
+     stage. A composer that refuses without saying which stage is wrong gets
+     worked around in a text editor, and a worked-around gate is worse than no
+     gate at all. */
+  var namingChecks = 0;
+  var namingCases = [
+    ["a required field left empty in stage 1",
+     [{ spec: GREEN_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} }], 0],
+    ["a required field left empty in stage 2",
+     [HEAD, { op: "pipe", spec: GREEN_SPEC, values: {} }], 1],
+    ["an invalid value in stage 3",
+     [HEAD, { op: "pipe", spec: WC_SPEC, values: {} },
+      { op: "seq", spec: GREEN_SPEC, values: { p: "/etc/$(id)" } }], 2],
+    ["a redirect with no target, in stage 2", [HEAD, { op: "redirect" }], 1],
+    ["an operator outside the closed set, in stage 2",
+     [HEAD, { op: "| sh", spec: WC_SPEC, values: {} }], 1],
+    ["a reference record in stage 2",
+     [HEAD, { op: "pipe", spec: { id: "ref3", tool: "wc", blast: "green",
+                                  rhel_versions: { "9": { command: "wc -l" } } }, values: {} }], 1],
+    ["an execution-sink target in stage 2", [HEAD, { op: "redirect", target: "/etc/cron.d/x" }], 1],
+    ["xargs -0 with no NUL producer, in stage 2",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: WC_SPEC, values: {} }], 1]
+  ];
+  for (var nc2 = 0; nc2 < namingCases.length; nc2++) {
+    for (var ncv = 0; ncv < VERSIONS.length; ncv++) {
+      namingChecks++;
+      var ncStages = namingCases[nc2][1], ncBad = namingCases[nc2][2];
+      if (A.assemblePipeline(ncStages, VERSIONS[ncv], { patterns: realPatterns }) !== null) {
+        stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
+                            ": the pipeline assembled, which it must not");
+        continue;
+      }
+      var vp = A.validatePipeline(ncStages, VERSIONS[ncv], { patterns: realPatterns });
+      if (vp.ok) {
+        stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
+                            ": validatePipeline() says ok while assemblePipeline() refused -- the " +
+                            "UI and the assembler disagree about the same pipeline");
+        continue;
+      }
+      if (!vp.stages[ncBad] || vp.stages[ncBad].ok !== false || !vp.stages[ncBad].reason) {
+        stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
+                            ": stage " + (ncBad + 1) + " is not named as the incomplete one -- " +
+                            JSON.stringify(vp.stages) + " (PL6)");
+        continue;
+      }
+      for (var ok3 = 0; ok3 < vp.stages.length; ok3++) {
+        if (ok3 === ncBad) continue;
+        if (vp.stages[ok3].ok === false) {
+          stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
+                              ": stage " + (ok3 + 1) + " was ALSO named wrong (" +
+                              vp.stages[ok3].reason + "). Naming every stage names none of them");
+        }
+      }
+    }
+  }
+  /* control: a complete pipeline reports ok, with no stage named wrong */
+  for (var ncc = 0; ncc < VERSIONS.length; ncc++) {
+    namingChecks++;
+    var goodVp = A.validatePipeline([HEAD, { op: "pipe", spec: WC_SPEC, values: {} }],
+                                    VERSIONS[ncc], { patterns: realPatterns });
+    if (!goodVp.ok || goodVp.reason !== null) {
+      stats.failures.push("stage naming control / RHEL " + VERSIONS[ncc] + ": a complete pipeline " +
+                          "was reported as not ok (" + goodVp.reason + ")");
+    }
+  }
+
+
+
+  /* (7) dangerous.json against the DE-QUOTED projection of the WHOLE pipeline.
+         Per stage, "rm -rf /" cannot match `find '/var/log'` or `xargs rm -rf`;
+         across the operator, on the de-quoted line, it must. */
+  var RM_RF = { id: "pipe-rmrf", tool: "rm", blast: "green", fields: [],
+                template: [{ lit: "rm" }, { lit: "-rf" }] };
+  var PATH_ARG = { id: "pipe-patharg", tool: "probe", blast: "green",
+                   fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                   template: [{ lit: "probe" }, { field: "p" }] };
+  var spanPatterns = [{ id: "dp-rm-rf-root", match: "rm -rf /", label: "l", why: "w",
+                        blast_floor: "red" }];
+  for (var sp2 = 0; sp2 < VERSIONS.length; sp2++) {
+    blastChecks++;
+    /* the pattern text exists ONLY across the pipe operator: neither stage
+       contains "rm -rf /" on its own, and the '/' is inside the next stage's
+       quoted value. */
+    var spanStages = [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+                      { op: "pipe", kind: "xargs", spec: RM_RF, values: {} }];
+    var spanned = A.assemblePipeline(spanStages, VERSIONS[sp2], { patterns: spanPatterns });
+    if (spanned === null) {
+      stats.failures.push("whole-pipeline pattern / RHEL " + VERSIONS[sp2] +
+                          ": the spanning composition was refused");
+      continue;
+    }
+    var stage0 = A.assembleCommand(FIND_PLAIN, VERSIONS[sp2], { p: "/var/log" }, { patterns: spanPatterns });
+    var stage1 = A.assembleCommand(RM_RF, VERSIONS[sp2], {}, { patterns: spanPatterns });
+    if (stage0.blast !== "green" || stage1.blast !== "green") {
+      stats.failures.push("whole-pipeline pattern / RHEL " + VERSIONS[sp2] + ": a stage already " +
+                          "matched the pattern on its own, so this case does not prove the pattern " +
+                          "table sees ACROSS the operator");
+      continue;
+    }
+    if (spanned.blast !== "red") {
+      stats.failures.push("whole-pipeline pattern / RHEL " + VERSIONS[sp2] + ": a destructive " +
+                          "pattern spanning the pipe operator did not fire -- " +
+                          JSON.stringify(spanned.command) + " rated '" + spanned.blast +
+                          "'. dangerous.json must be matched against the de-quoted projection of " +
+                          "the WHOLE pipeline, not stage by stage");
+    }
+    blastChecks++;
+    /* control: a pipeline that genuinely does not carry the pattern stays green */
+    var quietStages = [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+                       { op: "pipe", spec: WC_SPEC, values: {} }];
+    var quietPipe = A.assemblePipeline(quietStages, VERSIONS[sp2], { patterns: spanPatterns });
+    if (quietPipe === null || quietPipe.blast !== "green") {
+      stats.failures.push("whole-pipeline pattern control / RHEL " + VERSIONS[sp2] +
+                          ": an unrelated pipeline was rated " +
+                          (quietPipe ? quietPipe.blast : "null") + " -- the de-quoted matcher is " +
+                          "firing on anything");
+    }
+  }
+
+  /* (8) REFUSALS: every shape the composer must return null for, each with the
+         nearest legal composition as its control, so a refusal that is simply
+         "refuse everything" cannot pass. */
+  var refusalChecks = 0;
+  var refusals = [
+    ["a stage piping into sh", [HEAD, { op: "pipe", spec: SH_SPEC, values: {} }]],
+    ["a stage piping into bash", [HEAD, { op: "pipe", spec: BASH_SPEC, values: {} }]],
+    ["a stage piping into python", [HEAD, { op: "pipe", spec: PY_SPEC, values: {} }]],
+    ["a stage piping into perl", [HEAD, { op: "pipe", spec: PERL_SPEC, values: {} }]],
+    ["a shell as the FIRST stage", [{ spec: SH_SPEC, values: {} },
+                                    { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["xargs feeding a shell", [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+                               { op: "pipe", kind: "xargs", spec: SH_SPEC, values: {} }]],
+    ["a REFERENCE record (a handed command string) as a stage",
+     [{ spec: { id: "ref", tool: "grep", blast: "green",
+                rhel_versions: { "7": { command: "grep -r x /etc | wc -l" },
+                                 "8": { command: "grep -r x /etc | wc -l" },
+                                 "9": { command: "grep -r x /etc | wc -l" },
+                                 "10": { command: "grep -r x /etc | wc -l" } } },
+        values: {} }]],
+    ["a reference record as a LATER stage",
+     [HEAD, { op: "pipe",
+              spec: { id: "ref2", tool: "wc", blast: "green",
+                      rhel_versions: { "7": { command: "wc -l" }, "8": { command: "wc -l" },
+                                       "9": { command: "wc -l" }, "10": { command: "wc -l" } } },
+              values: {} }]],
+    ["xargs -0 behind a producer that does not emit NUL records",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: RM_SPEC, values: {} }]],
+    ["xargs as the first stage",
+     [{ kind: "xargs", spec: RM_SPEC, values: {} }]],
+    ["xargs joined by an operator other than a pipe",
+     [HEAD, { op: "and", kind: "xargs", spec: WC_SPEC, values: {} }]],
+    ["xargs whose producer is a redirect, not a command",
+     [HEAD, { op: "redirect_err", target: "/tmp/e.txt" },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: WC_SPEC, values: {} }]],
+    ["xargs -n alongside -I, which xargs resolves silently",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { maxArgs: "5", replace: true }, spec: WC_SPEC, values: {} }]],
+    ["xargs -n 0", [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+                    { op: "pipe", kind: "xargs", xargs: { maxArgs: "0" }, spec: WC_SPEC, values: {} }]],
+    ["xargs -n with a value that is not a whole number",
+     [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { maxArgs: "5; id" }, spec: WC_SPEC, values: {} }]],
+    ["a pipe after stdout is already redirected",
+     [HEAD, { op: "redirect", target: "/tmp/o.txt" }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a tee after stdout is already redirected",
+     [HEAD, { op: "append", target: "/tmp/o.txt" }, { op: "tee", target: "/tmp/p.txt" }]],
+    ["an operator on the FIRST stage", [{ op: "pipe", spec: GREEN_SPEC, values: { p: "/etc/ssh" } }]],
+    ["a later stage with no operator at all", [HEAD, { spec: WC_SPEC, values: {} }]],
+    ["a redirect with no target", [HEAD, { op: "redirect" }]],
+    ["a redirect whose target is a relative path", [HEAD, { op: "redirect", target: "out.txt" }]],
+    ["a redirect whose target traverses", [HEAD, { op: "redirect", target: "/tmp/../etc/passwd" }]],
+    ["a redirect stage that also carries a spec",
+     [HEAD, { op: "redirect", target: "/tmp/o.txt", spec: WC_SPEC, values: {} }]],
+    ["a 2>&1 stage that also carries a target", [HEAD, { op: "err_to_out", target: "/tmp/o.txt" }]],
+    ["a 2>&1 stage that also carries a spec", [HEAD, { op: "err_to_out", spec: WC_SPEC, values: {} }]],
+    ["a command stage that also carries a target",
+     [HEAD, { op: "pipe", spec: WC_SPEC, values: {}, target: "/tmp/o.txt" }]],
+    ["a stage of an unknown kind", [HEAD, { op: "pipe", kind: "eval", spec: WC_SPEC, values: {} }]],
+    ["an incomplete stage (a required field left empty)",
+     [HEAD, { op: "pipe", spec: GREEN_SPEC, values: {} }]],
+    ["an invalid stage value", [HEAD, { op: "pipe", spec: GREEN_SPEC, values: { p: "/etc/$(id)" } }]],
+    ["an empty pipeline", []],
+    ["a pipeline of nine stages", [HEAD, { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} },
+                                   { op: "pipe", spec: WC_SPEC, values: {} }]]
+  ];
+  for (var rf2 = 0; rf2 < refusals.length; rf2++) {
+    for (var rvr = 0; rvr < VERSIONS.length; rvr++) {
+      refusalChecks++;
+      var refRes = A.assemblePipeline(refusals[rf2][1], VERSIONS[rvr], { patterns: realPatterns });
+      if (refRes !== null) {
+        stats.failures.push("pipeline refusal / RHEL " + VERSIONS[rvr] + " / " + refusals[rf2][0] +
+                            ": composed " + JSON.stringify(refRes.command) +
+                            " instead of returning null");
+      }
+    }
+  }
+  /* the legal neighbours of those refusals, so "refuse everything" cannot pass */
+  var refusalControls = [
+    ["the legal xargs -0 shape, behind find -print0",
+     [{ spec: FIND_NUL, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: WC_SPEC, values: {} }]],
+    ["the legal xargs -I shape", [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { replace: true }, spec: WC_SPEC, values: {} }]],
+    ["the legal xargs -n shape", [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { maxArgs: "5" }, spec: WC_SPEC, values: {} }]],
+    ["a pipe after a STDERR redirect, where stdout still flows",
+     [HEAD, { op: "redirect_err", target: "/tmp/e.txt" }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a redirect followed by 2>&1", [HEAD, { op: "redirect", target: "/tmp/o.txt" },
+                                     { op: "err_to_out" }]],
+    ["the maximum-length pipeline, eight stages",
+     [HEAD, { op: "pipe", spec: WC_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} },
+      { op: "pipe", spec: WC_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} },
+      { op: "pipe", spec: WC_SPEC, values: {} }, { op: "pipe", spec: WC_SPEC, values: {} },
+      { op: "pipe", spec: WC_SPEC, values: {} }]]
+  ];
+  for (var rc2 = 0; rc2 < refusalControls.length; rc2++) {
+    for (var rcv = 0; rcv < VERSIONS.length; rcv++) {
+      refusalChecks++;
+      var rcRes = A.assemblePipeline(refusalControls[rc2][1], VERSIONS[rcv], { patterns: realPatterns });
+      if (rcRes === null) {
+        stats.failures.push("pipeline refusal control / RHEL " + VERSIONS[rcv] + " / " +
+                            refusalControls[rc2][0] + ": the LEGAL neighbour of a refused shape was " +
+                            "also refused -- the refusals above would pass on a composer that " +
+                            "refuses everything");
+        continue;
+      }
+      var rcMsg = pipelineOracle(rcRes.command, refusalControls[rc2][1], VERSIONS[rcv]);
+      if (rcMsg) {
+        stats.failures.push("pipeline refusal control / RHEL " + VERSIONS[rcv] + " / " +
+                            refusalControls[rc2][0] + ": PIPELINE ORACLE -- " + rcMsg);
+        continue;
+      }
+      pipeOracles++;
+    }
+  }
+
+  /* (9) NEGATIVE CONTROLS FOR THE ORACLE ITSELF. Each of these is a pipeline
+         string that is WRONG in a specific way, handed to the oracle with the
+         composition it claims to be. Every one must be reported. An oracle that
+         cannot fail proves nothing, and a weakened one -- dropping the position
+         check, dropping the count check, treating a quoted operator as an
+         operator, or skipping quoted words when looking for metacharacters --
+         is caught by a different row here. */
+  var oracleNegatives = [
+    ["an injected bare `|` inside what should be a value",
+     "grep -r /etc|sh | wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["an injected `|` glued to the inside of a quoted word (the quote-breaking shape)",
+     "grep -r '/etc'|'sh' | wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["an EXTRA operator the composition never named",
+     "grep -r '/etc' | wc -l ; id",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a MISSING operator",
+     "grep -r '/etc' wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a SWAPPED operator: the composition says pipe, the line says &&",
+     "grep -r '/etc' && wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["an operator at the WRONG position",
+     "grep -r | '/etc' wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["the operator QUOTED, so the shell would see a filename and not a pipe",
+     "grep -r '/etc' '|' wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a command substitution smuggled into an unquoted word",
+     "grep -r $(id) | wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["a redirect nobody composed",
+     "grep -r '/etc' > /etc/passwd | wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]],
+    ["unbalanced quoting",
+     "grep -r '/etc | wc -l",
+     [{ spec: GREEN_SPEC, values: { p: "/etc" } }, { op: "pipe", spec: WC_SPEC, values: {} }]]
+  ];
+  for (var on2 = 0; on2 < oracleNegatives.length; on2++) {
+    pipeNegatives++;
+    if (pipelineOracle(oracleNegatives[on2][1], oracleNegatives[on2][2], "9") === null) {
+      stats.failures.push("pipeline oracle negative control: " + oracleNegatives[on2][0] +
+                          " -- the oracle rated " + JSON.stringify(oracleNegatives[on2][1]) +
+                          " as exactly the operator's composition. An oracle that cannot fail " +
+                          "proves nothing");
+    }
+  }
+  /* and the positive control for the oracle: the honest line must PASS, or the
+     negatives above are passing because the oracle rejects everything. */
+  pipeNegatives++;
+  if (pipelineOracle("grep -r '/etc' | wc -l",
+                     [{ spec: GREEN_SPEC, values: { p: "/etc" } },
+                      { op: "pipe", spec: WC_SPEC, values: {} }], "9") !== null) {
+    stats.failures.push("pipeline oracle positive control: the oracle rejected the pipeline the " +
+                        "composer actually emits, so every negative control above passes for the " +
+                        "wrong reason");
+  }
+
+  /* (10) the STIG-corpus shape check (ADR-002). DISA's own check text is full
+          of pipelines; the closed operator set has to be able to express the
+          shapes a real check uses, or the corpus cannot express the checks it
+          itself contains. tests/fixtures/stig-pipeline-shapes.json records what
+          was measured and what is deliberately out of scope; the Python test
+          tests/test_pipeline_stig_shapes.py re-derives the measurement from
+          content/rules_rhel*.json so this claim cannot go stale. Here we assert
+          only the part that belongs to the assembler: every operator the
+          fixture says the corpus uses is in the closed table. */
+  var stigShapeChecks = 0;
+  var stigShapes = JSON.parse(fs.readFileSync(path.join(REPO, "tests", "fixtures",
+                                                        "stig-pipeline-shapes.json"), "utf8"));
+  var corpusOps = stigShapes.corpus_operators || [];
+  if (!corpusOps.length) {
+    stats.failures.push("tests/fixtures/stig-pipeline-shapes.json names no corpus operators, so " +
+                        "the expressibility claim below is vacuous");
+  }
+  for (var cs2 = 0; cs2 < corpusOps.length; cs2++) {
+    stigShapeChecks++;
+    var crow = corpusOps[cs2];
+    var expressible = A.PIPE_OPERATOR_EMITS.indexOf(crow.token) >= 0;
+    if (expressible !== (crow.expressible === true)) {
+      stats.failures.push("STIG corpus shape: the operator " + JSON.stringify(crow.token) + " occurs " +
+                          crow.count + " times at top level in the embedded rules and the fixture " +
+                          "says expressible=" + crow.expressible + ", but the closed table says " +
+                          expressible + " -- if the set cannot express a common DISA check, that is " +
+                          "a finding about the set, reported, not a reason to widen it quietly");
+    }
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -1676,6 +2724,20 @@ function main() {
     field_grammar_checks: grammarChecks,
     enum_branch_checks: branchChecks,
     inspector_flag_checks: inspectorChecks,
+    pipeline_checks: pipeChecks,
+    pipeline_rejected: pipeRejected,
+    pipeline_composed: pipeComposed,
+    pipeline_oracles: pipeOracles,
+    pipeline_operator_seam_checks: opSeamChecks,
+    pipeline_operator_controls: opKeyControls,
+    pipeline_table_checks: tableChecks,
+    pipeline_blast_checks: blastChecks,
+    pipeline_refusal_checks: refusalChecks,
+    pipeline_negative_controls: pipeNegatives,
+    pipeline_stig_shape_checks: stigShapeChecks,
+    pipeline_interpreter_class_checks: interpreterChecks,
+    pipeline_stage_naming_checks: namingChecks,
+    one_stage_invariants: oneStageInvariants,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1727,6 +2789,36 @@ function main() {
                 "every enum field of every generator on every release, asserted for validity and " +
                 "for blast — a destructive branch must come out at least yellow, and a green " +
                 "generator must still have a green branch)");
+    console.log("  " + pipeChecks + " PIPELINE checks (CR-T-31): every hostile vector into every " +
+                "field of every stage of 2- and 3-stage pipelines, and into every redirect target " +
+                "-- " + pipeRejected + " rejected (null), " + pipeComposed + " composed and " +
+                "confined");
+    console.log("  " + report.pipeline_operator_seam_checks + " operator-seam checks (every " +
+                "hostile vector, every prototype-chain key and the operator TEXT itself driven " +
+                "into `op`: an operator is a KEY into a closed table, never data) and " +
+                report.pipeline_operator_controls + " controls proving the ten real keys compose");
+    console.log("  " + pipeOracles + " PIPELINE ORACLE comparisons (the emitted line tokenised and " +
+                "every operator's identity AND word index compared to the composition, with no " +
+                "other word allowed to be an operator or to leave a metacharacter unquoted), " +
+                pipeNegatives + " oracle negative controls, " + report.pipeline_table_checks +
+                " operator-table integrity checks");
+    console.log("  " + report.pipeline_blast_checks + " blast-composition checks (a redirect " +
+                "outside scratch is a WRITE, a system-path target is RED, xargs feeding a " +
+                "destructive tool is RED, ; && || carry the max, and dangerous.json fires across " +
+                "an operator on the de-quoted WHOLE pipeline) and " +
+                report.pipeline_refusal_checks + " refusal checks, each with its legal neighbour " +
+                "as a control");
+    console.log("  " + report.pipeline_interpreter_class_checks + " interpreter-class checks " +
+                "(PL2: rule 4 as a CLASS -- a pipe into an interpreter, an xargs child that is " +
+                "one, and an execution sink reached by REDIRECT -- plus TM2-F8's wrapper refusals " +
+                "and the sed/awk controls that prove the class is not \"refuse anything powerful\")");
+    console.log("  " + report.pipeline_stage_naming_checks + " stage-naming checks (PL6: every " +
+                "incomplete pipeline is null AND validatePipeline() names the one stage that is " +
+                "wrong, never all of them)");
+    console.log("  " + oneStageInvariants + " one-stage invariants: a pipeline of one stage is " +
+                "assembleCommand(), byte for byte, on every generator and every release");
+    console.log("  " + report.pipeline_stig_shape_checks + " STIG-corpus shape checks (ADR-002: " +
+                "the closed set must express the pipelines DISA's own check text uses)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

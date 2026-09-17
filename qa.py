@@ -151,6 +151,16 @@ MARKERS = [
     ("de-quoted projection for the destructive table", "function unquoteCommand(", None),
     ("rich-rule slot allow-list", "var RICHRULE_SLOT_TYPES=", None),
     ("template flag/lit token allow-lists", "var FLAG_TOKEN_RE=", None),
+    # CR-T-31 — the pipeline composer. The operator table is the structural
+    # claim: an operator is a KEY into a closed table owned by the tool, never
+    # text a user supplies, so `|` can never enter a form field.
+    ("pipeline composer", "function assemblePipeline(", None),
+    ("closed pipeline operator table", "var PIPE_OPERATORS=", None),
+    ("pipeline operator emission allow-list", "var PIPE_OPERATOR_EMITS=", None),
+    ("pipeline stage diagnostics (which stage is incomplete)", "function validatePipeline(", None),
+    ("redirect-target blast rule (independent of the field type)", "function redirectTargetBlast(", None),
+    ("execution-sink refusal", "function isExecutionSink(", None),
+    ("nested-quoting-domain refusal", "function reparsesItsArgument(", None),
     # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
@@ -2965,7 +2975,14 @@ def gate_q17(ctx):
 # exits non-zero), so it was never a silent pass; it was a stack trace that looks
 # identical whether the harness broke or whether it caught something real.
 HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected",
-                       "quoted_safe", "positive_controls", "invariants", "assembler_bytes")
+                       "quoted_safe", "positive_controls", "invariants", "assembler_bytes",
+                       # CR-T-31. Q18's statement has to cover PIPELINE assembly too, or
+                       # the gate reads as "command assembly is proved safe" over a build
+                       # that also composes pipelines -- the MCR-SEC-010 mistake, in the
+                       # gate rather than in the code.
+                       "pipeline_checks", "pipeline_oracles", "pipeline_negative_controls",
+                       "pipeline_operator_seam_checks", "pipeline_interpreter_class_checks",
+                       "pipeline_stage_naming_checks", "one_stage_invariants")
 
 
 def harness_report_failures(rep, returncode, stderr=""):
@@ -3012,6 +3029,19 @@ def harness_report_failures(rep, returncode, stderr=""):
         f.append("the harness reported ZERO checks. A sweep that ran nothing rejects nothing and "
                  "quotes nothing safely, so it passes by having done no work — the same empty-set "
                  "fail-open Q9 has guarded since CR-T-07 (AL-GATE3-004)")
+    if not missing and not wrong and not rep["pipeline_checks"]:
+        f.append("the harness reported ZERO pipeline checks. This build composes pipelines, so a "
+                 "PASS here would be stating that command assembly is safe while saying nothing "
+                 "at all about the operator seam — the same empty-set fail-open, one tranche later "
+                 "(CR-T-31)")
+    if not missing and not wrong and not rep["pipeline_negative_controls"]:
+        f.append("the harness reported ZERO pipeline-oracle negative controls. An oracle nobody "
+                 "has watched fail is not disproven; it is unwatched, and the pipeline oracle is "
+                 "the only thing asserting that no operator reached the command from data")
+    if not missing and not wrong and not rep["one_stage_invariants"]:
+        f.append("the harness reported ZERO one-stage invariants. A pipeline of one stage must "
+                 "equal assembleCommand() byte for byte; unasserted, the composer is free to "
+                 "become a second, weaker assembler")
 
     if returncode != 0 and not failures:
         f.append("the harness exited %d without naming a failure: %s" % (returncode, (stderr or "")[:300]))
@@ -3026,6 +3056,28 @@ def harness_report_failures(rep, returncode, stderr=""):
                  "release, in every argument shape) and %d invariants — a validator that rejected "
                  "everything would fail this gate, not pass it"
                  % (rep["positive_controls"], rep["invariants"]))
+        d.append("PIPELINE assembly is covered by this same gate and this same statement "
+                 "(CR-T-31): %d pipeline checks drove every hostile vector into every field of "
+                 "every stage of multi-stage pipelines and into every redirect target; %d "
+                 "operator-seam checks drove every vector, every prototype-chain key and the "
+                 "operator TEXT itself into the stage's `op` slot and every one was refused, "
+                 "because an operator is a KEY into a closed table the tool owns and never a "
+                 "value a user supplies; %d pipeline-oracle comparisons asserted that every "
+                 "operator in the emitted line is at exactly the index the operator composed it "
+                 "at and that no other word is an operator or leaves a metacharacter unquoted; "
+                 "%d negative controls proved that oracle can fail; %d interpreter-class checks "
+                 "and %d stage-naming checks cover threat-model-v2 PL2 and PL6; and %d one-stage "
+                 "invariants proved a pipeline of one stage is assembleCommand(), byte for byte"
+                 % (rep["pipeline_checks"], rep["pipeline_operator_seam_checks"],
+                    rep["pipeline_oracles"], rep["pipeline_negative_controls"],
+                    rep["pipeline_interpreter_class_checks"], rep["pipeline_stage_naming_checks"],
+                    rep["one_stage_invariants"]))
+        d.append("what this gate does NOT say about pipelines: it proves the emitted line's "
+                 "STRUCTURE is the operator's own and that no value escaped its quoting. It does "
+                 "not prove the pipeline is a sensible thing to run, and the blast COMPOSITION "
+                 "rules it asserts are policy over a target path and a child binary — a path "
+                 "class nobody has written down still rates `unrated`, which is the honest answer "
+                 "and not a safe one")
         d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
                  % rep["assembler_bytes"])
         d.append("the report was checked for shape before it was believed: every count this line "

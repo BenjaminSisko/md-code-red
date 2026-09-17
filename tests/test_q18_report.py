@@ -45,6 +45,12 @@ GOOD = {
     "rejected": 60000, "quoted_safe": 3536, "positive_controls": 144,
     "invariants": 9, "assembler_bytes": 18000, "failures": [],
     "half_formed_checks": 76, "rich_rule_oracles": 12,
+    # CR-T-31: a COMPLETE report now includes the pipeline counts, because Q18's
+    # statement covers pipeline assembly. A stub missing them is a drifted
+    # report, which is exactly what the tests below are about.
+    "pipeline_checks": 17092, "pipeline_oracles": 577, "pipeline_negative_controls": 11,
+    "pipeline_operator_seam_checks": 332, "pipeline_interpreter_class_checks": 100,
+    "pipeline_stage_naming_checks": 36, "one_stage_invariants": 96,
 }
 
 
