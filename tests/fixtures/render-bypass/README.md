@@ -11,9 +11,17 @@ asserts:
 
 | File prefix | Required verdict |
 |---|---|
-| `safe_control.js` | **zero** failures — the healthy case, checked first |
+| `safe_control*.js` | **zero** failures — the healthy cases, checked first |
 | `unsafe_control_*.js` | at least one failure — the case that always fired |
 | `bypass_*.js` | at least one failure — the case that did not |
+
+`bypass_12`..`bypass_15` and `safe_control_computed_index.js` come from Marcus
+Reed's re-review finding **MCR-SEC-014**: the sink reached through bracket
+notation, with the property name written as a literal, spliced inline, spliced
+into a variable, or built across two statements. They come with the safe control, because the
+rule that closes them has to let `out[fields[i].name] = ...` — real code in
+`template.html` — through untouched. A gate with a false positive on the code it
+guards is a gate somebody switches off.
 
 None of these constructs exists in `template.html`, and none is allowed to: the
 product renders through one sink, through `esc()`/`escapeAttr()`, and Q17 is what

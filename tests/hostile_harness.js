@@ -596,6 +596,7 @@ function main() {
   var F_PATH = { name: "p", type: "path", required: true };
   var F_ZONE = { name: "zone", type: "zone", required: true };
   var F_TOADDR = { name: "toaddr", type: "ipv4", required: false };
+  var F_MODE = { name: "mode", type: "integer", required: false };
   var FWD_LIT = "--add-forward-port=port=443:proto=tcp:toaddr=";
 
   var hfCases = [
@@ -644,6 +645,29 @@ function main() {
       { id: "hf-fwd-bad-requires", fields: [F_ZONE],
         template: [{ lit: "firewall-cmd" }, { lit: FWD_LIT, requires: "nosuch" }] },
       { zone: "public" }, null),
+
+    /* (c) MCR-SEC-013, Marcus's re-review reproduction. A conditional POSITIONAL
+       literal is the one path the MCR-SEC-002 rule did not cover: isPositional-
+       Token() asked `tok.field && !tok.flag`, so a lit was never positional and
+       could vanish with a later positional still present — `chmod '/etc/foo'`,
+       the path sitting in the mode slot. The rule is the same one field tokens
+       obey: drop only if every later positional drops too. */
+    hfCase("chmod / conditional positional LIT drops while a later positional stays",
+      { id: "hf-chmod-lit", fields: [F_MODE, F_PATH],
+        template: [{ lit: "chmod" }, { lit: "0644", requires: "mode" }, { field: "p" }] },
+      { p: "/etc/foo" }, null),
+    hfCase("chmod / conditional positional LIT with its field supplied (control)",
+      { id: "hf-chmod-lit", fields: [F_MODE, F_PATH],
+        template: [{ lit: "chmod" }, { lit: "0644", requires: "mode" }, { field: "p" }] },
+      { mode: "1", p: "/etc/foo" }, "chmod 0644 '/etc/foo'"),
+    hfCase("chmod / conditional LIT is the last positional — the only legal drop",
+      { id: "hf-chmod-lit-trailing", fields: [F_MODE, F_PATH],
+        template: [{ lit: "chmod" }, { field: "p" }, { lit: "0644", requires: "mode" }] },
+      { p: "/etc/foo" }, "chmod '/etc/foo'"),
+    hfCase("chmod / conditional LIT last positional, field supplied (control)",
+      { id: "hf-chmod-lit-trailing", fields: [F_MODE, F_PATH],
+        template: [{ lit: "chmod" }, { field: "p" }, { lit: "0644", requires: "mode" }] },
+      { mode: "1", p: "/etc/foo" }, "chmod '/etc/foo' 0644"),
 
     /* --flag=value and --flag value: name and value live in one token, so the
        drop takes both or neither — but it still has to be declared. */

@@ -41,10 +41,23 @@ def fixtures(prefix):
 class TheGateOnHealthyCode(unittest.TestCase):
     """Control first."""
 
-    def test_the_safe_fixture_passes(self):
-        failures, audited = qa.render_sink_failures(read("safe_control.js"))
-        self.assertEqual([], failures, "the audited render shape was flagged: %s" % failures)
-        self.assertGreater(audited, 0, "nothing was audited — the checker read no expressions")
+    def test_the_safe_fixtures_pass(self):
+        """Every safe_control_*.js is a shape the product writes and must keep writing.
+
+        The computed-index control (MCR-SEC-014) is the false-positive guard for
+        the computed-member rule: `out[fields[i].name] = ...` is ordinary code in
+        this very repo, and a gate that flagged it would be turned off.
+        """
+        names = fixtures("safe_control")
+        self.assertGreaterEqual(len(names), 2, "the safe control set has shrunk")
+        audited_any = 0
+        for name in names:
+            with self.subTest(fixture=name):
+                failures, audited = qa.render_sink_failures(read(name))
+                self.assertEqual([], failures, "%s: the audited render shape was flagged: %s"
+                                 % (name, failures))
+                audited_any += audited
+        self.assertGreater(audited_any, 0, "nothing was audited — the checker read no expressions")
 
     def test_the_shipped_shell_passes(self):
         """The product's own render paths, as written today."""
@@ -66,7 +79,7 @@ class EveryBypassIsCaught(unittest.TestCase):
 
     def test_every_bypass_fixture_fails(self):
         names = fixtures("bypass_")
-        self.assertGreaterEqual(len(names), 11, "the bypass fixture set has shrunk")
+        self.assertGreaterEqual(len(names), 15, "the bypass fixture set has shrunk")
         for name in names:
             with self.subTest(fixture=name):
                 failures, _ = qa.render_sink_failures(read(name))
