@@ -2056,6 +2056,83 @@ def gate_q17(ctx):
     return f, d
 
 
+# Every count gate_q18 reports out of the harness's JSON. AL-GATE3-006: these
+# used to be read with rep["checks"] and friends, so a report that PARSED but was
+# key-incomplete — a partial write, a field renamed in hostile_harness.js and not
+# mirrored here, a future --json shape change — raised an uncaught KeyError in
+# the middle of qa.py instead of printing a named FAIL. It failed closed (Python
+# exits non-zero), so it was never a silent pass; it was a stack trace that looks
+# identical whether the harness broke or whether it caught something real.
+HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected",
+                       "quoted_safe", "positive_controls", "invariants", "assembler_bytes")
+
+
+def harness_report_failures(rep, returncode, stderr=""):
+    """Consume the hostile harness's JSON report. Returns (failures, details).
+
+    Nothing in here trusts the shape of `rep`. Q18 is the gate that stands
+    between a form field and a command a human runs as root, and its own failure
+    mode should be as legible as every other gate's: one FAIL line, naming the
+    reason, never a traceback.
+    """
+    f, d = [], []
+    if not isinstance(rep, dict):
+        f.append("the harness report is a JSON %s, not an object — qa.py and "
+                 "tests/hostile_harness.js disagree about the shape of --json output, and this "
+                 "gate is reading something it does not understand (AL-GATE3-006)"
+                 % type(rep).__name__)
+        return f, d
+
+    failures = rep.get("failures")
+    if failures is None:
+        failures = []
+    elif not isinstance(failures, list):
+        f.append("the harness report's 'failures' is a %s, not a list — the one field this gate "
+                 "reads to decide PASS or FAIL is not the field it expected (AL-GATE3-006)"
+                 % type(failures).__name__)
+        failures = []
+    for line in failures:
+        f.append("hostile input: %s" % line)
+
+    missing = [k for k in HARNESS_REPORT_KEYS if k not in rep]
+    if missing:
+        f.append("the harness report is missing the field(s) %s. A report that PARSES but does "
+                 "not carry what this gate reads means the harness and qa.py have drifted apart, "
+                 "or the harness died partway through writing it — either way nothing here has "
+                 "been proved (AL-GATE3-006)" % ", ".join(missing))
+    wrong = [k for k in HARNESS_REPORT_KEYS
+             if k in rep and (isinstance(rep[k], bool) or not isinstance(rep[k], int))]
+    if wrong:
+        f.append("the harness report carries a non-integer where this gate expects a count: %s "
+                 "(AL-GATE3-006)"
+                 % ", ".join("%s=%r" % (k, rep[k]) for k in wrong))
+
+    if not missing and not wrong and not rep["checks"]:
+        f.append("the harness reported ZERO checks. A sweep that ran nothing rejects nothing and "
+                 "quotes nothing safely, so it passes by having done no work — the same empty-set "
+                 "fail-open Q9 has guarded since CR-T-07 (AL-GATE3-004)")
+
+    if returncode != 0 and not failures:
+        f.append("the harness exited %d without naming a failure: %s" % (returncode, (stderr or "")[:300]))
+
+    if not f:
+        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
+                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
+                 "single-quoted token"
+                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
+                    rep["rejected"], rep["quoted_safe"]))
+        d.append("%d positive controls (every field type's benign value still assembles on every "
+                 "release, in every argument shape) and %d invariants — a validator that rejected "
+                 "everything would fail this gate, not pass it"
+                 % (rep["positive_controls"], rep["invariants"]))
+        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
+                 % rep["assembler_bytes"])
+        d.append("the report was checked for shape before it was believed: every count this line "
+                 "prints was proved present and integral first, so a truncated or renamed report "
+                 "is a FAIL line and never a traceback (AL-GATE3-006)")
+    return f, d
+
+
 def gate_q18(ctx):
     """Hostile-input harness — threat-model-v1 §11 merge-gate #4, plus gate #9.
 
@@ -2114,22 +2191,9 @@ def gate_q18(ctx):
     except ValueError:
         f.append("the harness produced no JSON report: %s" % (err or out)[:400])
         return f, d
-    for line in rep.get("failures", []):
-        f.append("hostile input: %s" % line)
-    if proc.returncode != 0 and not rep.get("failures"):
-        f.append("the harness exited %d without naming a failure: %s" % (proc.returncode, err[:300]))
-    if not f:
-        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
-                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
-                 "single-quoted token"
-                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
-                    rep["rejected"], rep["quoted_safe"]))
-        d.append("%d positive controls (every field type's benign value still assembles on every "
-                 "release, in every argument shape) and %d invariants — a validator that rejected "
-                 "everything would fail this gate, not pass it"
-                 % (rep["positive_controls"], rep["invariants"]))
-        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
-                 % rep["assembler_bytes"])
+    rf, rd = harness_report_failures(rep, proc.returncode, err)
+    f.extend(rf)
+    d.extend(rd)
     return f, d
 
 
