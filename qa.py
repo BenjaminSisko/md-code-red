@@ -2309,6 +2309,56 @@ def load_golden_commands():
         return None, "tests/fixtures/golden-commands.json could not be read: %s" % exc
 
 
+# trailing parenthetical, e.g. "Caleb Stone (SME)" -> "Caleb Stone" — stripped
+# BEFORE whitespace collapse so a name can never smuggle whitespace through it.
+_TRAILING_PAREN_RE = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def normalize_person_name(s):
+    """J2 (VER-002): casefold, collapse ALL Unicode whitespace (incl. NBSP) to
+    a single space, strip, after removing one trailing parenthetical. This
+    closes the accidental bypass (case, padding, doubled/NBSP whitespace,
+    "(SME)" suffix) — it does NOT and cannot close a deliberate alias like
+    "C. Stone"; that half is closed by the roster lookup, not by this
+    function, and the gate says so (see gate_q16's own diagnostic line)."""
+    if not isinstance(s, str):
+        return ""
+    s = _TRAILING_PAREN_RE.sub("", s)
+    s = "".join(" " if ch.isspace() else ch for ch in s)
+    s = re.sub(r" +", " ", s).strip()
+    return s.casefold()
+
+
+def load_roster():
+    """Load content-src/roster.json, the closed two-person-rule roster (J2,
+    VER-002): {"people": [{"name": ..., "roles": [...]}, ...]}. Returns
+    (dict_or_None, error_string_or_None) where the dict maps a NORMALISED
+    name (normalize_person_name) to its set of roles. Same REPO-fresh-read
+    rule as load_golden_commands(), for the same test-patching reason.
+    """
+    path = os.path.join(REPO, "content-src", "roster.json")
+    if not os.path.isfile(path):
+        return None, "content-src/roster.json is missing"
+    try:
+        with open(path, encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except (ValueError, OSError) as exc:
+        return None, "content-src/roster.json could not be read: %s" % exc
+    people = raw.get("people") if isinstance(raw, dict) else None
+    if not isinstance(people, list) or not people:
+        return None, "content-src/roster.json has no non-empty 'people' list"
+    roster = {}
+    for person in people:
+        if not isinstance(person, dict):
+            continue
+        name = person.get("name")
+        roles = person.get("roles")
+        if not isinstance(name, str) or not name or not isinstance(roles, list):
+            continue
+        roster[normalize_person_name(name)] = set(roles)
+    return roster, None
+
+
 def load_capture_file(rel_path):
     """Read+parse a capture record by its REPO-relative path (a receipt's own
     `capture` field). Returns (cap_dict_or_None, error_string_or_None)."""
@@ -2437,18 +2487,47 @@ def gate_q16(ctx):
                                      "emits on RHEL %s ('%s') — the template changed since "
                                      "capture; re-capture before re-verifying"
                                      % (eid, v, run_as, eid, v, golden_cmd))
+            # J2 (VER-002) — the two-person rule, normalised and roster-closed.
             by = receipt.get("by")
             captured_by = cap.get("captured_by")
-            if by and captured_by and by == captured_by:
-                f.append("entry %s verified['%s']: receipt's by ('%s') is the same person as the "
-                         "capture's captured_by — SME captures, QA verifies; one name cannot do "
-                         "both for the same receipt" % (eid, v, by))
+            by_norm = normalize_person_name(by) if by else None
+            captured_norm = normalize_person_name(captured_by) if captured_by else None
+            roster, roster_err = load_roster()
+            if roster_err:
+                if by or captured_by:
+                    f.append("entry %s verified['%s']: %s — the two-person rule cannot be "
+                             "enforced with no roster to check names against" % (eid, v, roster_err))
+            else:
+                if by:
+                    by_roles = roster.get(by_norm)
+                    if by_roles is None or "QA" not in by_roles:
+                        f.append("entry %s verified['%s']: receipt's by ('%s') is not a QA-roled "
+                                 "member of the roster (content-src/roster.json) — QA verifies, "
+                                 "and only a roster member holding the QA role may sign as 'by'"
+                                 % (eid, v, by))
+                if captured_by:
+                    cap_roles = roster.get(captured_norm)
+                    if cap_roles is None or "SME" not in cap_roles:
+                        f.append("entry %s verified['%s']: capture's captured_by ('%s') is not "
+                                 "an SME-roled member of the roster (content-src/roster.json) — "
+                                 "SME captures, and only a roster member holding the SME role "
+                                 "may sign as 'captured_by'" % (eid, v, captured_by))
+            if by_norm and captured_norm and by_norm == captured_norm:
+                f.append("entry %s verified['%s']: receipt's by ('%s') and capture's captured_by "
+                         "('%s') normalise to the same person — SME captures, QA verifies; one "
+                         "person cannot do both for the same receipt" % (eid, v, by, captured_by))
     if not f:
         d.append("%d expected_output blocks, %d capture records — expected output is captured, never typed "
                  "(content validation protocol runs are CR-T-34)" % (n_exp, len(captures)))
         d.append("%d per-version verified receipt(s), each backed by its own capture file for that "
-                 "exact entry/version pair, hash-matched against the currently assembled command, "
-                 "and captured by someone other than the receipt's own 'by'" % n_receipts)
+                 "exact entry/version pair, hash-matched against the currently assembled command "
+                 "(golden-table-bound for generators, J1), and roster-checked by role (J2)" % n_receipts)
+        d.append("two-person rule residual (J2, VER-002): normalisation (casefold + collapsed "
+                 "whitespace incl. NBSP + one stripped trailing parenthetical) closes only the "
+                 "ACCIDENTAL bypass. A deliberate alias (e.g. 'C. Stone') is NOT closable by any "
+                 "string comparison of names; it is refused here because it does not resolve "
+                 "against the closed roster in content-src/roster.json, not because it is "
+                 "detected as an alias of a real roster member.")
     return f, d
 
 

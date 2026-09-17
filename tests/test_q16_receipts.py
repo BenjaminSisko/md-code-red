@@ -175,7 +175,7 @@ class Q16ReceiptBacking(Q16TestCase):
         data, cap = make_ctx_data(receipt_by="Caleb Stone")  # same as captured_by
         f, _d = self.run_q16(data, cap)
         self.assertTrue(f, "a receipt whose 'by' equals the capture's 'captured_by' must fail")
-        self.assertTrue(any("same person as the capture's captured_by" in x for x in f),
+        self.assertTrue(any("normalise to the same person" in x for x in f),
                         "wrong reason:\n  " + "\n  ".join(f))
 
     def test_receipt_command_drift_fails(self):
