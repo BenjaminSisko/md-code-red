@@ -1028,6 +1028,21 @@ def island_escape_failures(island):
     return out
 
 
+def empty_set_failure(what, why):
+    """The one sentence AL-GATE3-004 asks every per-item gate to be able to say.
+
+    Q9 has said it since CR-T-07 — "a release with no CAT I rules at all means
+    the severity parse dropped them silently, which would make this gate pass by
+    having nothing to check" — and Q11 has guarded `not embedded`. The reasoning
+    was never specific to CAT I rules or to the CCI map: a loop that only records
+    a failure when it finds something wrong WITH an item reports PASS on no items
+    at all, which is the loudest possible silence.
+    """
+    return ("zero %s — %s. This gate finds a failure only by finding something wrong with an "
+            "item, so an empty set passes it by having nothing to check; the emptiness is "
+            "therefore the finding (AL-GATE3-004)" % (what, why))
+
+
 def gate_q1(ctx):
     f, d = [], []
     html = ctx["html"]
@@ -1149,9 +1164,21 @@ def gate_q3(ctx):
             f.append("%s: license_class '%s' is not verbatim-ok or paraphrase-only"
                      % (where, src.get("license_class")))
 
-    for e in data["commands"]["entries"]:
+    entries = data["commands"]["entries"]
+    tools = data["tools"]["tools"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries to re-check the provenance of",
+            "the provenance law is the reason a reader can trust a rendered command at root, and "
+            "a build that embeds no commands cannot have honoured it"))
+    if not tools:
+        f.append(empty_set_failure(
+            "tools to re-check the provenance of",
+            "every command entry names a tool, so no tools means no entries either — or an "
+            "extraction that dropped them"))
+    for e in entries:
         check("command entry %s" % e.get("id"), e.get("source"))
-    for t in data["tools"]["tools"]:
+    for t in tools:
         check("tools entry %s" % t.get("id"), t.get("source"))
     for v in VERSIONS:
         check("rules_rhel%s" % v, (data["rules"][v].get("_meta") or {}).get("source"))
@@ -1171,6 +1198,11 @@ def gate_q3(ctx):
 def gate_q4(ctx):
     f, d = [], []
     entries = ctx["data"]["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "verify/undo/blast IS the product's promise, and a build with no entries keeps it "
+            "the way an empty book keeps a promise to be accurate"))
     for e in entries:
         if not e.get("verify") or not e.get("undo") or e.get("blast") not in ("green", "yellow", "red"):
             f.append("entry %s: verify/undo/blast promise broken" % e.get("id"))
@@ -1297,6 +1329,11 @@ def gate_q8(ctx):
         meta = ds.get("_meta") or {}
         embedded = ds.get("rules", [])
         src, total = ctx["source_rules"][v]
+        if not embedded:
+            f.append(empty_set_failure(
+                "rules embedded for RHEL %s" % v,
+                "this gate reconciles the embedded count against _meta, and 0 == 0 is the one "
+                "pair of numbers that agrees no matter what the extractor did"))
         if meta.get("rule_count") != len(embedded):
             f.append("rules_rhel%s: _meta.rule_count %s != %d embedded"
                      % (v, meta.get("rule_count"), len(embedded)))
@@ -1321,6 +1358,14 @@ def gate_q8(ctx):
             f.append("rules_rhel%s: _meta.generator '%s' is not an extractor Q15 re-runs"
                      % (v, meta.get("generator")))
     entries = data["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "the entry count and _meta.entry_count agree trivially at zero"))
+    if not data["cci_nist"].get("cci"):
+        f.append(empty_set_failure(
+            "CCI mappings",
+            "the mapping count and _meta.entry_count agree trivially at zero"))
     if len(entries) != (data["commands"].get("_meta") or {}).get("entry_count"):
         f.append("commands.json _meta.entry_count != %d embedded entries" % len(entries))
     else:
@@ -1535,6 +1580,11 @@ def gate_q11(ctx):
 def gate_q12(ctx):
     f, d = [], []
     entries = ctx["data"]["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "four-version completeness is the claim on the cover of this product; with no "
+            "entries it is complete the way a blank page is"))
     for e in entries:
         versions = e.get("rhel_versions") or {}
         if set(versions.keys()) != set(VERSIONS):
@@ -1557,6 +1607,9 @@ def gate_q12(ctx):
         d.append("all %d entries carry all four RHEL keys with an explicit value in every one "
                  "(build.py resolved same_as pointers before embedding)" % len(entries))
     tools = ctx["data"]["tools"]["tools"]
+    if not tools:
+        f.append(empty_set_failure(
+            "tools", "no tool declares availability for all four releases because no tool is here"))
     for t in tools:
         if set((t.get("availability") or {}).keys()) != set(VERSIONS):
             f.append("tools entry %s: availability keys != {7,8,9,10}" % t.get("id"))
@@ -1577,6 +1630,20 @@ def gate_q13(ctx):
     if have_sources:
         source_ids = set(json.load(open(sources_json, encoding="utf-8")).get("sources", {}).keys())
     n_stig = 0
+    if not data["commands"]["entries"]:
+        f.append(empty_set_failure(
+            "command entries whose stig_id/rule_id/tool/category links resolve",
+            "referential integrity over an empty set of references is not a property anybody "
+            "wanted proved"))
+    if not tool_ids:
+        f.append(empty_set_failure(
+            "tool ids to resolve entry.tool against",
+            "an empty target set makes every future membership test a failure, not a pass, so "
+            "this one is caught here rather than as a flood of confusing entry errors later"))
+    if not categories:
+        f.append(empty_set_failure(
+            "categories to resolve entry.category against",
+            "same shape as the tool index above"))
     for e in data["commands"]["entries"]:
         if e.get("tool") not in tool_ids:
             f.append("entry %s: tool '%s' is not in tools.json" % (e.get("id"), e.get("tool")))
@@ -1755,6 +1822,11 @@ def gate_q16(ctx):
     data = ctx["data"]
     captures = (data["expected_output"].get("captures") or {})
     n_exp = 0
+    if not data["commands"]["entries"]:
+        f.append(empty_set_failure(
+            "command entries whose expected_output and verified receipts to check",
+            "'expected output is captured, never typed' is a claim about entries, and there are "
+            "none to make it about"))
     for e in data["commands"]["entries"]:
         for s in (e.get("stig") or []):
             if s.get("expected_output"):
