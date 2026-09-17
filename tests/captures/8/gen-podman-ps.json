@@ -1,0 +1,26 @@
+{
+ "blast_confirmed": "green",
+ "captured_by": "Caleb Stone",
+ "captured_on": "2026-09-17T13:30:12Z",
+ "command_as_run": "podman ps -a",
+ "command_hash_at_capture": "fb31d9f35cf09e7fa88070d7b57f52a320edcdb31eff16cedfa6b5ff60e218fd",
+ "entry_id": "gen-podman-ps",
+ "exit_code": 0,
+ "field_substitutions": {
+  "all": "yes (golden-table value; -a flag present)"
+ },
+ "host": "defiant-rhel8",
+ "kernel": "4.18.0-553.163.1.el8_10.x86_64",
+ "pkg_versions": {
+  "podman": "podman-4.9.4-37.module+el8.10.0+24790+ef71b018.x86_64"
+ },
+ "redhat_release": "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+ "rhel_version": "8",
+ "stderr": "",
+ "stdout": "CONTAINER ID  IMAGE                                                    COMMAND               CREATED       STATUS                 PORTS                                                                                   NAMES\n45f3222f407c  docker.io/library/redis:7.2-alpine                       redis-server          30 hours ago  Up 30 hours                                                                                                    librenms-redis\n3f3bfefdba47  docker.io/library/postgres:16-alpine                     postgres              30 hours ago  Up 30 hours                                                                                                    authentik-db\n2cbf4a5e9471  localhost/librenms-authentik:26.5.1-socialite-authentik                        30 hours ago  Up 30 hours            192.168.1.123:8000->8000/tcp                                                            librenms\n66c45d4e003b  localhost/pokemon-showdown-home:2026-07-26               node pokemon-show...  30 hours ago  Up 30 hours (healthy)  192.168.1.123:8010->8000/tcp                                                            pokemon-showdown-home\n7e37a15b9b08  docker.io/library/mariadb:10                             mysqld --innodb-f...  30 hours ago  Up 30 hours                                                                                                    librenms-db\n4da52b6e92d3  codeberg.org/forgejo/forgejo:15                          /usr/bin/s6-svsca...  30 hours ago  Up 30 hours            192.168.1.123:2222->22/tcp, 192.168.1.123:3000->3000/tcp, 192.168.1.123:3443->3443/tcp  forgejo\n818f445953ed  localhost/librenms-authentik:26.5.1-socialite-authentik                        30 hours ago  Up 30 hours                                                                                                    librenms-dispatcher\ncf03f6a1129f  localhost/uptime-kuma:2.5.3-homelab.5                    node server/serve...  30 hours ago  Up 30 hours (healthy)  192.168.1.123:3006->3001/tcp                                                            uptime-kuma\n9547a023a6fb  docker.io/library/redis:7-alpine                         --save 60 1 --log...  30 hours ago  Up 30 hours                                                                                                    authentik-redis\nb720b2c53f66  localhost/pokemon-showdown-client:2026-07-26-tls         node /srv/server....  30 hours ago  Up 30 hours (healthy)  192.168.1.123:8011->8080/tcp                                                            pokemon-showdown-client\n744cc2c500b2  ghcr.io/goauthentik/server:latest                        worker                30 hours ago  Up 30 hours                                                                                                    authentik-worker\n19ff6c6c0cf2  ghcr.io/goauthentik/server:latest                        server                30 hours ago  Up 30 hours            192.168.1.123:9000->9000/tcp                                                            authentik-server",
+ "undo_executed": {
+  "reason": "green/read-only, no undo needed",
+  "run": false
+ },
+ "verify_result": "PASS \u2014 table output printed, per verify text."
+}
