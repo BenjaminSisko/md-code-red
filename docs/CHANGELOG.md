@@ -4,6 +4,90 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — H1/H2/H3: pre-merge corrections from Marcus Reed (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Three conditions raised before this branch merges, all against work already on it.
+
+#### H1 — `gen-chronyd-one-shot-check` was wrongly raised to yellow
+
+G4(d) raised `gen-chronyd-one-shot-check` to `blast: "yellow"` on Caleb Stone's CR-T-34 capture
+run note that `chronyd -Q` "steps the system clock" — a misreading of `chronyd(8)` that an
+earlier ruling repeated and this branch then encoded into content, intent and notes.
+
+**Correction, from the pinned man page itself** (identical text on RHEL 8 and RHEL 10,
+`content-src/raw/rhel{8,10}/chronyd.man.txt#L64-L74`):
+
+> `-q` — When run in this mode, chronyd will set the system clock once and exit.
+> `-Q` — This option is similar to the `-q` option, except it only prints the offset without
+> making any corrections of the clock and disables server ports to allow chronyd to be started
+> without root privileges.
+
+This toolkit only ever generates `-Q`. `blast` reverts to `"green"`; `intent`, `verify`, `undo`
+and `notes` are rewritten to say what the man page actually says, with the lines cited (`verify`
+and `undo` were ALSO wrong before this branch ever touched the entry — both said "the step it
+applied"/"performs one correction", the same `-Q`/`-q` conflation, predating G4(d)).
+`tests/fixtures/golden-commands.json`'s `blast` field matches.
+
+New assertions in `tests/test_blast_state_change_labels.py`
+(`test_chronyd_one_shot_check_is_not_matched_and_stays_green`): the entry is not matched by the
+state-changing sweep, declares green, and none of `intent`/`notes`/`verify`/`undo` claim `-Q`
+steps the clock. Committed failing first (content still said yellow with the wrong claim), then
+the content fix.
+
+#### H3 — anchor the state-changing pattern table
+
+The same file's `STATE_CHANGE_RE` matched its bare words (`install`, `remove`, `add`, `del`,
+etc.) as a plain substring — which meant `gen-nmcli-static-ipv4` was flagged only because
+`ipv4.addresses` contains the letters "add", and `gen-useradd-create` only because `useradd`
+does. Neither command has a real `add` token; both entries stayed correctly labeled by accident
+(already yellow for other fields), but the sweep was never proving what it claimed to for them.
+
+`STATE_CHANGE_RE` now matches the bare-word entries with `\b` word boundaries and keeps
+`--permanent` as a literal substring (distinctive enough that a false hit inside another flag is
+not a realistic risk the way a 3-letter bare word is). `-Q` is also removed per H1. New negative-
+case tests (`test_word_boundary_anchoring_excludes_substring_false_positives`) prove `del`/`add`
+no longer fire inside `--delete`, `userdel`, `--address`, or `ipv4.addresses`; a companion
+positive-case test (`test_word_boundary_anchoring_still_matches_real_tokens`) proves the
+anchoring did not overcorrect into matching nothing.
+
+#### H2 — one shared invisible-character range table
+
+G2's evidence-export line-safety treatment (`evidenceHeaderSafe()`/`evidenceLineSafe()`) kept its
+own hand-rolled numeric range table instead of sharing `MCR-ASSEMBLER`'s existing `INVISIBLE_RE`
+(the range `MCR-SEC-004` already refuses in curated field values) — and that copy had already
+drifted, missing `U+061C` (Arabic Letter Mark), `U+00AD` (soft hyphen), `U+206A`–`U+206F`
+(deprecated text-direction/digit-shaping controls — it only went to `U+2069`), and all of
+`U+FE00`–`U+FE0F` (variation selectors — it covered none).
+
+**Fix: one shared table.** New `INVISIBLE_RE_G` — a global-flagged twin of `INVISIBLE_RE`,
+defined once, immediately after it. `headerSafe()` (`MCR-SEC-003`'s clipboard comment header) is
+widened to also strip it, applied AFTER the existing control-character pass so `\n`/`\r`/
+`U+2028`/`U+2029` keep becoming a space exactly as before (`INVISIBLE_RE` also lists those two in
+its own class; stripping first would have removed them outright instead of spacing them, and
+`tests/hostile_harness.js` already has an invariant pinning the old behavior —
+`headerSafe("a\nb\r\nc\u2028d") === "a b c d"` — which this fix keeps true by ordering, not by
+exception). `evidenceHeaderSafe()` drops its own range tables entirely and does the same two
+replacements minus the whitespace-collapsing step this export's own content needs to keep.
+
+New `tests/test_evidence_invisible_coverage.js`/`.py`: lifts `INVISIBLE_RE` and
+`evidenceLineSafe()` together out of the built file and enumerates every BMP codepoint
+(`U+0000`–`U+FFFF`, surrogates excluded) against it — the codepoint list is read fresh from the
+shipped regex every run, never hand-copied, so the two tables cannot silently diverge again
+without this test catching it. Committed failing (35 of 58 codepoints `INVISIBLE_RE` rejects
+survived `evidenceHeaderSafe()` unchanged), now 0.
+
+`tests/test_evidence_export.js` is updated to lift `MCR-ASSEMBLER` alongside `MCR-EVIDENCE` —
+`evidenceHeaderSafe()` now depends on `INVISIBLE_RE_G`/`HEADER_UNSAFE_G` from the assembler block,
+so `MCR-EVIDENCE` is no longer self-sufficient lifted alone, on purpose (both
+`tests/test_evidence_export_real.js` and the new coverage test already lifted both blocks
+together, so liftability-alone was never a reason to keep two copies of the same table).
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS, 176 unit tests PASS (171 + 5 new), hostile
+harness 81,577 checks / 0 FAILED, including the `MCR-SEC-003` line-terminator invariant and the
+140 enum-branch control checks (Marcus Reed's sweep, MCR-SEC-021, still green against the
+corrected labels).
+
 ### Added/Fixed — G4: capture import, blast labels, privilege field (2026-09-17, branch `salm/milo/panels-conditions`)
 
 Continuing on the same branch after G1-G3, from Caleb Stone's first content validation run

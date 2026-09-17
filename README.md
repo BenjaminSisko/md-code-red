@@ -16,6 +16,37 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — H1/H2/H3, branch `salm/milo/panels-conditions` (Milo Vance), Marcus Reed's
+  three post-G4 conditions before merge. **H1 (correction):** `gen-chronyd-one-shot-check` goes
+  back to `blast: "green"` — G4(d) wrongly raised it to yellow on Caleb Stone's CR-T-34 note that
+  `chronyd -Q` "steps the system clock", which misread `chronyd(8)` and was repeated by an
+  earlier ruling and then encoded into content. The pinned man page is explicit and identical on
+  RHEL 8 and RHEL 10 (`content-src/raw/rhel{8,10}/chronyd.man.txt#L64-L74`): `-q` steps the
+  clock; `-Q` "only prints the offset without making any corrections of the clock and disables
+  server ports to allow chronyd to be started without root privileges" — this toolkit only ever
+  generates `-Q`. `intent`/`verify`/`undo`/`notes` are rewritten to say what the man page actually
+  says, with the lines cited. **H3:** `tests/test_blast_state_change_labels.py`'s
+  `STATE_CHANGE_RE` drops `-Q` and anchors its bare-word entries with `\b` word boundaries instead
+  of matching as a plain substring — the old form matched `gen-nmcli-static-ipv4` only because
+  `ipv4.addresses` contains the letters "add", and `gen-useradd-create` only because `useradd`
+  does; new negative-case tests lock in that `del`/`add` no longer fire inside `--delete` or
+  `--address`. Fail-first: both corrections landed as a failing test first (chronyd's `blast`
+  assertion; the anchoring's negative cases already passed, added alongside as a regression
+  guard), then the content/pattern fix. **H2:** the evidence exporter's line-safety treatment
+  (`evidenceHeaderSafe()`/`evidenceLineSafe()`, condition G2) had its own hand-rolled numeric
+  range table that had already drifted from `MCR-ASSEMBLER`'s `INVISIBLE_RE` — missing `U+061C`,
+  `U+00AD`, `U+206A`–`U+206F` and `U+FE0F`. Both now share ONE table: a new global-flagged
+  `INVISIBLE_RE_G` twin of `INVISIBLE_RE`, used by both `headerSafe()` (widened, MCR-SEC-003's
+  clipboard header) and `evidenceHeaderSafe()` (rewritten to delete its own separate table).
+  New `tests/test_evidence_invisible_coverage.js`/`.py` lift `INVISIBLE_RE` and
+  `evidenceLineSafe()` straight out of the built file and enumerate every BMP codepoint against
+  it, so the two tables can never silently diverge again — committed failing (35 of 58 rejected
+  codepoints survived the old table), now 0. `tests/test_evidence_export.js` now lifts
+  `MCR-ASSEMBLER` alongside `MCR-EVIDENCE` (evidence is no longer self-sufficient lifted alone, on
+  purpose). 22/22 `qa.py` gates PASS, 176 unit tests PASS (171 + 5 new), hostile harness
+  81,577 / 0 FAILED, including the `MCR-SEC-003` line-terminator invariant H2's reordering had to
+  keep true.
+
 - **2026-09-17** — G4, branch `salm/milo/panels-conditions` (Milo Vance), continuing on the
   same branch after G1-G3. Rulings from Eli Cross closing CR-T-34's WADE_BLOCKED (Caleb Stone's
   content validation run, `tests/captures/README.md`, cherry-picked from `salm/caleb/captures-green`
