@@ -1,0 +1,90 @@
+{
+ "_meta": {
+  "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "curated": true,
+  "status": "DELIBERATELY BROKEN FIXTURE — stig_id RHEL-09-999999 does not exist in rules_rhel9.json",
+  "entry_count": 1
+ },
+ "categories": [
+  "firewall-cmd",
+  "nmcli",
+  "journalctl",
+  "lvm",
+  "ssh / sshd config",
+  "useradd / usermod",
+  "systemctl",
+  "dnf / yum",
+  "semanage / setsebool",
+  "chage",
+  "auditctl / ausearch",
+  "rsyslog",
+  "chronyd",
+  "podman"
+ ],
+ "entries": [
+  {
+   "id": "broken-dangling-stig",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Show whether an operator at the console can reboot the box with Ctrl-Alt-Delete",
+   "rhel_versions": {
+    "7": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "RHEL 7 wants the target both masked and inactive; the pinned V3R15 check treats an active target as a finding on its own.",
+     "changed_in_note": null
+    },
+    "8": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "The RHEL 8 check reads the same unit status and looks for \"Loaded: masked\".",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 9. The pinned V2R9 fix uses disable --now and mask --now, which the RHEL 8 fix text does not.",
+     "changed_in_note": null
+    },
+    "10": {
+     "command": "systemctl status ctrl-alt-del.target",
+     "notes": "Same read on RHEL 10 under the pinned V1R2 benchmark.",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "status",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
+   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
+   "blast": "green",
+   "stig": [
+    {
+     "stig_id": "RHEL-09-999999",
+     "rule_id": "SV-257785r1044833_rule",
+     "rhel_version": "9",
+     "cci": [
+      "CCI-002235"
+     ],
+     "nist": [
+      "AC-6 (10)"
+     ],
+     "check_cmd": "sudo systemctl status ctrl-alt-del.target",
+     "fix_cmd": "sudo systemctl disable --now ctrl-alt-del.target && sudo systemctl mask --now ctrl-alt-del.target",
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-stig-pinned",
+    "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  }
+ ]
+}
