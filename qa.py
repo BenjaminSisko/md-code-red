@@ -81,6 +81,16 @@ GENERATORS = (
     "extract/import_captures.py",         # expected_output.json (CR-T-34, from tests/captures/)
 )
 
+# extract/extract_flags.py is re-run by Q15 too (below), but through its own
+# --check --rhel <v> loop, not the generic GENERATORS loop above -- --rhel is
+# required, so it cannot run under a bare --check the way the scripts above
+# do. A FLAGS dataset is allowed to declare it as its generator (AL-GATE3-009):
+# a dataset naming anything outside this combined set is naming a script Q15
+# never re-runs, which is exactly the hand-edit-or-orphan state Q15 exists to
+# catch.
+FLAGS_GENERATOR = "extract/extract_flags.py"
+RERUN_GENERATORS = GENERATORS + (FLAGS_GENERATOR,)
+
 CDN_LITERALS = ("cdnjs", "jsdelivr", "unpkg", "googleapis", "gstatic", "cdn.")
 
 # ---------------------------------------------------------------------------
@@ -1716,8 +1726,15 @@ def gate_q8(ctx):
         d.append("commands: %d entries, count matches _meta" % len(entries))
     for v in VERSIONS:
         fl = data["flags"][v]
+        fl_meta = fl.get("_meta") or {}
+        # AL-GATE3-009: a FLAGS dataset's declared generator was never checked
+        # against anything — flags_rhel9.json shipped naming a script
+        # (extract/extract_rhel_flags.py) that has never existed in this repo.
+        if fl_meta.get("generator") not in RERUN_GENERATORS:
+            f.append("flags_rhel%s: _meta.generator '%s' is not an extractor Q15 re-runs"
+                     % (v, fl_meta.get("generator")))
         d.append("flags_rhel%s: %d CLI dictionaries (%s)"
-                 % (v, len(fl.get("clis", {})), (fl.get("_meta") or {}).get("status", "")[:48]))
+                 % (v, len(fl.get("clis", {})), fl_meta.get("status", "")[:48]))
     cci_meta = data["cci_nist"].get("_meta") or {}
     n_cci = len(data["cci_nist"].get("cci", {}))
     if cci_meta.get("entry_count") != n_cci:
@@ -2381,18 +2398,26 @@ def gate_q15(ctx):
     # Every generated dataset must name a generator this gate actually re-runs.
     # Otherwise a file could declare an extractor that is never executed and drift
     # unnoticed — which is precisely the hand-edit this gate exists to catch.
+    # AL-GATE3-009: this used to build `declared` from RULES and CCI only, so a
+    # FLAGS dataset's _meta.generator was never compared against anything --
+    # flags_rhel9.json shipped naming extract/extract_rhel_flags.py, a script
+    # that has never existed, and this gate reported PASS. FLAGS datasets are
+    # included below, and RERUN_GENERATORS (not the bare GENERATORS tuple)
+    # is the allowed set, since extract/extract_flags.py is re-run above
+    # through its own --check --rhel <v> loop rather than the generic one.
     data = ctx["data"]
-    declared = set()
+    declared = {}
     for v in VERSIONS:
-        declared.add(((data["rules"][v].get("_meta") or {}).get("generator")))
-    declared.add((data["cci_nist"].get("_meta") or {}).get("generator"))
-    unrerun = sorted(g for g in declared if g and g not in GENERATORS)
+        declared["rules_rhel%s" % v] = (data["rules"][v].get("_meta") or {}).get("generator")
+        declared["flags_rhel%s" % v] = (data["flags"][v].get("_meta") or {}).get("generator")
+    declared["cci_nist"] = (data["cci_nist"].get("_meta") or {}).get("generator")
+    unrerun = sorted((name, gen) for name, gen in declared.items() if gen and gen not in RERUN_GENERATORS)
     if unrerun:
-        f.append("generated dataset(s) declare a generator this gate does not re-run: %s"
-                 % ", ".join(unrerun))
+        f.append("dataset(s) declare a generator this gate does not re-run: %s"
+                 % ", ".join("%s: '%s'" % (name, gen) for name, gen in unrerun))
     else:
-        d.append("every RULES and CCI dataset declares a generator that this gate re-ran: %s"
-                 % ", ".join(sorted(declared - {None})))
+        d.append("every RULES, FLAGS and CCI dataset declares a generator that this gate re-ran: %s"
+                 % ", ".join(sorted({g for g in declared.values() if g})))
     return f, d
 
 

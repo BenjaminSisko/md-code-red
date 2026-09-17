@@ -13,7 +13,7 @@ WHAT THIS PRODUCES, AND WHY IT IS EMPTY
                                ADR-001 §6.1: a flag dictionary may only describe
                                flags a real binary on a real host of that RHEL
                                version actually accepts. No host has been read
-                               yet; extract/extract_rhel_flags.py (CR-T-09) is the
+                               yet; extract/extract_flags.py (CR-T-09) is the
                                extractor that will read one, and CR-T-10/11/12 run
                                it. Until then these files are empty by design
                                rather than filled with anything we cannot pin to a
@@ -60,7 +60,7 @@ def flags_skeleton(version):
             "host": None,
             "patch_level": None,
             "captured_on": None,
-            "generator": "extract/extract_rhel_flags.py",
+            "generator": "extract/extract_flags.py",
             "status": "pending — no RHEL %s host read yet (CR-T-09/10/11/12)" % version,
             "license_class": "paraphrase-only",
             "source": {

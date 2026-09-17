@@ -4,7 +4,7 @@
   "host": null,
   "patch_level": null,
   "captured_on": null,
-  "generator": "extract/extract_rhel_flags.py",
+  "generator": "extract/extract_flags.py",
   "status": "pending — no RHEL 9 host read yet (CR-T-09/10/11/12)",
   "license_class": "paraphrase-only",
   "source": {
