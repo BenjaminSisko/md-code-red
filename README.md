@@ -16,6 +16,54 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — D4 review fixes MCR-SEC-015..023, conditions E1–E7, branch
+  `salm/milo/generators` (Milo Vance). Marcus Reed's D4 review of the generator tranche returned
+  **DENY** on one HIGH that blocks on its own, plus six conditions and two advisories. All are closed
+  on this branch. **MCR-SEC-015 (HIGH, E1)** — the assembler joined every flag to its value with `=`
+  unless the token said `eq:false`, and `eq:false` was used nowhere in the 24 shipped specs, so 20
+  short-option tokens across 11 of 24 generators emitted `-X=value`, which getopt(3) does not accept:
+  it hands the `=` to the tool as the first character of the argument. `chage -M=60` sets max-days to
+  `"=60"`; `useradd -c=RFC-1234 -s=/bin/bash` silently sets a wrong GECOS and an invalid login shell;
+  `auditctl -w=/etc/motd` watches nothing while looking, to the operator recording the STIG control,
+  like it worked. Fixed at the assembler rather than per token: a new `flagJoin()` derives the join
+  from the flag's own shape — `--long` takes `=`, `-X` takes a space — so all 20 are correct with **no
+  content edit** and the defect is unwritable rather than merely absent. Two escape hatches survive,
+  each legal only on the shape it belongs to (`eq:false` on a long option, `join:"glued"` on a short
+  one), and `extract/schema.py` refuses the disagreement at build time while the assembler returns
+  null at run time. **MCR-SEC-022 (E7) and MCR-SEC-018 (E3)** — the D1 positional rule had an
+  unchecked off-switch: a `flag` key beside `lit` told it to look away, so `{lit:"0644",flag:"-P",
+  requires:"m"}` was accepted and reopened MCR-SEC-013 through the key meant to close it. Replaced
+  with the **derived** discriminator Marcus recommended — a `lit` matching `FLAG_TOKEN_RE` is an
+  option and never occupies an argument slot — in both halves; a token carrying both `lit` and `flag`
+  is now refused outright, including when they agree, and the two shipped exemplars of the shape lose
+  their `flag` key (both keep `requires`). That also closes MCR-SEC-018's over-refusal without the
+  dangerous workaround it invited — deleting `requires` would have made every SELinux boolean change
+  persistent when the operator asked for runtime-only. **MCR-SEC-023** — the lit branch pushed the
+  word and returned, so `sshd -T`, `setsebool -P`, `lvextend -r` and `journalctl --no-pager --boot`
+  appeared in the command and were absent from the flag-by-flag panel; option-shaped literals now
+  reach the inspector, rendering *"unverified — see man page"* where no explanation is curated.
+  **MCR-SEC-016 (E4)** — `lvm_size` and `group_list` field types; four fields retyped off `comment`,
+  the one free-text type, so `lvextend -L 'ticket RFC-1234'` no longer assembles. The LVM placeholder
+  now distinguishes `10G` (set to) from `+10G` (grow by), which nothing in the UI did. **MCR-SEC-019 /
+  MCR-SEC-020 (E5)** — `gen-fw-allow-service`'s citation repointed from `#L310` (`--add-service`, an
+  option it does not emit) to `#L538`, and a new **gate Q19** measures the flag dictionary against the
+  raw captures for all 44 tool/release pairs and checks that every generator citation shows the option
+  that generator actually emits. The dictionary gap is accepted with a date and a ticket in
+  `docs/POAM.md` and `content-src/flag_coverage_baseline.json`; what was missing was not the coverage
+  but anything able to see the gap, since Q15 re-runs the extractor and diffs its output against
+  itself. **MCR-SEC-021 (E6)** — the harness was a containment oracle only: it never asserted the
+  benign command is a valid invocation of its tool, which is how 20 malformed joins passed 76,225
+  checks. It gains a hand-authored **golden-command table** (`tests/fixtures/golden-commands.json`,
+  one row per generator per release, never generated from the assembler), a getopt(3) syntax oracle,
+  and an enum-branch sweep — `benignFor()` no longer pins every enum to `opts[0]`, and every
+  destructive branch must come out at least yellow while a green generator must still have a green
+  branch. The E1 and E7 fixes were committed **fail-first**: `77a688f` (44 harness failures) before
+  `5315fef`, and `1389487` (78 harness + 5 unit failures) before `dee9005`. E2 was already met at
+  `996b504`. Also new: `tests/test_positional_crosscheck.py`, which re-runs Marcus's exhaustive shift
+  sweep extended with option-shaped literals — 3,258 schema-accepted shapes, 104,256 runs, 0 shift
+  violations, and shown failing against the pre-fix tree. Gates: `build.py` reproducible / `qa.py`
+  Q1–Q19 PASS / `unittest` 57 OK (was 51) / harness 81,577 checks 0 FAILED (was 76,225).
+
 - **2026-09-17** — Guided-form generators CR-T-17..25, branch `salm/milo/generators` (Milo Vance).
   24 generator specs across the 9 tool areas Zee assigned this tranche: firewall-cmd (default zone,
   open-port and allow-service rich rules), nmcli (static IPv4), journalctl, lvcreate/lvextend, sshd

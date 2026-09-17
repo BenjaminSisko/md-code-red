@@ -4,6 +4,158 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — D4 review MCR-SEC-015..023, conditions E1–E7 (2026-09-17, branch `salm/milo/generators`)
+
+Marcus Reed's D4 review of the generator tranche at `69fb1c2`/`996b504` returned **DENY** — one HIGH
+that blocks on its own, plus conditions E1–E7 and two advisories. Everything below lands on the same
+branch. E2 (MCR-SEC-017, the rebase onto `origin/main`) was already met at `996b504`; D3 (no YAML
+sink without a YAML quoter *and* a YAML-parsing oracle) remains open and untouched, because this
+branch has no YAML sink.
+
+#### MCR-SEC-015 — HIGH — condition E1 — short options joined with `=`
+
+The assembler joined **every** flag to its value with `=` unless the token carried `eq:false`, and
+`eq:false` was used nowhere in the 24 shipped specs. 20 short-option tokens across 11 of 24
+generators emitted `-X=value`, which getopt(3) does not accept — the `=` is passed through as the
+first character of `optarg`.
+
+    auditctl -w='/etc/motd' -p='r' -k='identity'      ->  auditctl -w '/etc/motd' -p 'r' -k 'identity'
+    chage -M='60' -m='7' -W='14' 'svcacct'            ->  chage -M '60' -m '7' -W '14' 'svcacct'
+    useradd -m -c='RFC-1234' -G='wheel' -s='/bin/bash' 'svcacct'
+                                                      ->  useradd -m -c 'RFC-1234' -G 'wheel' -s '/bin/bash' 'svcacct'
+    lvcreate -L='10G' -n='lv0' 'vg0'                  ->  lvcreate -L '10G' -n 'lv0' 'vg0'
+
+Most fail loudly at the tool, which is the safe direction. Two do not: `auditctl` produces a STIG
+control that looks applied and is not, and `useradd` silently sets GECOS to `=RFC-1234` and the login
+shell to `=/bin/bash`.
+
+**Fixed at the assembler, not per token.** A new `flagJoin()` inside the `MCR-ASSEMBLER` block
+derives the join from the flag's own shape — `--long` joins with `=`, `-X` joins with a space — so
+all 20 tokens are correct with **no content edit at all**, and a 25th generator inherits the rule.
+Two escape hatches survive, each legal only on the shape it belongs to: `eq:false` on a long option,
+`join:"glued"` on a short one for a tool that requires `-Xvalue`. Neither is used in the tranche.
+
+**Deviation from the recommended fix, stated plainly.** MCR-SEC-015 recommended `eq:false` on every
+single-dash token plus a schema rule refusing a single-dash flag whose `eq` is not `false`. That is
+20 content edits and a rule an author can still defeat by forgetting a key on the twenty-first
+generator. The derived rule inverts it: a short option carrying `eq` **at all** is refused, because
+the join is derived and a declaration is a disagreement with the rule rather than a restatement of
+it. `extract/schema.py`'s new `flag_join_errors()` is the build-time half; the assembler returns
+`null` at run time for the same token.
+
+#### MCR-SEC-022 (E7) and MCR-SEC-018 (E3) — the discriminator is now derived
+
+`flag` beside `lit` was an unchecked off-switch for the D1 positional rule. It emits nothing on a lit
+token; its only effect was to make `isPositionalToken()` and `positional_indexes()` look away — so
+`{lit:"0644", flag:"-P", requires:"m"}` was accepted and reopened MCR-SEC-013 through the key meant
+to close it. Marcus's four-row table is now a test, on every release, in both halves:
+
+| template | build time | run time, gate supplied | run time, gate absent |
+|---|---|---|---|
+| `{lit:"0644",requires:"m"}` | REFUSED | — | — |
+| `{lit:"-P",flag:"-P",requires:"m"}` | REFUSED | `null` | `null` |
+| `{lit:"0644",flag:"-P",requires:"m"}` | REFUSED | `null` | `null` |
+| `{lit:"/etc/shadow",flag:"-x",requires:"m"}` | REFUSED | `null` | `null` |
+| `{lit:"-P",requires:"m"}` (derived) | accepted | `chmod -P '/etc/foo'` | `chmod '/etc/foo'` |
+
+A token carrying both `lit` and `flag` is refused **even when they agree**: the branch shipped two
+exemplars of the shape, and an author who hits the D1 build error should not have a
+documented-looking lever to pull. Whether a literal is an option is derived from the literal — a
+`lit` matching `FLAG_TOKEN_RE` is an option and never occupies an argument slot — so a real option
+needs no key. `gen-lvextend-grow` and `gen-setsebool-set` lose their `flag` key and keep `requires`,
+which is the regression Marcus said to watch for. This also closes MCR-SEC-018's over-refusal without
+the dangerous workaround it invited: deleting `requires` to clear the build error would have made
+every SELinux boolean change **persistent** when the operator asked for runtime-only.
+
+#### MCR-SEC-023 — advisory — a lit-emitted option is now explained
+
+The lit branch pushed the word and returned, so `sshd -T`, `setsebool -P`, `lvextend -r` and
+`journalctl --no-pager --boot` appeared in the command and were absent from the flag-by-flag panel.
+The same derived test decides it: an option-shaped literal goes into `flags[]`, in command order.
+With no curated `explain` and no dictionary hit the panel renders *"unverified — see man page"* — the
+no-guess law, not a guess.
+
+#### MCR-SEC-016 — condition E4 — closed grammars where one exists
+
+    lvm_size    ^([+-]?\d+(\.\d+)?[bBsSkKmMgGtTpPeE]?|\d+%(FREE|VG|PVS|ORIGIN))$
+    group_list  ^[a-z_][a-z0-9_-]{0,31}(,[a-z_][a-z0-9_-]{0,31})*$
+
+`gen-lvcreate-new-lv.size`, `gen-lvextend-grow.size`, `gen-useradd-create.groups` and
+`gen-usermod-add-group.groups` move off `comment`, the one free-text type. Nothing here was
+injectable — every value is `shQuote`d and every wrong one fails closed at the tool — but
+`lvextend -L 'ticket RFC-1234' -r '/dev/vg0/lv0'` assembled and rendered Copy on a yellow-blast
+storage command. The `lvm_size` label is load-bearing rather than decorative: it is the placeholder
+and the refusal reason, and the only place in the UI that distinguishes `10G` (set the volume to) from
+`+10G` (grow it by). The four `comment` fields Marcus called defensible stay free text; his unrated
+note on `chronyd -Q` is recorded in `docs/POAM.md` instead of being dropped.
+
+#### MCR-SEC-019 and MCR-SEC-020 — condition E5 — gate Q19
+
+`gen-fw-allow-service` cited `firewall-cmd.man.txt#L310` — `--add-service`, an option it does not
+emit, since it composes a rich rule. Repointed to `#L538`. **CLOSED.**
+
+The dictionary finding was never "there is a gap": it was that nothing could see one, because Q15
+re-runs the extractor and diffs the output against itself. New gate **Q19** has two halves, both
+shown able to fail before commit:
+
+- **Coverage** — distinct long options in each committed raw capture against the dictionary, for all
+  44 tool/release pairs, compared to `content-src/flag_coverage_baseline.json`, which records the gap
+  with its acceptance date, who accepted it and the ticket that owns closing it (CR-T-09/10). A
+  shortfall that **grows** fails; one that shrinks reports and asks for the baseline to be tightened.
+  Measured: firewall-cmd 16 of 205 long options on RHEL 8, dnf/yum 61 of 140, nmcli 2 of 20.
+- **Citations** — a generator citing a raw capture line must cite a line showing the option it emits,
+  and the option that counts is the one bound to a value or a rich rule, not a decoration like
+  `--permanent` that half the firewall-cmd man page mentions.
+
+**MCR-SEC-020 is ACCEPTED WITH A DATE** (2026-09-17) in `docs/POAM.md` alongside the `chronyd -Q`
+note and a re-confirmed MCR-SEC-014; closing the shortfall belongs to CR-T-09/10.
+
+#### MCR-SEC-021 — condition E6 — the harness gets a validity oracle
+
+The 12,689 content-spec checks were a **containment** oracle only. They assert a hostile value is
+rejected or confined to a single-quoted token whose skeleton matches the benign control, and never
+assert the benign control is a valid invocation of its tool. That is exactly how 20 malformed joins
+passed 76,225 checks with 0 failures.
+
+- `tests/fixtures/golden-commands.json` — one row per generator: stated benign values and the **exact**
+  command it must emit on each release (`null` where gated off), the flag list the inspector must show,
+  the blast it must rate, and the man-page rule the row pins. Hand-authored from each tool's man page
+  and getopt(3), never generated from the assembler: a table regenerated from the code it tests is a
+  transcript. Completeness runs both ways — a generator with no row fails, a row naming no generator
+  fails.
+- `optionSyntaxErrors()` — getopt(3) syntax on every benign command the harness assembles, with three
+  negative controls including MCR-SEC-015's own reproduction.
+- `benignFor(field, rot)` — no longer pins every enum to `opts[0]`, so a hostile value is fuzzed
+  against every branch of its neighbours rather than only the safest one.
+- A new enum-branch **control** sweep: every generator × every enum field × every option × every
+  release against the real `dangerous.json` — assembles, valid syntax, never below the declared blast,
+  and every destructive branch (`remove`/`stop`/`disable`/`off`) at least yellow. Checked in the honest
+  direction: a green-declared generator must have a branch **raised** and a branch still **green**, so
+  a pattern table that rated everything yellow would fail.
+
+#### Also
+
+- `tests/test_positional_crosscheck.py` + `tests/shift_crosscheck_driver.js` — Marcus's exhaustive
+  shift sweep re-run after the discriminator change and extended with option-shaped literals: every
+  2-to-4-token template over 8 token kinds containing a literal (4,336 shapes), filtered to the 3,258
+  `extract/schema.py` accepts, driven over 4 releases × 8 supplied/absent combinations — **104,256
+  runs, 0 shift violations**. The expectation is computed in Python from `schema.positional_indexes()`
+  and the answer comes from the assembler lifted through the harness's purity-checked extractor, so
+  neither side restates the other's rule. Shown failing against the pre-fix tree.
+- Nine new schema fixtures (seven invalid, two valid) covering the join rule and the dual-key token.
+- **Fail-first commits**, both hashes recorded: `77a688f` (golden table RED, 44 harness failures) →
+  `5315fef` (E1 green); `1389487` (discriminator table RED, 78 harness + 5 unit failures) → `dee9005`
+  (E7/E3/MCR-SEC-023 green).
+
+**Functions changed in `template.html`, all inside the `MCR-ASSEMBLER` block, and nothing else in that
+file:** `flagJoin()` (new — the derived join rule), `isPositionalToken()` (the derived positional
+discriminator), and `assembleCommand()` in three places (the field-flag branch and the richRule branch
+call `flagJoin()`; the lit branch refuses a dual-key token and pushes option-shaped literals into
+`flags[]`). Two rows were added to the `FIELD_TYPES` table for E4.
+
+**Gates:** `build.py` OK and reproducible · `qa.py` **Q1–Q19 PASS** · `unittest discover` **57 OK**
+(was 51) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225).
+
 ### Added — CR-T-17..25 guided-form generators (2026-09-17, branch `salm/milo/generators`)
 
 24 generator specs, one `GENERATORS` registry, form renderer and `decodeCmd()` — the P0 generator
