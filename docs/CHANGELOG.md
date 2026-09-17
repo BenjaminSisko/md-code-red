@@ -60,6 +60,33 @@ regenerated from the rebuilt artifact each time the island's sha256 moved
 (the flags_rhel9 fix, then the glossary drop) — via the same
 `buildRealExport()` path `test_evidence_export_real.js` uses, not hand-edited.
 
+- **AL-GATE3-015 a/b (tag blocker 4) — `ci.yml` and `docs/QA_GATES.md` said
+  the wrong gate range.** `.forgejo/workflows/ci.yml`'s two `"Q1-Q18"`
+  strings (the header comment and the QA-gate step name) are corrected to
+  `Q1-Q22 + JS`, the range `qa.py`'s own `GATES` list actually runs today.
+  `docs/QA_GATES.md` gained the missing **Q22** row (declared tool is the
+  invoked binary, every flag resolves/is curated/is honestly marked --
+  Marcus Reed's PANEL-001 / condition G1) and its header count is corrected
+  to Q1-Q22 + `JS`, 23 rows. Scope note: this pass touches only the Q22 row
+  and the header line it invalidates -- the Q20 "44 tool/release pairs" and
+  Q21 "226 tracked files" figures elsewhere in that document are separate,
+  pre-existing drift (the former stale as of this same tranche's AL-GATE3-010
+  fix, now 50 pairs; the latter already stale before it, `git ls-files | wc -l`
+  is 271+) and are Sam's docs-alpha lane's to correct, not touched here.
+- **Traceability notes (AL-GATE3-013, AL-GATE3-014a).** Recorded here since
+  no board row exists yet for either: **CR-T-27** (`extract/build_cci_map.py`,
+  a filtered CCI-to-800-53 map) was never built and never cited: its
+  deliverable is produced instead by `extract/parse_xccdf.py` (`:398`) under
+  **CR-T-07**, with 200 mappings filtered from the 5,137-item DISA CCI list,
+  re-checked independently by Q11 -- one parser, one pin verification, one
+  `--check` path, by architect ruling (Gate 3 review, 2026-09-18). **CR-T-31**
+  (print view) and **CR-T-32** (About panel) both shipped, correct, under
+  commit `163b20f`, whose subject cites `CR-T-26/28/29/30` -- neither ID was
+  ever cited by any commit. Zee's board still needs CR-T-30/31/32 formally
+  reconciled and a row opened for the nine-commit verified-per-version
+  tranche (`HL-verified-per-version`); that reconciliation is Zee's, not
+  done here.
+
 ### Fixed — Q14 widened to every curated free-text field, per-field license_class, guide receipt (2026-09-17, branch `salm/milo/q14-scope`)
 
 Self-flagged by Milo Vance during H1: Q14's shingle check scanned only

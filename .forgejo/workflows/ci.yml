@@ -1,7 +1,7 @@
 # MD CODE RED CI — BQP HTML profile (ADR-001 §10, threat-model-v1 §11).
 #
 # Seven steps, in order, stopping at the first failure:
-#   1 build            2 QA gate (Q1-Q18)   3 STIG accuracy re-check
+#   1 build            2 QA gate (Q1-Q22 + JS)   3 STIG accuracy re-check
 #   4 gitleaks         5 size report        6 drift check (reproducible build)
 #   7 artifact upload (with the .sha256 sidecar)
 #
@@ -60,7 +60,7 @@ jobs:
         run: python3 build.py
 
       # ---- 2 ----------------------------------------------------------------
-      - name: QA gate (Q1-Q18, including the hostile-input harness over the built artifact)
+      - name: QA gate (Q1-Q22 + JS, including the hostile-input harness over the built artifact)
         run: python3 qa.py
 
       # ---- 3 ----------------------------------------------------------------
