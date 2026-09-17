@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 27
+  "entry_count": 48
  },
  "categories": [
   "firewall-cmd",
@@ -27,7 +27,8 @@
   "auditctl / ausearch",
   "rsyslog",
   "chronyd",
-  "podman"
+  "podman",
+  "coreutils"
  ],
  "entries": [
   {
@@ -1794,6 +1795,1239 @@
     "10"
    ],
    "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+  },
+  {
+   "id": "ls-listing",
+   "tool": "ls",
+   "category": "coreutils",
+   "intent": "See what is in a directory before touching anything in it",
+   "rhel_versions": {
+    "7": {
+     "command": "ls -la /etc",
+     "notes": "Long-form listing with dotfiles: permissions, owner, group, size, and mtime for every entry, including . and .. Reads directory metadata only."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-l",
+     "explain": "Long format: one entry per line with mode, link count, owner, group, size, and modification time.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "Include entries whose name starts with a dot, including . and ..",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-h",
+     "explain": "Pair with -l to print sizes in human-readable units (K, M, G) instead of raw bytes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "Sort by modification time, newest first, instead of by name.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-R",
+     "explain": "Recurse into subdirectories and list each one in turn.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listing prints without an error and the entry count matches what the operator expects for that directory.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ls",
+    "title": "man page for ls, as installed on the reference host",
+    "url_or_man": "man ls(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "cd-change-directory",
+   "tool": "cd",
+   "category": "coreutils",
+   "intent": "Move the shell's working directory so relative paths resolve somewhere else",
+   "rhel_versions": {
+    "7": {
+     "command": "cd /var/log",
+     "notes": "A shell builtin, not an external binary: it changes the CURRENT SHELL's state and so cannot be run in a subshell or a pipeline and have the effect stick. With no argument it goes to $HOME; `cd -` returns to the previous directory."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-P",
+     "explain": "Resolve symlinks and use the physical directory structure instead of a logical (symlink-preserving) path.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-L",
+     "explain": "Use the logical path, following the shell's $PWD rather than resolving symlinks (the default).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`pwd` afterward prints the intended directory.",
+   "undo": "Nothing to undo -- `cd -` returns to the previous directory, or `cd` with no argument returns to $HOME.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "pushd-popd-directory-stack",
+   "tool": "pushd",
+   "category": "coreutils",
+   "intent": "Jump to a directory while remembering the one just left, then jump back later",
+   "rhel_versions": {
+    "7": {
+     "command": "pushd /var/log && tail -n 20 messages ; popd",
+     "notes": "Bash-only builtins layered on top of cd: pushd saves the current directory on a stack and changes to the new one; popd removes the top of the stack and cd's back to it. Neither exists in POSIX sh."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "+N",
+     "explain": "With pushd/popd, rotate to the Nth directory from the left of the stack instead of the top.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Suppress the directory-stack change; only manipulate the stack, don't cd.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`dirs` (or the shell prompt, if it shows $PWD) confirms which directory is current after each call.",
+   "undo": "popd undoes the matching pushd; running the stack back down with repeated popd returns to the starting directory.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "pwd-print-working-directory",
+   "tool": "pwd",
+   "category": "coreutils",
+   "intent": "Confirm exactly which directory the shell is in before running a relative-path command",
+   "rhel_versions": {
+    "7": {
+     "command": "pwd -P",
+     "notes": "Prints the absolute path of the current working directory, resolving symlinks with -P; without a flag it may print the shell's logical $PWD, which can include a symlink component."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-P",
+     "explain": "Print the physical path, resolving every symlink in it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-L",
+     "explain": "Print the logical path from $PWD without resolving symlinks (often the default).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed path matches where the operator believes they are.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-pwd",
+    "title": "man page for pwd, as installed on the reference host",
+    "url_or_man": "man pwd(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "cat-print-file",
+   "tool": "cat",
+   "category": "coreutils",
+   "intent": "Print a whole file to the terminal, or concatenate several files together",
+   "rhel_versions": {
+    "7": {
+     "command": "cat -n /etc/hosts",
+     "notes": "Streams the named file(s) to standard output in order. On a large or binary file this can flood the terminal, so head/less/tail are usually the better first move."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Number every output line.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-A",
+     "explain": "Show non-printing characters and mark line ends with $ and tabs with ^I, useful for spotting hidden whitespace.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Squeeze repeated blank lines down to one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-b",
+     "explain": "Number only non-blank output lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The expected file content appears on the terminal with no 'No such file' error.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-cat",
+    "title": "man page for cat, as installed on the reference host",
+    "url_or_man": "man cat(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "less-page-file",
+   "tool": "less",
+   "category": "coreutils",
+   "intent": "Read a large file a screen at a time instead of flooding the terminal",
+   "rhel_versions": {
+    "7": {
+     "command": "less /var/log/messages",
+     "notes": "An interactive pager: space/b page forward and back, / searches forward, ? searches backward, q quits. Unlike more, it can scroll backward and does not need to read the whole file first, so it opens instantly even on very large logs."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-N",
+     "explain": "Show line numbers down the left margin.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-S",
+     "explain": "Chop long lines instead of wrapping them; use the arrow keys to scroll sideways.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "+F",
+     "explain": "Start in follow mode, behaving like `tail -f` until Ctrl-C, then drop into the normal pager.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The file opens in the pager and / search finds the expected text.",
+   "undo": "Nothing to undo -- read-only; q exits without changing the file.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-less",
+    "title": "man page for less, as installed on the reference host",
+    "url_or_man": "man less(1)",
+    "version": "less 530-583",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "head-first-lines",
+   "tool": "head",
+   "category": "coreutils",
+   "intent": "See the beginning of a file without opening the whole thing",
+   "rhel_versions": {
+    "7": {
+     "command": "head -n 50 /var/log/messages",
+     "notes": "Prints the first N lines (10 by default) of each named file. Useful for checking a file's header, or the first records after a batch job starts writing."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Number of lines to print (accepts a count, e.g. -n 50).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Print the first N bytes instead of lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Always print a filename header, even with a single file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The expected leading lines of the file are printed.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-head",
+    "title": "man page for head, as installed on the reference host",
+    "url_or_man": "man head(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "tail-last-lines-follow",
+   "tool": "tail",
+   "category": "coreutils",
+   "intent": "See the end of a file, and optionally keep watching it as new lines arrive",
+   "rhel_versions": {
+    "7": {
+     "command": "tail -f -n 50 /var/log/messages",
+     "notes": "Prints the last N lines (10 by default); -f keeps the process running and prints new lines as the file grows, which is the standard way to watch a live log. Ctrl-C stops following."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Number of lines to print from the end (accepts a count, e.g. -n 50).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Follow the file: keep running and print appended lines as they are written.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-F",
+     "explain": "Like -f, but also re-opens the file by name if it is rotated or replaced.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Print the last N bytes instead of lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The expected trailing lines print, and with -f new lines appear as the watched process writes them.",
+   "undo": "Nothing to undo -- read-only; Ctrl-C stops a following tail without changing the file.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-tail",
+    "title": "man page for tail, as installed on the reference host",
+    "url_or_man": "man tail(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "which-locate-binary",
+   "tool": "which",
+   "category": "coreutils",
+   "intent": "Find out exactly which binary on $PATH will run when a command name is typed",
+   "rhel_versions": {
+    "7": {
+     "command": "which -a systemctl",
+     "notes": "Searches $PATH in order and prints the first (or, with -a, every) matching executable. Says nothing about shell builtins or aliases -- `type` covers those."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Print every matching executable on $PATH, not just the first.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Silent mode: no output, only an exit status, for use in scripts.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed path exists and matches the binary the operator expects to run.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-which",
+    "title": "man page for which, as installed on the reference host",
+    "url_or_man": "man which(1)",
+    "version": "which 2.20-2.21",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "type-classify-command",
+   "tool": "type",
+   "category": "coreutils",
+   "intent": "Find out whether a name is a shell builtin, an alias, a function, or an external binary before running it",
+   "rhel_versions": {
+    "7": {
+     "command": "type -a cd",
+     "notes": "A shell builtin, so it sees what the shell itself would run for that name -- including builtins and aliases, which `which` cannot see -- before falling back to a $PATH search."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Print every place the name resolves (alias, function, builtin, and each PATH match), not just the first.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "Print a single word describing the match: alias, keyword, function, builtin, or file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "type reports the kind of command (builtin, alias, function, or file) the operator expected.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "man-manual-page",
+   "tool": "man",
+   "category": "coreutils",
+   "intent": "Read the installed manual page for a command instead of guessing at its flags",
+   "rhel_versions": {
+    "7": {
+     "command": "man 5 sshd_config",
+     "notes": "Opens the manual page for the given name in the pager. The optional section number (1 commands, 5 file formats, 8 admin commands, etc.) disambiguates a name that appears in more than one section."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-k",
+     "explain": "Search man page names and descriptions for a keyword (equivalent to apropos).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Show which section(s) a name appears in (equivalent to whatis).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-w",
+     "explain": "Print the file path of the man page instead of displaying it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The page for the intended command and section opens in the pager.",
+   "undo": "Nothing to undo -- read-only; q exits the pager.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-man",
+    "title": "man page for man, as installed on the reference host",
+    "url_or_man": "man man(1)",
+    "version": "man-db 2.7-2.11",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "history-shell-history",
+   "tool": "history",
+   "category": "coreutils",
+   "intent": "Review or re-run a command that was typed earlier in this shell session",
+   "rhel_versions": {
+    "7": {
+     "command": "history 20",
+     "notes": "A shell builtin that prints the session's recorded command history (from memory and, at shell exit, from $HISTFILE). `!n` re-runs history entry n and `!!` re-runs the last command; on a STIG'd host these are recorded for audit, so a bad `!n` re-run is exactly as consequential as retyping the command."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Clear the in-memory history list for this session.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-d",
+     "explain": "Delete a single history entry by its offset.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-w",
+     "explain": "Write the current history list out to $HISTFILE immediately.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed entries match what was actually typed, in order, with their history numbers.",
+   "undo": "Nothing to undo -- read-only, unless -c or -d was used to edit the history list itself, which -w against a backed-up $HISTFILE can restore.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "umask-default-permissions",
+   "tool": "umask",
+   "category": "coreutils",
+   "intent": "Check or set the permission bits stripped from every new file and directory this shell creates",
+   "rhel_versions": {
+    "7": {
+     "command": "umask",
+     "notes": "With no argument, prints the current mask in octal (the STIG default is 0077 for interactive shells). With an argument it sets the mask for the rest of the session; the change does not apply retroactively to files that already exist."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-S",
+     "explain": "Print the mask in symbolic form (u=rwx,g=,o=) instead of octal.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "<mode>",
+     "explain": "Set the mask, e.g. `umask 0077`, so new files get no group/other access by default.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed (or newly set) mask matches policy, and a file created afterward has the expected permissions.",
+   "undo": "Run `umask` again with the previous value to restore it -- the setting is per-shell and never persists past the session unless it is also written into a shell init file.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "id-show-identity",
+   "tool": "id",
+   "category": "coreutils",
+   "intent": "Confirm which user and groups a command will actually run as",
+   "rhel_versions": {
+    "7": {
+     "command": "id -a",
+     "notes": "Prints the caller's (or a named user's) uid, gid, and full group list. The classic first check after `su`/`sudo` to confirm privilege actually changed."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-u",
+     "explain": "Print only the numeric user ID.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-g",
+     "explain": "Print only the numeric primary group ID.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-G",
+     "explain": "Print only the numeric group IDs the user belongs to.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Pair with -u/-g/-G to print names instead of numeric IDs.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported uid/gid/groups match the identity the operator expects to be running as.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-id",
+    "title": "man page for id, as installed on the reference host",
+    "url_or_man": "man id(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "who-logged-in-users",
+   "tool": "who",
+   "category": "coreutils",
+   "intent": "See who is currently logged in and on which terminal",
+   "rhel_versions": {
+    "7": {
+     "command": "who -a",
+     "notes": "Reads the current utmp record and prints each logged-in session's user, line, and login time. Lighter weight than `w`, with no CPU/load information."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Show all information: logins, run level, boot time, and dead processes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-b",
+     "explain": "Show the time of the last system boot only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-q",
+     "explain": "Print just a count and the list of logged-in usernames.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed sessions match who the operator expects to be on the box right now.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-who",
+    "title": "man page for who, as installed on the reference host",
+    "url_or_man": "man who(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "w-logged-in-activity",
+   "tool": "w",
+   "category": "coreutils",
+   "intent": "See who is logged in, what they are running, and how loaded the host is, in one view",
+   "rhel_versions": {
+    "7": {
+     "command": "w",
+     "notes": "Combines who's session list with the current load averages and each session's current foreground process and idle time. Reads /proc and utmp; changes nothing."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-h",
+     "explain": "Suppress the header line, for use in scripts.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Short format: drop the login time and JCPU/PCPU columns.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed sessions, idle times, and load average match host reality.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-w",
+    "title": "man page for w, as installed on the reference host",
+    "url_or_man": "man w(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "last-login-history",
+   "tool": "last",
+   "category": "coreutils",
+   "intent": "Review recent logins and reboots recorded in wtmp, for incident timelines and access review",
+   "rhel_versions": {
+    "7": {
+     "command": "last -F -n 25",
+     "notes": "Reads /var/log/wtmp (rotated, so history is finite) and prints logins, logouts, and reboots newest first. `last reboot` filters to just boot events."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Limit to the last N records.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-F",
+     "explain": "Print full login and logout timestamps instead of abbreviated ones.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-x",
+     "explain": "Include system shutdown and runlevel-change events.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "<user>",
+     "explain": "Filter to one account's login history.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed logins/logouts/reboots line up with what the operator already knows happened.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-last",
+    "title": "man page for last, as installed on the reference host",
+    "url_or_man": "man last(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "su-switch-user",
+   "tool": "su",
+   "category": "coreutils",
+   "intent": "Start a shell as another user, most often root, from an already-authenticated session",
+   "rhel_versions": {
+    "7": {
+     "command": "su -",
+     "notes": "Prompts for the TARGET account's password (not the caller's), then execs a shell as that user; the trailing `-` requests a full login shell with that user's environment instead of inheriting the caller's. On a STIG'd host, pam_faillock counts failed su attempts toward the SAME lockout counter as failed console/sudo logins (deny=3 by default) -- a mistyped root password here can lock the account exactly like a bad SSH login would."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-",
+     "explain": "Request a login shell: reset environment, change directory, and run the target's login scripts.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Run a single command as the target user and return, instead of starting an interactive shell.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Choose which shell to run instead of the target account's default.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`id` inside the new shell reports the target user's uid/gid.",
+   "undo": "Exit the su'd shell (Ctrl-D or `exit`) to return to the original session; nothing about the calling user's account is changed by su itself.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-su",
+    "title": "man page for su, as installed on the reference host",
+    "url_or_man": "man su(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "sudo-run-as-another-user",
+   "tool": "sudo",
+   "category": "coreutils",
+   "intent": "Run one command with another account's privileges, per a policy in /etc/sudoers, without opening a full shell",
+   "rhel_versions": {
+    "7": {
+     "command": "sudo -l",
+     "notes": "Authenticates the CALLING user's own password (unlike su, which needs the target's) and checks /etc/sudoers for permission before running the command as the target (root by default). `sudo -l` lists what the caller is allowed to run. On a STIG'd host the same pam_faillock lockout counter (deny=3, unlock_time=0 on the hardest baselines) applies to a mistyped sudo password as to a failed console login -- three bad sudo attempts can lock the only admin out with no automatic unlock. Never pipe a password into sudo with a heredoc on such a host; use an interactive prompt or a vetted non-interactive credential path instead."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-l",
+     "explain": "List the commands and options the current user is permitted to run.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Run as a user other than root.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Run an interactive login shell as the target user.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-k",
+     "explain": "Invalidate the cached sudo timestamp, forcing the next sudo to re-prompt for a password.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The command runs with the target account's privileges and `id` (run via sudo) reports that identity.",
+   "undo": "Nothing to undo for a read command; for a state-changing command run via sudo, undo the underlying command's own effect, not sudo itself.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-sudo",
+    "title": "man page for sudo, as installed on the reference host",
+    "url_or_man": "man sudo(8)",
+    "version": "sudo 1.8-1.9",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "env-show-environment",
+   "tool": "env",
+   "category": "coreutils",
+   "intent": "See exactly what environment a command would inherit, or run one command with a modified environment",
+   "rhel_versions": {
+    "7": {
+     "command": "env | sort",
+     "notes": "With no arguments, prints every inherited environment variable. Given a command, it can run that command with variables added, removed (-u), or with a nearly empty environment (-i), without changing the calling shell's own variables."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-i",
+     "explain": "Start from a nearly empty environment (only what's explicitly set on the command line) instead of inheriting the caller's.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Unset a named variable for the child command only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "VAR=value",
+     "explain": "Set or override a variable for the child command only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed (or child-process) environment contains exactly the variables expected.",
+   "undo": "Nothing to undo -- env never modifies the calling shell's own environment, only what a launched child process sees.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-env",
+    "title": "man page for env, as installed on the reference host",
+    "url_or_man": "man env(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "export-shell-variable",
+   "tool": "export",
+   "category": "coreutils",
+   "intent": "Make a shell variable visible to every command this shell launches from now on",
+   "rhel_versions": {
+    "7": {
+     "command": "export PATH=\"$PATH:/opt/tool/bin\"",
+     "notes": "A shell builtin: an ordinary variable is local to this shell process; export marks it so child processes inherit it too. The change lasts only for this shell session unless it is also written into a shell init file."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Remove the export attribute from a variable without unsetting its value.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "List every currently exported variable.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "A newly launched command (e.g. `env | grep VARNAME`) shows the expected value.",
+   "undo": "Unset the variable with `unset VARNAME`, or restart the shell -- the change never persists past the session unless also placed in a shell init file.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
   }
  ]
 }

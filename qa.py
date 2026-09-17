@@ -3400,7 +3400,15 @@ def gate_q22(ctx):
             if not cmd:
                 continue                  # unavailable on this release — nothing to check
             words = cmd.split()
-            if words and words[0] == "sudo":
+            # A leading "sudo" is ordinarily privilege-elevation noise in front of
+            # the real subject binary and is stripped before comparison -- EXCEPT
+            # when the entry's own declared binary IS sudo (the daily-commands
+            # tranche's su/sudo entry, Milo Vance, 2026-09-17): there the command
+            # legitimately starts and ends with "sudo" as the subject itself
+            # (e.g. "sudo -l"), and stripping it would compare sudo's OWN flag
+            # against the binary name and always fail. No existing entry has
+            # binary "sudo" today, so this changes nothing else.
+            if words and words[0] == "sudo" and binary != "sudo":
                 words = words[1:]
             first = words[0] if words else ""
             if first != binary:

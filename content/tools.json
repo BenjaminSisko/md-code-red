@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 19
+  "tool_count": 41
  },
  "tools": [
   {
@@ -590,6 +590,622 @@
     "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "ls",
+   "binary": "ls",
+   "label": "ls",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-ls",
+    "title": "man page for ls, as installed on the reference host",
+    "url_or_man": "man ls(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "cd",
+   "binary": "cd",
+   "label": "cd (shell builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "pushd",
+   "binary": "pushd",
+   "label": "pushd (bash builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "popd",
+   "binary": "popd",
+   "label": "popd (bash builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "pwd",
+   "binary": "pwd",
+   "label": "pwd",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-pwd",
+    "title": "man page for pwd, as installed on the reference host",
+    "url_or_man": "man pwd(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "cat",
+   "binary": "cat",
+   "label": "cat",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-cat",
+    "title": "man page for cat, as installed on the reference host",
+    "url_or_man": "man cat(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "less",
+   "binary": "less",
+   "label": "less",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-less",
+    "title": "man page for less, as installed on the reference host",
+    "url_or_man": "man less(1)",
+    "version": "less 530-583",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "head",
+   "binary": "head",
+   "label": "head",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-head",
+    "title": "man page for head, as installed on the reference host",
+    "url_or_man": "man head(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "tail",
+   "binary": "tail",
+   "label": "tail",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-tail",
+    "title": "man page for tail, as installed on the reference host",
+    "url_or_man": "man tail(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "which",
+   "binary": "which",
+   "label": "which",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-which",
+    "title": "man page for which, as installed on the reference host",
+    "url_or_man": "man which(1)",
+    "version": "which 2.20-2.21",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "type",
+   "binary": "type",
+   "label": "type (shell builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "man",
+   "binary": "man",
+   "label": "man",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-man",
+    "title": "man page for man, as installed on the reference host",
+    "url_or_man": "man man(1)",
+    "version": "man-db 2.7-2.11",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "history",
+   "binary": "history",
+   "label": "history (shell builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "umask",
+   "binary": "umask",
+   "label": "umask",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "id",
+   "binary": "id",
+   "label": "id",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-id",
+    "title": "man page for id, as installed on the reference host",
+    "url_or_man": "man id(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "who",
+   "binary": "who",
+   "label": "who",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-who",
+    "title": "man page for who, as installed on the reference host",
+    "url_or_man": "man who(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "w",
+   "binary": "w",
+   "label": "w",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-w",
+    "title": "man page for w, as installed on the reference host",
+    "url_or_man": "man w(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "last",
+   "binary": "last",
+   "label": "last",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-last",
+    "title": "man page for last, as installed on the reference host",
+    "url_or_man": "man last(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "su",
+   "binary": "su",
+   "label": "su",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-su",
+    "title": "man page for su, as installed on the reference host",
+    "url_or_man": "man su(1)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "sudo",
+   "binary": "sudo",
+   "label": "sudo",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-sudo",
+    "title": "man page for sudo, as installed on the reference host",
+    "url_or_man": "man sudo(8)",
+    "version": "sudo 1.8-1.9",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "env",
+   "binary": "env",
+   "label": "env",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-env",
+    "title": "man page for env, as installed on the reference host",
+    "url_or_man": "man env(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "export",
+   "binary": "export",
+   "label": "export (shell builtin)",
+   "category": "coreutils",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-bash",
+    "title": "man page for bash, as installed on the reference host",
+    "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
+    "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
    }
   }
  ]
