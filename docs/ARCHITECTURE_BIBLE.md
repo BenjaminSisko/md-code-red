@@ -727,6 +727,16 @@ review, not a `build.py` flag.
 
 ## 25. Glossary
 
+This is documentation prose, not shipped content. `content/glossary.json`
+(the Ansible-fork glossary this section's own note points at) is present in
+the repo but not shipped in the alpha: `build.py`'s `CONTENT` map dropped it
+for v1.0.0-alpha.1 (AL-GATE3-011, CEO decision, Gate 3 review
+ENG-2026-09-18-002 section 8.1 item 2) because it shipped embedded and
+unreachable -- no Glossary kind in the search index, no rail, no panel, no
+renderer. The file stays committed for a later tranche that wires a real
+RHEL/STIG glossary view, at which point this section becomes the design
+reference for that view rather than a description of dead weight.
+
 - **Air-gapped network**: a network with no physical or logical connection to the
   public internet or any external network -- the deployment context this tool is
   built for.
