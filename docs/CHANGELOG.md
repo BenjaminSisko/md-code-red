@@ -4,6 +4,66 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — Q14 widened to every curated free-text field, per-field license_class, guide receipt (2026-09-17, branch `salm/milo/q14-scope`)
+
+Self-flagged by Milo Vance during H1: Q14's shingle check scanned only
+`rhel_versions[].notes`, `.changed_in_note.what` and `flags[].explain`, and
+decided whether to check an entry AT ALL by reading `entry.source.license_class`
+once, before `curated_texts()` ever ran a single field. Caught by hand during
+H1 (a paraphrase-only man-page sentence pasted into a curated field, since
+reworded); this tranche closes the class of gap rather than the one instance.
+
+- **Field coverage.** `intent`, `verify`, `undo` — the same clipboard-header
+  fields `notes` and `flags[].explain` sit beside (`extract/schema.py`
+  `HEADER_BOUND_FIELDS`, mirrored rather than imported: `qa.py` stays
+  stdlib-only and keeps its own independent read of the content, same
+  reasoning as Q8..Q11's own XCCDF parse) — had no check at all. Neither did
+  a generator spec's `fields[].label`/`.help` (the form-facing UI copy on a
+  `"template" in e` entry, no `type` restriction, exactly where a pasted man
+  page sentence would land) or `stig[].notes` (not in the schema today;
+  added defensively so a future one is not a silent hole).
+- **Per-field license_class, not per-entry.** The real gap the 27-entry audit
+  found: `firewalld-service-active`, `journald-service-active` and
+  `ctrl-alt-del-target-masked` all cite a verbatim-ok DISA STIG at
+  `entry.source`, but carry individual `flags[]` marked
+  `license_class: paraphrase-only` (systemctl's `status`/`is-active`
+  behaviour is documented, not STIG text). Under the old entry-level filter
+  those flags' `explain` text was never read at all — a verbatim lift there
+  would have shipped clean. `curated_texts()` now returns `(text,
+  license_class)` pairs; a flag's own `license_class` overrides its entry's
+  when present, everything else stays governed by the entry's.
+- **Guide-citation offline mechanism (the decision this tranche made).** Q14
+  stays a pure offline check against `content-src/raw/` — no reach to the
+  corpus mirror on saratoga, which is not in this repo and not available
+  air-gapped (the same reasoning `gate_q15`'s own docstring already gives for
+  refusing a live-host dependency). A paraphrase-only entry whose
+  `source.url_or_man` is not a `man ...` reference or a `content-src/raw/`
+  path (`source_is_offline_checkable()` — i.e. it names a Red Hat guide,
+  which this repo does not stage: copying guide prose into `content-src/`
+  just to shingle-check it would itself be the verbatim embedding the
+  licensing ruling exists to prevent) now requires a `source.
+  paraphrase_attested_by {by, on}` receipt, checked against `content-src/
+  roster.json`'s QA role through the same `normalize_person_name()`/
+  `load_roster()` two-person-rule infrastructure `gate_q16` already uses
+  (`attestation_failures()`). None of the 27 shipped entries hit this path —
+  every one cites a staged man page or a DISA STIG — so this is forward cover
+  for the first entry that cites a guide directly, not a change to what
+  ships today.
+- **Audit.** All 27 shipped command entries re-checked under the widened
+  gate: **0 collisions, 0 entries need a `paraphrase_attested_by` receipt.**
+  Every paraphrase-only entry's prose, including the three flag-level
+  overrides above, genuinely paraphrases its cited man page.
+- **Fail-first.** `tests/test_paraphrase.py` widened from 15 to 33 cases —
+  `TheWidenedFieldsAreCaught`, `TheFlagLicenseClassOverride`,
+  `TheChronydNearMiss` (the H1 incident re-created deterministically from
+  `content-src/raw/rhel8/chronyd.man.txt`, plus a check that the real
+  `gen-chronyd-one-shot-check` entry is clean) and `TheGuideAttestationReceipt`.
+  Committed red at `23d340c` against the unwidened `qa.py`
+  (`python3 -m unittest tests.test_paraphrase`: Ran 33 tests, FAILED —
+  failures=9, errors=6, skipped=2); green after the `qa.py` fix at `de5c21d`
+  (Ran 33 tests, OK, skipped=2 — the two end-to-end `TheWholeGate` cases,
+  which need a `dist/` build).
+
 ### Fixed — Q16 closes J1/J2/J3, the Verified-per-version review's conditions (2026-09-18, branch `salm/milo/receipt-guards`)
 
 Marcus Reed's Verified-per-version review (VER-001/002/003) approved the per-version receipt
