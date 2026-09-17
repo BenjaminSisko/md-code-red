@@ -158,11 +158,17 @@ watched fail, and what it explicitly does not prove is `docs/QA_GATES.md`, not
 restated here. The full local verification sequence, in order:
 
 ```
-rm -rf dist && python3 build.py
+git clean -fdx dist && python3 build.py
 python3 qa.py
 python3 -m unittest discover -s tests
 node tests/hostile_harness.js
 ```
+
+`git clean -fdx dist`, never `rm -rf dist`: `dist/` has carried tracked release
+artifacts (the shipped `.html`, its `.sha256` sidecar, its `.provenance.json`)
+since v1.0.0-alpha.1 was tagged, and `build.py` does not regenerate all three
+on its own -- `rm -rf dist` deletes committed files a plain rebuild will not
+restore. `git clean -fdx dist` removes only what git does not track.
 
 All four must be green before a branch is considered mergeable -- this is the
 same sequence `docs/ARCHITECTURE_BIBLE.md`'s rebuild verification checklist

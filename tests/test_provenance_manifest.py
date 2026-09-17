@@ -11,6 +11,14 @@ committed content, never re-implement it) and checks the two claims that
 matter most independently, the same way qa.py's build_ctx() would: re-hash
 the artifact file and the bytes inside its own <script id="mcr-data"> island,
 and compare both to what the manifest says.
+
+Artifact lookup is qa.find_artifact() itself, not a second copy of it. This
+file used to carry its own `sorted(glob)[-1]` duplicate -- the same
+AL-GATE3-001-class fail-open qa.py's own find_artifact() had (DECISION_LOG
+2026-09-17/18): a stale dist/*.html sorting last would make this test check
+make_provenance.py against the wrong file and never notice. Importing qa's
+version means this test locates the artifact exactly the way a real gate
+does, with the same refusal to guess.
 """
 import hashlib
 import json
@@ -24,12 +32,10 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST = os.path.join(REPO, "dist")
 SCRIPT = os.path.join(REPO, "extract", "make_provenance.py")
 
+sys.path.insert(0, REPO)
+import qa  # noqa: E402
 
-def find_artifact():
-    if not os.path.isdir(DIST):
-        return None
-    cands = sorted(f for f in os.listdir(DIST) if f.startswith("md-code-red_") and f.endswith(".html"))
-    return os.path.join(DIST, cands[-1]) if cands else None
+find_artifact = qa.find_artifact
 
 
 def sha256_file(path):

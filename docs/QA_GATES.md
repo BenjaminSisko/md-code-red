@@ -23,13 +23,30 @@ usually missing from documents like this:
 tracked with IDs (`MCR-SEC-*` from Marcus Reed's security reviews, `AL-GATE3-*`
 from Al's Gate 3 diff review) and referenced in the rows they belong to.
 
+## Clean rebuild: `git clean -fdx dist`, never `rm -rf dist`
+
+`dist/` has carried tracked release artifacts since v1.0.0-alpha.1 was tagged:
+`md-code-red_v1.0.0-alpha.1.html`, its `.sha256` sidecar, and its
+`.provenance.json` manifest are all committed to this repo, not merely
+build output. `rm -rf dist` deletes tracked content that `build.py` does not
+regenerate (only `extract/make_provenance.py` writes the provenance manifest,
+and it is not part of a normal `build.py` run) -- so the "clean, then rebuild"
+step the integrator checklist and `docs/WORKFLOW.md`/`docs/CODE_STANDARDS.md`
+document as standing practice quietly breaks the working tree every time it is
+followed literally, leaving a committed file gone until someone notices and
+restores it. `git clean -fdx dist` removes only what git does NOT track --
+exactly the stale artifacts and stray sidecars this file's Q1 section and
+`dist_integrity_failures()` exist to refuse -- and leaves the release
+artifacts alone. Use `git clean -fdx dist && python3 build.py` everywhere the
+old `rm -rf dist && python3 build.py` recipe is written down.
+
 ---
 
 ## The table
 
 | Gate | Proves | Negative control | Residual |
 |---|---|---|---|
-| **Q1** | Build integrity: DOCTYPE/`<html>`/`<head>`/`<body>` present, exactly two `<script>` elements (one JSON island, one inline app script), the island parses, the version string matches in five places, the build date matches, the `.sha256` sidecar matches the artifact, no raw `<` or `>` survives into the data island, **and (CR-T-28) the embedded `CONTENT_FINGERPRINT` constant equals a fresh sha256 of the shipped island**. The fingerprint is defined as the sha256 of exactly the bytes inside `<script id="mcr-data">…</script>` — computed by `build.py` before that payload is substituted into the template (never a hash of a string containing itself) and embedded as a plain constant, never inside the island. | **Partial.** `tests/test_island_escaping.py` (7) drives `island_escape_failures()` with `<!--<script`, with the pre-MCR-SEC-007 `</`-only escaping, and end to end through a real build with the hostile sequence planted in a rule title. The DOCTYPE / script-count / five-way version match / sha256-sidecar / fingerprint checks have **no fixture** — nothing has ever broken the script count, corrupted a version string, or planted a stale fingerprint and asserted Q1 catches it. | The island-escaping half is the only half that has been watched fail. |
+| **Q1** | Build integrity: DOCTYPE/`<html>`/`<head>`/`<body>` present, exactly two `<script>` elements (one JSON island, one inline app script), the island parses, the version string matches in five places, the build date matches, the `.sha256` sidecar matches the artifact, no raw `<` or `>` survives into the data island, **and (CR-T-28) the embedded `CONTENT_FINGERPRINT` constant equals a fresh sha256 of the shipped island**. The fingerprint is defined as the sha256 of exactly the bytes inside `<script id="mcr-data">...</script>` -- computed by `build.py` before that payload is substituted into the template (never a hash of a string containing itself) and embedded as a plain constant, never inside the island. **Preflight, before any of the above runs:** `find_artifact()` no longer globs `dist/` and takes whatever sorts last -- it derives the ONE filename `build.py`'s own `APP_VERSION` names and gates exactly that file, nothing else. `dist_integrity_failures()` then refuses to proceed at all (hard `FAIL`, non-zero exit, before Q1's own checks run) if `dist/` holds any other `md-code-red_*.html`/`.sha256`/`.provenance.json`, naming every offender, or if the correctly-named artifact is older than `build.py`, `template.html`, or anything in `content/` -- a stale file cannot pass by having the right name and an unchecked clock. | **Partial**, now **Yes** for artifact selection. `tests/test_island_escaping.py` (7) as before for the escaping half. **New:** `tests/test_dist_integrity.py` (5) closes AL-GATE3-001's post-release finding (DECISION_LOG 2026-09-17, three dist/ incidents) -- a stale sidecar named to sort after the real artifact and carrying the CURRENT version string (the `*.main.html` shape of the actual incident) is proven NOT selected; a stray `.html`/`.sha256` in `dist/` is proven refused, named; a correctly-named artifact predating a `content/` edit is proven refused by mtime. The DOCTYPE / script-count / five-way version match / sha256-sidecar / fingerprint checks still have **no fixture** -- nothing has ever broken the script count, corrupted a version string, or planted a stale fingerprint and asserted Q1 catches it. | The island-escaping half and the artifact-selection half are the only halves that have been watched fail. Selection is now name-derived rather than defensive pattern-matching: it cannot be fooled by sort order, but a `dist/` holding a file with the exact expected name that was hand-edited in place (never rebuilt, `touch`ed to a fresh mtime) is a residual this gate does not close -- CONTENT_FINGERPRINT and the sha256 sidecar (both above) are what catch that instead. |
 | **Q2** | Air-gap law: no external script, stylesheet, link, image or media element; no `@import`/`@font-face`; no non-`data:` `url()`; no `http(s)` `src`/`href`; no network-capable API reached from the app script by any of four routes (written out, bracketed, fused from string literals, or aliased without being called); no CDN literal, written out or assembled. | **Yes**, `tests/test_airgap_and_markers.py` (19): nine routes to a network API, ten "stays clean" controls covering every computed-member shape `template.html` writes, and an end-to-end planted `window["fe"+"tch"]` through `gate_q2` on the real artifact. | A name produced at **run time** from something that is not a string literal — a code-point array, a value out of the content island — is invisible to any scan of the source. Same residual Q17 states; same reason. |
 | **Q3** | Provenance law: every command entry, tool, flag dictionary, rules dataset, the CCI map and the destructive-pattern table carry all five `source` fields, with a `license_class` from the allowed set. The field list and the class list are **read out of `extract/schema.py`'s text**, never restated here. | **Yes**, `tests/test_provenance_fields.py` (8): one field dropped at a time, the superset assertion against `schema.PROVENANCE_FIELDS`, an assertion that `qa.py` reads the tuple rather than restating something that happens to match, and unreadable/empty schema tuples. Empty-set case in `tests/test_empty_set_gates.py`. | The **check** is deliberately independent of `extract/schema.py` (that is the point of Q3) — only the constant is shared. So the two can still disagree about what "missing" means, just not about which fields are required. |
 | **Q4** | Every command entry carries `verify`, `undo`, and a `blast` of `green`/`yellow`/`red`. | **Yes**, `tests/test_empty_set_gates.py` (6) for the empty case. The per-field checks have no fixture. | Proves the fields are **present and well-typed**, never that a `verify` command verifies anything or that an `undo` undoes it. Content validation is CR-T-34. |
@@ -64,9 +81,10 @@ politer word.
 
 Named here rather than left to be discovered by the next reviewer:
 
-1. **Q1**, except its island-escaping half. Nothing has ever broken the script
-   count, corrupted one of the five version strings, mismatched the sha256
-   sidecar, or planted a stale `CONTENT_FINGERPRINT` and asserted Q1 catches it.
+1. **Q1**, except its island-escaping half and its artifact-selection preflight
+   (`tests/test_dist_integrity.py`). Nothing has ever broken the script count,
+   corrupted one of the five version strings, mismatched the sha256 sidecar,
+   or planted a stale `CONTENT_FINGERPRINT` and asserted Q1 catches it.
 2. **Q6.** A text scan doing what it says, with a cosmetic blast radius.
 3. **Q15.** The `--check` re-run is exercised end to end on every build and by
    nothing in `tests/`.

@@ -104,7 +104,36 @@ class TheRepositoryIsClean(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.paths = qa.tracked_text_files()
+        all_paths = qa.tracked_text_files()
+        # A tracked path this working tree does not currently have -- most
+        # commonly one of dist/'s own committed release files after a
+        # wrongly-run `rm -rf dist` instead of `git clean -fdx dist` (see
+        # docs/QA_GATES.md's "Clean rebuild" section) -- is a WORKING-TREE
+        # STATE, not a trojan character. Split it out here, once, so every
+        # test below reads only files that exist and reports the gap
+        # plainly (test_no_tracked_file_is_missing_from_the_working_tree)
+        # instead of a later test crashing on an unhandled
+        # FileNotFoundError the moment it tries to open one directly.
+        if all_paths is None:
+            cls.paths, cls.missing = None, []
+        else:
+            cls.missing = [rel for rel in all_paths
+                           if not os.path.exists(os.path.join(REPO, rel))]
+            missing_set = set(cls.missing)
+            cls.paths = [rel for rel in all_paths if rel not in missing_set]
+
+    def test_no_tracked_file_is_missing_from_the_working_tree(self):
+        """A git-tracked file absent from disk is a working-tree problem,
+        never a trojan character -- report it plainly, pointing at the fix,
+        rather than let it silently thin the corpus every other test in
+        this class scans, or crash a test that opens it directly."""
+        self.assertEqual(
+            [], self.missing,
+            "%d git-tracked file(s) are missing from the working tree: %s. "
+            "Restore them with `git checkout -- <path>` (or `git checkout "
+            "-- dist` if they are all under dist/ -- see docs/QA_GATES.md's "
+            "'Clean rebuild' section for why `rm -rf dist` causes this)."
+            % (len(self.missing), ", ".join(self.missing)))
 
     def test_the_corpus_is_real(self):
         """A walk that returns nothing would pass the assertion below."""
