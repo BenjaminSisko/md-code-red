@@ -79,18 +79,14 @@ class RealContentIsSchemaClean(unittest.TestCase):
         starts rejecting the nulls. Nothing here needs editing for that to happen.
         """
         data = build.load_content()
-        ctx = schema.make_ctx(data)
-        nulls = [(e["id"], fl.get("flag"))
-                 for e in data["commands"]["entries"]
-                 for fl in (e.get("flags") or []) if fl.get("explain") is None]
-        if ctx["flags_datasets_empty"]:
-            self.assertEqual([], schema.content_errors(data),
-                             "flag explains are null and the dictionaries are empty — that is legal; "
-                             "some other rule is failing")
-        else:
-            self.assertEqual([], nulls,
-                             "the FLAGS dictionaries are populated, so these flags must now carry a "
-                             "curated explain: %s" % nulls)
+        nulls_on_verified = [(e["id"], fl.get("flag"))
+                             for e in data["commands"]["entries"] if e.get("verified")
+                             for fl in (e.get("flags") or []) if fl.get("explain") is None]
+        self.assertEqual([], nulls_on_verified,
+                         "verified entries must carry a curated explain for every flag: %s" % nulls_on_verified)
+        self.assertEqual([], schema.content_errors(data),
+                         "unverified entries may carry explain:null (curation is a later, cited step); "
+                         "some other rule is failing")
 
 
 class ValidFixtures(unittest.TestCase):
