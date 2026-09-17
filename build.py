@@ -21,14 +21,20 @@ import sys
 from datetime import date
 
 REPO = os.path.dirname(os.path.abspath(__file__))
+
+# The content schema lives in extract/schema.py so that build.py and
+# tests/test_schema.py enforce the same rules from one file (CR-T-06). extract/ is
+# a plain directory of scripts, not a package, so it goes on the path explicitly.
+sys.path.insert(0, os.path.join(REPO, "extract"))
+import schema  # noqa: E402
 APP_NAME = "MD CODE RED"
 APP_VERSION = "v1.0.0-dev"
 APP_BUILD_DATE = date.today().isoformat()
 CLASSIFICATION = "UNCLASSIFIED"
 
-VERSIONS = ("7", "8", "9", "10")
-BLASTS = ("green", "yellow", "red")
-LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
+VERSIONS = schema.VERSIONS
+BLASTS = schema.BLASTS
+LICENSE_CLASSES = schema.LICENSE_CLASSES
 
 # ADR-001 §4 content layout. Curated families are hand-authored; generated
 # families are produced by extract/ and are never hand-edited.
@@ -38,7 +44,8 @@ CONTENT = {
     "tools": "tools.json",
     "dangerous": "dangerous.json",
     "glossary": "glossary.json",
-    # generated — extract/make_skeleton_content.py today, parse_xccdf.py at CR-T-07
+    # generated — extract/parse_xccdf.py (rules_*, cci_nist),
+    #             extract/make_pending_skeletons.py (flags_*, expected_output)
     "rules_7": "rules_rhel7.json",
     "rules_8": "rules_rhel8.json",
     "rules_9": "rules_rhel9.json",
@@ -83,214 +90,21 @@ def load_content(root=None):
 
 # --------------------------------------------------------------------------
 # validate() — fails loud, never silently drops an entry
+#
+# The rules themselves live in extract/schema.py (CR-T-06). This function is the
+# build's enforcement point: load the one cross-file fact schema.py cannot derive
+# from content/ (the source_ref ids in content-src/SOURCES.json), ask for the error
+# list, and refuse to assemble anything if it is non-empty.
 # --------------------------------------------------------------------------
 
-def _provenance_errors(where, src):
-    """source.title / url_or_man / retrieved_on / license_class are mandatory."""
-    errs = []
-    if not isinstance(src, dict):
-        return ["%s: missing provenance (no source object)" % where]
-    for field in ("title", "url_or_man", "retrieved_on", "license_class"):
-        if not src.get(field):
-            errs.append("%s: missing provenance field source.%s" % (where, field))
-    lc = src.get("license_class")
-    if lc and lc not in LICENSE_CLASSES:
-        errs.append("%s: license_class '%s' is not one of %s" % (where, lc, ", ".join(LICENSE_CLASSES)))
-    return errs
-
-
-def _resolve_chain(entry_id, versions, key, errs):
-    """Follow same_as pointers to a concrete value. Detects cycles and dangling keys."""
-    seen = []
-    cur = key
-    while True:
-        if cur in seen:
-            errs.append("commands entry %s: same_as cycle %s" % (entry_id, " -> ".join(seen + [cur])))
-            return None
-        seen.append(cur)
-        val = versions.get(cur)
-        if not isinstance(val, dict):
-            errs.append("commands entry %s: rhel_versions['%s'] is not an object" % (entry_id, cur))
-            return None
-        if "same_as" not in val:
-            return cur
-        nxt = val.get("same_as")
-        if nxt not in VERSIONS:
-            errs.append("commands entry %s: rhel_versions['%s'].same_as '%s' is not one of %s"
-                        % (entry_id, cur, nxt, ", ".join(VERSIONS)))
-            return None
-        cur = nxt
-
-
 def validate(data):
-    errs = []
-    cmds = data["commands"]
-    categories = set(cmds.get("categories") or [])
-    tool_ids = set(t.get("id") for t in data["tools"].get("tools", []))
     have_sources_json = os.path.exists(CONTENT_SRC_SOURCES)
     source_ids = set()
     if have_sources_json:
         with open(CONTENT_SRC_SOURCES, encoding="utf-8") as f:
             source_ids = set(json.load(f).get("sources", {}).keys())
 
-    # ---- generated datasets: provenance and shape ----
-    for v in VERSIONS:
-        rules = data["rules"][v]
-        meta = rules.get("_meta") or {}
-        errs += _provenance_errors("rules_rhel%s _meta" % v, meta.get("source"))
-        if not meta.get("generator"):
-            errs.append("rules_rhel%s: _meta.generator missing (generated files declare their extractor)" % v)
-        if meta.get("rule_count") != len(rules.get("rules", [])):
-            errs.append("rules_rhel%s: _meta.rule_count %s != %d embedded rules"
-                        % (v, meta.get("rule_count"), len(rules.get("rules", []))))
-        for r in rules.get("rules", []):
-            if not r.get("i") or not r.get("rid") or not r.get("t"):
-                errs.append("rules_rhel%s: rule %s missing STIG ID, rule id, or title" % (v, r.get("v", "?")))
-        flags = data["flags"][v]
-        fmeta = flags.get("_meta") or {}
-        if flags.get("clis"):
-            # A dictionary that embeds flag text must name where the text came from.
-            errs += _provenance_errors("flags_rhel%s _meta" % v, fmeta.get("source"))
-        elif not (fmeta.get("status") or "").strip():
-            # An empty dictionary embeds nothing, so it has nothing to cite — but it
-            # must say, in words, why it is empty. Silence is not an option.
-            errs.append("flags_rhel%s: dictionary is empty and _meta.status does not say why" % v)
-        if not fmeta.get("generator"):
-            errs.append("flags_rhel%s: _meta.generator missing" % v)
-    errs += _provenance_errors("cci_nist _meta", (data["cci_nist"].get("_meta") or {}).get("source"))
-    for t in data["tools"].get("tools", []):
-        errs += _provenance_errors("tools entry %s" % t.get("id", "?"), t.get("source"))
-        avail = t.get("availability") or {}
-        if set(avail.keys()) != set(VERSIONS):
-            errs.append("tools entry %s: availability keys %s != the four RHEL keys"
-                        % (t.get("id", "?"), sorted(avail.keys())))
-        for v in VERSIONS:
-            a = avail.get(v) or {}
-            if "available" not in a:
-                errs.append("tools entry %s: availability['%s'] has no 'available' value" % (t.get("id", "?"), v))
-            elif a.get("available") is False and not a.get("reason"):
-                errs.append("tools entry %s: availability['%s'] is unavailable with no reason" % (t.get("id", "?"), v))
-
-    # ---- rule lookup for referential integrity ----
-    rule_by_version = {}
-    for v in VERSIONS:
-        rule_by_version[v] = {r["i"]: r for r in data["rules"][v].get("rules", []) if r.get("i")}
-
-    captures = (data["expected_output"].get("captures") or {})
-
-    # ---- command entries ----
-    ids = []
-    for e in cmds.get("entries", []):
-        eid = e.get("id") or "?"
-        ids.append(eid)
-        for field in ("id", "tool", "category", "intent", "verify", "undo", "blast", "source"):
-            if not e.get(field):
-                errs.append("commands entry %s: missing %s" % (eid, field))
-        if e.get("blast") not in BLASTS:
-            errs.append("commands entry %s: bad blast '%s'" % (eid, e.get("blast")))
-        if e.get("category") and e.get("category") not in categories:
-            errs.append("commands entry %s: category '%s' not in commands.json categories" % (eid, e.get("category")))
-        if e.get("tool") and e.get("tool") not in tool_ids:
-            errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e.get("tool")))
-        errs += _provenance_errors("commands entry %s" % eid, e.get("source"))
-
-        # four RHEL keys, always, with an explicit value shape
-        versions = e.get("rhel_versions")
-        if not isinstance(versions, dict):
-            errs.append("commands entry %s: rhel_versions missing" % eid)
-        else:
-            missing = [v for v in VERSIONS if v not in versions]
-            extra = [k for k in versions if k not in VERSIONS]
-            if missing:
-                errs.append("commands entry %s: rhel_versions missing RHEL key(s) %s — "
-                            "all four of 7/8/9/10 are mandatory, 'not available' is a value not an absence"
-                            % (eid, ", ".join(missing)))
-            if extra:
-                errs.append("commands entry %s: rhel_versions has unknown key(s) %s" % (eid, ", ".join(extra)))
-            for v in VERSIONS:
-                val = versions.get(v)
-                if not isinstance(val, dict):
-                    continue
-                if "same_as" in val:
-                    _resolve_chain(eid, versions, v, errs)
-                elif "unavailable" in val:
-                    u = val.get("unavailable") or {}
-                    if not (u.get("reason") or "").strip():
-                        errs.append("commands entry %s: rhel_versions['%s'].unavailable has an empty reason" % (eid, v))
-                elif "command" in val:
-                    if not (val.get("command") or "").strip():
-                        errs.append("commands entry %s: rhel_versions['%s'].command is empty" % (eid, v))
-                    cin = val.get("changed_in_note")
-                    if cin not in (None, {}) and isinstance(cin, dict):
-                        for field in ("version", "what", "source_ref"):
-                            if not cin.get(field):
-                                errs.append("commands entry %s: rhel_versions['%s'].changed_in_note missing %s"
-                                            % (eid, v, field))
-                else:
-                    errs.append("commands entry %s: rhel_versions['%s'] is none of "
-                                "{command,notes,changed_in_note} / {same_as} / {unavailable}" % (eid, v))
-
-        # flags
-        for fl in (e.get("flags") or []):
-            if not fl.get("flag"):
-                errs.append("commands entry %s: a flags[] item has no flag token" % eid)
-            ref = fl.get("source_ref")
-            if ref:
-                if not have_sources_json:
-                    errs.append("commands entry %s: flag '%s' cites source_ref '%s' but "
-                                "content-src/SOURCES.json does not exist yet" % (eid, fl.get("flag"), ref))
-                elif ref not in source_ids:
-                    errs.append("commands entry %s: flag '%s' source_ref '%s' does not resolve in "
-                                "content-src/SOURCES.json" % (eid, fl.get("flag"), ref))
-
-        # stig[] referential integrity
-        for s in (e.get("stig") or []):
-            sid = s.get("stig_id")
-            v = s.get("rhel_version")
-            if not sid:
-                errs.append("commands entry %s: a stig[] item has no stig_id" % eid)
-                continue
-            if v not in VERSIONS:
-                errs.append("commands entry %s: stig %s has rhel_version '%s', not one of %s"
-                            % (eid, sid, v, ", ".join(VERSIONS)))
-                continue
-            rec = rule_by_version[v].get(sid)
-            if rec is None:
-                errs.append("commands entry %s: stig_id %s does not resolve to a record in rules_rhel%s.json"
-                            % (eid, sid, v))
-                continue
-            if s.get("rule_id") != rec.get("rid"):
-                errs.append("commands entry %s: stig %s rule_id '%s' != rules_rhel%s record rid '%s'"
-                            % (eid, sid, s.get("rule_id"), v, rec.get("rid")))
-            if s.get("cci") and list(s["cci"]) != list(rec.get("cci") or []):
-                errs.append("commands entry %s: stig %s cci %s != source-parsed %s"
-                            % (eid, sid, s.get("cci"), rec.get("cci")))
-            if s.get("nist") and list(s["nist"]) != list(rec.get("n") or []):
-                errs.append("commands entry %s: stig %s nist %s != CCI-map-derived %s"
-                            % (eid, sid, s.get("nist"), rec.get("n")))
-            exp = s.get("expected_output")
-            if exp:
-                key = "%s|%s|%s" % (eid, sid, v)
-                if key not in captures:
-                    errs.append("commands entry %s: stig %s carries expected_output with no capture record "
-                                "'%s' in content/expected_output.json — expected output is captured, never typed"
-                                % (eid, sid, key))
-
-        # verified is a receipt, not a boolean claim
-        ver = e.get("verified")
-        if ver not in (False, None):
-            if not isinstance(ver, dict):
-                errs.append("commands entry %s: verified must be false or {by,on,host}" % eid)
-            else:
-                for field in ("by", "on", "host"):
-                    if not ver.get(field):
-                        errs.append("commands entry %s: verified is set but has no capture record field '%s'"
-                                    % (eid, field))
-
-    dupes = sorted(set(i for i in ids if ids.count(i) > 1))
-    if dupes:
-        errs.append("duplicate command entry ids: %s" % ", ".join(dupes))
-
+    errs = schema.content_errors(data, source_ids=source_ids, have_sources_json=have_sources_json)
     if errs:
         for e in errs:
             print("SCHEMA:", e, file=sys.stderr)
@@ -310,7 +124,7 @@ def assemble(data):
         for v in VERSIONS:
             val = versions[v]
             if "same_as" in val:
-                target = _resolve_chain(e["id"], versions, v, errs)
+                target = schema.resolve_chain(e["id"], versions, v, errs)
                 if target is None:
                     continue
                 base = dict(versions[target])

@@ -28,8 +28,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
 
-      - name: Schema tests (build.py must fail loud on broken content)
-        run: python3 tests/test_build_fails_on_broken.py
+      # extract/schema.py states the content schema once; test_schema.py pins it
+      # against valid and invalid bundles, and test_build_fails_on_broken.py proves
+      # the build itself refuses defective content. Discover runs both, so a new
+      # test file is picked up without editing this protected workflow.
+      - name: Schema and build-refusal tests
+        run: python3 -m unittest discover -s tests -v
 
       # ---- 1 ----------------------------------------------------------------
       - name: Build the single file from sources (never patch an assembled file)

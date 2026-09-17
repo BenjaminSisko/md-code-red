@@ -52,6 +52,13 @@ CCI_LIST = "U_CCI_List.xml"
 SAMPLE_PER_RELEASE = 20
 SAMPLE_STRIDE = 7
 
+# Every extractor that writes into content/. Q15 re-runs each with --check and
+# diffs the result against the committed files (ADR-001 §6.3).
+GENERATORS = (
+    "extract/parse_xccdf.py",            # rules_rhel{7,8,9,10}.json, cci_nist.json
+    "extract/make_pending_skeletons.py",  # flags_rhel{7,8,9,10}.json, expected_output.json
+)
+
 CDN_LITERALS = ("cdnjs", "jsdelivr", "unpkg", "googleapis", "gstatic", "cdn.")
 
 # ---------------------------------------------------------------------------
@@ -627,14 +634,23 @@ def gate_q8(ctx):
         if meta.get("source_rule_count") != total:
             f.append("rules_rhel%s: _meta.source_rule_count %s != %d rules in the pinned XCCDF"
                      % (v, meta.get("source_rule_count"), total))
+        # CR-T-07 removed the partial datasets. extract/parse_xccdf.py emits every
+        # rule in every pinned benchmark, so a shortfall is now a failure and not a
+        # declaration: there is no longer an extractor that can honestly produce one.
         if meta.get("partial"):
-            d.append("rules_rhel%s: %d of %d source rules embedded — declared PARTIAL (%s)"
-                     % (v, len(embedded), total, meta.get("partial_reason", "")[:60]))
-        elif len(embedded) != total:
-            f.append("rules_rhel%s: %d embedded != %d in the pinned XCCDF and _meta.partial is not set"
-                     % (v, len(embedded), total))
+            f.append("rules_rhel%s: _meta.partial is set — CR-T-07 emits full benchmarks; "
+                     "a partial RULES dataset no longer has a generator that produces it" % v)
+        if len(embedded) != total:
+            f.append("rules_rhel%s: %d embedded != %d rules in the pinned XCCDF" % (v, len(embedded), total))
         else:
-            d.append("rules_rhel%s: %d rules, full parity with the pinned XCCDF" % (v, total))
+            cats = meta.get("cat_counts") or {}
+            d.append("rules_rhel%s (%s): %d rules, full parity with the pinned XCCDF — "
+                     "CAT I %s / II %s / III %s"
+                     % (v, meta.get("version", "?"), total,
+                        cats.get("I", "?"), cats.get("II", "?"), cats.get("III", "?")))
+        if meta.get("generator") not in GENERATORS:
+            f.append("rules_rhel%s: _meta.generator '%s' is not an extractor Q15 re-runs"
+                     % (v, meta.get("generator")))
     entries = data["commands"]["entries"]
     if len(entries) != (data["commands"].get("_meta") or {}).get("entry_count"):
         f.append("commands.json _meta.entry_count != %d embedded entries" % len(entries))
@@ -644,6 +660,14 @@ def gate_q8(ctx):
         fl = data["flags"][v]
         d.append("flags_rhel%s: %d CLI dictionaries (%s)"
                  % (v, len(fl.get("clis", {})), (fl.get("_meta") or {}).get("status", "")[:48]))
+    cci_meta = data["cci_nist"].get("_meta") or {}
+    n_cci = len(data["cci_nist"].get("cci", {}))
+    if cci_meta.get("entry_count") != n_cci:
+        f.append("cci_nist.json: _meta.entry_count %s != %d embedded mappings"
+                 % (cci_meta.get("entry_count"), n_cci))
+    else:
+        d.append("cci_nist: %d mappings embedded, filtered from the %s item DISA CCI list"
+                 % (n_cci, cci_meta.get("source_cci_count", "?")))
     return f, d
 
 
@@ -654,15 +678,21 @@ def gate_q9(ctx):
     n_cat1 = 0
     for v in VERSIONS:
         src, _ = ctx["source_rules"][v]
+        cat1 = 0
         for r in data["rules"][v].get("rules", []):
             sid = r.get("i")
             if not sid:
                 f.append("rules_rhel%s: a rule has no STIG ID" % v)
                 continue
+            if r.get("c") not in ("I", "II", "III"):
+                f.append("rules_rhel%s %s: CAT '%s' is not I/II/III" % (v, sid, r.get("c")))
             if r.get("c") == "I":
+                cat1 += 1
                 n_cat1 += 1
-                if not r.get("chk") or not r.get("fix"):
-                    f.append("rules_rhel%s %s: CAT I with missing check or fix text" % (v, sid))
+                missing = [label for label, key in (("check", "chk"), ("fix", "fix")) if not r.get(key)]
+                if missing:
+                    f.append("rules_rhel%s %s: CAT I rule with no %s text — a CAT I finding without "
+                             "both is not usable as evidence" % (v, sid, " and no ".join(missing)))
             s = src.get(sid)
             if s and s["cci"] and not r.get("cci"):
                 f.append("rules_rhel%s %s: source has CCI %s, embedded record has none" % (v, sid, s["cci"]))
@@ -670,9 +700,18 @@ def gate_q9(ctx):
                 if cci_map.get(c) and cci_map[c].get("nist") and not r.get("n"):
                     f.append("rules_rhel%s %s: %s maps to %s but the record carries no NIST control"
                              % (v, sid, c, cci_map[c]["nist"]))
+        # A release with no CAT I rules at all means the severity parse dropped them
+        # silently, which would make this gate pass by having nothing to check.
+        if cat1 == 0:
+            f.append("rules_rhel%s: zero CAT I rules — every pinned RHEL benchmark has some, so the "
+                     "severity parse dropped them" % v)
+        else:
+            d.append("rules_rhel%s: all %d CAT I rules carry both check and fix text" % (v, cat1))
     if not f:
-        d.append("every embedded rule has a STIG ID; all %d CAT I rules carry check and fix text; "
-                 "CCI present wherever the source has one; NIST present wherever the CCI maps" % n_cat1)
+        d.append("every one of the %d embedded rules has a STIG ID and a CAT of I/II/III; all %d CAT I "
+                 "rules carry check and fix text; CCI present wherever the source has one; NIST present "
+                 "wherever the CCI maps"
+                 % (sum(len(data["rules"][v].get("rules", [])) for v in VERSIONS), n_cat1))
     return f, d
 
 
@@ -689,7 +728,11 @@ def gate_q10(ctx):
         ids = sorted(embedded)
         sample = ids[::SAMPLE_STRIDE][:SAMPLE_PER_RELEASE] or ids[:SAMPLE_PER_RELEASE]
         if len(ids) <= SAMPLE_PER_RELEASE:
-            sample = ids                      # small partial dataset: check all of it
+            sample = ids                      # dataset smaller than the sample: check all of it
+        elif len(sample) < SAMPLE_PER_RELEASE:
+            f.append("rules_rhel%s: stride %d over %d rules yields only %d samples, not the %d "
+                     "ADR-001 §7.3 Q10 requires" % (v, SAMPLE_STRIDE, len(ids), len(sample),
+                                                    SAMPLE_PER_RELEASE))
         bad = []
         for sid in sample:
             e, s = embedded[sid], src.get(sid)
@@ -704,14 +747,22 @@ def gate_q10(ctx):
                 bad.append("%s: CCI %s != source %s" % (sid, e.get("cci"), s["cci"]))
             if e.get("c") != s["c"]:
                 bad.append("%s: CAT %s != source %s" % (sid, e.get("c"), s["c"]))
-            ef = (e.get("fix") or "").split("[trimmed")[0].strip()
-            if ef and not s["fix"].startswith(ef[:100]):
-                bad.append("%s: fix text prefix differs from source" % sid)
+            # CR-T-07 embeds check and fix verbatim and uncapped, so the whole text
+            # must match — not merely a prefix. The split on the Etsy pipeline's
+            # trim marker stays so a capped dataset would still be compared fairly.
+            for key, label in (("fix", "fix"), ("chk", "check")):
+                et = (e.get(key) or "").split("[trimmed")[0].strip()
+                if et and not s[key].startswith(et[:100]):
+                    bad.append("%s: %s text prefix differs from source" % (sid, label))
+                elif et and et != s[key]:
+                    bad.append("%s: %s text differs from source beyond its first 100 characters"
+                               % (sid, label))
         if bad:
             f.append("rules_rhel%s accuracy: %s" % (v, "; ".join(bad[:6])))
         else:
-            d.append("rules_rhel%s: %d sampled rules re-parsed from %s and identical on "
-                     "title, rule id, CCI, CAT, and fix-text prefix" % (v, len(sample), XCCDF[v]))
+            d.append("rules_rhel%s: %d of %d rules sampled at stride %d, re-parsed from %s, identical "
+                     "on title, rule id, CCI, CAT, and full check and fix text"
+                     % (v, len(sample), len(ids), SAMPLE_STRIDE, XCCDF[v]))
     return f, d
 
 
@@ -741,6 +792,14 @@ def gate_q11(ctx):
     else:
         d.append("%d of %d CCI mappings re-checked against %s (Rev 5 index) — all match"
                  % (len(sample), len(ids), CCI_LIST))
+    # The map is filtered on purpose (ADR-001 §5.4). It must be filtered to exactly
+    # what the four benchmarks cite: anything more is dead weight in an air-gapped
+    # file, anything less breaks a crosswalk at render time.
+    meta = data["cci_nist"].get("_meta") or {}
+    unmapped = meta.get("unmapped_cci")
+    if unmapped:
+        d.append("%d referenced CCI(s) carry no 800-53 index in the DISA list and are embedded with an "
+                 "empty nist[] rather than a guess: %s" % (len(unmapped), ", ".join(unmapped[:6])))
     # every CCI referenced by an embedded rule must exist in the map
     referenced = set()
     for v in VERSIONS:
@@ -751,6 +810,10 @@ def gate_q11(ctx):
         f.append("CCIs referenced by embedded rules but absent from cci_nist.json: %s" % ", ".join(missing))
     else:
         d.append("all %d CCIs referenced by embedded rules resolve in the map" % len(referenced))
+    unreferenced = sorted(set(embedded) - referenced)
+    if unreferenced:
+        f.append("cci_nist.json carries %d mapping(s) no embedded rule cites — the map is filtered to "
+                 "the referenced set (ADR-001 §5.4): %s" % (len(unreferenced), ", ".join(unreferenced[:6])))
     return f, d
 
 
@@ -889,19 +952,42 @@ def gate_q14(ctx):
 
 
 def gate_q15(ctx):
+    """Re-run every extractor over the committed sources and diff (ADR-001 §6.3).
+
+    One entry per generated content family. A family with no extractor listed here
+    is a family nobody can prove was generated rather than typed, so the list is
+    checked against the generators the datasets themselves declare, below.
+    """
     f, d = [], []
-    script = os.path.join(REPO, "extract", "make_skeleton_content.py")
-    if not os.path.exists(script):
-        f.append("extract/make_skeleton_content.py missing — generated files cannot be re-derived")
-        return f, d
-    proc = subprocess.run([sys.executable, script, "--check"], cwd=REPO,
-                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    out = proc.stdout.decode("utf-8", "replace").strip()
-    if proc.returncode != 0:
-        f.append("generated content does not match a fresh extractor run (hand-edited?):\n      "
-                 + out.replace("\n", "\n      "))
+    for script in GENERATORS:
+        path = os.path.join(REPO, script)
+        if not os.path.exists(path):
+            f.append("%s missing — the files it generates cannot be re-derived" % script)
+            continue
+        proc = subprocess.run([sys.executable, path, "--check"], cwd=REPO,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out = proc.stdout.decode("utf-8", "replace").strip()
+        if proc.returncode != 0:
+            f.append("generated content does not match a fresh run of %s (hand-edited?):\n      %s"
+                     % (script, out.replace("\n", "\n      ")))
+        else:
+            d.append(out)
+
+    # Every generated dataset must name a generator this gate actually re-runs.
+    # Otherwise a file could declare an extractor that is never executed and drift
+    # unnoticed — which is precisely the hand-edit this gate exists to catch.
+    data = ctx["data"]
+    declared = set()
+    for v in VERSIONS:
+        declared.add(((data["rules"][v].get("_meta") or {}).get("generator")))
+    declared.add((data["cci_nist"].get("_meta") or {}).get("generator"))
+    unrerun = sorted(g for g in declared if g and g not in GENERATORS)
+    if unrerun:
+        f.append("generated dataset(s) declare a generator this gate does not re-run: %s"
+                 % ", ".join(unrerun))
     else:
-        d.append(out)
+        d.append("every RULES and CCI dataset declares a generator that this gate re-ran: %s"
+                 % ", ".join(sorted(declared - {None})))
     return f, d
 
 
