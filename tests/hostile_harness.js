@@ -66,7 +66,8 @@ function extractAssembler(file) {
     "\"use strict\";\n" + block + "\n" +
     "return {shQuote:shQuote,yamlQuote:yamlQuote,validateField:validateField," +
     "validateSpec:validateSpec,assembleCommand:assembleCommand," +
-    "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES};");
+    "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES," +
+    "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap};");
   return { api: factory(), bytes: block.length };
 }
 
@@ -80,31 +81,134 @@ function extractAssembler(file) {
    NOT backslash-escaped — which is the only text an injected value could ever
    act through. */
 function tokenize(cmd) {
-  var words = [], cur = "", bare = "", quoted = false, started = false, inQ = false, i = 0;
+  var words = [], cur = "", bare = "", deq = "", quoted = false, started = false, inQ = false, i = 0;
   function flush() {
-    if (started) words.push({ raw: cur, bare: bare, quoted: quoted });
-    cur = ""; bare = ""; quoted = false; started = false;
+    if (started) words.push({ raw: cur, bare: bare, deq: deq, quoted: quoted });
+    cur = ""; bare = ""; deq = ""; quoted = false; started = false;
   }
   while (i < cmd.length) {
     var c = cmd.charAt(i);
     if (inQ) {
       cur += c;
-      if (c === "'") inQ = false;
+      if (c === "'") inQ = false; else deq += c;
       i++; started = true; continue;
     }
     if (c === "\\") {
       if (i + 1 >= cmd.length) return null;      /* trailing backslash: malformed */
       cur += c + cmd.charAt(i + 1);
+      deq += cmd.charAt(i + 1);
       i += 2; started = true; continue;          /* escaped char is inert, not 'bare' */
     }
     if (c === "'") { inQ = true; quoted = true; cur += c; i++; started = true; continue; }
     if (c === " " || c === "\t") { flush(); i++; continue; }
     if (c === "\n" || c === "\r") return null;   /* a raw newline is never legitimate here */
-    cur += c; bare += c; i++; started = true;
+    cur += c; bare += c; deq += c; i++; started = true;
   }
   if (inQ) return null;                          /* unbalanced quote: quoting is broken */
   flush();
   return words;
+}
+
+/* ------------------------------------------------- the rich-rule oracle -----
+ * MCR-SEC-005(b). tokenize()/skeleton() prove SHELL-token containment and
+ * nothing else: a value can sit perfectly inside one single-quoted shell word
+ * and still rewrite the grammar of whatever consumes that word. firewalld's
+ * rich-rule language is that consumer, so it gets its own parser here.
+ *
+ * parseRichRule() is deliberately strict — every token is either an element
+ * name or a key="value" attribute with no quote inside the value. Anything else
+ * is injected syntax and returns null rather than being tolerated.
+ */
+function parseRichRule(s) {
+  var toks = String(s).split(" ");
+  if (toks.length < 2 || toks[0] !== "rule") return null;
+  var els = [{ name: "rule", attrs: [] }], action = null, i;
+  for (i = 1; i < toks.length; i++) {
+    var t = toks[i];
+    if (/^[a-z][a-z0-9-]*$/.test(t)) {
+      if (i === toks.length - 1) { action = t; break; }
+      els.push({ name: t, attrs: [] });
+      continue;
+    }
+    var m = /^([a-z][a-z0-9-]*)="([^"\s]*)"$/.exec(t);
+    if (!m) return null;
+    els[els.length - 1].attrs.push([m[1], m[2]]);
+  }
+  if (action === null) return null;
+  return { elements: els, action: action };
+}
+
+/* What the OPERATOR asked for, derived from the plan and the values they chose —
+ * the intent the composed rule must equal, element for element, in order. */
+function intendedRichRule(plan, values) {
+  var els = [{ name: "rule", attrs: [["family", values[plan.family]]] }];
+  if (plan.source && values[plan.source] !== undefined) {
+    els.push({ name: "source", attrs: [["address", values[plan.source]]] });
+  }
+  if (plan.destination && values[plan.destination] !== undefined) {
+    els.push({ name: "destination", attrs: [["address", values[plan.destination]]] });
+  }
+  if (plan.service && values[plan.service] !== undefined) {
+    els.push({ name: "service", attrs: [["name", values[plan.service]]] });
+  }
+  if (plan.port && values[plan.port] !== undefined) {
+    els.push({ name: "port", attrs: [["port", values[plan.port]], ["protocol", values[plan.protocol]]] });
+  }
+  return { elements: els, action: values[plan.action] };
+}
+
+function describeRule(r) {
+  var out = [], i, j;
+  for (i = 0; i < r.elements.length; i++) {
+    var e = r.elements[i], bits = [];
+    for (j = 0; j < e.attrs.length; j++) bits.push(e.attrs[j][0] + "=" + e.attrs[j][1]);
+    out.push(e.name + "(" + bits.join(",") + ")");
+  }
+  return out.join(" ") + " -> " + r.action;
+}
+
+/* The oracle proper: lift the composed rule back out of the assembled command,
+ * parse it, and assert the element count, the element order, every attribute and
+ * the ACTION are exactly the operator's intent. An injected `accept` clause or a
+ * `log` element changes the count; a swapped action changes the action. */
+function richRuleOracle(command, plan, values) {
+  var words = tokenize(command);
+  if (words === null) return "the command does not tokenise as balanced shell words";
+  var payload = null, i;
+  for (i = 0; i < words.length; i++) {
+    if (words[i].deq.indexOf("--add-rich-rule=") === 0) {
+      payload = words[i].deq.slice("--add-rich-rule=".length);
+    }
+  }
+  if (payload === null) return "no --add-rich-rule= token in the assembled command";
+  var got = parseRichRule(payload);
+  if (got === null) return "the composed rich rule does not parse as rich-rule syntax: " + JSON.stringify(payload);
+  var want = intendedRichRule(plan, values);
+  if (got.elements.length !== want.elements.length) {
+    return "rich-rule element count " + got.elements.length + " != the operator's " +
+           want.elements.length + " — " + describeRule(got) + " vs " + describeRule(want);
+  }
+  for (i = 0; i < want.elements.length; i++) {
+    var g = got.elements[i], w = want.elements[i];
+    if (g.name !== w.name) {
+      return "rich-rule element " + i + " is '" + g.name + "', the operator's is '" + w.name + "'";
+    }
+    if (g.attrs.length !== w.attrs.length) {
+      return "rich-rule element '" + g.name + "' carries " + g.attrs.length + " attributes, the " +
+             "operator's carries " + w.attrs.length + " — " + describeRule(got);
+    }
+    for (var j = 0; j < w.attrs.length; j++) {
+      if (g.attrs[j][0] !== w.attrs[j][0] || g.attrs[j][1] !== String(w.attrs[j][1])) {
+        return "rich-rule attribute " + g.attrs[j][0] + "=" + g.attrs[j][1] + " != the operator's " +
+               w.attrs[j][0] + "=" + w.attrs[j][1];
+      }
+    }
+  }
+  if (got.action !== String(want.action)) {
+    return "rich-rule ACTION is '" + got.action + "' but the operator selected '" + want.action +
+           "' — the rule installed on the host would not be the rule on screen";
+  }
+  return null;
 }
 
 /* The shape a shell sees: every quoted payload collapses to one placeholder, so
@@ -156,30 +260,65 @@ function spacedFlagSpec(type, def) {
   };
 }
 /* The highest-risk field class in the threat model: a rich rule whose legitimate
-   syntax overlaps shell syntax. Composed from validated sub-fields only. */
-function richRuleSpec(hostileField, hostileType) {
-  var fields = [
-    { name: "family", type: "family", required: true, versions: VERSIONS },
-    { name: "source", type: "cidr", required: true, versions: VERSIONS },
-    { name: "port", type: "portrange", required: true, versions: VERSIONS },
-    { name: "proto", type: "protocol", required: true, versions: VERSIONS },
-    { name: "act", type: "action", required: true, versions: VERSIONS }
-  ];
-  for (var i = 0; i < fields.length; i++) {
-    if (fields[i].name === hostileField) fields[i].type = hostileType || fields[i].type;
+   syntax overlaps shell syntax. Composed from validated sub-fields only.
+ *
+ * MCR-SEC-005(a). (hostileField, hostileType) substitutes a DIFFERENT field type
+ * into one rich-rule slot. Before the fix this function was only ever called as
+ * richRuleSpec(null, null), so the substitution never fired and no free-text type
+ * was ever placed in a rich-rule slot — which is precisely why MCR-SEC-001
+ * survived 15,392 checks. It is now driven with every field type in every slot.
+ *
+ * `shape` picks the plan: "port" is the port/protocol rule, "service" is the
+ * shape from the MCR-SEC-001 reproduction, where a `service` slot fed from a
+ * comment-typed field injected a whole `accept` clause.
+ */
+function richRuleSpec(hostileField, hostileType, defs, shape) {
+  var fields, plan;
+  if (shape === "service") {
+    fields = [
+      { name: "family", type: "family", required: true, versions: VERSIONS },
+      { name: "source", type: "cidr", required: true, versions: VERSIONS },
+      { name: "svc", type: "service", required: true, versions: VERSIONS },
+      { name: "act", type: "action", required: true, versions: VERSIONS }
+    ];
+    plan = { family: "family", source: "source", service: "svc", action: "act" };
+  } else {
+    fields = [
+      { name: "family", type: "family", required: true, versions: VERSIONS },
+      { name: "source", type: "cidr", required: true, versions: VERSIONS },
+      { name: "port", type: "portrange", required: true, versions: VERSIONS },
+      { name: "proto", type: "protocol", required: true, versions: VERSIONS },
+      { name: "act", type: "action", required: true, versions: VERSIONS }
+    ];
+    plan = { family: "family", source: "source", port: "port", protocol: "proto", action: "act" };
   }
-  return {
-    id: "harness-richrule", tool: "firewall-cmd", blast: "green",
+  for (var i = 0; i < fields.length; i++) {
+    if (fields[i].name === hostileField && hostileType) {
+      fields[i].type = hostileType;
+      var d = (defs || {})[hostileType] || {};
+      if (d.options) fields[i].options = d.options;
+      else delete fields[i].options;
+    }
+  }
+  var spec = {
+    id: "harness-richrule" + (shape === "service" ? "-service" : ""),
+    tool: "firewall-cmd", blast: "green",
     fields: fields,
     template: [
       { lit: "firewall-cmd" },
-      {
-        flag: "--add-rich-rule",
-        richRule: { family: "family", source: "source", port: "port", protocol: "proto", action: "act" }
-      },
+      { flag: "--add-rich-rule", richRule: plan },
       { lit: "--permanent" }
     ]
   };
+  spec._plan = plan;
+  return spec;
+}
+
+/* The benign value set for each rich-rule shape, per slot field name. */
+function richBaseFor(shape) {
+  return shape === "service"
+    ? { family: "ipv4", source: "10.0.0.0/8", svc: "ssh", act: "accept" }
+    : { family: "ipv4", source: "10.0.0.0/8", port: "8443", proto: "tcp", act: "accept" };
 }
 
 /* -------------------------------------------------------------------- run */
@@ -193,7 +332,7 @@ function main() {
   var types = Object.keys(fx.field_types);
   var vectors = fx.vectors;
 
-  var stats = { checks: 0, rejected: 0, quoted: 0, failures: [], byClass: {}, byType: {} };
+  var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, failures: [], byClass: {}, byType: {} };
 
   function note(cls, outcome) {
     if (!stats.byClass[cls]) stats.byClass[cls] = { rejected: 0, quoted: 0 };
@@ -259,6 +398,16 @@ function main() {
         + JSON.stringify(refWords ? skeleton(refWords) : "(control does not tokenise)"));
       return;
     }
+    /* MCR-SEC-005(b): shell containment is not rich-rule containment. If this
+       spec composes a rich rule, the rule itself gets parsed and compared. */
+    if (spec._plan) {
+      var oracleMsg = richRuleOracle(res.command, spec._plan, values);
+      if (oracleMsg) {
+        stats.failures.push(label + ": rich-rule oracle — " + oracleMsg);
+        return;
+      }
+      stats.oracles++;
+    }
     stats.quoted++;
     note(cls, "quoted");
   }
@@ -290,22 +439,129 @@ function main() {
     }
   }
 
-  /* ---- the rich-rule path: hostile text into each validated sub-field ---- */
-  var richBase = { family: "ipv4", source: "10.0.0.0/8", port: "8443", proto: "tcp", act: "accept" };
-  var richFields = ["family", "source", "port", "proto", "act"];
-  for (var rf = 0; rf < richFields.length; rf++) {
-    for (var rv = 0; rv < vectors.length; rv++) {
-      for (var rr = 0; rr < VERSIONS.length; rr++) {
-        var rspec = richRuleSpec(null, null);
-        rspec._hostileField = richFields[rf];
-        rspec._benign = richBase[richFields[rf]];
-        var vals = {};
-        for (var kk in richBase) if (Object.prototype.hasOwnProperty.call(richBase, kk)) vals[kk] = richBase[kk];
-        vals[richFields[rf]] = vectors[rv].value;
-        /* every rich-rule sub-field is a closed grammar: nothing hostile may compose */
-        check("richrule[" + richFields[rf] + "] / " + vectors[rv].id + " / RHEL " + VERSIONS[rr],
-              vectors[rv]["class"], rspec, VERSIONS[rr], vals, vectors[rv].value, "reject");
+  /* ---- the rich-rule path (MCR-SEC-001 / MCR-SEC-005) --------------------
+     Three sweeps, because two different things can go wrong here: a hostile
+     VALUE in a legitimate sub-field type, and a hostile TYPE substituted into a
+     rich-rule slot by a content author. The second one is what MCR-SEC-001 was:
+     the slot allow-list is now the control, and this is the sweep that proves it.
+   */
+  var RICH_SHAPES = ["port", "service"];
+  var richCounts = { native: 0, typed: 0, refusedType: 0, allowedType: 0 };
+
+  function slotOfField(plan, fieldName) {
+    for (var s in plan) {
+      if (Object.prototype.hasOwnProperty.call(plan, s) && plan[s] === fieldName) return s;
+    }
+    return null;
+  }
+  function valuesFrom(base, override, value) {
+    var out = {}, k;
+    for (k in base) if (Object.prototype.hasOwnProperty.call(base, k)) out[k] = base[k];
+    if (override) out[override] = value;
+    return out;
+  }
+
+  for (var sh = 0; sh < RICH_SHAPES.length; sh++) {
+    var shape = RICH_SHAPES[sh];
+    var richBase = richBaseFor(shape);
+    var richFields = Object.keys(richBase);
+
+    /* (1) native sub-field types, hostile values: every rich-rule sub-field is a
+           closed grammar, so nothing hostile may compose. */
+    for (var rf = 0; rf < richFields.length; rf++) {
+      for (var rv = 0; rv < vectors.length; rv++) {
+        for (var rr = 0; rr < VERSIONS.length; rr++) {
+          var rspec = richRuleSpec(null, null, fx.field_types, shape);
+          rspec._hostileField = richFields[rf];
+          rspec._benign = richBase[richFields[rf]];
+          richCounts.native++;
+          check("richrule-" + shape + "[" + richFields[rf] + "] / " + vectors[rv].id +
+                " / RHEL " + VERSIONS[rr], vectors[rv]["class"], rspec, VERSIONS[rr],
+                valuesFrom(richBase, richFields[rf], vectors[rv].value), vectors[rv].value, "reject");
+        }
       }
+    }
+
+    /* (2) hostile TYPE substituted into each slot, benign value for that type.
+           A type that is not on the slot's allow-list must yield null even with a
+           perfectly valid value — that is the structural rule, not a character
+           rule. A type that IS allow-listed must still compose the operator's
+           exact rule, which the oracle checks. */
+    for (var tf = 0; tf < richFields.length; tf++) {
+      var slot = slotOfField(richRuleSpec(null, null, fx.field_types, shape)._plan, richFields[tf]);
+      for (var tt = 0; tt < types.length; tt++) {
+        var subType = types[tt];
+        var allowed = (A.RICHRULE_SLOT_TYPES[slot] || []).indexOf(subType) >= 0;
+        for (var tr = 0; tr < VERSIONS.length; tr++) {
+          var tspec = richRuleSpec(richFields[tf], subType, fx.field_types, shape);
+          var tvals = valuesFrom(richBase, richFields[tf], fx.field_types[subType].benign);
+          var label = "richrule-" + shape + "[" + slot + " := " + subType + "] / RHEL " + VERSIONS[tr];
+          stats.checks++;
+          richCounts.typed++;
+          var tres = A.assembleCommand(tspec, VERSIONS[tr], tvals, { patterns: [] });
+          if (!allowed) {
+            if (tres !== null) {
+              stats.failures.push(label + ": a field type that is NOT on this rich-rule slot's " +
+                                  "allow-list composed a rule — " + JSON.stringify(tres.command));
+            } else {
+              stats.rejected++; note("rich-rule slot type", "rejected");
+              richCounts.refusedType++;
+            }
+            continue;
+          }
+          if (tres === null) {
+            stats.failures.push(label + ": an allow-listed closed-grammar type was refused with a " +
+                                "benign value — the slot allow-list is too narrow to be usable");
+            continue;
+          }
+          var msg = richRuleOracle(tres.command, tspec._plan, tvals);
+          if (msg) {
+            stats.failures.push(label + ": rich-rule oracle — " + msg);
+            continue;
+          }
+          stats.quoted++; stats.oracles++; note("rich-rule slot type", "quoted");
+          richCounts.allowedType++;
+        }
+      }
+    }
+
+    /* (3) hostile TYPE and hostile VALUE together: the cross product the
+           signature was written for. Every case must be refused — either
+           structurally (type not allowed in the slot) or by the type's own
+           allow-list (every allowed type is a closed grammar). */
+    for (var hf = 0; hf < richFields.length; hf++) {
+      for (var ht = 0; ht < types.length; ht++) {
+        for (var hv = 0; hv < vectors.length; hv++) {
+          for (var hr = 0; hr < VERSIONS.length; hr++) {
+            var hspec = richRuleSpec(richFields[hf], types[ht], fx.field_types, shape);
+            hspec._hostileField = richFields[hf];
+            hspec._benign = richBase[richFields[hf]];
+            check("richrule-" + shape + "[" + richFields[hf] + " := " + types[ht] + "] / " +
+                  vectors[hv].id + " / RHEL " + VERSIONS[hr], vectors[hv]["class"], hspec,
+                  VERSIONS[hr], valuesFrom(richBase, richFields[hf], vectors[hv].value),
+                  vectors[hv].value, "reject");
+          }
+        }
+      }
+    }
+
+    /* (4) benign control for the shape: the rule the operator asked for still
+           composes, on every release, and the oracle agrees element for element. */
+    for (var br = 0; br < VERSIONS.length; br++) {
+      var bspec = richRuleSpec(null, null, fx.field_types, shape);
+      stats.checks++;
+      var bres = A.assembleCommand(bspec, VERSIONS[br], richBase, { patterns: [] });
+      if (bres === null) {
+        stats.failures.push("richrule-" + shape + " benign control was rejected on RHEL " + VERSIONS[br]);
+        continue;
+      }
+      var bmsg = richRuleOracle(bres.command, bspec._plan, richBase);
+      if (bmsg) {
+        stats.failures.push("richrule-" + shape + " benign control / RHEL " + VERSIONS[br] +
+                            ": rich-rule oracle — " + bmsg);
+        continue;
+      }
+      stats.quoted++; stats.oracles++; note("rich-rule benign control", "quoted");
     }
   }
 
@@ -339,9 +595,62 @@ function main() {
   if (broken === null || UNQUOTED_OK.test(bareText(broken))) {
     inv.push("negative control: the tokeniser accepted an unquoted $(whoami) as safe");
   }
+  /* negative control for the RICH-RULE oracle: it must be able to fail. The
+     first string is the command Marcus's MCR-SEC-001 reproduction produced —
+     shell-quoting-clean, grammar-injected. The second swaps only the action. */
+  var injectedRule = "firewall-cmd --add-rich-rule='rule family=\"ipv4\" source address=\"10.0.0.0/8\" " +
+                     "service name=\"ssh\" log prefix=\"X\" level=\"emerg\" limit value=\"1/s\" accept " +
+                     "#\" drop' --permanent";
+  if (richRuleOracle(injectedRule, { family: "f", source: "s", service: "v", action: "a" },
+                     { f: "ipv4", s: "10.0.0.0/8", v: "ssh", a: "drop" }) === null) {
+    inv.push("negative control: the rich-rule oracle rated the MCR-SEC-001 injected rule as the " +
+             "operator's intent — the oracle cannot fail and therefore proves nothing");
+  }
+  var swappedAction = "firewall-cmd --add-rich-rule='rule family=\"ipv4\" source address=\"10.0.0.0/8\" " +
+                      "accept' --permanent";
+  if (richRuleOracle(swappedAction, { family: "f", source: "s", action: "a" },
+                     { f: "ipv4", s: "10.0.0.0/8", a: "drop" }) === null) {
+    inv.push("negative control: the rich-rule oracle did not notice a swapped ACTION");
+  }
   var brokenShape = tokenize("probe --value='x' ; id");
   if (brokenShape !== null && skeleton(brokenShape) === skeleton(tokenize("probe --value='x'"))) {
     inv.push("negative control: the shape comparison did not notice an appended ; id");
+  }
+  /* MCR-SEC-001 reproduction, verbatim from Marcus Reed's security review of
+     4184ea8, kept as a named regression. A comment-typed field wired into a
+     rich-rule `service` slot injected a whole `accept` clause and a logging
+     clause past a `drop` the operator had selected; the harness rated it
+     QUOTED-SAFE because shell quoting did hold. It must now be null. */
+  var mcr001 = {
+    id: "mcr-sec-001", tool: "firewall-cmd", blast: "green",
+    fields: [{ name: "family", type: "family", required: true },
+             { name: "src", type: "cidr", required: true },
+             { name: "note", type: "comment", required: true },
+             { name: "act", type: "action", required: true }],
+    template: [{ lit: "firewall-cmd" },
+               { flag: "--add-rich-rule",
+                 richRule: { family: "family", source: "src", service: "note", action: "act" } },
+               { lit: "--permanent" }]
+  };
+  var mcr001Values = { family: "ipv4", src: "10.0.0.0/8", act: "drop",
+                       note: 'ssh" log prefix="X" level="emerg" limit value="1/s" accept #' };
+  if (A.validateField("comment", mcr001Values.note).ok !== true) {
+    inv.push("MCR-SEC-001 regression: the vector no longer validates as a comment, so this " +
+             "regression test has stopped testing the reported defect");
+  }
+  for (var mv = 0; mv < VERSIONS.length; mv++) {
+    var mres = A.assembleCommand(mcr001, VERSIONS[mv], mcr001Values, { patterns: [] });
+    if (mres !== null) {
+      inv.push("MCR-SEC-001 regression on RHEL " + VERSIONS[mv] + ": a comment-typed field " +
+               "composed into a rich-rule slot — " + JSON.stringify(mres.command));
+    }
+  }
+  /* the same shape with the same hostile text but a closed-grammar type must be
+     refused by the type's own allow-list, not silently composed */
+  var mcr001b = JSON.parse(JSON.stringify(mcr001));
+  mcr001b.fields[2].type = "service";
+  if (A.assembleCommand(mcr001b, "9", mcr001Values, { patterns: [] }) !== null) {
+    inv.push("MCR-SEC-001 regression: a service-typed slot accepted rich-rule syntax as a value");
   }
   if (A.shQuote("it's") !== "'it'\\''s'") inv.push("shQuote() does not use the POSIX '\\'' idiom");
   if (A.yamlQuote("it's") !== "'it''s'") inv.push("yamlQuote() does not use the YAML '' idiom");
@@ -395,8 +704,15 @@ function main() {
     checks: stats.checks,
     rejected: stats.rejected,
     quoted_safe: stats.quoted,
+    rich_rule_oracles: stats.oracles,
+    rich_rule_slot_types_refused: richCounts.refusedType,
+    rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
-    invariants: 4 + VERSIONS.length * 3 + 2 + 2,
+    /* quoting idioms (4) + empty-required, version gating and gated enums
+       (3 per release) + 2 tokeniser negative controls + 2 rich-rule-oracle
+       negative controls + 2 blast invariants + the MCR-SEC-001 regression
+       (1 vector check + 1 per release + 1 typed) */
+    invariants: 4 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length),
     failures: stats.failures
   };
   if (asJson) {
@@ -404,9 +720,14 @@ function main() {
   } else {
     console.log("hostile-input harness — " + report.target + " (" + loaded.bytes + " bytes of assembler)");
     console.log("  " + types.length + " field types x " + vectors.length + " vectors x " +
-                VERSIONS.length + " releases x 3 argument shapes, plus 5 rich-rule sub-fields");
+                VERSIONS.length + " releases x 3 argument shapes, plus two rich-rule shapes with " +
+                "every field type substituted into every slot");
     console.log("  " + stats.checks + " checks: " + stats.rejected + " rejected (null), " +
                 stats.quoted + " quoted-safe, " + stats.failures.length + " FAILED");
+    console.log("  rich-rule: " + report.rich_rule_slot_types_refused + " slot/type pairs refused " +
+                "structurally, " + report.rich_rule_slot_types_allowed + " allow-listed and composed, " +
+                stats.oracles + " compositions parsed and compared element-for-element to the " +
+                "operator's intent");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

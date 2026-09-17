@@ -459,6 +459,13 @@ function fieldFor(spec,name){
   for(var i=0;i<fields.length;i++){ if(fields[i].name===name) return fields[i]; }
   return null;
 }
+/* field name -> declared type, so a composer can refuse a slot by the SPEC's
+   declaration rather than by what the value happens to look like (MCR-SEC-001). */
+function fieldTypeMap(spec){
+  var fields=(spec&&spec.fields)||[],out={};
+  for(var i=0;i<fields.length;i++){ if(fields[i]&&fields[i].name) out[fields[i].name]=fields[i].type; }
+  return out;
+}
 function fieldAvailable(field,version){
   return !field.versions || inList(field.versions,version);
 }
@@ -499,14 +506,71 @@ function validateSpec(spec,version,values){
 
 /* firewalld rich rules are composed from independently validated sub-fields and
    trusted literal syntax — never by concatenating one free-text box into the
-   command line (threat-model-v1 §3.1, highest-risk field class). The double
-   quotes below are literals from this file; no validated value can contain one,
-   because no field type's allow-list admits a quote character. */
-function composeRichRule(map,plan){
+   command line (threat-model-v1 §3.1, highest-risk field class).
+
+   MCR-SEC-001. The comment that used to stand here argued that no validated
+   value can contain a double quote "because no field type's allow-list admits
+   one". That was FALSE and a future author would have relied on it: `comment`
+   admits every printable character and `enum` admits whatever a content author
+   lists, so a value could close an attribute and open new rich-rule elements —
+   a firewall-policy bypass (the installed rule's ACTION differs from the one on
+   screen) that shell quoting cannot see, because the injected text never leaves
+   its single-quoted shell token. Two rules replace that claim:
+
+   1. STRUCTURAL — a rich-rule slot may only be filled by a field whose type is
+      listed for that slot in RICHRULE_SLOT_TYPES, and every one of those is a
+      closed grammar. `comment` and `enum` are deliberately NOT rich-rule
+      sub-field types. Rich-rule attribute syntax has no escape sequence for a
+      double quote inside an attribute value, so there is no encoding that makes
+      free text safe there; the honest answer is no free-text path into a rich
+      rule at all, rather than a fourth escaping domain that cannot be written
+      correctly.
+   2. CHARACTER — every mapped value is re-checked here, at composition time,
+      against a closed value set, and the whole rule is refused (null) if any
+      value carries a quote, a backslash, whitespace, or anything else that could
+      open a new element. Rule 1 already makes rule 2 unreachable today; rule 2
+      is what still holds if a future type is added to rule 1's table in error. */
+var RICHRULE_SLOT_TYPES={
+  family:["family"],
+  source:["cidr","ipaddr","ipv4","ipv6"],
+  destination:["cidr","ipaddr","ipv4","ipv6"],
+  service:["service"],
+  port:["port","portrange"],
+  protocol:["protocol"],
+  action:["action"]
+};
+var RICHRULE_SLOTS=["family","source","destination","service","port","protocol","action"];
+/* No quote, no backslash, no whitespace, no '=', no '<' or '>': nothing that can
+   terminate an attribute value or begin another rich-rule element. */
+var RICHRULE_VALUE_RE=/^[A-Za-z0-9_.:\/-]+$/;
+
+function richRuleSlotOk(slot,type){
+  return inList(RICHRULE_SLOT_TYPES[slot]||null,type);
+}
+
+/* composeRichRule(resolvedValues, plan, fieldTypes) -> string | null
+   `fieldTypes` maps field name -> declared type, so the structural rule above can
+   be enforced on the SPEC, not merely on the value that happened to be typed. */
+function composeRichRule(map,plan,types){
+  if(!plan||!types) return null;
+  var k,i;
+  for(k in plan){
+    if(!Object.prototype.hasOwnProperty.call(plan,k)) continue;
+    if(!inList(RICHRULE_SLOTS,k)) return null;             /* unknown rich-rule slot */
+    if(!richRuleSlotOk(k,types[plan[k]])) return null;     /* type not allowed in this slot */
+  }
+  for(i=0;i<RICHRULE_SLOTS.length;i++){
+    var nm=plan[RICHRULE_SLOTS[i]];
+    if(!nm) continue;
+    var val=map[nm];
+    if(val===undefined||val===null) continue;
+    if(typeof val!=="string"||!RICHRULE_VALUE_RE.test(val)) return null;   /* fail closed */
+  }
   var family=map[plan.family];
   if(!family) return null;
   var out='rule family="'+family+'"';
   if(plan.source && map[plan.source]) out+=' source address="'+map[plan.source]+'"';
+  if(plan.destination && map[plan.destination]) out+=' destination address="'+map[plan.destination]+'"';
   if(plan.service && map[plan.service]) out+=' service name="'+map[plan.service]+'"';
   if(plan.port && map[plan.port]){
     if(!plan.protocol || !map[plan.protocol]) return null;   /* a port with no protocol is half-formed */
@@ -567,13 +631,14 @@ function assembleCommand(spec,version,values,opts){
   if(spec.versions && !inList(spec.versions,version)) return null;
   var v=validateSpec(spec,version,values||{});
   if(!v.ok) return null;
+  var types=fieldTypeMap(spec);
   var words=[],flags=[],i;
   for(i=0;i<spec.template.length;i++){
     var tok=spec.template[i];
     if(!tok) return null;
     if(tok.lit!==undefined && tok.lit!==null){ words.push(String(tok.lit)); continue; }
     if(tok.richRule){
-      var composed=composeRichRule(v.resolved,tok.richRule);
+      var composed=composeRichRule(v.resolved,tok.richRule,types);
       if(composed===null) return null;
       words.push(tok.flag?String(tok.flag)+"="+shQuote(composed):shQuote(composed));
       if(tok.flag) flags.push({flag:String(tok.flag),explain:tok.explain||null});

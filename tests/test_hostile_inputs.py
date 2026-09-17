@@ -57,10 +57,33 @@ class HostileInputTests(unittest.TestCase):
         self.assertEqual(self.report["field_types"], len(self.fixture["field_types"]))
         self.assertEqual(self.report["vectors"], len(self.fixture["vectors"]))
         self.assertEqual(self.report["versions"], 4)
-        expected = (self.report["field_types"] * self.report["vectors"] * 4 * 3
-                    + 5 * self.report["vectors"] * 4)
+        types, vectors = self.report["field_types"], self.report["vectors"]
+        # Two rich-rule shapes: the port/protocol rule (5 sub-fields) and the
+        # MCR-SEC-001 reproduction's service rule (4). Every sub-field of both
+        # takes every field type in turn (MCR-SEC-005a), with a benign value and
+        # with every hostile vector.
+        rich_fields = 5 + 4
+        expected = (types * vectors * 4 * 3              # every type x vector x release x shape
+                    + rich_fields * vectors * 4          # native sub-field types, hostile values
+                    + rich_fields * types * 4            # every type substituted into every slot
+                    + rich_fields * types * vectors * 4  # substituted type AND hostile value
+                    + 2 * 4)                             # benign control per rich-rule shape
         self.assertEqual(self.report["checks"], expected,
                          "the harness did not run every field type x vector x release x shape")
+
+    def test_rich_rule_slots_refuse_every_type_that_is_not_allow_listed(self):
+        """MCR-SEC-001/005: the sweep richRuleSpec's signature was written for."""
+        self.assertGreater(self.report["rich_rule_slot_types_refused"], 0,
+                           "no (rich-rule slot, field type) pair was refused — the hostile-type "
+                           "substitution is dead again")
+        self.assertGreater(self.report["rich_rule_slot_types_allowed"], 0,
+                           "no field type composed a rich rule at all — the slot allow-list is so "
+                           "narrow the feature cannot work, which is not a pass")
+
+    def test_the_rich_rule_oracle_ran(self):
+        """Shell-token containment is not rich-rule containment (MCR-SEC-005b)."""
+        self.assertGreater(self.report["rich_rule_oracles"], 0,
+                           "no composed rich rule was parsed and compared to the operator's intent")
 
     def test_outcomes_are_accounted_for(self):
         self.assertEqual(self.report["rejected"] + self.report["quoted_safe"],
