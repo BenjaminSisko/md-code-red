@@ -16,6 +16,40 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — Security review fixes MCR-SEC-001..012, branch `salm/milo/shell-assembler`
+  (Milo Vance). **Marcus Reed reviewed the assembler tranche and returned DENY with `block_flag`:
+  three HIGH, five MEDIUM, two LOW, two INFORMATIONAL. All twelve are addressed on this branch.**
+  The three blockers were real defects in code the UI cannot reach yet, which is exactly why they
+  had to close now: CR-T-25 and CR-T-33 build fourteen P0 tool categories of templates against this
+  contract. **MCR-SEC-001** — a `comment`-typed field wired into a firewalld rich-rule slot could
+  close an attribute and inject a whole `accept` clause past the operator's `drop`, with shell
+  quoting intact, so the harness rated it safe; rich-rule slots now take closed-grammar types only
+  (`comment` and `enum` are deliberately not rich-rule sub-field types, because rich-rule syntax has
+  no escape for a quote inside an attribute value), every mapped value is re-checked at composition
+  time, and the harness gained a rich-rule parser that compares the composed rule to the operator's
+  intent element by element. **MCR-SEC-002** — the never-half-formed rule was enforced per field, so
+  an absent optional value made its token vanish and `chown 'apache' '/var/www'` became
+  `chown '/var/www'`; dropping a token is now a declared property of the template, positional
+  arguments can never shift, and `{lit:"...", requires:"field"}` makes a literal disappear with the
+  value it owns. **MCR-SEC-003** — "Copy with comment" built its header from raw content text, so a
+  newline in `intent` put an unrendered `rm -rf /var/log/audit` on the clipboard with blast still
+  green; every header line is now rendered, escaped, single-line and `# `-prefixed, the schema
+  rejects control characters in `intent`/`verify`/`undo`/`stig[]` at build time, `blastFor()` reads
+  the whole clipboard payload, and the header is rendered on screen as a read-only preview of
+  exactly what gets copied. The MEDIUM findings closed five mechanical bypasses of the Q17 render
+  audit (now a sink inventory with source-derived accumulators and a real literal parser, with 13
+  negative fixtures), gave the generator/spec shape a build-time schema with flag and lit token
+  allow-lists, escaped every `<` and `>` in the data island so `<!--<script` cannot swallow the app,
+  and taught the destructive-pattern table to match the de-quoted command so `rm -rf /` fires on
+  `rm -rf '/etc/pki'`. The dead `yamlQuote()` was **removed** rather than left looking like proof
+  (the quoting-domain gate is shell-only until the Ansible generators land), and render, copy and
+  the future exporter now read one rendered-state object. **The harness grew from 15,392 to 63,536
+  checks** — every field type substituted into every rich-rule slot, 60 never-half-formed checks, 65
+  clipboard-payload checks, 32 flag/lit allow-list checks, and a check that every row of
+  `dangerous.json` can actually fire. `qa.py` is green on all 18 gates, `python3 -m unittest
+  discover -s tests` runs 51 tests green, two builds of the same sources are byte-identical, and the
+  artifact was driven in Chrome with zero console errors.
+
 - **2026-09-17** — CR-T-08/13/14/15/16, branch `salm/milo/shell-assembler` (Milo Vance). **The tool has
   a working shell and, with it, the command assembler — the piece the threat model ranks as this
   product's top risk.** The five UI regions are real: a rail with focus-revealed text labels, the
