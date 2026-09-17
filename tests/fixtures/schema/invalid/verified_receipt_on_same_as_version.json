@@ -1,6 +1,6 @@
 {
- "_case": "every legal shape at once: a same_as chain two links deep, an unavailable value with an alternative, a changed_in_note that cites a source, a curated flag explain, and a verified {by, on, host} receipt",
- "_expect": null,
+ "_case": "verified carries a receipt on RHEL 9, but this entry's RHEL 9 is same_as RHEL 8 — a same_as version was never independently run and cannot carry its own receipt, and RHEL 8's receipt does not propagate onto it",
+ "_expect": "cannot carry its own receipt",
  "commands": {
   "_meta": {
    "schema": "ADR-001 §5.1",
@@ -12,39 +12,36 @@
   ],
   "entries": [
    {
-    "id": "fixture-every-legal-shape",
+    "id": "fixture-service-active",
     "tool": "systemctl",
     "category": "systemctl",
     "intent": "Prove a unit is running before claiming the control is in place",
     "rhel_versions": {
      "7": {
-      "unavailable": {
-       "reason": "The fixtured unit is not packaged for RHEL 7.",
-       "alternative": "service fixtured status"
-      }
+      "command": "systemctl status fixtured",
+      "notes": "RHEL 7 reads the full unit block.",
+      "changed_in_note": null
      },
      "8": {
       "command": "systemctl is-active fixtured",
       "notes": "RHEL 8 narrows to the one-word state.",
-      "changed_in_note": {
-       "version": "8",
-       "what": "The unit moved under systemd's control in RHEL 8.",
-       "source_ref": "src-fixture"
-      }
+      "changed_in_note": null
      },
      "9": {
       "same_as": "8",
       "changed_in_note": null
      },
      "10": {
-      "same_as": "9",
-      "changed_in_note": null
+      "unavailable": {
+       "reason": "The fixtured unit does not exist on RHEL 10.",
+       "alternative": null
+      }
      }
     },
     "flags": [
      {
       "flag": "is-active",
-      "explain": "Reports whether the named unit is currently active.",
+      "explain": null,
       "source_ref": null,
       "license_class": "paraphrase-only"
      }
@@ -65,12 +62,7 @@
       ],
       "check_cmd": "systemctl is-active fixtured",
       "fix_cmd": "systemctl enable --now fixtured",
-      "expected_output": {
-       "text": "active",
-       "host": "rhel9-lab01",
-       "patch_level": "RHEL 8.10",
-       "captured_on": "2026-10-03"
-      }
+      "expected_output": null
      }
     ],
     "source": {
@@ -83,13 +75,13 @@
     },
     "verified": {
      "7": false,
-     "8": {
+     "8": false,
+     "9": {
       "by": "Caleb Stone",
       "on": "2026-10-03",
       "host": "rhel9-lab01",
       "capture": "tests/captures/8/fixture-service-active.json"
      },
-     "9": false,
      "10": false
     }
    }
@@ -282,9 +274,32 @@
    "_meta": {
     "rhel_version": "9",
     "generator": "extract/extract_rhel_flags.py",
-    "status": "pending — no RHEL 9 host read yet"
+    "status": "pending — no RHEL 9 host read yet",
+    "source": {
+     "title": "man pages and --help output on a RHEL 9 host",
+     "url_or_man": "man 1 systemctl",
+     "version": "systemd-252-46.el9",
+     "retrieved_on": "2026-10-04",
+     "license_class": "paraphrase-only"
+    }
    },
-   "clis": {}
+   "clis": {
+    "systemctl": {
+     "package": "systemd-252-46.el9",
+     "source": "man 1 systemctl",
+     "flags": [
+      {
+       "names": [
+        "is-active"
+       ],
+       "raw_ref": "content-src/man/9/systemctl.txt#L1",
+       "explain": "Reports whether the named unit is currently active.",
+       "curated_by": "Caleb Stone",
+       "curated_on": "2026-10-04"
+      }
+     ]
+    }
+   }
   },
   "10": {
    "_meta": {
@@ -321,26 +336,8 @@
   "_meta": {
    "generator": "extract/import_captures.py",
    "status": "pending — no capture files",
-   "capture_count": 1
+   "capture_count": 0
   },
-  "captures": {
-   "fixture-every-legal-shape|RHEL-08-000001|8": {
-    "entry_id": "fixture-every-legal-shape",
-    "stig_id": "RHEL-08-000001",
-    "rhel_version": "8",
-    "host": "rhel9-lab01",
-    "os_release": "Red Hat Enterprise Linux release 8.10",
-    "kernel": "4.18.0-553.el8.x86_64",
-    "patch_level": "RHEL 8.10",
-    "command_run": "systemctl is-active fixtured",
-    "exit_code": 0,
-    "stdout": "active",
-    "stderr": "",
-    "captured_on": "2026-10-03",
-    "captured_by": "Caleb Stone",
-    "redactions": [],
-    "compliant": true
-   }
-  }
+  "captures": {}
  }
 }

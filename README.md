@@ -16,6 +16,25 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-18** — `verified` is per RHEL version, branch `salm/milo/verified-per-version`
+  (Milo Vance). CEO ruling closing Riley Park's first capture review
+  (`capture-review-run1-2026-09-18.md` RILEY-F1): a single whole-entry `verified` flag could not
+  be set `true` for any of Caleb Stone's CR-T-34 batch without overclaiming an RHEL version
+  nobody captured. `content/commands.json`'s `verified` is now an object keyed `"7"`/`"8"`/
+  `"9"`/`"10"`, each `false` or a `{by, on, host, capture}` receipt; the old boolean is rejected
+  by `extract/schema.py`, and a version whose row is `unavailable` or a `same_as` pointer can
+  never carry a receipt of its own (it was never independently run — a `same_as` target's
+  receipt does not propagate). `qa.py`'s Q16 gate now checks each receipt against its own
+  capture file for that exact entry/version pair (hash-matched against the currently assembled
+  command; the SME who captured it can never be the QA reviewer who verified it). Riley Park's
+  18 cleared entry/version pairs (`firewalld-service-active`, `ctrl-alt-del-target-masked`,
+  `journald-service-active`, `gen-ausearch-by-key`, `gen-chage-list`,
+  `gen-journalctl-unit-logs`, `gen-podman-ps`, `gen-rsyslogd-test-config`,
+  `gen-systemctl-query` x RHEL 8/10) are now written in. `extract/import_captures.py`'s
+  one-hop-only same_as resolver (Riley's RILEY-F5) now delegates to `extract/schema.py`'s
+  cycle-guarded, any-length chain resolver. The Inspector, the evidence exporter and the status
+  bar now show per-version verification state ("verified by NAME on DATE (HOST)" / "captured,
+  awaiting QA" / "not host-verified"). See `docs/CHANGELOG.md` for the full breakdown.
 - **2026-09-17** — CR-T-12, branch `salm/milo/flags-rhel7` (Milo Vance): `flags_rhel7.json` is
   populated for the first time, from a rootless UBI7 container on saratoga standing in for the
   RHEL 7 host the lab doesn't have (`registry.access.redhat.com/ubi7/ubi:latest`, digest

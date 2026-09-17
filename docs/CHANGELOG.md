@@ -4,6 +4,75 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Changed — `verified` is per RHEL version, not per entry (2026-09-17/18, branch `salm/milo/verified-per-version`)
+
+CEO ruling closing Riley Park's first capture review (`capture-review-run1-2026-09-18.md`
+RILEY-F1): a single whole-entry `verified` flag could not be set `true` for any of the 9
+entries Caleb Stone's CR-T-34 run captured without overclaiming an RHEL version nobody ran the
+command on (every one of them declares applicability to at least one version that was not
+captured that night). `content/commands.json`'s `verified` field is now an object keyed
+`"7"`/`"8"`/`"9"`/`"10"`, each value `false` or a `{by, on, host, capture}` receipt.
+
+- **Schema** (`extract/schema.py`): `verified_errors()` rejects the old whole-entry boolean
+  outright and requires all four RHEL keys on the new object, each `false` or a receipt. A
+  version whose `rhel_versions` row is `unavailable` or a `same_as` pointer — or, for a
+  generator spec, a version its own `versions` list excludes — can never carry a receipt of its
+  own: it was never independently run on that version, and a `same_as` TARGET's receipt does
+  not propagate onto the version pointing at it. `entry_has_any_receipt()` replaces the old
+  `bool(entry.get("verified"))` check everywhere a "has this entry been claimed verified at
+  all" test is needed (the flags-must-be-curated rule, most notably — a per-version object
+  with every value `false` is truthy but claims nothing).
+- **Migration**: all 27 entries' `verified: false` became `verified: {"7": false, "8": false,
+  "9": false, "10": false}`. Two entries' RHEL 10 row (`firewalld-service-active`,
+  `journald-service-active`) was promoted from a `same_as` pointer to its own concrete `command`
+  (identical text; the same_as pointer was authored before either version was independently
+  run) after Caleb Stone's CR-T-34 capture on `saratoga-rhel10` proved RHEL 10 genuinely was run
+  on a real, distinct host — a same_as row can never carry its own receipt, and this version now
+  has one to carry.
+- **`qa.py` Q16** (`gate_q16`): a per-version receipt is now checked against its OWN capture
+  file (the receipt's `capture` field) rather than only the STIG-keyed `expected_output.json`
+  index (which does not cover the 6 of 9 batch entries with no STIG mapping): the capture must
+  be for the exact (entry, RHEL version) pair, its `command_hash_at_capture` must match
+  `sha256(command_as_run)`, its `command_as_run` must still match the command this build
+  actually assembles for that version (content edited since capture now drifts this gate red
+  instead of silently passing), and the receipt's `by` must not equal the capture's
+  `captured_by` — the SME who captured it can never be the QA reviewer who verified it.
+- **`same_as` chain resolution** (Riley Park's RILEY-F5): `extract/import_captures.py`'s own
+  one-hop-only `resolved_command()` — which silently skipped the "edit resets verified"
+  integrity check for a two-hop chain's far end (`firewalld-service-active`'s real RHEL
+  10 -> 9 -> 8 chain, at the revision she reviewed) — now delegates to
+  `extract/schema.py`'s `resolved_command()`/`resolve_chain()`, which resolves a chain of any
+  length with a cycle guard. One resolver, not two that can drift apart.
+- **Riley Park's 18 receipts** (capture-review-run1-2026-09-18.md §4) written into
+  `content/commands.json`: `firewalld-service-active`, `ctrl-alt-del-target-masked`,
+  `journald-service-active`, `gen-ausearch-by-key`, `gen-chage-list`,
+  `gen-journalctl-unit-logs`, `gen-podman-ps`, `gen-rsyslogd-test-config`,
+  `gen-systemctl-query` x RHEL 8 (`defiant-rhel8`) and RHEL 10 (`saratoga-rhel10`) — 18
+  entry/version pairs, each `{"by": "Riley Park", "on": "2026-09-18", "host": "...",
+  "capture": "tests/captures/<v>/<entry_id>.json"}`. Two `flags[].explain` values
+  (`firewalld-service-active`/`ctrl-alt-del-target-masked`'s `status`, `firewalld-service-
+  active`/`journald-service-active`'s `is-active`) were curated to close the resulting "a
+  verified entry must carry a curated explain for every flag" schema check, paraphrased from
+  `systemctl(1)` with no 8-gram collision against the staged raw corpus (Q14).
+- **UI** (`template.html`): a new `verificationStatusForVersion(entry, version)` helper is the
+  one place entry/version verification state becomes the three states the UI shows — "verified
+  by NAME on DATE (HOST)" for a receipted version, "captured, awaiting QA" when a STIG-joined
+  capture exists with no receipt yet, "not host-verified" otherwise. Used by the Inspector (a
+  new "Verification" region above "Flag by flag"), the evidence exporter (`formatEvidenceText()`
+  prints the receipt line for the EXPORTED version only, never every version the entry
+  carries), and the status bar (a badge next to "RHEL N" reflecting the selected entry's state
+  for the selected version).
+- **Docs**: `tests/captures/README.md`'s stale `WADE_BLOCKED` section (reporting that
+  `extract/import_captures.py` did not exist) is replaced with the resolved canonical path and
+  the SME-captures/QA-verifies per-version flow; `docs/WORKFLOW.md` §2a documents the same flow
+  and notes, for Riley/Caleb and not edited here, that the company-record protocol document
+  (`test-plan-skeleton-v1.md` §7) should add `command_hash_at_capture` and `verify_result` to
+  its written field table to match what the code has gated on since CR-T-34.
+
+Fail-first: `tests/fixtures/schema/invalid/verified_true_without_receipt.json` (old boolean),
+`verified_receipt_on_unavailable_version.json` and `verified_receipt_on_same_as_version.json`
+(new), plus a Q16 capture-backing case and a two-hop same_as drift case — each asserted failing
+before its fix landed. See the branch's own commits for the failing-then-passing hashes.
 ### Added — CR-T-12: the RHEL 7 flag dictionary, from a UBI7 container (2026-09-17, branch `salm/milo/flags-rhel7`)
 
 There is no RHEL 7 host in the lab. Under the Founder's delegation (DECISION_LOG 2026-09-18), a

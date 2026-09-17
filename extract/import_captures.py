@@ -89,6 +89,14 @@ CAPTURES_DIR = os.path.join(REPO, "tests", "captures")
 COMMANDS_JSON = os.path.join(CONTENT, "commands.json")
 VERSIONS = ("7", "8", "9", "10")
 
+# schema.py is the one place same_as chains are resolved (resolve_chain(), used
+# by both rhel_versions_errors() and schema.resolved_command()) -- see
+# resolved_command() below, which used to keep its own one-hop-only copy here
+# (Riley Park's RILEY-F5: a two-hop chain silently skipped this file's drift
+# check for the far end of the chain).
+sys.path.insert(0, os.path.join(REPO, "extract"))
+import schema  # noqa: E402
+
 REQUIRED_FIELDS = (
     "entry_id", "rhel_version", "host", "redhat_release", "kernel", "pkg_versions",
     "command_as_run", "exit_code", "stdout", "stderr", "captured_on", "captured_by",
@@ -102,25 +110,16 @@ def load_entries():
 
 
 def resolved_command(entry, version):
-    """The entry's own rhel_versions[version].command, following one same_as
-    hop — the same shape build.py's assemble()/extract/schema.py's
-    resolve_chain() resolve. None for a generator entry (MCR-SEC-006: no
-    fixed command exists to diff a capture against), an absent/unavailable
-    version, or an unresolvable same_as (schema.py is the build-time
-    authority on cycles; this function just declines to guess)."""
-    if entry is None or "template" in entry or version not in VERSIONS:
-        return None
-    slot = (entry.get("rhel_versions") or {}).get(version)
-    if not isinstance(slot, dict):
-        return None
-    if "same_as" in slot:
-        target = slot["same_as"]
-        if target == version or target not in VERSIONS:
-            return None
-        slot = (entry.get("rhel_versions") or {}).get(target)
-        if not isinstance(slot, dict) or "same_as" in slot:
-            return None  # content authors here only ever emit one hop
-    return slot.get("command")
+    """The entry's own rhel_versions[version].command, resolving a same_as
+    chain of ANY length (cycle-guarded) via schema.resolved_command() /
+    schema.resolve_chain() — the same resolution build.py's assemble() applies
+    before a same_as pointer ships. Delegates rather than keeping a second
+    copy: this file used to stop after one hop (Riley Park's RILEY-F5 —
+    firewalld-service-active's real RHEL 10 -> 9 -> 8 chain silently skipped
+    the drift check below for the RHEL 10 capture), and a second, independently
+    drifting copy of the same resolution rule is exactly the bug class
+    schema.py exists to close (CR-T-06)."""
+    return schema.resolved_command(entry, version)
 
 
 def capture_errors(rel_path, cap, entries_by_id):

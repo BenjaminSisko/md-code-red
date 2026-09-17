@@ -195,6 +195,40 @@ def rhel_versions_errors(eid, versions):
     return errs
 
 
+def resolved_command(entry, version):
+    """The entry's own rhel_versions[version].command, resolving a same_as
+    CHAIN of any length (cycle-guarded) via resolve_chain() above -- the same
+    resolution build.py's assemble() performs before a same_as pointer ships.
+
+    Single source of truth for "what command does this version actually run"
+    (Riley Park's RILEY-F5: extract/import_captures.py's own resolver used to
+    stop after one same_as hop, so a two-hop chain like RHEL 10 -> 9 -> 8
+    silently skipped the "edit resets verified" integrity check for the far
+    end of the chain). extract/import_captures.py and qa.py's Q16 gate both
+    call this instead of re-walking rhel_versions by hand, so the chain is
+    resolved the same way everywhere or not at all.
+
+    None for a generator entry (MCR-SEC-006: composed at render time from
+    validated form input, so there is no fixed command to diff against), a
+    version not in VERSIONS, or a chain resolve_chain() cannot resolve (a
+    cycle or a dangling same_as -- rhel_versions_errors() is the build-time
+    authority on those; this function does not guess).
+    """
+    if not isinstance(entry, dict) or "template" in entry or version not in VERSIONS:
+        return None
+    versions = entry.get("rhel_versions")
+    if not isinstance(versions, dict):
+        return None
+    errs = []
+    target = resolve_chain(entry.get("id") or "?", versions, version, errs)
+    if target is None or errs:
+        return None
+    slot = versions.get(target)
+    if not isinstance(slot, dict):
+        return None
+    return slot.get("command")
+
+
 # ---------------------------------------------------------------------------
 # generator / spec shape (MCR-SEC-006)
 #
@@ -545,9 +579,10 @@ def entry_errors(e, ctx):
         errs += spec_errors("commands entry %s" % eid, e)
     else:
         errs += rhel_versions_errors(eid, e.get("rhel_versions"))
-        errs += flags_errors(eid, e.get("flags"), dict(ctx, entry_verified=bool(e.get("verified"))))
+        errs += flags_errors(eid, e.get("flags"),
+                             dict(ctx, entry_verified=entry_has_any_receipt(e.get("verified"))))
     errs += stig_errors(eid, e.get("stig"), ctx)
-    errs += verified_errors(eid, e.get("verified"))
+    errs += verified_errors(eid, e.get("verified"), e)
     return errs
 
 
@@ -642,19 +677,126 @@ def stig_errors(eid, stig, ctx):
     return errs
 
 
-def verified_errors(eid, ver):
-    """`verified` is a receipt ({by, on, host}), never a bare boolean claim."""
+VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
+
+
+def entry_has_any_receipt(ver):
+    """True if ANY RHEL version of this entry's per-version `verified` object
+    carries a real receipt (a dict), never a bare truthiness check on the
+    object itself.
+
+    `verified` used to be a single whole-entry value, where `bool(e.get(
+    "verified"))` was a fine proxy for "has this been claimed verified". CEO
+    ruling (capture-review-run1-2026-09-18.md RILEY-F1) made it per-version:
+    {"7": false, "8": false, "9": false, "10": false} is a non-empty dict and
+    therefore truthy, but it asserts nothing about any version. Only a real
+    receipt on at least one version means the entry has been claimed verified
+    at all -- which is what flags_errors()'s "a verified entry must curate
+    every flag" rule is actually about.
+    """
+    if not isinstance(ver, dict):
+        return False
+    return any(isinstance(v, dict) for v in ver.values())
+
+
+def _unreceiptable_versions(entry):
+    """Versions of THIS entry a receipt can never attach to, with why.
+
+    A `same_as` row's own text is borrowed from its resolved target and an
+    `unavailable` row has no command at all -- neither one was independently
+    run on a real host of that stated version, so neither can carry its own
+    {by, on, host, capture} receipt (CEO ruling, per verified_errors()'s
+    docstring). A generator spec (MCR-SEC-006, no rhel_versions block) draws
+    the same line from its own `versions` restriction: a version the spec
+    excludes was never offered to a form and so was never run either.
+    """
+    out = {}
+    if not isinstance(entry, dict):
+        return out
+    if "template" in entry:
+        vs = entry.get("versions")
+        if isinstance(vs, list) and vs:
+            for v in VERSIONS:
+                if v not in vs:
+                    out[v] = "not applicable to this generator (versions: %s)" % ", ".join(vs)
+        return out
+    versions = entry.get("rhel_versions")
+    if not isinstance(versions, dict):
+        return out
+    for v in VERSIONS:
+        val = versions.get(v)
+        if not isinstance(val, dict):
+            continue
+        if "unavailable" in val:
+            out[v] = "unavailable"
+        elif "same_as" in val:
+            out[v] = "a same_as pointer"
+    return out
+
+
+def verified_errors(eid, ver, entry=None):
+    """`verified` is an object keyed by RHEL version, each value false or a
+    {by, on, host, capture} receipt -- never a single whole-entry claim.
+
+    CEO ruling (capture-review-run1-2026-09-18.md RILEY-F1, closing Riley
+    Park's first capture review): the old single boolean/receipt overclaimed
+    every RHEL version a batch never captured, because a real capture batch
+    is per-version and the entry-level field was not. `verified` is now
+    keyed "7"/"8"/"9"/"10" like `rhel_versions` itself -- false is a value,
+    not an absence, so all four keys are mandatory.
+
+    A version whose rhel_versions row is `unavailable`, or is a `same_as`
+    pointer (or, for a generator spec, a version its own `versions` list
+    excludes) was never independently run on a real host of that stated
+    version, so it can never carry a receipt of its own -- and a same_as
+    TARGET's receipt never propagates onto the version that points at it.
+    The UI says "not host-verified" for that version rather than silently
+    reusing the target's evidence (see template.html's verification-status
+    helpers).
+    """
     if ver in (False, None):
         return []
     if ver is True:
-        return ["commands entry %s: verified is true with no receipt — it must be "
-                "{by, on, host} naming who ran it, when, and on which host" % eid]
+        return ["commands entry %s: verified is the old boolean 'true' -- verified is now an "
+                "object keyed by RHEL version (7/8/9/10), each value false or a "
+                "{by, on, host, capture} receipt (CEO ruling: per-version, not per-entry)" % eid]
     if not isinstance(ver, dict):
-        return ["commands entry %s: verified must be false or {by, on, host}" % eid]
+        return ["commands entry %s: verified must be false or an object keyed by RHEL version "
+                "(7/8/9/10)" % eid]
     errs = []
-    for field in ("by", "on", "host"):
-        if not ver.get(field):
-            errs.append("commands entry %s: verified is set but has no capture record field '%s'" % (eid, field))
+    missing = [v for v in VERSIONS if v not in ver]
+    extra = [k for k in ver if k not in VERSIONS]
+    if missing:
+        errs.append("commands entry %s: verified is missing RHEL key(s) %s -- all four of "
+                    "7/8/9/10 are mandatory, false is a value not an absence"
+                    % (eid, ", ".join(missing)))
+    if extra:
+        errs.append("commands entry %s: verified has unknown key(s) %s" % (eid, ", ".join(extra)))
+
+    unreceiptable = _unreceiptable_versions(entry)
+    for v in VERSIONS:
+        if v not in ver:
+            continue
+        rv = ver[v]
+        if rv is False or rv is None:
+            continue
+        if rv is True:
+            errs.append("commands entry %s: verified['%s'] is true with no receipt -- it must be "
+                        "false or {by, on, host, capture}" % (eid, v))
+            continue
+        if not isinstance(rv, dict):
+            errs.append("commands entry %s: verified['%s'] must be false or "
+                        "{by, on, host, capture}" % (eid, v))
+            continue
+        if v in unreceiptable:
+            errs.append("commands entry %s: verified['%s'] carries a receipt, but RHEL %s is %s "
+                        "on this entry -- that version was never independently captured and "
+                        "cannot carry its own receipt (a same_as target's receipt does not "
+                        "propagate)" % (eid, v, v, unreceiptable[v]))
+            continue
+        for field in VERIFIED_RECEIPT_FIELDS:
+            if not rv.get(field):
+                errs.append("commands entry %s: verified['%s'] is set but has no '%s'" % (eid, v, field))
     return errs
 
 

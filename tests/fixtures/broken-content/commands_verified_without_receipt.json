@@ -2,7 +2,7 @@
  "_meta": {
   "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
   "curated": true,
-  "status": "DELIBERATELY BROKEN FIXTURE — verified is set but carries no on/host",
+  "status": "DELIBERATELY BROKEN FIXTURE -- verified['10'] is set but carries no on/host/capture",
   "entry_count": 1
  },
  "categories": [
@@ -127,7 +127,12 @@
     "license_class": "verbatim-ok"
    },
    "verified": {
-    "by": "Caleb Stone"
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": {
+     "by": "Caleb Stone"
+    }
    }
   }
  ]

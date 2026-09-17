@@ -2283,38 +2283,128 @@ CAPTURE_REQUIRED_FIELDS = (
 )
 
 
+# {by, on, host, capture} — extract/schema.py's VERIFIED_RECEIPT_FIELDS, kept
+# textually identical (CEO ruling, per-version verified; capture-review-run1-
+# 2026-09-18.md RILEY-F1).
+VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
+
+
+def load_capture_file(rel_path):
+    """Read+parse a capture record by its REPO-relative path (a receipt's own
+    `capture` field). Returns (cap_dict_or_None, error_string_or_None)."""
+    if not isinstance(rel_path, str) or not rel_path:
+        return None, "receipt's capture path is empty"
+    abs_path = os.path.join(REPO, rel_path)
+    if not os.path.isfile(abs_path):
+        return None, "capture file '%s' does not exist" % rel_path
+    try:
+        with open(abs_path, encoding="utf-8") as fh:
+            return json.load(fh), None
+    except (ValueError, OSError) as exc:
+        return None, "capture file '%s' could not be read: %s" % (rel_path, exc)
+
+
 def gate_q16(ctx):
+    """Capture backing. Two independent claims are checked here:
+
+    1. Every stig[] row that carries expected_output has a real capture record
+       behind it, keyed entry_id|stig_id|rhel_version (unchanged from before
+       the per-version verified ruling — expected_output is captured, never
+       typed, regardless of whether anything is marked verified).
+
+    2. Every per-version verified receipt is backed by ITS OWN capture file
+       for that exact (entry, rhel_version) pair: the receipt names a capture
+       path, that file exists and validates, its entry_id/rhel_version match
+       the (entry, version) the receipt sits on, its command_hash_at_capture
+       matches sha256(command_as_run) (not tampered/hand-edited), and — for a
+       fixed rhel_versions command (never a generator's, MCR-SEC-006) — the
+       captured command_as_run still matches the command this build actually
+       assembles for that version today (ctx["data"] is the SHIPPED artifact,
+       so same_as chains are already resolved here exactly the way build.py
+       resolved them). Content edited since capture drifts this check red.
+       Finally, the receipt's `by` must not equal the capture's `captured_by`
+       — SME captures, QA verifies; the same name cannot do both.
+    """
     f, d = [], []
     data = ctx["data"]
     captures = (data["expected_output"].get("captures") or {})
     n_exp = 0
+    n_receipts = 0
     if not data["commands"]["entries"]:
         f.append(empty_set_failure(
             "command entries whose expected_output and verified receipts to check",
             "'expected output is captured, never typed' is a claim about entries, and there are "
             "none to make it about"))
     for e in data["commands"]["entries"]:
+        eid = e.get("id")
         for s in (e.get("stig") or []):
             if s.get("expected_output"):
                 n_exp += 1
-                key = "%s|%s|%s" % (e["id"], s.get("stig_id"), s.get("rhel_version"))
+                key = "%s|%s|%s" % (eid, s.get("stig_id"), s.get("rhel_version"))
                 cap = captures.get(key)
                 if not cap:
                     f.append("entry %s stig %s: expected_output with no capture record %s"
-                             % (e["id"], s.get("stig_id"), key))
+                             % (eid, s.get("stig_id"), key))
                     continue
                 for field in CAPTURE_REQUIRED_FIELDS:
                     if field not in cap:
                         f.append("capture %s: missing required field %s" % (key, field))
+
         ver = e.get("verified")
-        if ver not in (False, None):
-            for field in ("by", "on", "host"):
-                if not (ver or {}).get(field):
-                    f.append("entry %s: verified is set but has no '%s'" % (e["id"], field))
+        if not isinstance(ver, dict):
+            continue
+        for v in VERSIONS:
+            receipt = ver.get(v)
+            if not isinstance(receipt, dict):
+                continue
+            n_receipts += 1
+            for field in VERIFIED_RECEIPT_FIELDS:
+                if not receipt.get(field):
+                    f.append("entry %s verified['%s']: receipt has no '%s'" % (eid, v, field))
+            cap_path = receipt.get("capture")
+            cap, err = load_capture_file(cap_path)
+            if err:
+                f.append("entry %s verified['%s']: %s" % (eid, v, err))
+                continue
+            if not isinstance(cap, dict):
+                f.append("entry %s verified['%s']: capture '%s' is not a JSON object"
+                         % (eid, v, cap_path))
+                continue
+            if cap.get("entry_id") != eid or str(cap.get("rhel_version")) != v:
+                f.append("entry %s verified['%s']: capture '%s' is for %s/%s, not this entry/version "
+                         "pair — a receipt's capture must back that exact (entry, rhel_version)"
+                         % (eid, v, cap_path, cap.get("entry_id"), cap.get("rhel_version")))
+                continue
+            for field in CAPTURE_REQUIRED_FIELDS:
+                if field not in cap:
+                    f.append("entry %s verified['%s']: capture '%s' missing required field '%s'"
+                             % (eid, v, cap_path, field))
+            if "command_as_run" in cap and "command_hash_at_capture" in cap:
+                computed = hashlib.sha256(cap["command_as_run"].encode("utf-8")).hexdigest()
+                if computed != cap["command_hash_at_capture"]:
+                    f.append("entry %s verified['%s']: capture '%s' command_hash_at_capture does "
+                             "not match sha256(command_as_run) — tampered or hand-edited capture "
+                             "record" % (eid, v, cap_path))
+            if "template" not in e:
+                current = ((e.get("rhel_versions") or {}).get(v) or {}).get("command")
+                run_as = cap.get("command_as_run")
+                if current and run_as is not None and run_as != current:
+                    f.append("entry %s verified['%s']: capture's command_as_run ('%s') no longer "
+                             "matches the RHEL %s command this build assembles today ('%s') — "
+                             "content changed since capture; re-capture before re-verifying"
+                             % (eid, v, run_as, v, current))
+            by = receipt.get("by")
+            captured_by = cap.get("captured_by")
+            if by and captured_by and by == captured_by:
+                f.append("entry %s verified['%s']: receipt's by ('%s') is the same person as the "
+                         "capture's captured_by — SME captures, QA verifies; one name cannot do "
+                         "both for the same receipt" % (eid, v, by))
     if not f:
         d.append("%d expected_output blocks, %d capture records — expected output is captured, never typed "
                  "(content validation protocol runs are CR-T-34)" % (n_exp, len(captures)))
-        d.append("no entry claims verified without a {by,on,host} receipt")
+        d.append("%d per-version verified receipt(s), each backed by its own capture file for that "
+                 "exact entry/version pair, hash-matched against the currently assembled command, "
+                 "and captured by someone other than the receipt's own 'by'" % n_receipts)
     return f, d
 
 
