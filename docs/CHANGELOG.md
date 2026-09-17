@@ -4,6 +4,68 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+## v1.0.0-alpha.1 — 2026-09-18 (lab-only alpha)
+
+First internal alpha, released to SALM-controlled lab pilot hosts only.
+**Not GA, not signed, not for distribution outside the lab.** Readiness
+assessment `REL-2026-09-18-001`; ship authorization Eli Cross (CEO).
+
+### What's in
+
+- Command builders for 19 P0 tools across RHEL 7, 8, 9 and 10 (24 generator
+  entries plus 3 STIG check entries): `systemctl`, `firewall-cmd`, `nmcli`,
+  `dnf`/`yum`, `semanage`/`setsebool`, `useradd`/`usermod`, `chage`, LVM
+  (`lvcreate`, `lvextend`), sshd config test, `journalctl`, `auditctl`/
+  `ausearch`, rsyslog config test, chronyd offset check, `podman`.
+- Every rule of the four pinned DISA STIGs embedded with check and fix text:
+  RHEL 7 V3R15 (sunset, frozen), RHEL 8 V2R8, RHEL 9 V2R9, RHEL 10 V1R2 --
+  1,492 rules, 200 CCI-to-NIST-SP-800-53 mappings.
+- Version awareness: options shown only for the RHEL versions that have
+  them, with a stated reason when a tool is unavailable (`dnf` and `podman`
+  on RHEL 7).
+- Per-version verification labels on every command: verified by QA on a
+  named host, captured and awaiting QA, or documented and not host-verified.
+- Export as Evidence: a deterministic plain-text block with STIG ID, title,
+  CAT, CCIs, NIST controls, check and fix text, the assembled command,
+  expected output where captured, source citation, and the content
+  fingerprint.
+- Keyboard-first shell, dark and light themes, search across tools, flags,
+  STIG IDs, CCIs and controls, favorites and recent by ID, print view, About
+  panel with attribution and source provenance.
+- Content fingerprint: SHA-256 of the embedded data island, shown in About
+  and in every export, recomputable from the file alone.
+
+### Verification status, stated plainly
+
+| Claim | Status |
+|---|---|
+| Commands executed on a real host and reviewed by QA | 18 entry-and-version pairs, all on RHEL 8 (Defiant 8.10) and RHEL 10 (Saratoga 10.2). |
+| STIG rows with captured expected compliant output | 5, all compliant on the real hosts. |
+| Entries with no capture on any version | 19 of 27. |
+| RHEL 9 | No flag dictionary, no captures. Commands are documentation-sourced. |
+| RHEL 7 | Flag dictionary from an unsubscribed UBI7 container covers 6 of 22 tools. No captures. Every RHEL 7 command reads "documented, not host-verified." The RHEL 7 STIG is sunset at DISA. |
+| Flag explanations | Mostly "unverified, see man page." Curated explanations are authored later with citations. |
+| Firewall-cmd flag coverage | 16 of 205 long options in the RHEL 8 dictionary, because of an extractor parsing gap. The accepted-gap baseline expires 2026-09-25 and the build fails after that date unless renewed. |
+
+### Known limitations
+
+- Only Chromium-class browsers were tested. Firefox ESR on RHEL and Edge on
+  Windows are untested in this build.
+- No Ansible or Git generators (P1).
+- Multi-STIG-row entries export their first row only.
+- The glossary content is not shipped in this alpha (see AL-GATE3-011
+  below).
+- No deploy receipt exists yet for the pilot jump box; Avery Quinn signs
+  the first one.
+
+### Operator rules
+
+Full procedure: "MD CODE RED v1.0.0-alpha -- Pilot Standard Operating
+Procedure." Lab-controlled hosts only; verify the artifact SHA-256 and the
+content fingerprint against the release page before every use; never copy
+the file into another accreditation boundary; do not paste alpha evidence
+exports into a real body of evidence; report every wrong command.
+
 ### Fixed — Gate 3 tag blockers 1, 2, 4 and the glossary drop (2026-09-17/18, branch `salm/milo/gate3-blockers`)
 
 Closes three of Al Kowalski's four `v1.0.0-alpha.1` tag blockers from the
