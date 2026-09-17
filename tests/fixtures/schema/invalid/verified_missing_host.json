@@ -1,6 +1,6 @@
 {
  "_case": "verified names who and when but not the host the command was run on",
- "_expect": "verified is set but has no capture record field 'host'",
+ "_expect": "verified['8'] is set but has no 'host'",
  "commands": {
   "_meta": {
    "schema": "ADR-001 §5.1",
@@ -74,9 +74,15 @@
      "license_class": "verbatim-ok"
     },
     "verified": {
-     "by": "Caleb Stone",
-     "on": "2026-10-03",
-     "host": ""
+     "7": false,
+     "8": {
+      "by": "Caleb Stone",
+      "on": "2026-10-03",
+      "host": "",
+      "capture": "tests/captures/8/fixture-service-active.json"
+     },
+     "9": false,
+     "10": false
     }
    }
   ]

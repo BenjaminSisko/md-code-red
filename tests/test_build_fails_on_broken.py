@@ -27,7 +27,7 @@ CASES = [
     ("commands_missing_rhel_key.json", "rhel_versions missing RHEL key(s) 7"),
     ("commands_dangling_stig.json", "does not resolve to a record in rules_rhel9.json"),
     ("commands_missing_provenance.json", "missing provenance field source.url_or_man"),
-    ("commands_verified_without_receipt.json", "verified is set but has no capture record field 'on'"),
+    ("commands_verified_without_receipt.json", "verified['10'] is set but has no 'on'"),
     ("commands_unavailable_empty_reason.json", "unavailable has an empty reason"),
     ("commands_same_as_cycle.json", "same_as cycle"),
     # MCR-SEC-003: a header-bound string that is not single-line fails the BUILD,

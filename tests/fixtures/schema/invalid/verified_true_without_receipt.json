@@ -1,6 +1,6 @@
 {
- "_case": "verified is a bare boolean claim instead of a {by, on, host} receipt",
- "_expect": "verified is true with no receipt",
+ "_case": "verified is the old whole-entry boolean, not a per-version receipt object",
+ "_expect": "verified is the old boolean 'true'",
  "commands": {
   "_meta": {
    "schema": "ADR-001 §5.1",

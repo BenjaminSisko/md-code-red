@@ -89,7 +89,8 @@ class RealContentIsSchemaClean(unittest.TestCase):
         """
         data = build.load_content()
         nulls_on_verified = [(e["id"], fl.get("flag"))
-                             for e in data["commands"]["entries"] if e.get("verified")
+                             for e in data["commands"]["entries"]
+                             if schema.entry_has_any_receipt(e.get("verified"))
                              for fl in (e.get("flags") or []) if fl.get("explain") is None]
         self.assertEqual([], nulls_on_verified,
                          "verified entries must carry a curated explain for every flag: %s" % nulls_on_verified)
