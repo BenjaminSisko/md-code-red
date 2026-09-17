@@ -1097,7 +1097,7 @@ function main() {
   var goldenRows = golden.generators || {};
   var realPatterns = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "dangerous.json"),
                                                  "utf8")).patterns) || [];
-  var goldenChecks = 0, syntaxChecks = 0;
+  var goldenChecks = 0, syntaxChecks = 0, inspectorChecks = 0;
   for (var gs = 0; gs < specEntries.length; gs++) {
     var gentry = specEntries[gs];
     var grow = Object.prototype.hasOwnProperty.call(goldenRows, gentry.id) ? goldenRows[gentry.id] : null;
@@ -1134,6 +1134,28 @@ function main() {
       if (gres.blast !== grow.blast) {
         stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": blast is '" + gres.blast +
                             "', the table says '" + grow.blast + "'");
+      }
+      /* MCR-SEC-023: the flag-by-flag panel must name every option the command
+         shows, in the order it shows them — option tokens AND option-shaped
+         literals. A panel silent about a flag that is present is a smaller
+         version of a panel describing one that is not. */
+      inspectorChecks++;
+      var gotFlags = [];
+      for (var gf = 0; gf < gres.flags.length; gf++) gotFlags.push(gres.flags[gf].flag);
+      var wantFlags = grow.flags || [];
+      if (gotFlags.join(" ") !== wantFlags.join(" ")) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": the inspector's flag list " +
+                            "is [" + gotFlags.join(", ") + "], the table says [" + wantFlags.join(", ") +
+                            "] — the panel and the command must agree (MCR-SEC-023)");
+      }
+      for (var gfc = 0; gfc < gotFlags.length; gfc++) {
+        inspectorChecks++;
+        if (gres.command.indexOf(gotFlags[gfc]) < 0) {
+          stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": the inspector names flag " +
+                              gotFlags[gfc] + ", which is not in " + JSON.stringify(gres.command) +
+                              " — describing a flag that is not present is the Explainer row of " +
+                              "threat-model §4");
+        }
       }
       syntaxChecks++;
       var gsyn = optionSyntaxErrors(gres.command);
@@ -1174,6 +1196,99 @@ function main() {
   if (optionSyntaxErrors("rsyslogd -N1 -f '/etc/rsyslog.conf'").length) {
     stats.failures.push("invariant: the option-syntax oracle flagged the glued short option -N1, " +
                         "which is legal");
+  }
+
+  /* ---- the DERIVED positional discriminator (MCR-SEC-018/022, E3 and E7) --
+     Marcus Reed's D4 addendum table, run as a test on every release.
+
+     The D1 rule says a conditional literal occupies an argument slot, so it may
+     only vanish when every later positional token vanishes with it. Milo's first
+     answer was a DECLARED discriminator: a `flag` key alongside `lit` told the
+     rule "this literal is an option, look away". Neither half checked that the
+     declaration was true, so `{lit:"0644", flag:"-P", requires:"m"}` was
+     accepted and reopened MCR-SEC-013 through the key that was meant to close
+     it. A rule a sibling key silently disables is not a rule.
+
+     The discriminator is now DERIVED from the word the token actually emits: a
+     `lit` matching FLAG_TOKEN_RE is an option and never occupies an argument
+     slot. There is no second key to disagree with the first, so the smuggle
+     cannot be expressed — and a token carrying both `lit` and `flag` is refused
+     outright, at build time and at run time, because `flag` emits nothing there
+     and exists only to point the rule away from the word that does.
+
+     Template under test: [{lit:"chmod"}, TOKEN, {field:"p"}] — `m` optional,
+     `p` a required path, exactly the shape of the original MCR-SEC-013 vector. */
+  var discChecks = 0;
+  function discSpec(tok) {
+    return { id: "harness-discriminator", tool: "harness", blast: "green",
+             fields: [{ name: "m", type: "integer", required: false, versions: VERSIONS },
+                      { name: "p", type: "path", required: true, versions: VERSIONS }],
+             template: [{ lit: "chmod" }, tok, { field: "p" }] };
+  }
+  var discCases = [
+    [{ lit: "0644", requires: "m" }, "chmod 0644 '/etc/foo'", null,
+     "the baseline MCR-SEC-013 vector: a bare conditional literal is positional, so it may not " +
+     "drop while the path after it survives"],
+    [{ lit: "-P", flag: "-P", requires: "m" }, null, null,
+     "the dual-key shape the branch shipped twice. `flag` emits nothing on a lit token; it only " +
+     "switched the positional rule off. Refused now even when it tells the truth, because a rule " +
+     "that can be switched off by a key nobody checks is not a rule (MCR-SEC-022)"],
+    [{ lit: "0644", flag: "-P", requires: "m" }, null, null,
+     "Marcus's smuggle: an ARGUMENT literal wearing an option's flag key. This assembled " +
+     "`chmod '/etc/foo'` with the path in the mode slot — MCR-SEC-013, reopened"],
+    [{ lit: "/etc/shadow", flag: "-x", requires: "m" }, null, null,
+     "the same smuggle with a path literal, which is the shape that actually hurts"],
+    [{ lit: "-P", requires: "m" }, "chmod -P '/etc/foo'", "chmod '/etc/foo'",
+     "the DERIVED answer, and the shape gen-setsebool-set and gen-lvextend-grow now use: an " +
+     "option-shaped literal is an option, so dropping it shifts nothing and both states are " +
+     "correct — with no key at all"]
+  ];
+  for (var dc = 0; dc < discCases.length; dc++) {
+    for (var dv = 0; dv < VERSIONS.length; dv++) {
+      var dspec = discSpec(discCases[dc][0]);
+      discChecks += 2;
+      var withM = A.assembleCommand(dspec, VERSIONS[dv], { m: "7", p: "/etc/foo" }, { patterns: [] });
+      var noM = A.assembleCommand(dspec, VERSIONS[dv], { p: "/etc/foo" }, { patterns: [] });
+      var gotWith = withM === null ? null : withM.command;
+      var gotNo = noM === null ? null : noM.command;
+      if (gotWith !== discCases[dc][1]) {
+        stats.failures.push("discriminator / RHEL " + VERSIONS[dv] + " / " +
+                            JSON.stringify(discCases[dc][0]) + " with 'm' supplied: expected " +
+                            JSON.stringify(discCases[dc][1]) + ", got " + JSON.stringify(gotWith) +
+                            " — " + discCases[dc][3]);
+      }
+      if (gotNo !== discCases[dc][2]) {
+        stats.failures.push("discriminator / RHEL " + VERSIONS[dv] + " / " +
+                            JSON.stringify(discCases[dc][0]) + " with 'm' ABSENT: expected " +
+                            JSON.stringify(discCases[dc][2]) + ", got " + JSON.stringify(gotNo) +
+                            " — " + discCases[dc][3]);
+      }
+    }
+  }
+  /* MCR-SEC-023 on the derived shape: the option-shaped literal reaches the
+     inspector's flag list, so the panel and the command say the same thing. */
+  discChecks++;
+  var discFlagged = A.assembleCommand(discSpec({ lit: "-P", requires: "m" }), "9",
+                                      { m: "7", p: "/etc/foo" }, { patterns: [] });
+  if (!discFlagged || discFlagged.flags.length !== 1 || discFlagged.flags[0].flag !== "-P") {
+    stats.failures.push("discriminator: an option-shaped literal did not reach the inspector's flag " +
+                        "list — flags=" + JSON.stringify(discFlagged ? discFlagged.flags : null) +
+                        " (MCR-SEC-023)");
+  } else if (discFlagged.flags[0].explain !== null) {
+    stats.failures.push("discriminator: an uncurated option-shaped literal was given an explanation " +
+                        "rather than null — the no-guess law renders 'unverified' from null");
+  }
+  /* control: the shipped content carries no dual-key token any more. */
+  for (var dk = 0; dk < specEntries.length; dk++) {
+    var dtpl = specEntries[dk].template || [];
+    for (var dt = 0; dt < dtpl.length; dt++) {
+      discChecks++;
+      if (dtpl[dt] && dtpl[dt].lit !== undefined && dtpl[dt].flag !== undefined) {
+        stats.failures.push("content spec " + specEntries[dk].id + " template[" + dt + "] carries " +
+                            "both `lit` and `flag` — the declared discriminator is gone and the " +
+                            "derived one needs no key (MCR-SEC-022)");
+      }
+    }
   }
 
   /* ---- the DERIVED join rule, token by token (MCR-SEC-015 / E1) ----------
@@ -1366,6 +1481,8 @@ function main() {
     golden_command_checks: goldenChecks,
     option_syntax_checks: syntaxChecks,
     flag_join_checks: joinChecks,
+    discriminator_checks: discChecks,
+    inspector_flag_checks: inspectorChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1406,6 +1523,10 @@ function main() {
                 "checks (no short option joined with '='; every long option keeps its '=')");
     console.log("  " + joinChecks + " derived-join checks: the join is computed from the flag's " +
                 "shape, and a token declaring a join its shape derives is null on every release");
+    console.log("  " + discChecks + " derived-discriminator checks (an option-shaped lit is an " +
+                "OPTION and never an argument slot; a token carrying both lit and flag is refused) " +
+                "and " + inspectorChecks + " inspector flag-list checks (MCR-SEC-023: the panel " +
+                "names every option the command shows, and no option it does not)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();
