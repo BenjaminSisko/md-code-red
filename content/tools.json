@@ -1,0 +1,65 @@
+{
+ "_meta": {
+  "schema": "tool: id, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} — ADR-001 §5.5",
+  "curated": true,
+  "status": "CR-T-02 skeleton — only the tools the three skeleton command entries use. The full 14-category matrix lands with the P0 generators (CR-T-17..25).",
+  "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
+  "tool_count": 3
+ },
+ "tools": [
+  {
+   "id": "firewall-cmd",
+   "label": "firewall-cmd / firewalld",
+   "category": "firewall-cmd",
+   "availability": {
+    "7": {"available": true, "note": "firewalld is the application firewall the pinned RHEL 7 benchmark checks for (RHEL-07-040520)."},
+    "8": {"available": true},
+    "9": {"available": true},
+    "10": {"available": true}
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "systemctl",
+   "label": "systemctl",
+   "category": "systemctl",
+   "availability": {
+    "7": {"available": true, "note": "RHEL 7 is the first release where systemd, and therefore systemctl, is the init system."},
+    "8": {"available": true},
+    "9": {"available": true},
+    "10": {"available": true}
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md) — every pinned release's check text drives the service state through systemctl",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "journalctl",
+   "label": "journalctl / systemd-journald",
+   "category": "journalctl",
+   "availability": {
+    "7": {"available": true, "note": "No pinned RHEL 7 benchmark rule maps to the journal service; the service itself ships with systemd."},
+    "8": {"available": true, "note": "No pinned RHEL 8 benchmark rule maps to the journal service."},
+    "9": {"available": true, "note": "RHEL-09-211040 requires the service to be active."},
+    "10": {"available": true, "note": "RHEL-10-500000 requires the service to be active."}
+   },
+   "source": {
+    "title": "DISA RHEL 9 V2R9 and RHEL 10 V1R2 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  }
+ ]
+}

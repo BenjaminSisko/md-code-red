@@ -1,0 +1,55 @@
+{
+ "_meta": {
+  "generator": "extract/make_skeleton_content.py",
+  "source_file": "U_CCI_List.xml",
+  "sha256": "a9e3850f7f30665170c377839abea2fd94863019e434cb27b3f6b2d5e277f403",
+  "cci_list_version": "2025-01-23",
+  "entry_count": 5,
+  "filtered_to": "CCIs referenced by the pinned XCCDF rules embedded in content/rules_rhel*.json",
+  "license_class": "verbatim-ok",
+  "source": {
+   "title": "DISA Control Correlation Identifier (CCI) List, publish date 2025-01-23",
+   "url_or_man": "stig-src/U_CCI_List.xml",
+   "version": "2025-01-23",
+   "retrieved_on": "2026-09-17",
+   "license_class": "verbatim-ok"
+  }
+ },
+ "cci": {
+  "CCI-000366": {
+   "nist": [
+    "CM-6 b"
+   ],
+   "rev": "5",
+   "text": "Implement the security configuration settings."
+  },
+  "CCI-000382": {
+   "nist": [
+    "CM-7 b"
+   ],
+   "rev": "5",
+   "text": "Configure the system to prohibit or restrict the use of organization-defined prohibited or restricted functions, system ports, protocols, software, and/or services."
+  },
+  "CCI-001665": {
+   "nist": [
+    "SC-24"
+   ],
+   "rev": "5",
+   "text": "Preserve organization-defined system state information in the event of a system failure."
+  },
+  "CCI-002235": {
+   "nist": [
+    "AC-6 (10)"
+   ],
+   "rev": "5",
+   "text": "Prevent non-privileged users from executing privileged functions."
+  },
+  "CCI-002314": {
+   "nist": [
+    "AC-17 (1)"
+   ],
+   "rev": "5",
+   "text": "Employ automated mechanisms to control remote access methods."
+  }
+ }
+}

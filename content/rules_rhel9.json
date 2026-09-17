@@ -1,0 +1,74 @@
+{
+ "_meta": {
+  "rhel_version": "9",
+  "version": "V2R9",
+  "release": "RHEL 9 · STIG V2R9 · benchmark 01 Jul 2026",
+  "benchmark_date": "01 Jul 2026",
+  "source_file": "U_RHEL_9_STIG_V2R9_Manual-xccdf.xml",
+  "sha256": "c912407aa6a2f151979db8bf6d901a06116f1624bf60b19b3737febf73bba539",
+  "sunset": false,
+  "generator": "extract/make_skeleton_content.py",
+  "partial": true,
+  "partial_reason": "CR-T-02 skeleton: only rules cited by content/commands.json. extract/parse_xccdf.py (CR-T-07) emits the full dataset.",
+  "rule_count": 3,
+  "source_rule_count": 445,
+  "license_class": "verbatim-ok",
+  "source": {
+   "title": "DISA Security Technical Implementation Guide, RHEL 9 · STIG V2R9 · benchmark 01 Jul 2026",
+   "url_or_man": "stig-src/U_RHEL_9_STIG_V2R9_Manual-xccdf.xml",
+   "version": "V2R9",
+   "retrieved_on": "2026-09-17",
+   "license_class": "verbatim-ok"
+  },
+  "cci_list_version": "2025-01-23"
+ },
+ "rules": [
+  {
+   "v": "V-257936",
+   "i": "RHEL-09-251015",
+   "rid": "SV-257936r1044995_rule",
+   "c": "II",
+   "t": "The firewalld service on RHEL 9 must be active.",
+   "cci": [
+    "CCI-000382",
+    "CCI-002314"
+   ],
+   "n": [
+    "CM-7 b",
+    "AC-17 (1)"
+   ],
+   "chk": "Verify that \"firewalld\" is active with the following command:\n\n$ systemctl is-active firewalld \n\nactive\n\nIf the firewalld service is not active, this is a finding.",
+   "fix": "To enable the firewalld service run the following command:\n\n$ sudo systemctl enable --now firewalld"
+  },
+  {
+   "v": "V-257785",
+   "i": "RHEL-09-211050",
+   "rid": "SV-257785r1044833_rule",
+   "c": "I",
+   "t": "The x86 Ctrl-Alt-Delete key sequence must be disabled on RHEL 9.",
+   "cci": [
+    "CCI-002235"
+   ],
+   "n": [
+    "AC-6 (10)"
+   ],
+   "chk": "Verify RHEL 9 is not configured to reboot the system when Ctrl-Alt-Delete is pressed with the following command:\n\n$ sudo systemctl status ctrl-alt-del.target\n\nctrl-alt-del.target\nLoaded: masked (Reason: Unit ctrl-alt-del.target is masked.)\nActive: inactive (dead)\n\nIf the \"ctrl-alt-del.target\" is loaded and not masked, this is a finding.",
+   "fix": "Configure RHEL 9 to disable the ctrl-alt-del.target with the following command:\n\n$ sudo systemctl disable --now ctrl-alt-del.target\n$ sudo systemctl mask --now ctrl-alt-del.target"
+  },
+  {
+   "v": "V-257783",
+   "i": "RHEL-09-211040",
+   "rid": "SV-257783r991562_rule",
+   "c": "II",
+   "t": "RHEL 9 systemd-journald service must be enabled.",
+   "cci": [
+    "CCI-001665"
+   ],
+   "n": [
+    "SC-24"
+   ],
+   "chk": "Verify that \"systemd-journald\" is active with the following command:\n\n$ systemctl is-active systemd-journald\n\nactive\n\nIf the systemd-journald service is not active, this is a finding.",
+   "fix": "To enable the systemd-journald service, run the following command:\n\n$ sudo systemctl enable --now systemd-journald"
+  }
+ ]
+}

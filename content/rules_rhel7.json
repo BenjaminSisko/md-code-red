@@ -1,0 +1,57 @@
+{
+ "_meta": {
+  "rhel_version": "7",
+  "version": "V3R15",
+  "release": "RHEL 7 · STIG V3R15 · benchmark 24 Jul 2024",
+  "benchmark_date": "24 Jul 2024",
+  "source_file": "U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
+  "sha256": "c563a56ccbe934c82fbea336fabc26d0e5c2c23efc54e6a562f649bc65ec83b2",
+  "sunset": true,
+  "generator": "extract/make_skeleton_content.py",
+  "partial": true,
+  "partial_reason": "CR-T-02 skeleton: only rules cited by content/commands.json. extract/parse_xccdf.py (CR-T-07) emits the full dataset.",
+  "rule_count": 2,
+  "source_rule_count": 244,
+  "license_class": "verbatim-ok",
+  "source": {
+   "title": "DISA Security Technical Implementation Guide, RHEL 7 · STIG V3R15 · benchmark 24 Jul 2024",
+   "url_or_man": "stig-src/U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
+   "version": "V3R15",
+   "retrieved_on": "2026-09-17",
+   "license_class": "verbatim-ok"
+  },
+  "cci_list_version": "2025-01-23"
+ },
+ "rules": [
+  {
+   "v": "V-204604",
+   "i": "RHEL-07-040520",
+   "rid": "SV-204604r991589_rule",
+   "c": "II",
+   "t": "The Red Hat Enterprise Linux operating system must enable an application firewall, if available.",
+   "cci": [
+    "CCI-000366"
+   ],
+   "n": [
+    "CM-6 b"
+   ],
+   "chk": "Verify the operating system enabled an application firewall.\n\nCheck to see if \"firewalld\" is installed with the following command:\n\n# yum list installed firewalld\nfirewalld-0.3.9-11.el7.noarch.rpm\n\nIf the \"firewalld\" package is not installed, ask the System Administrator if another firewall application (such as iptables) is installed. \n\nIf an application firewall is not installed, this is a finding. \n\nCheck to see if the firewall is loaded and active with the following command:\n\n# systemctl status firewalld\nfirewalld.service - firewalld - dynamic firewall daemon\n\n   Loaded: loaded (/usr/lib/systemd/system/firewalld.service; enabled)\n   Active: active (running) since Tue 2014-06-17 11:14:49 CEST; 5 days ago\n\nIf \"firewalld\" does not show a status of \"loaded\" and \"active\", this is a finding. \n\nCheck the state of the firewall:\n\n# firewall-cmd --state \nrunning\n\nIf \"firewalld\" does not show a state of \"running\", this is a finding.",
+   "fix": "Ensure the operating system's application firewall is enabled.\n\nInstall the \"firewalld\" package, if it is not on the system, with the following command:\n\n# yum install firewalld\n\nStart the firewall via \"systemctl\" with the following command:\n\n# systemctl start firewalld"
+  },
+  {
+   "v": "V-204455",
+   "i": "RHEL-07-020230",
+   "rid": "SV-204455r991589_rule",
+   "c": "I",
+   "t": "The Red Hat Enterprise Linux operating system must be configured so that the x86 Ctrl-Alt-Delete key sequence is disabled on the command line.",
+   "cci": [
+    "CCI-000366"
+   ],
+   "n": [
+    "CM-6 b"
+   ],
+   "chk": "Verify the operating system is not configured to reboot the system when Ctrl-Alt-Delete is pressed.\n\nCheck that the ctrl-alt-del.target is masked and not active with the following command:\n\n     # systemctl status ctrl-alt-del.target\n\n     ctrl-alt-del.target\n     Loaded: masked (/dev/null; bad)\n     Active: inactive (dead)\n\nIf the ctrl-alt-del.target is not masked, this is a finding.\n\nIf the ctrl-alt-del.target is active, this is a finding.",
+   "fix": "Configure the system to disable the Ctrl-Alt-Delete sequence for the command line with the following commands:\n\n     # systemctl disable ctrl-alt-del.target\n\n     # systemctl mask ctrl-alt-del.target"
+  }
+ ]
+}
