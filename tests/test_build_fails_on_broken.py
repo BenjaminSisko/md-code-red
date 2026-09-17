@@ -34,9 +34,16 @@ CASES = [
 
 
 def scratch_repo(tmp, broken=None):
-    """A minimal buildable tree: build.py + template.html + content/."""
+    """A minimal buildable tree: build.py + extract/schema.py + template.html + content/.
+
+    extract/schema.py comes along because build.py imports the schema from there
+    rather than carrying its own copy (CR-T-06). Nothing else in extract/ is
+    needed: the build reads content/, never stig-src/.
+    """
     shutil.copy(os.path.join(REPO, "build.py"), tmp)
     shutil.copy(os.path.join(REPO, "template.html"), tmp)
+    os.makedirs(os.path.join(tmp, "extract"))
+    shutil.copy(os.path.join(REPO, "extract", "schema.py"), os.path.join(tmp, "extract"))
     shutil.copytree(os.path.join(REPO, "content"), os.path.join(tmp, "content"))
     if broken:
         shutil.copy(os.path.join(FIXTURES, broken), os.path.join(tmp, "content", "commands.json"))
