@@ -127,11 +127,43 @@ MARKERS = [
 # it is named here AND every contribution to it is itself audited by this gate.
 # ---------------------------------------------------------------------------
 INNERHTML_ALLOWLIST = {
-    "html": "renderVersionSelector(): every 'html +=' contribution is audited by this same gate",
     'parts.join("")': "renderStatusBar(): every parts.push() argument is audited by this same gate",
 }
-AUDITED_ACCUMULATORS = ["html"]          # <name> += <expr>
 AUDITED_PUSH_TARGETS = ["parts"]         # <name>.push(<expr>)
+
+# ---------------------------------------------------------------------------
+# Render-sink inventory (Q17, MCR-SEC-004).
+#
+# The audit used to look for one sink spelling — `.innerHTML =` — and one
+# hard-coded accumulator name. Five mechanical bypasses followed from that:
+# `+=` on the sink, `html = html + x` (assignment, not `+=`), an intermediate
+# accumulator under any other name, insertAdjacentHTML(), and outerHTML. None of
+# them existed in the code; all five passed the gate. The gate now (a) forbids
+# the sinks this product has no use for outright, (b) derives the accumulator
+# set from the source instead of hard-coding it, and (c) audits `=` and `+=`
+# alike, on the sink and on every derived accumulator.
+#
+# These are FORBIDDEN, not audited: there is no correct use of them here, and a
+# rule with no exception cannot be bypassed by writing the exception.
+# ---------------------------------------------------------------------------
+FORBIDDEN_SINKS = [
+    (re.compile(r"\binsertAdjacentHTML\s*\("), "insertAdjacentHTML()"),
+    (re.compile(r"\.\s*outerHTML\b"), ".outerHTML"),
+    (re.compile(r"\bdocument\s*\.\s*write(?:ln)?\s*\("), "document.write()/document.writeln()"),
+    (re.compile(r"\bcreateContextualFragment\s*\("), "Range.createContextualFragment()"),
+    (re.compile(r"\bsrcdoc\s*="), "srcdoc="),
+]
+# `.innerHTML` may only ever appear as an assignment sink, never read into
+# something else or passed anywhere.
+INNERHTML_ANY_RE = re.compile(r"\.\s*innerHTML\b")
+INNERHTML_SINK_RE = re.compile(r"\.\s*innerHTML\s*\+?=(?!=)\s*")
+# setAttribute must name its attribute with a literal the gate can read, and that
+# literal may not be one that turns a value into a URL, a style or a handler.
+SETATTR_RE = re.compile(r"\.setAttribute\s*\(")
+SETATTR_FORBIDDEN_RE = re.compile(r"^(href|src|srcdoc|style|action|formaction|xlink:href|on[a-z]+)$",
+                                  re.I)
+IDENT_RE = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
+JOIN_RE = re.compile(r"^([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*join\s*\(")
 
 # ---------------------------------------------------------------------------
 # Trojan-source scan (Q17). Raw C0/C1 controls and invisible or bidirectional
@@ -228,11 +260,43 @@ def split_top_level(expr, sep="+"):
     return [p for p in parts if p != ""]
 
 
+def literal_end(seg):
+    """Index of the quote that closes the string literal starting at seg[0], or None."""
+    if not seg or seg[0] not in "\"'":
+        return None
+    quote, i = seg[0], 1
+    while i < len(seg):
+        c = seg[i]
+        if c == "\\":
+            i += 2
+            continue
+        if c == quote:
+            return i
+        if c in "\n\r":
+            return None            # a JS string literal cannot span a raw newline
+        i += 1
+    return None
+
+
 def is_literal(seg):
-    return len(seg) >= 2 and seg[0] in "\"'" and seg[-1] == seg[0]
+    """True only for ONE complete string literal that closes at its last character.
+
+    MCR-SEC-004(c). The old implementation compared seg[0] and seg[-1] only, so
+    is_literal('"a" + raw + "b"') was True. That was not exploitable while
+    split_top_level() splits on top-level '+' first — but a checker whose
+    correctness depends on the splitter running first is one refactor away from
+    being wrong, and this one guards the XSS path into a tool trusted at root.
+    Template literals are rejected outright: interpolation is the thing this gate
+    exists to catch.
+    """
+    seg = seg.strip()
+    if seg.startswith("`"):
+        return False
+    end = literal_end(seg)
+    return end is not None and end == len(seg) - 1
 
 
-def segment_ok(seg):
+def segment_ok(seg, accumulators=()):
     seg = seg.strip()
     if not seg:
         return True
@@ -240,6 +304,8 @@ def segment_ok(seg):
         return True
     if re.match(r"^(esc|escapeAttr|escapeRegex)\s*\(", seg):
         return True
+    if seg in accumulators:
+        return True            # derived accumulator: its own assignments are audited
     if seg in INNERHTML_ALLOWLIST:
         return True
     if seg.startswith("(") and seg.endswith(")"):
@@ -247,13 +313,165 @@ def segment_ok(seg):
         if "?" in inner:
             cond, _, rest = inner.partition("?")
             branches = split_top_level(rest, ":")
-            return all(segment_ok(b) for b in branches)
-        return segment_ok(inner)
+            return all(segment_ok(b, accumulators) for b in branches)
+        return segment_ok(inner, accumulators)
     return False
 
 
-def expression_ok(expr):
-    return all(segment_ok(s) for s in split_top_level(expr))
+def expression_ok(expr, accumulators=()):
+    return all(segment_ok(s, accumulators) for s in split_top_level(expr))
+
+
+def assignments_to(src, name):
+    """Every `<name> = ...` and `<name> += ...` expression in src.
+
+    The lookbehind keeps `foo.html = x` and `myhtml = x` out; `(?!=)` keeps
+    `==` out.
+    """
+    out = []
+    pat = re.compile(r"(?<![.\w$])%s\s*\+?=(?!=)\s*" % re.escape(name))
+    for m in pat.finditer(src):
+        expr, _end = read_assignment(src, m.end())
+        out.append(expr)
+    return out
+
+
+def sink_expressions(src):
+    """Every expression assigned into an audited render sink (`=` and `+=`)."""
+    out = []
+    for m in INNERHTML_SINK_RE.finditer(src):
+        expr, _end = read_assignment(src, m.end())
+        out.append(expr)
+    return out
+
+
+def derive_accumulators(src):
+    """Every identifier that reaches a render sink, transitively (MCR-SEC-004b).
+
+    An accumulator is not a name this file knows in advance — it is whatever the
+    source assigns into a sink. Start from the bare identifiers on the right of
+    every sink assignment, then follow their own assignments: `var html = "" + h`
+    makes `h` an accumulator too, so `h += entry.intent` is audited rather than
+    invisible. Fixed point, so a chain of any length is covered.
+    """
+    queue, seen = [], set()
+    for expr in sink_expressions(src):
+        for seg in split_top_level(expr):
+            seg = seg.strip()
+            if IDENT_RE.match(seg):
+                queue.append(seg)
+    while queue:
+        name = queue.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        for expr in assignments_to(src, name):
+            for seg in split_top_level(expr):
+                seg = seg.strip()
+                if IDENT_RE.match(seg) and seg not in seen:
+                    queue.append(seg)
+    return seen
+
+
+def render_sink_failures(src):
+    """The whole Q17 render-safety audit over a piece of JS. Returns (failures, audited).
+
+    Factored out of gate_q17 so tests/test_render_audit.py can drive it with the
+    bypass constructs from MCR-SEC-004 and prove each one now fails. A gate that
+    has never been seen to fail is not a gate.
+    """
+    f, audited = [], 0
+
+    for rx, label in FORBIDDEN_SINKS:
+        hits = len(rx.findall(src))
+        if hits:
+            f.append("%s appears %d time(s): this product renders through exactly one audited sink "
+                     "(innerHTML, esc()-wrapped), and there is no correct use of this one here "
+                     "(MCR-SEC-004)" % (label, hits))
+
+    # `.innerHTML` may only be an assignment target
+    for m in INNERHTML_ANY_RE.finditer(src):
+        tail = src[m.end():m.end() + 8]
+        if not re.match(r"\s*\+?=(?!=)", tail):
+            f.append("`.innerHTML` used as something other than an assignment sink (followed by %r) "
+                     "— every render path has to go through the audited assignment form" % tail)
+
+    # setAttribute: the attribute name must be a readable literal, and not one
+    # that turns its value into a URL, a style or an event handler.
+    for m in SETATTR_RE.finditer(src):
+        args, _end = read_assignment(src, m.end())
+        first = split_top_level(args, ",")[0].strip() if args else ""
+        if not is_literal(first):
+            f.append("setAttribute() called with a non-literal attribute name (%s) — the gate cannot "
+                     "prove it is not href/src/style/on*, so write the name out" % first[:40])
+            continue
+        name = first[1:-1]
+        if SETATTR_FORBIDDEN_RE.match(name):
+            f.append("setAttribute(%r, ...) — href/src/srcdoc/style/action/on* turn a string into a "
+                     "URL, a stylesheet or a handler; this product sets data-* and ARIA only" % name)
+
+    accumulators = derive_accumulators(src)
+
+    for expr in sink_expressions(src):
+        audited += 1
+        if not expression_ok(expr, accumulators):
+            bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+            f.append("innerHTML assignment is not esc()/escapeAttr()-wrapped or literal: %s"
+                     % "; ".join(b[:70] for b in bad))
+
+    for name in sorted(accumulators):
+        exprs = assignments_to(src, name)
+        if not exprs:
+            f.append("'%s' is assigned into an innerHTML sink but nothing in this file assigns to it "
+                     "in a form this gate can audit" % name)
+        for expr in exprs:
+            audited += 1
+            if not expression_ok(expr, accumulators):
+                bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+                f.append("accumulator '%s' takes an unescaped segment: %s"
+                         % (name, "; ".join(b[:70] for b in bad)))
+
+    # allow-listed join() accumulators: the push target must itself be audited
+    for expr in sink_expressions(src):
+        for seg in split_top_level(expr):
+            jm = JOIN_RE.match(seg.strip())
+            if jm and jm.group(1) not in AUDITED_PUSH_TARGETS:
+                f.append("'%s.join(...)' reaches a sink but '%s' is not an audited push target"
+                         % (jm.group(1), jm.group(1)))
+
+    for name in AUDITED_PUSH_TARGETS:
+        for m in re.finditer(r"\b%s\.push\(" % re.escape(name), src):
+            expr, _end = read_assignment(src, m.end())
+            audited += 1
+            if not expression_ok(expr, accumulators):
+                bad = [s for s in split_top_level(expr) if not segment_ok(s, accumulators)]
+                f.append("'%s.push()' takes an unescaped segment: %s"
+                         % (name, "; ".join(b[:70] for b in bad)))
+
+    return f, audited
+
+
+def trojan_scan(text, where):
+    """Raw C0/C1, zero-width and bidirectional-override characters, by code point.
+
+    C10: this runs over the data island as well as the hand-written shell. DISA
+    fix text is rendered AND copied into evidence blocks, so a bidi override in
+    vendor XML is the textbook trojan-source case; excluding the island was a
+    deliberate blind spot.
+    """
+    found = {}
+    for m in TROJAN_RE.finditer(text):
+        cp = ord(m.group(0))
+        if cp in found:
+            continue
+        found[cp] = text[:m.start()].count("\n") + 1
+    if not found:
+        return []
+    return ["raw control or invisible character(s) in %s: %s — source and embedded content are "
+            "written with escapes, never with the character itself; a bidi override or a stray NUL "
+            "is both a review-integrity hazard and how a \\u escape turns into the thing it meant "
+            "to describe"
+            % (where, ", ".join("U+%04X at line %d" % (cp, ln) for cp, ln in sorted(found.items())[:8]))]
 
 
 def read_assignment(src, start):
@@ -375,6 +593,30 @@ def parse_cci_list():
 # gates
 # ---------------------------------------------------------------------------
 
+def island_escape_failures(island):
+    """MCR-SEC-007 — no HTML-significant character survives into the data island.
+
+    Escaping only `</` closes `</script>` and leaves `<!--` and `<script` alone,
+    which is enough to push the HTML tokeniser into script-data-double-escaped
+    state and swallow the island's own closing tag along with the whole app
+    script. build.py escapes every `<` and `>` as \\u003c / \\u003e; this asserts
+    it on the built file, so reverting the escaping fails the build rather than
+    waiting for a DISA fix text that happens to contain `<!--<script`.
+
+    Returns a list of failure strings; empty means the island is clean.
+    """
+    out = []
+    for ch, name in (("<", "less-than"), (">", "greater-than")):
+        n = island.count(ch)
+        if n:
+            at = island.index(ch)
+            out.append("the data island contains %d raw %s character(s) — first at offset %d, "
+                       "context %r. build.py must escape every '<' and '>' as \\u003c / \\u003e so "
+                       "'</script', '<!--', '-->' and '<script' are all closed by one rule "
+                       "(MCR-SEC-007)" % (n, name, at, island[max(0, at - 30):at + 30]))
+    return out
+
+
 def gate_q1(ctx):
     f, d = [], []
     html = ctx["html"]
@@ -407,6 +649,11 @@ def gate_q1(ctx):
         f.append("data island does not parse as JSON")
     else:
         d.append("data island parses (%.2f MB of JSON)" % (ctx["island_len"] / 1024.0 / 1024.0))
+    esc_f = island_escape_failures(ctx["island"])
+    f.extend(esc_f)
+    if not esc_f:
+        d.append("no raw '<' or '>' anywhere in the data island — '</script', '<!--', '-->' and "
+                 "'<script' are all closed by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)")
     consts = ctx["build_consts"]
     version = consts.get("APP_VERSION")
     checks = [
@@ -1169,51 +1416,30 @@ def gate_q17(ctx):
     for need in ("function esc(", "function escapeAttr("):
         if need not in shell:
             f.append("%s definition missing" % need.replace("function ", "").replace("(", "()"))
-    # trojan-source scan of the hand-written shell (the data island is vendor
-    # prose and is not hand-written, so it is excluded by using ctx["shell"])
-    found = {}
-    for m in TROJAN_RE.finditer(shell):
-        cp = ord(m.group(0))
-        if cp in found:
-            continue
-        found[cp] = shell[:m.start()].count("\n") + 1
-    if found:
-        f.append("raw control or invisible character(s) in the shipped shell: %s — source is written "
-                 "with escapes, never with the character itself; a bidi override or a stray NUL is "
-                 "both a review-integrity hazard and how a \\u escape turns into the thing it meant "
-                 "to describe"
-                 % ", ".join("U+%04X at line %d" % (cp, ln) for cp, ln in sorted(found.items())[:8]))
-    else:
+    # trojan-source scan — the hand-written shell AND the data island (C10).
+    shell_trojan = trojan_scan(shell, "the shipped shell")
+    island_trojan = trojan_scan(ctx["island"], "the embedded data island")
+    f.extend(shell_trojan)
+    f.extend(island_trojan)
+    if not shell_trojan:
         d.append("no raw C0/C1 control, zero-width, or bidirectional-override character anywhere in "
                  "the hand-written shell")
-    # mechanical innerHTML audit
-    audited = 0
-    for m in re.finditer(r"\.innerHTML\s*=\s*", shell):
-        expr, _end = read_assignment(shell, m.end())
-        audited += 1
-        if not expression_ok(expr):
-            bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-            f.append("innerHTML assignment is not esc()/escapeAttr()-wrapped or literal: %s"
-                     % "; ".join(b[:70] for b in bad))
-    for name in AUDITED_ACCUMULATORS:
-        for m in re.finditer(r"\b%s\s*\+=\s*" % re.escape(name), shell):
-            expr, _end = read_assignment(shell, m.end())
-            audited += 1
-            if not expression_ok(expr):
-                bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-                f.append("accumulator '%s' takes an unescaped segment: %s"
-                         % (name, "; ".join(b[:70] for b in bad)))
-    for name in AUDITED_PUSH_TARGETS:
-        for m in re.finditer(r"\b%s\.push\(" % re.escape(name), shell):
-            expr, _end = read_assignment(shell, m.end())
-            audited += 1
-            if not expression_ok(expr):
-                bad = [s for s in split_top_level(expr) if not segment_ok(s)]
-                f.append("'%s.push()' takes an unescaped segment: %s"
-                         % (name, "; ".join(b[:70] for b in bad)))
-    if not any("innerHTML" in x or "accumulator" in x or ".push()" in x for x in f):
-        d.append("%d innerHTML/accumulator expressions audited; every concatenated segment is a string "
-                 "literal, an esc()/escapeAttr()/escapeRegex() call, or an allow-listed accumulator" % audited)
+    if not island_trojan:
+        d.append("the same scan over the %.2f MB data island: clean. DISA fix text is rendered AND "
+                 "copied into evidence, so vendor prose gets the trojan-source scan too — the earlier "
+                 "exclusion was a blind spot (MCR-SEC-004 / condition C10)"
+                 % (ctx["island_len"] / 1024.0 / 1024.0))
+
+    # mechanical render-sink audit (MCR-SEC-004)
+    sink_f, audited = render_sink_failures(shell)
+    f.extend(sink_f)
+    if not sink_f:
+        d.append("%d innerHTML/accumulator/push expressions audited; every concatenated segment is a "
+                 "string literal, an esc()/escapeAttr()/escapeRegex() call, or an accumulator this "
+                 "gate derived from the source and audited in turn" % audited)
+        d.append("derived accumulators: %s" % (", ".join(sorted(derive_accumulators(shell))) or "none"))
+        d.append("forbidden sinks absent: %s"
+                 % ", ".join(label for _rx, label in FORBIDDEN_SINKS))
         for k, why in sorted(INNERHTML_ALLOWLIST.items()):
             d.append("allow-list: %s — %s" % (k, why))
     return f, d
@@ -1324,7 +1550,10 @@ def build_ctx():
     data = None
     if island:
         try:
-            data = json.loads(island.replace("<\\/", "</"))
+            # < / > are ordinary JSON escapes; json.loads restores them.
+            # No pre-substitution here on purpose — a gate that repairs its input
+            # cannot tell a well-escaped island from a badly escaped one.
+            data = json.loads(island)
         except json.JSONDecodeError:
             data = None
     app = re.findall(r"<script>(.*?)</script>", html, re.S)

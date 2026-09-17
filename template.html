@@ -1286,9 +1286,17 @@ function setRail(name){
   renderAll();
 }
 function togglePanel(which){
-  var attr=(which==="sidebar")?"data-sidebar":"data-inspector";
-  var now=document.body.getAttribute(attr)==="off";
-  document.body.setAttribute(attr,now?"on":"off");
+  /* Both attribute names are string literals at the call site rather than one
+     variable, so Q17's setAttribute inventory can prove by reading that neither
+     is href/src/style/on* — a gate cannot audit a name it has to guess at
+     (MCR-SEC-004). */
+  if(which==="sidebar"){
+    document.body.setAttribute("data-sidebar",
+      document.body.getAttribute("data-sidebar")==="off"?"on":"off");
+  }else{
+    document.body.setAttribute("data-inspector",
+      document.body.getAttribute("data-inspector")==="off"?"on":"off");
+  }
 }
 
 function renderAll(){

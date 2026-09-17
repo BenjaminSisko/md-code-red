@@ -10,8 +10,8 @@ the extractor that produced it, and the file is rebuilt (ADR-001 §7.1/§7.4, th
 Cardinal Rule). Nobody opens dist/*.html in an editor, at any size, ever.
 
 Lineage: forked from grey-beard-ansible v1.0.1 build.py. The load -> validate ->
-inject -> token-replace skeleton and the "</" escaping of the island payload come
-over unchanged; the CONTENT map and validate() are MD CODE RED's own (ADR-001 §4).
+inject -> token-replace skeleton comes over unchanged (the island escaping does not:
+see escape_island(), MCR-SEC-007); the CONTENT map and validate() are MD CODE RED's own (ADR-001 §4).
 """
 
 import hashlib
@@ -168,6 +168,31 @@ def assemble(data):
     return data
 
 
+def escape_island(payload):
+    """Neutralise every HTML-significant character in the JSON data island.
+
+    MCR-SEC-007. The inherited rule was `payload.replace("</", "<\\/")`, with the
+    comment "keep the JSON safe inside a <script> block". That closes `</script>`
+    and nothing else. It does NOT close the HTML tokeniser's
+    script-data-double-escaped state: a payload carrying `<!--` followed by
+    `<script` (neither of which has a slash, so neither was rewritten) puts the
+    parser into that state, where `</script>` stops terminating the element. The
+    island's own closing tag, the app script that follows it and the "Not built
+    yet" fallback inside it are then all consumed as text data — a silent denial
+    of use on a jump box mid-task, with no error shown.
+
+    DISA XCCDF fix text is embedded verbatim and is vendor-controlled string
+    data, so `<!--<script` is a content value away, not an attack away.
+
+    Escaping `<` and `>` as \\u003c / \\u003e is valid JSON (JSON.parse restores
+    the characters), costs nothing at parse time, and closes `</script`, `<!--`,
+    `-->` and `<script` in one rule rather than enumerating sequences. Every `<`
+    and `>` in a JSON document is inside string content — the structural
+    characters are {}[],:" and the bare literals — so nothing else is touched.
+    """
+    return payload.replace("<", "\\u003c").replace(">", "\\u003e")
+
+
 def build():
     data = load_content()
     validate(data)
@@ -179,8 +204,7 @@ def build():
     if "/*__DATA__*/" not in tpl:
         sys.exit("FATAL: template.html has no /*__DATA__*/ placeholder")
 
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-    payload = payload.replace("</", "<\\/")  # keep the JSON safe inside a <script> block
+    payload = escape_island(json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
     out = tpl.replace("/*__DATA__*/", payload)
     out = (out.replace("__APP_NAME__", APP_NAME)
               .replace("__VERSION__", APP_VERSION)
