@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 15
+  "entry_count": 17
  },
  "categories": [
   "firewall-cmd",
@@ -983,6 +983,105 @@
     "license_class": "verbatim-ok"
    },
    "verified": false
+  },
+  {
+   "id": "gen-dnf-package",
+   "tool": "dnf",
+   "category": "dnf / yum",
+   "intent": "Install or remove a package with dnf",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "install",
+      "remove"
+     ]
+    },
+    {
+     "name": "pkg",
+     "type": "package",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "dnf"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "pkg"
+    }
+   ],
+   "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
+   "undo": "Run this generator again with the reverse action.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ]
+  },
+  {
+   "id": "gen-yum-package",
+   "tool": "yum",
+   "category": "dnf / yum",
+   "intent": "Install or remove a package with yum (RHEL 7's package manager; a compatibility symlink to dnf on RHEL 8+)",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "install",
+      "remove"
+     ]
+    },
+    {
+     "name": "pkg",
+     "type": "package",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "yum"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "pkg"
+    }
+   ],
+   "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
+   "undo": "Run this generator again with the reverse action.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false,
+   "versions": [
+    "7",
+    "8",
+    "9",
+    "10"
+   ]
   }
  ]
 }
