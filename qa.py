@@ -2046,6 +2046,15 @@ def gate_q13(ctx):
 SHINGLE_N = 8                       # ADR-001 §7.3 Q14. The promise is an 8-gram.
 STAGED_SUBDIRS = ("man", "help", "redhat", "git")
 
+# Mirrors extract/schema.py's HEADER_BOUND_FIELDS. Not imported from there on
+# purpose — qa.py is stdlib-only and keeps its own independent path through
+# this file's data on principle (see the module docstring: Q8..Q11 re-parse
+# XCCDF themselves rather than reuse the extractor, "the accuracy gate is
+# worth nothing if it re-uses the extractor's code path"). Same reasoning
+# applies to Q14: it should not trust extract/schema.py's idea of which
+# fields are free text, it should have its own.
+HEADER_BOUND_FIELDS = ("intent", "verify", "undo")
+
 
 def shingles(text):
     """Every SHINGLE_N-word run in text, normalised. Pure."""
@@ -2078,17 +2087,56 @@ def raw_shingles(repo=REPO):
 
 
 def curated_texts(entry):
-    """Every curated string on an entry that Q14 compares against raw sources."""
+    """Every curated free-text field on an entry that Q14 compares against raw sources.
+
+    Returns (text, license_class) pairs, not bare strings. Most fields are
+    governed by the entry's own `source.license_class` — but flags[] may carry
+    a license_class of their own (a flag can be cited from a different source
+    than the entry as a whole, once content-src/SOURCES.json exists to resolve
+    a source_ref against), so a flag's own license_class wins over the entry's
+    when present. This is the fix for the H1 gap: an entry whose top-level
+    `source` is verbatim-ok (a DISA STIG citation) can still carry an
+    individually paraphrase-only flag (systemctl's `status`/`is-active`
+    behaviour, documented rather than STIG text) — under the old entry-level
+    gate, that flag's `explain` was never checked at all, because the whole
+    entry was skipped before curated_texts() ever ran.
+
+    Every field Q14 was asked to cover (ADR-001 §7.3, widened per Milo Vance's
+    self-flagged H1 gap): `intent`, `verify`, `undo` (entry-level, HEADER_BOUND_
+    FIELDS — the same three fields copied into the clipboard comment header,
+    extract/schema.py's single_line_errors rule), rhel_versions[].notes and
+    .changed_in_note.what, flags[].explain, stig[].notes (schema does not
+    define this key today, but a future free-text stig row note must not be a
+    silent hole), and a generator spec's fields[].label / fields[].help — the
+    form-facing strings on a `"template" in e` entry (extract/schema.py
+    spec_fields_errors), which carry no `type` restriction and are exactly
+    where a paraphrase-only man page sentence would land if pasted into a
+    field's UI copy instead of into `intent`.
+    """
+    entry_lc = (entry.get("source") or {}).get("license_class")
     texts = []
+    for field in HEADER_BOUND_FIELDS:  # ("intent", "verify", "undo")
+        if isinstance(entry.get(field), str) and entry[field]:
+            texts.append((entry[field], entry_lc))
     for v in VERSIONS:
         val = (entry.get("rhel_versions") or {}).get(v) or {}
         if val.get("notes"):
-            texts.append(val["notes"])
+            texts.append((val["notes"], entry_lc))
         if (val.get("changed_in_note") or {}).get("what"):
-            texts.append(val["changed_in_note"]["what"])
+            texts.append((val["changed_in_note"]["what"], entry_lc))
     for fl in (entry.get("flags") or []):
         if fl.get("explain"):
-            texts.append(fl["explain"])
+            texts.append((fl["explain"], fl.get("license_class") or entry_lc))
+    for s in (entry.get("stig") or []):
+        if isinstance(s, dict) and s.get("notes"):
+            texts.append((s["notes"], entry_lc))
+    if isinstance(entry.get("fields"), list):
+        for fld in entry["fields"]:
+            if not isinstance(fld, dict):
+                continue
+            for key in ("label", "help"):
+                if isinstance(fld.get(key), str) and fld[key]:
+                    texts.append((fld[key], entry_lc))
     return texts
 
 
@@ -2099,16 +2147,93 @@ def paraphrase_failures(entries, raw_grams):
     in CI is the gate the planted fixture proves. ADR-001 §7.3 asked for that
     test file; until AL-GATE3's Gate 3 review, Q14 was the only gate in this file
     with no way to drive it at all.
+
+    Filtering by license_class now happens PER FIELD (curated_texts' second
+    tuple element), not once per entry — see curated_texts()'s docstring for
+    why: a flags[] item's own license_class can differ from its entry's.
     """
     f = []
     for e in entries:
-        if (e.get("source") or {}).get("license_class") != "paraphrase-only":
-            continue
-        for t in curated_texts(e):
+        for t, lc in curated_texts(e):
+            if lc != "paraphrase-only":
+                continue
             shared = shingles(t) & raw_grams
             if shared:
                 f.append("entry %s: %d-gram lifted from a paraphrase-only source: \"%s\""
                          % (e.get("id"), SHINGLE_N, " ".join(sorted(shared)[0])))
+    return f
+
+
+def source_is_offline_checkable(source):
+    """True if Q14's shingle check has bytes to compare this citation against.
+
+    A `man N tool` reference or a direct `content-src/raw/...` path names a
+    source this repo stages (or is staged FROM) under content-src/raw/, so
+    raw_shingles() actually contains the text the citation claims. Anything
+    else — a docs.redhat.com URL, a local PDF, a "... Guide" title — names a
+    Red Hat guide (CC-BY-SA 3.0, paraphrase-only per content-licensing-ruling
+    v1). This repo does not and should not stage guide prose the way it stages
+    man/--help captures: copying a copyrighted guide passage into content-src/
+    just so Q14 can shingle-check it would itself be the verbatim embedding
+    the licensing ruling exists to prevent (and man pages are a redistributable
+    reference dump by convention; a Red Hat doc page is not). So Q14 cannot
+    see those bytes and cannot vouch for a paraphrase drawn from them the way
+    it vouches for one drawn from a staged man page — see attestation_failures().
+    """
+    ref = (source or {}).get("url_or_man")
+    if not isinstance(ref, str):
+        return False
+    return ref.startswith("man ") or ref.startswith("content-src/raw/")
+
+
+def attestation_failures(entries, repo=REPO):
+    """A paraphrase-only entry whose source Q14 cannot shingle-check offline.
+
+    The offline mechanism decision (this tranche): Q14 stays a pure offline
+    8-gram check against content-src/raw/ — it does NOT reach out to the
+    corpus mirror on saratoga (not in this repo, not reachable in an air-gapped
+    CI run, and the exact kind of live-host dependency gate_q15's own docstring
+    already refuses for a similar reason). An entry whose paraphrase-only
+    source is a Red Hat guide rather than a staged man page therefore gets no
+    automated collision check — so it must carry a human one instead: a
+    `source.paraphrase_attested_by: {by, on}` receipt naming who read the
+    cited guide passage and confirms the curated text paraphrases it rather
+    than copying it. `by` is checked against content-src/roster.json the same
+    way gate_q16's per-version verified receipts are (normalize_person_name +
+    the closed roster's QA role) — the same two-person-rule infrastructure,
+    reused rather than re-invented, requiring a QA name because this is a
+    review of someone else's curated text, not a self-attestation.
+
+    None of the 27 shipped command entries hit this path today: every
+    paraphrase-only entry cites a staged man page (content-src/raw/) and every
+    guide mention in a `notes` field is contextual prose inside an entry whose
+    own `source` is a man page. This function exists so the FIRST entry that
+    cites a guide directly is not silently exempt from Q14 by having nothing
+    to compare against.
+    """
+    f = []
+    roster, roster_err = load_roster()
+    for e in entries:
+        src = e.get("source") or {}
+        if src.get("license_class") != "paraphrase-only" or source_is_offline_checkable(src):
+            continue
+        eid = e.get("id")
+        att = src.get("paraphrase_attested_by")
+        if not isinstance(att, dict) or not att.get("by") or not att.get("on"):
+            f.append("entry %s: source '%s' (%s) is paraphrase-only but is not a staged man page "
+                     "or content-src/raw/ path — Q14 has no corpus bytes to shingle-check it "
+                     "against, so it needs a source.paraphrase_attested_by {by, on} receipt "
+                     "naming who confirmed the curated text paraphrases that source rather than "
+                     "copying it"
+                     % (eid, src.get("url_or_man"), src.get("title")))
+            continue
+        if roster is None:
+            f.append("entry %s: source.paraphrase_attested_by cannot be checked — %s" % (eid, roster_err))
+            continue
+        who = normalize_person_name(att.get("by"))
+        if "QA" not in roster.get(who, set()):
+            f.append("entry %s: source.paraphrase_attested_by.by '%s' does not resolve to a QA "
+                     "role in content-src/roster.json" % (eid, att.get("by")))
     return f
 
 
@@ -2148,6 +2273,7 @@ def gate_q14(ctx):
 
     coverage = raw_coverage_failures(data)
     f.extend(coverage)
+    f.extend(attestation_failures(data["commands"]["entries"]))
 
     if not corpus:
         if coverage:
