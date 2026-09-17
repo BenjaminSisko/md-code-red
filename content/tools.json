@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 17
+  "tool_count": 18
  },
  "tools": [
   {
@@ -502,6 +502,36 @@
     "10": {
      "available": true,
      "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "chronyd",
+   "label": "chronyd / chrony",
+   "category": "chronyd",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "chronyd is the RHEL 7 default NTP daemon (chrony package); ntpd is available as a legacy alternative from the separate ntp package, but is not installed or enabled by default."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10. ntpd is not in the default repositories from RHEL 8 forward — chronyd only."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts. chronyd only; ntpd is not available."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10. chronyd only; ntpd is not available."
     }
    },
    "source": {

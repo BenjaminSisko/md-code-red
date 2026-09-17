@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 24
+  "entry_count": 25
  },
  "categories": [
   "firewall-cmd",
@@ -1439,6 +1439,41 @@
     "license_class": "paraphrase-only"
    },
    "verified": false
+  },
+  {
+   "id": "gen-chronyd-one-shot-check",
+   "tool": "chronyd",
+   "category": "chronyd",
+   "intent": "Run a single NTP correction against a server or pool and exit, without touching the running chronyd service or its configuration",
+   "fields": [
+    {
+     "name": "directive",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "chronyd"
+    },
+    {
+     "flag": "-Q",
+     "field": "directive"
+    }
+   ],
+   "verify": "chronyd -Q exits 0 and prints the step it applied, or an error if the server is unreachable.",
+   "undo": "Nothing to undo — -Q performs one correction and exits; it does not modify the running chronyd service, its configuration, or start anything persistent.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-chronyd-r8",
+    "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 chronyd",
+    "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "notes": "RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
   }
  ]
 }
