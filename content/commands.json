@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 21
+  "entry_count": 23
  },
  "categories": [
   "firewall-cmd",
@@ -1291,6 +1291,112 @@
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
     "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-auditctl-watch",
+   "tool": "auditctl",
+   "category": "auditctl / ausearch",
+   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot — persistent rules go in /etc/audit/rules.d/)",
+   "fields": [
+    {
+     "name": "path",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "perms",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "r",
+      "w",
+      "x",
+      "a",
+      "wa",
+      "rwa",
+      "rwxa"
+     ]
+    },
+    {
+     "name": "key",
+     "type": "audit_key",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "auditctl"
+    },
+    {
+     "flag": "-w",
+     "field": "path"
+    },
+    {
+     "flag": "-p",
+     "field": "perms"
+    },
+    {
+     "flag": "-k",
+     "field": "key",
+     "optional": true
+    }
+   ],
+   "verify": "auditctl -l lists the new watch rule.",
+   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule — the flags must match the rule exactly.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-auditctl-r8",
+    "title": "auditctl(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 auditctl",
+    "version": "RHEL 8 — content-src/raw/rhel8/auditctl.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-ausearch-by-key",
+   "tool": "ausearch",
+   "category": "auditctl / ausearch",
+   "intent": "Search the audit log for events tagged with a rule key, optionally bounded by start time",
+   "fields": [
+    {
+     "name": "key",
+     "type": "audit_key",
+     "required": true
+    },
+    {
+     "name": "start",
+     "type": "comment",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "ausearch"
+    },
+    {
+     "flag": "-k",
+     "field": "key"
+    },
+    {
+     "flag": "-ts",
+     "field": "start",
+     "optional": true
+    }
+   ],
+   "verify": "The command prints matching audit events, or exits 1 with no output if none matched.",
+   "undo": "Nothing to undo — ausearch only reads the audit log.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-ausearch-r8",
+    "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 ausearch",
+    "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
