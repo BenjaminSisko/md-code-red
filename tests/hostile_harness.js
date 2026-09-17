@@ -565,6 +565,140 @@ function main() {
     }
   }
 
+  /* ---- MCR-SEC-002: never-half-formed, per TEMPLATE ----------------------
+     The rule used to be enforced per FIELD: an optional field that was not
+     supplied simply made its token vanish, so a positional argument could shift
+     into the slot before it (`chown 'apache' '/var/www'` -> `chown '/var/www'`)
+     and a literal that owned a value could be left dangling
+     (`--add-forward-port=port=443:proto=tcp:toaddr=` with nothing after it).
+     Both reproductions below are Marcus's, kept verbatim as regressions.
+
+     Every template shape gets the absent-optional case, on all four releases:
+     positional, trailing positional, --flag=value, --flag value, lit-then-field,
+     lit-with-requires, and the version-gated variants of each. `want` is either
+     null or the exact command the template must produce. */
+  var halfFormed = 0;
+  function hfCase(id, spec, values, want) {
+    return { id: id, spec: spec, values: values, want: want };
+  }
+  var F_OWNER = { name: "owner", type: "username", required: false };
+  var F_PATH = { name: "p", type: "path", required: true };
+  var F_ZONE = { name: "zone", type: "zone", required: true };
+  var F_TOADDR = { name: "toaddr", type: "ipv4", required: false };
+  var FWD_LIT = "--add-forward-port=port=443:proto=tcp:toaddr=";
+
+  var hfCases = [
+    /* (a) Marcus's positional-shift reproduction */
+    hfCase("chown / optional positional, not declared droppable, value absent",
+      { id: "hf-chown", fields: [F_OWNER, F_PATH],
+        template: [{ lit: "chown" }, { field: "owner" }, { field: "p" }] },
+      { p: "/var/www" }, null),
+    hfCase("chown / both positionals supplied (control)",
+      { id: "hf-chown", fields: [F_OWNER, F_PATH],
+        template: [{ lit: "chown" }, { field: "owner" }, { field: "p" }] },
+      { owner: "apache", p: "/var/www" }, "chown 'apache' '/var/www'"),
+    hfCase("chown / declared droppable but a later positional is present",
+      { id: "hf-chown-declared", fields: [F_OWNER, F_PATH],
+        template: [{ lit: "chown" }, { field: "owner", optional: true }, { field: "p" }] },
+      { p: "/var/www" }, null),
+    hfCase("chown / declared droppable and trailing — the only legal drop",
+      { id: "hf-chown-trailing", fields: [F_OWNER, F_PATH],
+        template: [{ lit: "chown" }, { field: "p" }, { field: "owner", optional: true }] },
+      { p: "/var/www" }, "chown '/var/www'"),
+
+    /* (b) Marcus's dangling-option reproduction, named in threat-model §3.4 */
+    hfCase("firewall-cmd / lit owns the value, value absent, nothing declared",
+      { id: "hf-fwd", fields: [F_ZONE, F_TOADDR],
+        template: [{ lit: "firewall-cmd" }, { flag: "--zone", field: "zone" },
+                   { lit: FWD_LIT }, { field: "toaddr" }] },
+      { zone: "public" }, null),
+    hfCase("firewall-cmd / both supplied (control)",
+      { id: "hf-fwd", fields: [F_ZONE, F_TOADDR],
+        template: [{ lit: "firewall-cmd" }, { flag: "--zone", field: "zone" },
+                   { lit: FWD_LIT }, { field: "toaddr" }] },
+      { zone: "public", toaddr: "10.1.1.1" },
+      "firewall-cmd --zone='public' " + FWD_LIT + " '10.1.1.1'"),
+    hfCase("firewall-cmd / lit declares requires:, so it drops WITH its value",
+      { id: "hf-fwd-requires", fields: [F_ZONE, F_TOADDR],
+        template: [{ lit: "firewall-cmd" }, { flag: "--zone", field: "zone" },
+                   { lit: FWD_LIT, requires: "toaddr" }, { field: "toaddr", optional: true }] },
+      { zone: "public" }, "firewall-cmd --zone='public'"),
+    hfCase("firewall-cmd / requires: lit keeps its value when supplied",
+      { id: "hf-fwd-requires", fields: [F_ZONE, F_TOADDR],
+        template: [{ lit: "firewall-cmd" }, { flag: "--zone", field: "zone" },
+                   { lit: FWD_LIT, requires: "toaddr" }, { field: "toaddr", optional: true }] },
+      { zone: "public", toaddr: "10.1.1.1" },
+      "firewall-cmd --zone='public' " + FWD_LIT + " '10.1.1.1'"),
+    hfCase("lit requires: a field the spec does not declare",
+      { id: "hf-fwd-bad-requires", fields: [F_ZONE],
+        template: [{ lit: "firewall-cmd" }, { lit: FWD_LIT, requires: "nosuch" }] },
+      { zone: "public" }, null),
+
+    /* --flag=value and --flag value: name and value live in one token, so the
+       drop takes both or neither — but it still has to be declared. */
+    hfCase("--flag=value / optional value absent, not declared droppable",
+      { id: "hf-flag", fields: [F_OWNER],
+        template: [{ lit: "probe" }, { flag: "--owner", field: "owner" }] },
+      {}, null),
+    hfCase("--flag=value / optional value absent, declared droppable",
+      { id: "hf-flag-declared", fields: [F_OWNER],
+        template: [{ lit: "probe" }, { flag: "--owner", field: "owner", optional: true }] },
+      {}, "probe"),
+    hfCase("--flag value / optional value absent, declared droppable",
+      { id: "hf-spaced-declared", fields: [F_OWNER],
+        template: [{ lit: "probe" }, { flag: "--owner", eq: false, field: "owner", optional: true }] },
+      {}, "probe"),
+    hfCase("--flag value / optional value absent, not declared droppable",
+      { id: "hf-spaced", fields: [F_OWNER],
+        template: [{ lit: "probe" }, { flag: "--owner", eq: false, field: "owner" }] },
+      {}, null)
+  ];
+
+  for (var hc = 0; hc < hfCases.length; hc++) {
+    for (var hr2 = 0; hr2 < VERSIONS.length; hr2++) {
+      var cs = hfCases[hc];
+      halfFormed++;
+      var got = A.assembleCommand(cs.spec, VERSIONS[hr2], cs.values, { patterns: [] });
+      var gotCmd = got === null ? null : got.command;
+      if (gotCmd !== cs.want) {
+        stats.failures.push("half-formed / RHEL " + VERSIONS[hr2] + " / " + cs.id +
+                            ": expected " + JSON.stringify(cs.want) + ", got " + JSON.stringify(gotCmd));
+      }
+      /* a command that survives may never end in a dangling option token */
+      if (gotCmd !== null && /=$/.test(gotCmd)) {
+        stats.failures.push("half-formed / RHEL " + VERSIONS[hr2] + " / " + cs.id +
+                            ": the assembled command ends in a dangling '=' — " + JSON.stringify(gotCmd));
+      }
+    }
+  }
+
+  /* version-gated positional: the same template must not be well-formed on one
+     release and mis-positioned on another. */
+  var vgA = { name: "a", type: "zone", required: false, versions: ["9", "10"] };
+  var vgB = { name: "b", type: "zone", required: true };
+  for (var vg = 0; vg < VERSIONS.length; vg++) {
+    var late = VERSIONS[vg] === "9" || VERSIONS[vg] === "10";
+    var midSpec = { id: "hf-gated-mid", fields: [vgA, vgB],
+                    template: [{ lit: "probe" }, { field: "a", optional: true }, { field: "b" }] };
+    var tailSpec = { id: "hf-gated-tail", fields: [vgA, vgB],
+                     template: [{ lit: "probe" }, { field: "b" }, { field: "a", optional: true }] };
+    var midWant = late ? "probe 'public' 'trusted'" : null;
+    var tailWant = late ? "probe 'trusted' 'public'" : "probe 'trusted'";
+    halfFormed += 2;
+    var midGot = A.assembleCommand(midSpec, VERSIONS[vg], { a: "public", b: "trusted" }, { patterns: [] });
+    var tailGot = A.assembleCommand(tailSpec, VERSIONS[vg], { a: "public", b: "trusted" }, { patterns: [] });
+    if ((midGot === null ? null : midGot.command) !== midWant) {
+      stats.failures.push("half-formed [gated mid-positional] / RHEL " + VERSIONS[vg] + ": expected " +
+                          JSON.stringify(midWant) + ", got " +
+                          JSON.stringify(midGot === null ? null : midGot.command));
+    }
+    if ((tailGot === null ? null : tailGot.command) !== tailWant) {
+      stats.failures.push("half-formed [gated trailing positional] / RHEL " + VERSIONS[vg] +
+                          ": expected " + JSON.stringify(tailWant) + ", got " +
+                          JSON.stringify(tailGot === null ? null : tailGot.command));
+    }
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -705,6 +839,7 @@ function main() {
     rejected: stats.rejected,
     quoted_safe: stats.quoted,
     rich_rule_oracles: stats.oracles,
+    half_formed_checks: halfFormed,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -728,6 +863,8 @@ function main() {
                 "structurally, " + report.rich_rule_slot_types_allowed + " allow-listed and composed, " +
                 stats.oracles + " compositions parsed and compared element-for-element to the " +
                 "operator's intent");
+    console.log("  " + halfFormed + " never-half-formed checks (absent optional field across every " +
+                "template shape, all four releases)");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

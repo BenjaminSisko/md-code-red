@@ -469,6 +469,20 @@ function fieldTypeMap(spec){
 function fieldAvailable(field,version){
   return !field.versions || inList(field.versions,version);
 }
+/* Is this token's field going to contribute a value on this release? A token
+   with no field (a lit, a rich rule) is always "present"; a field token is
+   present only if the field exists, is available on this release, and validated
+   into a resolved value. MCR-SEC-002 turns on this one answer. */
+function tokenPresent(spec,version,resolved,tok){
+  if(!tok||tok.field===undefined||tok.field===null) return true;
+  var field=fieldFor(spec,tok.field);
+  if(!field) return false;
+  if(!fieldAvailable(field,version)) return false;
+  return Object.prototype.hasOwnProperty.call(resolved,tok.field);
+}
+function isPositionalToken(tok){
+  return !!(tok && tok.field!==undefined && tok.field!==null && !tok.flag);
+}
 
 /* validateSpec() is the UI's window into the same decision assembleCommand()
    makes, so the form can say WHICH field is wrong without the assembler ever
@@ -636,7 +650,18 @@ function assembleCommand(spec,version,values,opts){
   for(i=0;i<spec.template.length;i++){
     var tok=spec.template[i];
     if(!tok) return null;
-    if(tok.lit!==undefined && tok.lit!==null){ words.push(String(tok.lit)); continue; }
+    if(tok.lit!==undefined && tok.lit!==null){
+      /* A literal may belong to a field — '--add-forward-port=...toaddr=' belongs
+         to the toaddr value that follows it. requires: names that field, so the
+         literal disappears WITH it and can never be left dangling. */
+      if(tok.requires!==undefined && tok.requires!==null){
+        var owner=fieldFor(spec,tok.requires);
+        if(!owner) return null;                   /* lit binds to a field that does not exist */
+        if(!tokenPresent(spec,version,v.resolved,{field:tok.requires})) continue;
+      }
+      words.push(String(tok.lit));
+      continue;
+    }
     if(tok.richRule){
       var composed=composeRichRule(v.resolved,tok.richRule,types);
       if(composed===null) return null;
@@ -646,8 +671,32 @@ function assembleCommand(spec,version,values,opts){
     }
     var field=fieldFor(spec,tok.field);
     if(!field) return null;                       /* template cites a field that does not exist */
-    if(!fieldAvailable(field,version)) continue;  /* version-gated: impossible to include */
-    if(!(tok.field in v.resolved)) continue;      /* optional and not supplied */
+    if(!tokenPresent(spec,version,v.resolved,tok)){
+      /* MCR-SEC-002. This token is about to vanish — because the value was not
+         supplied, or because the field is gated out of this release. Dropping a
+         token is a decision about the TEMPLATE, not about one field, so it is
+         only legal when the template declared it:
+
+           - optional:true is mandatory. Without it the template is not complete
+             on this release and the only honest answer is null. A shortened
+             command with Copy enabled and no banner is worse than a blocked
+             button (threat-model-v1 §3.4).
+           - a POSITIONAL token may additionally only vanish if every later
+             positional token vanishes too. Otherwise argument n+1 is promoted
+             into slot n — `chown 'apache' '/var/www'` silently becoming
+             `chown '/var/www'` — and the command still assembles.
+
+         A version-gated field takes the same path as an unsupplied one: the same
+         template must not be well-formed on RHEL 9 and mis-positioned on RHEL 8. */
+      if(tok.optional!==true) return null;
+      if(isPositionalToken(tok)){
+        for(var j=i+1;j<spec.template.length;j++){
+          if(!isPositionalToken(spec.template[j])) continue;
+          if(tokenPresent(spec,version,v.resolved,spec.template[j])) return null;
+        }
+      }
+      continue;
+    }
     var q=shQuote(v.resolved[tok.field]);
     if(tok.flag){
       words.push(String(tok.flag)+(tok.eq===false?" ":"=")+q);

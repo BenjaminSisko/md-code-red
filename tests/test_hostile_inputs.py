@@ -80,6 +80,12 @@ class HostileInputTests(unittest.TestCase):
                            "no field type composed a rich rule at all — the slot allow-list is so "
                            "narrow the feature cannot work, which is not a pass")
 
+    def test_absent_optional_fields_are_covered_on_every_template_shape(self):
+        """MCR-SEC-002: never-half-formed is a property of the template, not a field."""
+        self.assertGreaterEqual(
+            self.report["half_formed_checks"], 13 * 4,
+            "the absent-optional sweep does not cover every template shape on every release")
+
     def test_the_rich_rule_oracle_ran(self):
         """Shell-token containment is not rich-rule containment (MCR-SEC-005b)."""
         self.assertGreater(self.report["rich_rule_oracles"], 0,
