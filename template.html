@@ -2020,7 +2020,7 @@ function renderFavoritesSidebar(){
   el("sidebar-body").innerHTML=html;
 }
 function renderToolList(){
-  var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
+  var all=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
   if(STATE.rail==="favorites"){ renderFavoritesSidebar(); return; }
   if(STATE.rail==="about"){
@@ -2030,16 +2030,32 @@ function renderToolList(){
     el("sidebar-body").innerHTML=html;
     return;
   }
-  if(STATE.rail!=="builder"){
+  if(STATE.rail!=="builder"&&STATE.rail!=="ansible"){
     html+="<p class=\"region-label\">"+esc(STATE.rail)+"</p>";
     html+="<p class=\"muted\">This rail lands with its own task: STIG search over the whole catalog "+
           "(CR-T-26 put the STIG panel and search-by-STIG-ID in the Inspector and the command "+
-          "palette instead; a dedicated browse view here is still open) and the Ansible generator "+
-          "(CR-T-25). The Command Builder, Favorites and About rails are live now.</p>";
+          "palette instead; a dedicated browse view here is still open). The Command Builder, "+
+          "Ansible, Favorites and About rails are live now.</p>";
     el("sidebar-body").innerHTML=html;
     return;
   }
-  html+="<p class=\"region-label\">Tools</p>";
+  /* The Ansible rail renders the SAME tool list as the Command Builder, over a
+     different slice of tools.json: the seven ansible-* control-node binaries,
+     which the builder rail correspondingly does not show. One renderer, one
+     escaping idiom, one keyboard contract -- a second hand-written list here
+     would be a second place for Q17's audit rule to be got wrong.
+
+     Until this tranche the rail rendered a "lands with its own task" placeholder,
+     which is exactly what the Founder opened v1.0.0-alpha.1 and saw. The tools
+     it lists carry no RHEL-version gating of their own: an ansible-playbook
+     invocation is governed by the control node's ansible-core version, not by
+     the release of the hosts it reaches, and each tool record says so. */
+  var ansibleRail=(STATE.rail==="ansible");
+  var tools=[],ti;
+  for(ti=0;ti<all.length;ti++){
+    if((all[ti].category==="ansible")===ansibleRail) tools.push(all[ti]);
+  }
+  html+="<p class=\"region-label\">"+esc(ansibleRail?"Ansible":"Tools")+"</p>";
   if(!tools.length){
     html+="<p class=\"muted\">No tools in this build's content island.</p>";
     el("sidebar-body").innerHTML=html;

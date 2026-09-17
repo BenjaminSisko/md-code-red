@@ -4,6 +4,49 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — Grey Beard content port, part 2: the 23 Ansible entries, and the Ansible rail goes live
+
+The Ansible rail in v1.0.0-alpha.1 rendered a paragraph beginning "This rail
+lands with its own task". That paragraph is what "I don't see any git or
+ansible content" was: a rail wired to a placeholder over a catalog with no
+Ansible in it.
+
+- 23 Ansible entries carried across from Grey Beard, in six categories:
+  **Check before you run** (5: `--syntax-check`, `--check --diff`,
+  `--list-hosts`, `--list-tasks`, `ansible-config dump --only-changed`),
+  **Target fewer hosts** (5: `--limit`, host patterns, `--start-at-task`,
+  `--step`, `--tags`), **Debug a failure** (5: `-m ping`, `-vvv`,
+  `ansible-inventory --host`, `ansible-doc`, `fetch`), **Facts & inventory**
+  (2: `--graph`, `-m setup -a filter=`), **Run & operate** (3: ad-hoc
+  `--become -K`, `--forks`, offline `ansible-galaxy collection install`),
+  **Vault & secrets** (3: `create`, `encrypt_string --stdin-name`, `rekey`).
+- 7 new `content/tools.json` records: `ansible`, `ansible-playbook`,
+  `ansible-inventory`, `ansible-doc`, `ansible-config`, `ansible-vault`,
+  `ansible-galaxy`. All seven are available on all four RHEL releases and
+  each says why: a control-node command is governed by the ansible-core
+  version on the machine you run it from, not by the release of the hosts it
+  reaches.
+- **`renderToolList()` slices tools.json by category.** The Ansible rail
+  renders the seven `ansible-*` tools; the Command Builder rail renders the
+  other 41. One renderer, one escaping idiom, one keyboard contract -- a
+  second hand-written list would be a second place to get Q17's audit rule
+  wrong. The placeholder paragraph no longer names the Ansible generator as
+  pending.
+- **Flag explanations come from Grey Beard's generated ansible-doc
+  dictionary** (`content/flags.json`, `extract/extract_ansible_doc.py`,
+  ansible-core 2.21.1). Records whose text is a `--help` usage-line fragment
+  rather than a description are not carried; the flag is dropped instead.
+  Three subcommand options that no top-level `--help` dictionary can hold
+  (`--graph`'s empty record, `--stdin-name`, `--only-changed`) carry an
+  explanation taken from that entry's own Grey Beard notes, which name the
+  flag and say what it does.
+- `tests/test_ansible_rail.py` (new, 6 tests): the rail's slice is a silent
+  failure mode -- a drifted category string renders an empty list that reads
+  as "this build has no content" rather than as a bug. These assert both
+  slices are non-empty, that every Ansible tool has at least one entry, that
+  every `a-*` entry is reachable from the rail, that no Ansible tool is gated
+  off a RHEL release, and that the placeholder prose the Founder read is gone.
+
 ### Added — Grey Beard content port, part 1: the 41 RHEL entries (CR-T-33 tranche)
 
 The Founder's verdict on v1.0.0-alpha.1 was that the daily ground is not

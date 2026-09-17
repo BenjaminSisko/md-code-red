@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 68
+  "entry_count": 91
  },
  "categories": [
   "firewall-cmd",
@@ -37,7 +37,13 @@
   "Logs & journald",
   "Packages",
   "Processes & performance",
-  "Files & permissions"
+  "Files & permissions",
+  "Check before you run",
+  "Target fewer hosts",
+  "Debug a failure",
+  "Facts & inventory",
+  "Run & operate",
+  "Vault & secrets"
  ],
  "entries": [
   {
@@ -3860,6 +3866,1214 @@
     "id": "src-greybeard-r-stat",
     "title": "Grey Beard Ansible field kit, content/commands.json entry 'r-stat' (orbit/grey-beard-ansible, same owner); its own source line: man stat (RHEL 9), paraphrased",
     "url_or_man": "orbit/grey-beard-ansible content/commands.json#r-stat",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-syntax-check",
+   "tool": "ansible-playbook",
+   "category": "Check before you run",
+   "intent": "Check a playbook for syntax errors without running it",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --syntax-check",
+     "notes": "Parses the playbook and its includes; catches YAML and playbook-keyword mistakes. Does NOT catch bad module arguments or missing files on targets. Mentor: This is the authoritative YAML check - trust it over any offline linter, including this tool's. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--syntax-check",
+     "explain": "perform a syntax check on the playbook, but do not execute it",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Exit code 0 and the line 'playbook: site.yml' with no error output.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-syntax-check",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-syntax-check' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-syntax-check",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-check-diff",
+   "tool": "ansible-playbook",
+   "category": "Check before you run",
+   "intent": "See what a playbook WOULD change without changing anything",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --check --diff",
+     "notes": "Check mode predicts changed/ok per task; --diff shows file content changes. Modules with full check_mode support are accurate; command/shell tasks are skipped, so a --check run that looks clean can still change things for real. Mentor: Trust it about 90%. The other 10% is command/shell tasks - read those by hand. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--check",
+     "explain": "don't make any changes; instead, try to predict some of the changes that may occur",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--diff",
+     "explain": "when changing (small) files and templates, show the differences in those files; works great with --check",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Output shows predicted changed= counts; nothing on the targets actually changed (spot-check one).",
+   "undo": "none - read-only (but see notes: not all modules honor check mode)",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-check-diff",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-check-diff' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-check-diff",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-list-hosts",
+   "tool": "ansible-playbook",
+   "category": "Check before you run",
+   "intent": "See exactly which hosts a play or pattern will hit",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --list-hosts",
+     "notes": "Expands the hosts: pattern of every play against your inventory and prints the matched hosts. Run this before anything red. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--list-hosts",
+     "explain": "outputs a list of matching hosts; does not execute anything else",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed host list matches what you intended - no extras.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-list-hosts",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-list-hosts' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-list-hosts",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-list-tasks",
+   "tool": "ansible-playbook",
+   "category": "Check before you run",
+   "intent": "See every task a playbook would run, in order",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --list-tasks",
+     "notes": "Prints plays and task names without executing. Pair with --list-tags to see what's skippable. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--list-tasks",
+     "explain": "list all tasks that would be executed",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Task list prints; nothing executes.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-list-tasks",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-list-tasks' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-list-tasks",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-lint-config",
+   "tool": "ansible-config",
+   "category": "Check before you run",
+   "intent": "See which config file is loaded and what differs from defaults",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-config dump --only-changed",
+     "notes": "ansible --version prints the winning config file (precedence: $ANSIBLE_CONFIG, ./ansible.cfg, ~/.ansible.cfg, /etc/ansible/ansible.cfg). dump --only-changed shows every setting you've overridden and where it came from. Mentor: A world-writable current directory makes Ansible silently skip ./ansible.cfg. If 'config file =' isn't what you expect, check directory permissions first. Run `ansible --version` alongside this: that is the command that prints the winning 'config file =' line, and this one prints what that file changed. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "dump",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--only-changed",
+     "explain": "Prints only the settings this installation has overridden, each one naming where the override came from, instead of the whole default configuration.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "'config file =' points at the file you intend; each changed setting names its origin.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-lint-config",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-lint-config' (orbit/grey-beard-ansible, same owner); its own source line: ansible-config --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-lint-config",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-limit",
+   "tool": "ansible-playbook",
+   "category": "Target fewer hosts",
+   "intent": "Run a playbook against only some of its hosts",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --limit web01",
+     "notes": "--limit (or -l) intersects the play's hosts: pattern with your subset. Accepts names, groups, globs (web*), and comma lists. THE damage-containment flag: test on one host before the fleet. Mentor: New change? --limit one host, verify, then widen. Every time. No exceptions, including Fridays. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--limit",
+     "explain": "further limit selected hosts to an additional pattern",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Recap shows only the limited host(s).",
+   "undo": "n/a - limits scope; the tasks themselves still change state per their own undo",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-limit",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-limit' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-limit",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-patterns",
+   "tool": "ansible",
+   "category": "Target fewer hosts",
+   "intent": "Target hosts with patterns: groups, exclusions, intersections",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible 'webservers:!web03' -m ping",
+     "notes": "Patterns: 'a:b' union, 'a:!b' exclude, 'a:&b' intersection, 'web*' glob, 'all' everything. Quote the pattern - ! and & are shell characters. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Name of the action to execute (default=command)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Run with --list-hosts first to see the expansion.",
+   "undo": "none - pattern selection itself is read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-patterns",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-patterns' (orbit/grey-beard-ansible, same owner); its own source line: ansible --help / patterns docs (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-patterns",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-start-at",
+   "tool": "ansible-playbook",
+   "category": "Target fewer hosts",
+   "intent": "Resume a long playbook at a specific task",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --start-at-task 'Deploy config'",
+     "notes": "Skips everything before the named task. Dangerous if earlier tasks set facts or prerequisites the later tasks assume - know what you're skipping. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--start-at-task",
+     "explain": "start the playbook at the task matching this name",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "First executed task in output is the one you named.",
+   "undo": "n/a - depends on the tasks run",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-start-at",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-start-at' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-start-at",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-step",
+   "tool": "ansible-playbook",
+   "category": "Target fewer hosts",
+   "intent": "Confirm each task interactively before it runs",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --step",
+     "notes": "Prompts y/n/c per task (c = continue without asking). Slow but surgical - good for a first run of someone else's playbook. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--step",
+     "explain": "one-step-at-a-time: confirm each task before running",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "You get a (y/n/c) prompt before each task.",
+   "undo": "n/a - you control each step",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-step",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-step' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-step",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-tags",
+   "tool": "ansible-playbook",
+   "category": "Target fewer hosts",
+   "intent": "Run only tasks with a given tag",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --tags config --list-tasks",
+     "notes": "Drop --list-tasks to actually run. --skip-tags inverts. See available tags with --list-tags. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--tags",
+     "explain": "only run plays and tasks tagged with these values. This argument may be specified multiple times.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--list-tasks",
+     "explain": "list all tasks that would be executed",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "--list-tasks preview shows only the tagged tasks.",
+   "undo": "n/a - depends on the tasks run",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-tags",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-tags' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-tags",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-ping",
+   "tool": "ansible",
+   "category": "Debug a failure",
+   "intent": "Test that Ansible can reach and run Python on hosts",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible all -m ping",
+     "notes": "Not ICMP - it SSHes in and runs a tiny Python module. SUCCESS means transport AND Python module execution both work. If raw works but ping fails, the problem is Python-side (interpreter, temp dir), not SSH. Mentor: This distinction - transport vs module execution - solved our first outage. Learn it cold. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Name of the action to execute (default=command)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Each host reports SUCCESS with \"ping\": \"pong\".",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-ping",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-ping' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc ansible.builtin.ping (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-ping",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-vvv",
+   "tool": "ansible-playbook",
+   "category": "Debug a failure",
+   "intent": "See exactly what Ansible is doing under the hood",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml -vvv --limit web01",
+     "notes": "-v result data, -vvv connection commands (the actual ssh/sftp invocations), -vvvv adds connection plugin debugging. Look for 'ESTABLISH SSH CONNECTION' vs 'ESTABLISH LOCAL CONNECTION' to see how a host is really being reached. Mentor: A hang at a task usually means an invisible prompt - password, host key, or sudo. -vvv shows you the exact command it's stuck on; run that command yourself and you'll see the prompt. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-v",
+     "explain": "Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, connection debugging might require -vvvv. This argument may be specified multiple times.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--limit",
+     "explain": "further limit selected hosts to an additional pattern",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Output includes ESTABLISH ... CONNECTION lines per task.",
+   "undo": "none - verbosity only; the run itself still changes state",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-vvv",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-vvv' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-vvv",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-inv-host",
+   "tool": "ansible-inventory",
+   "category": "Debug a failure",
+   "intent": "See every variable Ansible has resolved for one host",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-inventory --host web01",
+     "notes": "Prints the merged variables (connection settings included) for that host as JSON. THE tool for 'why is it connecting like that?'. For localhost: if this returns anything without ansible_connection=local, delegation to localhost will SSH to your own box. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--host",
+     "explain": "Output specific host info, works as inventory script. It will ignore limit",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "JSON shows the vars you expect; for localhost expect ansible_connection: local or no entry at all (implicit localhost).",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-inv-host",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-inv-host' (orbit/grey-beard-ansible, same owner); its own source line: ansible-inventory --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-inv-host",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-doc",
+   "tool": "ansible-doc",
+   "category": "Debug a failure",
+   "intent": "Read the official docs for any module, offline, on the box",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-doc ansible.builtin.lineinfile",
+     "notes": "Full vendor documentation with examples, right on the control node. ansible-doc -l lists everything installed. -s prints a playbook-ready snippet skeleton. Mentor: This is the authority this tool defers to. When my dictionaries and ansible-doc disagree, ansible-doc wins - it ships with your exact version. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "verify": "Doc page renders in your pager.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-doc",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-doc' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-doc",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-fetch",
+   "tool": "ansible",
+   "category": "Debug a failure",
+   "intent": "Pull a file OFF remote hosts for evidence (compare configs across the fleet)",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible webservers -m ansible.builtin.fetch -a 'src=/etc/ssh/sshd_config dest=evidence/ flat=no'",
+     "notes": "fetch is copy in reverse: grabs src from every matched host into dest/<hostname>/<path> locally. THE evidence-gathering move - pull the suspect config from 50 hosts and diff them before pushing any fix. For a quick in-memory peek at one file, -m slurp returns it base64-encoded instead. Mentor: Diagnose with fetch before you treat with copy. Reading the fleet's actual state has saved me from 'fixing' the wrong thing more times than I can count. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Name of the action to execute (default=command)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "evidence/<host>/etc/ssh/sshd_config exists per host; diff -r evidence/web01 evidence/web02 shows the drift you're hunting.",
+   "undo": "rm -r evidence/ locally - targets were never written to",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-fetch",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-fetch' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc fetch/slurp (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-fetch",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-24",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-inv-graph",
+   "tool": "ansible-inventory",
+   "category": "Facts & inventory",
+   "intent": "See the whole inventory as a group tree",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-inventory --graph",
+     "notes": "ASCII tree of groups and members. Add --vars to include variables (verbose). First command to run on an unfamiliar control node. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--graph",
+     "explain": "Prints the inventory as an ASCII tree of groups and their members; add --vars to include variables.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Tree prints; groups match expectations.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-inv-graph",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-inv-graph' (orbit/grey-beard-ansible, same owner); its own source line: ansible-inventory --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-inv-graph",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-setup-filter",
+   "tool": "ansible",
+   "category": "Facts & inventory",
+   "intent": "See facts (OS, IPs, memory) Ansible gathers about a host",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible web01 -m setup -a 'filter=ansible_distribution*'",
+     "notes": "setup is the fact-gathering module. filter= narrows the firehose. Common: ansible_default_ipv4, ansible_distribution*, ansible_memtotal_mb, ansible_mounts. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Name of the action to execute (default=command)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Facts print for the host.",
+   "undo": "none - read-only",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-setup-filter",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-setup-filter' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc ansible.builtin.setup (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-setup-filter",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-adhoc-become",
+   "tool": "ansible",
+   "category": "Run & operate",
+   "intent": "Run one privileged command on hosts (ad-hoc)",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible webservers -m command -a 'systemctl status sshd' --become -K",
+     "notes": "-m command runs without a shell (no pipes/redirects; use -m shell if you need them). --become elevates, -K prompts for the sudo password. Without -K a sudo password requirement = silent hang. Mentor: Forgetting -K is the #1 'Ansible is frozen' cause after host-key prompts. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "-m",
+     "explain": "Name of the action to execute (default=command)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--become",
+     "explain": "run operations with become (does not imply password prompting)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-K",
+     "explain": "ask for privilege escalation password",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Each host returns rc=0 and the command output.",
+   "undo": "depends on the command - prefer read-only commands ad-hoc",
+   "blast": "red",
+   "source": {
+    "id": "src-greybeard-a-adhoc-become",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-adhoc-become' (orbit/grey-beard-ansible, same owner); its own source line: ansible --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-adhoc-become",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-forks",
+   "tool": "ansible-playbook",
+   "category": "Run & operate",
+   "intent": "Control how many hosts run in parallel",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-playbook site.yml --forks 5",
+     "notes": "Default forks is 5. Raise for speed on big fleets; LOWER it (even to 1, or use serial: in the play) for risky rolling changes so failures stop early. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "--forks",
+     "explain": "specify number of parallel processes to use (default=5)",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "With forks 1, hosts complete strictly one at a time in output.",
+   "undo": "n/a - execution control only",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-forks",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-forks' (orbit/grey-beard-ansible, same owner); its own source line: ansible-playbook --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-forks",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-galaxy-offline",
+   "tool": "ansible-galaxy",
+   "category": "Run & operate",
+   "intent": "Install a collection offline (air-gapped, from a carried tarball)",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-galaxy collection install /media/transfer/ansible-posix-2.2.0.tar.gz",
+     "notes": "Collections (ansible.posix, community.general...) are NOT part of ansible-core - they install separately, and on an air-gapped box the tarball must be carried across. Download low-side with 'ansible-galaxy collection download <name>', transfer, install from the file path. Installs to ~/.ansible/collections by default. Mentor: Two snippets in this kit (authorized_key, firewalld module) need ansible.posix - check for it on day one, not mid-change. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "collection",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "install",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "ansible-galaxy collection list shows the collection and version; ansible-doc ansible.posix.firewalld renders.",
+   "undo": "remove the collection directory from ~/.ansible/collections/ansible_collections/<namespace>/<name>",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-galaxy-offline",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-galaxy-offline' (orbit/grey-beard-ansible, same owner); its own source line: ansible-galaxy --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-galaxy-offline",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-24",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-vault-create",
+   "tool": "ansible-vault",
+   "category": "Vault & secrets",
+   "intent": "Create or edit an encrypted secrets file",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-vault create group_vars/all/vault.yml",
+     "notes": "Opens $EDITOR, encrypts on save (AES256). Edit later with ansible-vault edit, view with ansible-vault view. At run time supply the password: --ask-vault-pass or --vault-password-file. Mentor: Name encrypted files 'vault.yml' and reference their vars from a plain vars file - greppability without decryption. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "create",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "File starts with $ANSIBLE_VAULT;1.1;AES256. ansible-vault view shows the plaintext.",
+   "undo": "ansible-vault decrypt <file> (permanently removes encryption - rarely what you want)",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-vault-create",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-vault-create' (orbit/grey-beard-ansible, same owner); its own source line: ansible-vault --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-vault-create",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-vault-string",
+   "tool": "ansible-vault",
+   "category": "Vault & secrets",
+   "intent": "Encrypt a single value to paste into a vars file",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-vault encrypt_string --stdin-name 'db_password'",
+     "notes": "Emits a !vault-tagged YAML block you paste inline; --stdin-name prompts for the secret so it never lands in shell history. (Passing the secret as an argument leaves it in ~/.bash_history - the real leak risk of this command.) Mentor: If you already typed a secret on the command line: history -d that line, and rotate the secret if the box is shared. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "encrypt_string",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--stdin-name",
+     "explain": "Names the variable and reads the secret from standard input, so the secret is never typed as a command-line argument and never lands in shell history.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "Output is a db_password: !vault | block; a playbook using it decrypts correctly with the vault password. history | tail shows no plaintext secret.",
+   "undo": "replace the block with a plain value (and rotate the secret if it was exposed anywhere, including shell history)",
+   "blast": "green",
+   "source": {
+    "id": "src-greybeard-a-vault-string",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-vault-string' (orbit/grey-beard-ansible, same owner); its own source line: ansible-vault --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-vault-string",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-24",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "a-vault-rekey",
+   "tool": "ansible-vault",
+   "category": "Vault & secrets",
+   "intent": "Change the vault password on encrypted files",
+   "rhel_versions": {
+    "7": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "8": {
+     "same_as": "9",
+     "changed_in_note": null
+    },
+    "9": {
+     "command": "ansible-vault rekey group_vars/all/vault.yml",
+     "notes": "Prompts for old and new passwords. Do this on personnel change - the vault password is a shared secret. These are control-node commands: the ansible-core version on the machine you run them from governs them, not the RHEL release of the hosts they reach. The four release rows therefore repeat one invocation, because there is one. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "changed_in_note": null
+    },
+    "10": {
+     "same_as": "9",
+     "changed_in_note": null
+    }
+   },
+   "flags": [
+    {
+     "flag": "rekey",
+     "explain": null,
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "ansible-vault view works with the new password and fails with the old.",
+   "undo": "rekey again back to a known password",
+   "blast": "yellow",
+   "source": {
+    "id": "src-greybeard-a-vault-rekey",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-vault-rekey' (orbit/grey-beard-ansible, same owner); its own source line: ansible-vault --help (core 2.21.1)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#a-vault-rekey",
     "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
