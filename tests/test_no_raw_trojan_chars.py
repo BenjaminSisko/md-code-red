@@ -115,11 +115,52 @@ class TheRepositoryIsClean(unittest.TestCase):
                            "only %d tracked files to scan — the corpus collapsed"
                            % len(self.paths or []))
 
-    def test_the_excluded_prefixes_are_the_two_vendor_capture_trees(self):
-        """Stated as a test so the exclusion list cannot quietly grow."""
-        self.assertEqual(("stig-src/", "content-src/raw/"), qa.TROJAN_SCAN_EXCLUDE)
-        for path in self.paths:
-            self.assertFalse(path.startswith(qa.TROJAN_SCAN_EXCLUDE))
+    def test_nothing_is_excluded_from_the_walk(self):
+        """MCR-SEC-025/F1. The first cut of this gate skipped stig-src/ and
+        content-src/raw/ wholesale as "pinned vendor captures". Marcus Reed asked
+        for the narrower rule instead — every tracked file scanned, with ONE
+        allowance, a U+FEFF byte-order mark at offset 0 — and he is right: both
+        trees measure clean apart from that single BOM, so the exclusion bought
+        nothing and cost the two largest directories in the repository. An
+        exclusion list is a hole in a walk; this one is now empty."""
+        self.assertEqual((), qa.TROJAN_SCAN_EXCLUDE,
+                         "the walk excludes %r — every prefix here is a directory no gate reads"
+                         % (qa.TROJAN_SCAN_EXCLUDE,))
+        for tree in ("stig-src/", "content-src/raw/"):
+            self.assertTrue(any(p.startswith(tree) for p in self.paths),
+                            "%s is not in the scanned corpus" % tree)
+
+    def test_a_byte_order_mark_at_offset_zero_is_allowed(self):
+        """The single allowance, and the only reason stig-src/ was ever excluded."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        path = os.path.join(tmp, "bom.xml")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(chr(0xFEFF) + '<?xml version="1.0"?>\n<x/>\n')
+        self.assertEqual([], qa.raw_trojan_failures([path]),
+                         "a leading BOM is legitimate file framing, not a trojan character")
+
+    def test_a_byte_order_mark_anywhere_else_is_caught(self):
+        """...and the allowance is offset 0 ONLY, or it is a loophole."""
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        path = os.path.join(tmp, "midbom.txt")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("safe" + chr(0xFEFF) + "value\n")
+        failures = qa.raw_trojan_failures([path])
+        self.assertEqual(1, len(failures), failures)
+        self.assertIn("U+FEFF", failures[0])
+
+    def test_the_cci_xml_is_the_only_file_leaning_on_that_allowance(self):
+        """Named, so a second BOM cannot appear without someone deciding to allow it."""
+        leading = []
+        for rel in self.paths:
+            with open(os.path.join(REPO, rel), "rb") as fh:
+                head = fh.read(3)
+            if head == b"\xef\xbb\xbf":
+                leading.append(rel)
+        self.assertEqual(["stig-src/U_CCI_List.xml"], leading,
+                         "the set of files carrying a leading BOM changed: %r" % leading)
 
     def test_no_tracked_file_carries_a_raw_trojan_character(self):
         failures = qa.raw_trojan_failures(self.paths)
