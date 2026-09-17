@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q18, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q19, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -12,10 +12,13 @@ qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file kee
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
 
-Q18 is beyond ADR-001's list: it is Marcus's CI merge-gate #4 and #9
+Q18 and Q19 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
 (threat-model-v1 §11), the hostile-input harness over the command assembler and
-the quoting-domain separation check. It is the only gate in this file that
-REQUIRES Node — see gate_q18 for why a skip is not acceptable there.
+the quoting-domain separation check. Q19 closes AL-GATE3-001 from Al Kowalski's
+BQP Gate 3 review: Q17 proves esc()/escapeAttr() are CALLED at every render
+sink and cannot prove they ESCAPE anything, so Q19 lifts them out of the shipped
+artifact and RUNS them against a hostile corpus. Both REQUIRE Node — see
+gate_q18 and gate_q19 for why a skip is not acceptable in either.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -660,6 +663,258 @@ def read_assignment(src, start):
             buf += c
         i += 1
     return buf.strip(), i
+
+
+# ---------------------------------------------------------------------------
+# JS lexical masking (AL-GATE3-001, AL-GATE3-003)
+#
+# Several gates need to know where the CODE is: Q7 brace-matches try{} blocks,
+# Q19 brace-matches a function body out of the shipped file, Q5 asks whether a
+# structural marker is real code rather than a word in a comment, and Q2 asks
+# whether a network API is named in the script rather than in prose. All four
+# were counting raw characters, and Al Kowalski's Gate 3 review reproduced what
+# that costs: one unbalanced brace inside a string literal inside a try{} block
+# desynced Q7's depth counter and absorbed a genuinely unguarded
+# localStorage call into the span it rated "guarded" (AL-GATE3-003).
+#
+# mask_js_literals() answers the question once. It returns a copy of the source
+# with the same length and the same line breaks, in which:
+#
+#   * a comment is blanked entirely, delimiters included;
+#   * the CONTENTS of a string, template literal or regex literal are blanked,
+#     and the delimiters are left in place.
+#
+# Keeping the delimiters is what lets Q5 still find a marker like `var APP_NAME="`
+# (that trailing quote is the delimiter, not content) while a marker sitting
+# INSIDE a string is gone. Blanking a template literal whole — interpolation
+# included — is deliberate: `${...}` is code, but it carries braces, and dropping
+# both halves keeps the brace count balanced, which is the property every caller
+# here depends on.
+#
+# Same offsets in, same offsets out: a line number computed on the masked copy is
+# the line number in the original.
+# ---------------------------------------------------------------------------
+
+# A '/' can only open a regex literal where a value cannot already have ended;
+# anywhere else it is division. Same heuristic the comment stripper used.
+REGEX_MAY_START_AFTER = "(,=:[!&|?{};+-*%~^"
+
+
+def mask_js_literals(src):
+    """Blank comment text and string/template/regex CONTENTS, preserving offsets."""
+    out = list(src)
+    n = len(src)
+
+    def blank(a, b):
+        for k in range(max(0, a), min(b, n)):
+            if out[k] != "\n":
+                out[k] = " "
+
+    i = 0
+    while i < n:
+        c = src[i]
+        if c == "/" and i + 1 < n and src[i + 1] == "*":
+            j = src.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            blank(i, j)
+            i = j
+            continue
+        if c == "/" and i + 1 < n and src[i + 1] == "/":
+            j = src.find("\n", i)
+            j = n if j < 0 else j
+            blank(i, j)
+            i = j
+            continue
+        if c in "\"'":
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == c or src[j] in "\n\r":
+                    break        # a JS string literal cannot span a raw newline
+                j += 1
+            blank(i + 1, j)
+            i = min(j, n) + 1
+            continue
+        if c == "`":
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == "`":
+                    break
+                j += 1
+            blank(i + 1, j)
+            i = min(j, n) + 1
+            continue
+        if c == "/":
+            k = i - 1
+            while k >= 0 and src[k] in " \t\r\n":
+                k -= 1
+            prev = src[k] if k >= 0 else ""
+            if prev == "" or prev in REGEX_MAY_START_AFTER:
+                j, in_class, closed = i + 1, False, False
+                while j < n:
+                    ch = src[j]
+                    if ch == "\\":
+                        j += 2
+                        continue
+                    if ch == "[":
+                        in_class = True
+                    elif ch == "]":
+                        in_class = False
+                    elif ch == "/" and not in_class:
+                        closed = True
+                        break
+                    elif ch == "\n":
+                        break
+                    j += 1
+                if closed:
+                    blank(i + 1, j)
+                    i = j + 1
+                    continue
+        i += 1
+    return "".join(out)
+
+
+def app_script_of(src):
+    """The JavaScript to read: the last inline <script> of an HTML file, else src.
+
+    Lets the escaper gate take a built artifact, template.html, or a bare
+    fragment of JS, and read the same thing in each case. Masking an HTML file
+    with a JS lexer would be wrong — an apostrophe in prose would open a string
+    that never closes — so the JS is separated out first.
+    """
+    blocks = re.findall(r"<script>(.*?)</script>", src, re.S)
+    return blocks[-1] if blocks else src
+
+
+def extract_js_function(src, name):
+    """The verbatim text of `function <name>(...){...}`. Returns (text, error).
+
+    Brace-matched over the masked copy, so a brace inside a string, a regex or a
+    comment cannot end the body early. Exactly one of the two return values is
+    None.
+    """
+    masked = mask_js_literals(src)
+    hits = list(re.finditer(r"\bfunction\s+%s\s*\(" % re.escape(name), masked))
+    if not hits:
+        return None, "no `function %s(` definition in the shipped file" % name
+    if len(hits) > 1:
+        return None, ("%d definitions of `function %s(` — the gate cannot tell which one the "
+                      "render paths call, and neither can a reviewer" % (len(hits), name))
+    m = hits[0]
+    brace = masked.find("{", m.end())
+    if brace < 0:
+        return None, "`function %s(` has no body" % name
+    depth = 0
+    for i in range(brace, len(masked)):
+        if masked[i] == "{":
+            depth += 1
+        elif masked[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[m.start():i + 1], None
+    return None, ("`function %s(`'s body is never closed — the brace match ran off the end of "
+                  "the file" % name)
+
+
+# The three functions every rendered value in this product passes through. Q17
+# proves they are CALLED; Q19 proves they ESCAPE.
+ESCAPERS = ("esc", "escapeAttr", "escapeRegex")
+ESCAPER_PROBE = os.path.join(REPO, "tests", "escaper_probe.js")
+ESCAPER_CORPUS = os.path.join(REPO, "tests", "fixtures", "escaper-corpus.json")
+
+
+def extract_escaper_block(src):
+    """The three escaper definitions, lifted verbatim. Returns (text, error)."""
+    script = app_script_of(src)
+    parts, errs = [], []
+    for name in ESCAPERS:
+        text, err = extract_js_function(script, name)
+        if err:
+            errs.append("%s(): %s" % (name, err))
+        else:
+            parts.append(text)
+    if errs:
+        return None, "; ".join(errs)
+    return "\n".join(parts) + "\n", None
+
+
+def escaper_failures(src):
+    """Q19 (AL-GATE3-001). Run the shipped escapers; do not read them.
+
+    Returns (failures, details). Factored out of gate_q19 so
+    tests/test_escaper_behaviour.py can drive it with a mutated escaper body and
+    prove the gate sees what Q17 cannot.
+    """
+    f, d = [], []
+    if not os.path.exists(ESCAPER_PROBE) or not os.path.exists(ESCAPER_CORPUS):
+        f.append("tests/escaper_probe.js or tests/fixtures/escaper-corpus.json is missing — the "
+                 "escaper property gate cannot run. An escaping check that quietly skips is the "
+                 "fail-open this gate exists to close (AL-GATE3-001)")
+        return f, d
+
+    block, err = extract_escaper_block(src)
+    if err:
+        f.append("could not lift the escapers out of the shipped file: %s" % err)
+        return f, d
+
+    node = shutil.which("node")
+    if not node:
+        f.append("node is not installed on this runner. The escapers are JavaScript and this gate "
+                 "RUNS them — reading them is what Q17 already does, and reading them is what "
+                 "AL-GATE3-001 showed is not enough. CI installs Node (actions/setup-node@v4) so "
+                 "this check cannot be skipped on the build that needed it.")
+        return f, d
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8")
+    try:
+        tmp.write(block)
+        tmp.close()
+        proc = subprocess.run([node, ESCAPER_PROBE, tmp.name, "--json"],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    finally:
+        os.unlink(tmp.name)
+    out = proc.stdout.decode("utf-8", "replace")
+    err_text = proc.stderr.decode("utf-8", "replace").strip()
+    try:
+        rep = json.loads(out)
+    except ValueError:
+        f.append("the escaper probe produced no JSON report: %s" % (err_text or out)[:400])
+        return f, d
+    if not isinstance(rep, dict):
+        f.append("the escaper probe's report is not an object: %s" % out[:200])
+        return f, d
+    for line in rep.get("failures", []):
+        f.append("escaper property: %s" % line)
+    if proc.returncode != 0 and not rep.get("failures"):
+        f.append("the escaper probe exited %d without naming a failure: %s"
+                 % (proc.returncode, err_text[:300]))
+    checks = rep.get("checks", 0)
+    if not f and not checks:
+        f.append("the escaper probe reported zero checks — a battery with nothing in it passes "
+                 "everything, which is the empty-set fail-open in a different costume")
+    if not f:
+        d.append("%d properties checked over %s declared and %s generated hostile vectors: esc() "
+                 "leaves no raw < > \" ' and no bare &, escapeAttr() adds ` and =, and both "
+                 "round-trip exactly through a strict entity decoder — so an escaper that DELETES "
+                 "the dangerous character fails here too, rather than silently corrupting DISA "
+                 "fix text"
+                 % (checks, rep.get("vectors", "?"), rep.get("generated_vectors", "?")))
+        d.append("escapeRegex(): every regex metacharacter present is backslash-escaped and none "
+                 "is left bare; the pattern compiles, matches its own input, and does not match "
+                 "what only the UNescaped pattern would match")
+        d.append("%s negative control(s) ran first: the probe drives its own battery against "
+                 "known-broken escapers (identity, drop-the-character, half-escaped) and refuses "
+                 "to report a PASS unless it just failed all of them (AL-GATE3-001)"
+                 % rep.get("negative_controls", "?"))
+        d.append("escapers lifted verbatim out of the shipped file (%d bytes, %s), not read from "
+                 "template.html and not re-implemented in Python"
+                 % (rep.get("escaper_bytes", len(block)), ", ".join("%s()" % n for n in ESCAPERS)))
+    return f, d
 
 
 # ---------------------------------------------------------------------------
@@ -1689,6 +1944,30 @@ def gate_q18(ctx):
     return f, d
 
 
+def gate_q19(ctx):
+    """Escaper behaviour — the functions ESCAPE, not merely exist (AL-GATE3-001).
+
+    Q17 audits call sites: every value reaching a render sink is a literal, an
+    accumulator this gate derived and audited in turn, or an
+    esc()/escapeAttr()/escapeRegex() call. That is a real property and it stays.
+    What it cannot be is a proof that those three functions do anything, because
+    `function esc(s){return s;}` changes no call site at all — Al Kowalski's
+    Gate 3 review reproduced exactly that against render_sink_failures() and got
+    back zero failures over four audited expressions.
+
+    So this gate stops reading and starts running. The three definitions are
+    lifted verbatim out of the SHIPPED artifact — the same discipline Q18's
+    harness applies to the assembler block, for the same reason: the code that
+    clears the gate has to be the code that crosses the air gap. They go through
+    tests/escaper_probe.js under node against a hostile corpus, and the probe
+    proves it can fail, on this runner, on every run, before it reports anything.
+
+    Node is REQUIRED, as it is for Q18. An escaping check that downgrades itself
+    to PENDING when the runner is thin is a fail-open wearing a politer word.
+    """
+    return escaper_failures(ctx["shell"])
+
+
 def gate_node_check(ctx):
     """BQP Gate 2 #1/#9 — JS syntax of the extracted app script. Node is optional."""
     f, d, p = [], [], []
@@ -1778,6 +2057,7 @@ GATES = [
     ("Q16", "Capture backing (expected_output and verified receipts)", gate_q16),
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
     ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
+    ("Q19", "Escaper behaviour (esc/escapeAttr/escapeRegex actually escape, run under node)", gate_q19),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -1818,7 +2098,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue
