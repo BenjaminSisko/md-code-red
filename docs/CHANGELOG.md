@@ -4,6 +4,80 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — Panels review conditions G1/G2/G3 (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Closes Marcus Reed's APPROVE WITH CONDITIONS on `636fd7f` (Panels review, CR-T-26/28/29/30).
+
+#### G1 (MED, PANEL-001) — declared tool was not the invoked binary
+
+`firewalld-service-active` (`tool: "firewall-cmd"`) and `journald-service-active`
+(`tool: "journalctl"`) both emit `systemctl` commands on every RHEL release. The Inspector's
+flag-by-flag panel resolves an explanation with `decodeCmd(res.tool, res.version, res.flags)`,
+which reads `FLAGS[version].clis[toolId]` — the wrong binary's dictionary, so `status`/`is-active`
+could never resolve there even after CR-T-09/10 populated real flag dictionaries.
+
+- `content/commands.json` gains `explain_tool: "systemctl"` on both entries. Chosen over re-filing
+  `tool: "systemctl"` because `tool` also drives the sidebar Tools rail (`entriesForTool()`) — both
+  entries would become undiscoverable from the firewalld/journald tool page they belong on.
+  `tool` is unchanged everywhere else (navigation, category, the evidence export's tool label).
+- `template.html`'s `renderInspector()` resolves the flag dictionary through
+  `entry.explain_tool || res.tool` — the one call site that mattered. `MCR-ASSEMBLER` untouched.
+- `content/tools.json` gains a `binary` field per tool (id already equalled the real binary for
+  all 19; now recorded explicitly).
+- `extract/schema.py` and `qa.py` Q13 validate `explain_tool` resolves to a real `tools.json` id,
+  the same rule `tool` already follows.
+- New `qa.py` **Q22** gate: every entry's `rhel_versions` commands' first word (after one leading
+  `sudo`) must match its declared tool's binary, and every `flags[].flag` must resolve in a
+  populated flag dictionary, carry a curated `explain`, or be honestly marked (not option-shaped,
+  i.e. a subcommand like `is-active` that can never appear in an OPTIONS dictionary, with a
+  `license_class` on record). Committed failing first (8 FAILs, both entries × all 4 RHEL
+  versions), then the content/template fix landed and it went green.
+
+#### G2 (LOW, PANEL-002) — bidi overrides and NUL survived into the evidence export
+
+`esc()` correctly stays an HTML-entity escaper, not a sanitiser — but a `U+202E` bidi override or a
+raw NUL in a rule title or check/fix text still reached `formatEvidenceText()`'s plain-text output
+unchanged, and that text crosses trust boundary 5 into an SCTM/ATO package.
+
+- `template.html`'s `MCR-EVIDENCE` block gains `evidenceHeaderSafe()`/`evidenceLineSafe()`, and
+  `push()` now routes every pushed value through them. Reimplemented rather than calling
+  `MCR-ASSEMBLER`'s `headerSafe()` directly, so the block stays independently liftable and pure on
+  its own (its purity check forbids reaching outside itself) and `MCR-ASSEMBLER` stays untouched.
+  Deliberately not identical to `headerSafe()`: it does not collapse run-on whitespace, because this
+  export's own content relies on it (`"STIG version: V2R8  benchmark date: ..."`), where
+  `headerSafe()`'s single clipboard comment line does not.
+- Removes bidi override/isolate and zero-width ranges (`U+200B`–`U+200F`, `U+202A`–`U+202E`,
+  `U+2060`–`U+2069`, `U+FEFF`) outright; C0/C1 controls, NUL and line separators become a space —
+  applied per physical line so multi-paragraph check/fix text keeps its structure. `<`, `"` and `'`
+  are left exactly as authored: this is plain text, not markup.
+- Fail-first hostile fixture added to `tests/test_evidence_export.js`: a rule title carrying
+  `U+202E`/`U+200E`, check text carrying a raw NUL, fix text carrying literal `<`/`"`/`'`. Committed
+  failing (all three hostile characters survived), then the fix landed and it went green.
+
+#### G3 — where the CR-T-28 report's sample export citation actually came from
+
+The CR-T-28 report pasted a sample export citing *"man firewall-cmd(1) … retrieved 2026-09-01"*
+for `firewalld-service-active`. That line has never existed in this repository at any revision —
+`content/commands.json`'s real `source` for that entry has always been the DISA STIG pin
+(`retrieved_on: 2026-09-17`), and `renderEvidenceModal()` takes `src` from `ctx.entry.source`, so
+the shipped export path cannot produce it. Traced to `tests/test_evidence_export.js`'s own
+hand-written determinism fixture (`fixtureOpts()`) — a synthetic illustration built to prove two
+calls are byte-identical, never meant to represent real content — pasted into the report as if it
+were a real run.
+
+- New `tests/test_evidence_export_real.js`/`.py`: lifts `MCR-ASSEMBLER` and `MCR-EVIDENCE`
+  verbatim out of the built artifact and runs them against the REAL data island —
+  `entryById("firewalld-service-active")` → `assembleCommand()` → `withCopyPayloads()` →
+  `formatEvidenceText()`, never a fixture — and snapshots the result against
+  `tests/fixtures/evidence/firewalld-service-active.rhel9.txt`, byte-for-byte except the
+  `Operator date:` line, plus an explicit assertion the output can never reproduce the
+  hand-written sample's citation. The report sample and the shipped artifact can no longer diverge.
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS (new **Q22**), 168 unit tests PASS (167 + 1
+new), hostile harness 81,577 checks / 0 FAILED, byte-identical to Marcus Reed's review count
+(`MCR-ASSEMBLER` genuinely untouched).
+
 ### Added — CR-T-26/28/29/30, STIG panel, evidence exporter, typed search, favorites/recent/print/about (2026-09-17, branch `salm/milo/panels`)
 
 Four renderer/index modules, all consuming the existing rendered-state object (`RESULT` /

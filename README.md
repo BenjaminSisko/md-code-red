@@ -16,6 +16,40 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — Panels review conditions G1/G2/G3, branch `salm/milo/panels-conditions`
+  (Milo Vance), closing Marcus Reed's APPROVE WITH CONDITIONS on `636fd7f`. **G1 (MED,
+  PANEL-001):** `firewalld-service-active` and `journald-service-active` declared
+  `tool: "firewall-cmd"`/`"journalctl"` while every `rhel_versions` command is a `systemctl`
+  invocation, so the Inspector's flag panel (`decodeCmd(res.tool, ...)`) looked `status`/`is-active`
+  up in the wrong binary's dictionary and could never resolve them, even once CR-T-09/10 populated
+  real dictionaries. Fixed with an `explain_tool: "systemctl"` field on both entries (simpler than
+  re-filing `tool`, which drives the sidebar Tools rail and would have buried both entries under
+  `systemctl`'s long entry list) — `renderInspector()` now resolves the flag dictionary through
+  `entry.explain_tool || res.tool`. New `qa.py` **Q22** gate (committed failing first, 8 FAILs on
+  the two entries) checks every entry's declared tool resolves, through `tools.json`'s new `binary`
+  field, to the actual binary its commands invoke, and every flag resolves in a populated
+  dictionary, carries a curated `explain`, or is honestly marked (non-option-shaped with a
+  `license_class`, since a systemctl subcommand like `is-active` can never appear in a man-page
+  OPTIONS dictionary). **G2 (LOW, PANEL-002):** `esc()` correctly stays an HTML-entity escaper, not
+  a sanitiser, but a bidi override or a raw NUL in a rule title/check text still reached
+  `formatEvidenceText()`'s plain-text output unchanged — this text crosses trust boundary 5 into an
+  SCTM/ATO package. New `evidenceHeaderSafe()`/`evidenceLineSafe()` in the `MCR-EVIDENCE` block
+  (reimplemented rather than calling `MCR-ASSEMBLER`'s `headerSafe()`, so the block stays
+  independently liftable and pure, and per physical line so multi-paragraph check/fix text keeps
+  its structure) strip C0/C1 controls, NUL, and bidi/zero-width ranges from every interpolated
+  value; `<`, `"` and `'` still come through literally, since this is plain text, not markup.
+  Fail-first hostile fixture (U+202E, U+200E, NUL) added to `tests/test_evidence_export.js`.
+  **G3:** the CR-T-28 report's sample export citation ("man firewall-cmd(1) … retrieved 2026-09-01")
+  traced to `tests/test_evidence_export.js`'s own hand-written determinism fixture — a synthetic
+  illustration, never real content — pasted into the report as if it were a real run;
+  `content/commands.json`'s real `source` for that entry has always been the DISA STIG pin. New
+  `tests/test_evidence_export_real.js`/`.py` build the REAL evidence export for
+  `firewalld-service-active` on RHEL 9 by lifting `MCR-ASSEMBLER`/`MCR-EVIDENCE` over the real
+  built data island and snapshot it against `tests/fixtures/evidence/firewalld-service-active.rhel9.txt`,
+  so the report sample and the shipped artifact can never diverge again. 22/22 `qa.py` gates PASS
+  (new **Q22**), 168 unit tests PASS (167 + 1), hostile harness 81,577 / 0 FAILED — byte-identical
+  to Marcus Reed's review, `MCR-ASSEMBLER` untouched.
+
 - **2026-09-17** — CR-T-26/28/29/30, branch `salm/milo/panels` (Milo Vance). Four renderer/index
   modules landed on top of `0ba8cf5`, all consuming the existing rendered-state object — the
   `MCR-ASSEMBLER` block and the field validators were not touched. **CR-T-26 STIG panel:**
