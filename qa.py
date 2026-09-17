@@ -3,7 +3,7 @@
 
 Stdlib only.
 
-    python3 qa.py              # every gate, Q1..Q19, one PASS/FAIL line each
+    python3 qa.py              # every gate, Q1..Q20, one PASS/FAIL line each
     python3 qa.py --accuracy   # Q10 + Q11 only (the STIG/CCI accuracy re-check)
     python3 qa.py --size       # the size report only — informational, never fails
 
@@ -12,15 +12,20 @@ qa.py, Q8..Q11 from the Etsy RHEL STIG pipeline's qa-rhel-stig.py (this file kee
 its own independent XCCDF parse on purpose: the accuracy gate is worth nothing if
 it re-uses the extractor's code path), Q12..Q17 are new for MD CODE RED.
 
-Q18 is beyond ADR-001's list: it is Marcus's CI merge-gate #4 and #9
+Q18, Q19 and Q20 are beyond ADR-001's list. Q18 is Marcus's CI merge-gate #4 and #9
 (threat-model-v1 §11), the hostile-input harness over the command assembler and
-the quoting-domain separation check. It is the only gate in this file that
-REQUIRES Node — see gate_q18 for why a skip is not acceptable there.
+the quoting-domain separation check. Q19 closes AL-GATE3-001 from Al Kowalski's
+BQP Gate 3 review: Q17 proves esc()/escapeAttr() are CALLED at every render
+sink and cannot prove they ESCAPE anything, so Q19 lifts them out of the shipped
+artifact and RUNS them against a hostile corpus. Both REQUIRE Node — see
+gate_q18 and gate_q19 for why a skip is not acceptable in either.
 
-Q19 is MCR-SEC-020 and MCR-SEC-019 (condition E5): the flag dictionary measured
-against the raw captures it was extracted from, and every generator citation
-checked to show an option that generator actually emits. Q15 cannot see either,
-because it re-runs the extractor and diffs the output against itself.
+Q20 is MCR-SEC-020 and MCR-SEC-019 (condition E5 of Marcus Reed's D4 review):
+the flag dictionary measured against the raw captures it was extracted from, and
+every generator citation checked to show an option that generator actually
+emits. Q15 cannot see either, because it re-runs the extractor and diffs the
+output against itself — a systematically skipped option class produces a
+byte-identical re-parse and a PASS.
 
 SIZE IS REPORTED, NEVER ENFORCED. The Founder ruled the ceiling unlimited on
 2026-09-17; ADR-001 §7.2's 8 MB ceiling is superseded. The size line prints MB
@@ -289,12 +294,63 @@ def find_artifact():
 
 def load_build_constants():
     """Read APP_NAME/APP_VERSION out of build.py without importing it."""
-    src = open(os.path.join(REPO, "build.py"), encoding="utf-8").read()
+    with open(os.path.join(REPO, "build.py"), encoding="utf-8") as fh:
+        src = fh.read()
     out = {}
     for key in ("APP_NAME", "APP_VERSION", "CLASSIFICATION"):
         m = re.search(r'^%s\s*=\s*"([^"]+)"' % key, src, re.M)
         out[key] = m.group(1) if m else None
     return out
+
+
+SCHEMA_PATH = os.path.join(REPO, "extract", "schema.py")
+
+
+def parse_schema_tuple(src, name):
+    """A module-level tuple of string literals out of extract/schema.py's TEXT.
+
+    AL-GATE3-005. Q3 re-checks provenance at the artifact level, independently of
+    the extractor — that independence is the same rule Q10's docstring states for
+    the XCCDF parse, and it is worth keeping. What is not worth keeping is Q3
+    ALSO carrying its own idea of which fields are required, because that copy
+    silently drifted: qa.py wanted four fields, extract/schema.py wanted five,
+    and the missing one was `version`, the field schema.py's own docstring calls
+    mandatory because "a source that cannot say which version of the document it
+    came from cannot be re-checked".
+
+    So: the CONSTANT is shared, the CHECK is not. It is read out of the file the
+    same way load_build_constants() reads APP_VERSION out of build.py, with no
+    import and no code path in common.
+
+    Raises rather than returning a default. A gate that falls back to an idea of
+    its own when it cannot read the source of truth is the weaker-copy problem
+    again, with extra steps.
+    """
+    m = re.search(r"^%s\s*=\s*\(([^)]*)\)" % re.escape(name), src, re.M)
+    if not m:
+        raise ValueError("extract/schema.py declares no module-level %s tuple that qa.py can "
+                         "read — Q3's independent re-check has no source of truth for which "
+                         "fields are required (AL-GATE3-005)" % name)
+    fields = tuple(re.findall(r"""["']([^"']+)["']""", m.group(1)))
+    if not fields:
+        raise ValueError("extract/schema.py's %s is empty — an empty requirement list is a gate "
+                         "that requires nothing (AL-GATE3-005)" % name)
+    return fields
+
+
+def provenance_fields():
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        return parse_schema_tuple(f.read(), "PROVENANCE_FIELDS")
+
+
+def license_classes():
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        return parse_schema_tuple(f.read(), "LICENSE_CLASSES")
+
+
+def parse_provenance_fields(src):
+    """parse_schema_tuple(src, "PROVENANCE_FIELDS"), kept as its own name for tests."""
+    return parse_schema_tuple(src, "PROVENANCE_FIELDS")
 
 
 def split_top_level(expr, sep="+"):
@@ -483,6 +539,144 @@ def fused_literal_concatenations(src):
     return out
 
 
+def computed_member_expressions(src):
+    """Every `<expr>[<prop>]` in src, as (prop, context) — reads as well as writes.
+
+    computed_property_expressions() above only looks at ASSIGNMENTS, which is all
+    Q17 needs: a render sink is written, never read. Q2 needs the other half. A
+    network API is REACHED, and it can be reached by a read that never becomes a
+    call on the same line (`var f = window["fe"+"tch"];`). The property is
+    recovered by walking back from the `]` and matching brackets, so a nested
+    index is read whole.
+    """
+    out = []
+    for m in re.finditer(r"\]", src):
+        depth, j = 0, m.start()
+        while j >= 0:
+            if src[j] == "]":
+                depth += 1
+            elif src[j] == "[":
+                depth -= 1
+                if depth == 0:
+                    break
+            j -= 1
+        if j <= 0:
+            continue                       # unbalanced, or an array literal at offset 0
+        if src[j - 1] in " \t\r\n=(,:[{;+":
+            continue                       # `[1,2]` is an array literal, not a member access
+        out.append((src[j + 1:m.start()].strip(), src[max(0, j - 30):m.end()].strip()))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Air-gap law: reaching the network without spelling its name (Q2).
+#
+# Q2 was a text scan: `fetch(`, `XMLHttpRequest`, `WebSocket`,
+# `navigator.sendBeacon`, `import(`. Al Kowalski's Gate 3 review put it in the
+# same structural class as the Q17 computed-member gap MCR-SEC-014 closed, but
+# undocumented and untested rather than accepted and recorded — a computed call
+# (`window["fe"+"tch"]()`) or an alias (`var f=fetch; f()`) is invisible to it.
+#
+# So the D2 rule, mirrored: a name spelled in brackets, a name fused inline out
+# of string literals, and a name assembled through a variable across statements
+# are all the name. Plus the shape Q17 does not need — the bare REFERENCE. A
+# render sink is always written; a network API only has to be reached, and
+# `var f = fetch;` never spells a call at all.
+#
+# What this does NOT catch is the same residual Q17 states rather than claims
+# away: a name produced at run time from something that is not a string literal.
+# No scan of the source can see that, and this gate does not pretend to. It is an
+# accident-prevention gate over hand-written code CODEOWNERS reviews.
+# ---------------------------------------------------------------------------
+NETWORK_APIS = ("fetch", "XMLHttpRequest", "WebSocket", "EventSource", "sendBeacon",
+                "importScripts", "Worker", "SharedWorker", "RTCPeerConnection", "navigator")
+NETWORK_NAME_RE = re.compile(r"(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|"
+                             r"importScripts|SharedWorker|Worker|RTCPeerConnection)")
+NETWORK_BARE_RE = re.compile(r"\b(fetch|XMLHttpRequest|WebSocket|EventSource|importScripts|"
+                             r"SharedWorker|Worker|RTCPeerConnection)\b|"
+                             r"\bnavigator\s*\.\s*sendBeacon\b|\bimport\s*\(")
+
+
+def network_call_failures(script):
+    """Every route from this app script to a network API. Returns a list of failures.
+
+    Pure: takes JavaScript, returns strings. gate_q2 and
+    tests/test_airgap_and_markers.py both call it.
+    """
+    f = []
+    masked = mask_js_literals(script)
+
+    # 1. The name, written out, anywhere in real code — a CALL is not required.
+    #    `var f = fetch;` is the whole of the bypass, and the call site that
+    #    follows it need not be in this file's line of sight.
+    seen = set()
+    for m in NETWORK_BARE_RE.finditer(masked):
+        name = m.group(0).strip()
+        if name in seen:
+            continue
+        seen.add(name)
+        f.append("network-capable API '%s' is named in the app script at line %d. This product "
+                 "ships one HTML file because it runs where there is no route off the machine; "
+                 "there is no correct reference to a network API in it, called or not"
+                 % (name, masked[:m.start()].count("\n") + 1))
+
+    # 2. The name in brackets, or built out of literals — MCR-SEC-014's D2 rule,
+    #    applied to the air gap instead of to the render sinks.
+    for prop, context in computed_member_expressions(script):
+        if is_literal(prop):
+            hit = NETWORK_NAME_RE.search(prop[1:-1])
+            if hit:
+                f.append("computed member access naming '%s' — `window[\"fetch\"]` is the same "
+                         "API as `window.fetch`, written the other way round, and every text scan "
+                         "here reads the dotted spelling: %s" % (hit.group(0), context[:70]))
+            continue
+        if IDENT_RE.match(prop):
+            lits = []
+            for expr in assignments_to(script, prop):
+                lits.extend(l[1:-1] for l in STRING_LIT_RE.findall(expr))
+            hit = NETWORK_NAME_RE.search("".join(lits))
+            if hit:
+                f.append("computed member access `[%s]` where the source builds '%s' into '%s' "
+                         "from string literals — an API name assembled across statements is still "
+                         "that API's name: %s" % (prop, hit.group(0), prop, context[:70]))
+            continue
+        # A property expression that is neither one literal nor one identifier:
+        # fuse every literal it contributes, plus every literal assigned to each
+        # identifier term, and read the result. `window["fe"+part]` with
+        # `part="tch"` elsewhere spells the API name across two places at once.
+        pieces = []
+        for seg in split_top_level(prop):
+            seg = seg.strip()
+            if is_literal(seg):
+                pieces.append(seg[1:-1])
+            elif IDENT_RE.match(seg):
+                for expr in assignments_to(script, seg):
+                    pieces.extend(l[1:-1] for l in STRING_LIT_RE.findall(expr))
+        hit = NETWORK_NAME_RE.search("".join(pieces))
+        if hit:
+            f.append("computed member access whose property expression (%s) fuses to '%s' out of "
+                     "string literals in this file — splitting an API name over a literal and a "
+                     "variable is still spelling it: %s" % (prop[:40], hit.group(0), context[:70]))
+
+    # 3. Any concatenation of string literals that spells one, wherever it sits.
+    for fused, chunk in fused_literal_concatenations(script):
+        hit = NETWORK_NAME_RE.search(fused)
+        if hit:
+            f.append("a concatenation of string literals spells '%s' (%s) — network API names are "
+                     "not assembled from pieces in an air-gapped product"
+                     % (hit.group(0), chunk[:70]))
+
+    # 4. A CDN host built the same way, which the CDN_LITERALS scan cannot see.
+    for fused, chunk in fused_literal_concatenations(script):
+        low = fused.lower()
+        for lit in CDN_LITERALS:
+            if lit in low:
+                f.append("a concatenation of string literals spells the CDN literal '%s' (%s)"
+                         % (lit, chunk[:70]))
+                break
+    return f
+
+
 def computed_sink_failures(src):
     """Q17's computed-member rule (MCR-SEC-014). Returns (failures, inspected)."""
     f, inspected = [], 0
@@ -668,6 +862,258 @@ def read_assignment(src, start):
 
 
 # ---------------------------------------------------------------------------
+# JS lexical masking (AL-GATE3-001, AL-GATE3-003)
+#
+# Several gates need to know where the CODE is: Q7 brace-matches try{} blocks,
+# Q19 brace-matches a function body out of the shipped file, Q5 asks whether a
+# structural marker is real code rather than a word in a comment, and Q2 asks
+# whether a network API is named in the script rather than in prose. All four
+# were counting raw characters, and Al Kowalski's Gate 3 review reproduced what
+# that costs: one unbalanced brace inside a string literal inside a try{} block
+# desynced Q7's depth counter and absorbed a genuinely unguarded
+# localStorage call into the span it rated "guarded" (AL-GATE3-003).
+#
+# mask_js_literals() answers the question once. It returns a copy of the source
+# with the same length and the same line breaks, in which:
+#
+#   * a comment is blanked entirely, delimiters included;
+#   * the CONTENTS of a string, template literal or regex literal are blanked,
+#     and the delimiters are left in place.
+#
+# Keeping the delimiters is what lets Q5 still find a marker like `var APP_NAME="`
+# (that trailing quote is the delimiter, not content) while a marker sitting
+# INSIDE a string is gone. Blanking a template literal whole — interpolation
+# included — is deliberate: `${...}` is code, but it carries braces, and dropping
+# both halves keeps the brace count balanced, which is the property every caller
+# here depends on.
+#
+# Same offsets in, same offsets out: a line number computed on the masked copy is
+# the line number in the original.
+# ---------------------------------------------------------------------------
+
+# A '/' can only open a regex literal where a value cannot already have ended;
+# anywhere else it is division. Same heuristic the comment stripper used.
+REGEX_MAY_START_AFTER = "(,=:[!&|?{};+-*%~^"
+
+
+def mask_js_literals(src):
+    """Blank comment text and string/template/regex CONTENTS, preserving offsets."""
+    out = list(src)
+    n = len(src)
+
+    def blank(a, b):
+        for k in range(max(0, a), min(b, n)):
+            if out[k] != "\n":
+                out[k] = " "
+
+    i = 0
+    while i < n:
+        c = src[i]
+        if c == "/" and i + 1 < n and src[i + 1] == "*":
+            j = src.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            blank(i, j)
+            i = j
+            continue
+        if c == "/" and i + 1 < n and src[i + 1] == "/":
+            j = src.find("\n", i)
+            j = n if j < 0 else j
+            blank(i, j)
+            i = j
+            continue
+        if c in "\"'":
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == c or src[j] in "\n\r":
+                    break        # a JS string literal cannot span a raw newline
+                j += 1
+            blank(i + 1, j)
+            i = min(j, n) + 1
+            continue
+        if c == "`":
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == "`":
+                    break
+                j += 1
+            blank(i + 1, j)
+            i = min(j, n) + 1
+            continue
+        if c == "/":
+            k = i - 1
+            while k >= 0 and src[k] in " \t\r\n":
+                k -= 1
+            prev = src[k] if k >= 0 else ""
+            if prev == "" or prev in REGEX_MAY_START_AFTER:
+                j, in_class, closed = i + 1, False, False
+                while j < n:
+                    ch = src[j]
+                    if ch == "\\":
+                        j += 2
+                        continue
+                    if ch == "[":
+                        in_class = True
+                    elif ch == "]":
+                        in_class = False
+                    elif ch == "/" and not in_class:
+                        closed = True
+                        break
+                    elif ch == "\n":
+                        break
+                    j += 1
+                if closed:
+                    blank(i + 1, j)
+                    i = j + 1
+                    continue
+        i += 1
+    return "".join(out)
+
+
+def app_script_of(src):
+    """The JavaScript to read: the last inline <script> of an HTML file, else src.
+
+    Lets the escaper gate take a built artifact, template.html, or a bare
+    fragment of JS, and read the same thing in each case. Masking an HTML file
+    with a JS lexer would be wrong — an apostrophe in prose would open a string
+    that never closes — so the JS is separated out first.
+    """
+    blocks = re.findall(r"<script>(.*?)</script>", src, re.S)
+    return blocks[-1] if blocks else src
+
+
+def extract_js_function(src, name):
+    """The verbatim text of `function <name>(...){...}`. Returns (text, error).
+
+    Brace-matched over the masked copy, so a brace inside a string, a regex or a
+    comment cannot end the body early. Exactly one of the two return values is
+    None.
+    """
+    masked = mask_js_literals(src)
+    hits = list(re.finditer(r"\bfunction\s+%s\s*\(" % re.escape(name), masked))
+    if not hits:
+        return None, "no `function %s(` definition in the shipped file" % name
+    if len(hits) > 1:
+        return None, ("%d definitions of `function %s(` — the gate cannot tell which one the "
+                      "render paths call, and neither can a reviewer" % (len(hits), name))
+    m = hits[0]
+    brace = masked.find("{", m.end())
+    if brace < 0:
+        return None, "`function %s(` has no body" % name
+    depth = 0
+    for i in range(brace, len(masked)):
+        if masked[i] == "{":
+            depth += 1
+        elif masked[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[m.start():i + 1], None
+    return None, ("`function %s(`'s body is never closed — the brace match ran off the end of "
+                  "the file" % name)
+
+
+# The three functions every rendered value in this product passes through. Q17
+# proves they are CALLED; Q19 proves they ESCAPE.
+ESCAPERS = ("esc", "escapeAttr", "escapeRegex")
+ESCAPER_PROBE = os.path.join(REPO, "tests", "escaper_probe.js")
+ESCAPER_CORPUS = os.path.join(REPO, "tests", "fixtures", "escaper-corpus.json")
+
+
+def extract_escaper_block(src):
+    """The three escaper definitions, lifted verbatim. Returns (text, error)."""
+    script = app_script_of(src)
+    parts, errs = [], []
+    for name in ESCAPERS:
+        text, err = extract_js_function(script, name)
+        if err:
+            errs.append("%s(): %s" % (name, err))
+        else:
+            parts.append(text)
+    if errs:
+        return None, "; ".join(errs)
+    return "\n".join(parts) + "\n", None
+
+
+def escaper_failures(src):
+    """Q19 (AL-GATE3-001). Run the shipped escapers; do not read them.
+
+    Returns (failures, details). Factored out of gate_q19 so
+    tests/test_escaper_behaviour.py can drive it with a mutated escaper body and
+    prove the gate sees what Q17 cannot.
+    """
+    f, d = [], []
+    if not os.path.exists(ESCAPER_PROBE) or not os.path.exists(ESCAPER_CORPUS):
+        f.append("tests/escaper_probe.js or tests/fixtures/escaper-corpus.json is missing — the "
+                 "escaper property gate cannot run. An escaping check that quietly skips is the "
+                 "fail-open this gate exists to close (AL-GATE3-001)")
+        return f, d
+
+    block, err = extract_escaper_block(src)
+    if err:
+        f.append("could not lift the escapers out of the shipped file: %s" % err)
+        return f, d
+
+    node = shutil.which("node")
+    if not node:
+        f.append("node is not installed on this runner. The escapers are JavaScript and this gate "
+                 "RUNS them — reading them is what Q17 already does, and reading them is what "
+                 "AL-GATE3-001 showed is not enough. CI installs Node (actions/setup-node@v4) so "
+                 "this check cannot be skipped on the build that needed it.")
+        return f, d
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".js", delete=False, mode="w", encoding="utf-8")
+    try:
+        tmp.write(block)
+        tmp.close()
+        proc = subprocess.run([node, ESCAPER_PROBE, tmp.name, "--json"],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    finally:
+        os.unlink(tmp.name)
+    out = proc.stdout.decode("utf-8", "replace")
+    err_text = proc.stderr.decode("utf-8", "replace").strip()
+    try:
+        rep = json.loads(out)
+    except ValueError:
+        f.append("the escaper probe produced no JSON report: %s" % (err_text or out)[:400])
+        return f, d
+    if not isinstance(rep, dict):
+        f.append("the escaper probe's report is not an object: %s" % out[:200])
+        return f, d
+    for line in rep.get("failures", []):
+        f.append("escaper property: %s" % line)
+    if proc.returncode != 0 and not rep.get("failures"):
+        f.append("the escaper probe exited %d without naming a failure: %s"
+                 % (proc.returncode, err_text[:300]))
+    checks = rep.get("checks", 0)
+    if not f and not checks:
+        f.append("the escaper probe reported zero checks — a battery with nothing in it passes "
+                 "everything, which is the empty-set fail-open in a different costume")
+    if not f:
+        d.append("%d properties checked over %s declared and %s generated hostile vectors: esc() "
+                 "leaves no raw < > \" ' and no bare &, escapeAttr() adds ` and =, and both "
+                 "round-trip exactly through a strict entity decoder — so an escaper that DELETES "
+                 "the dangerous character fails here too, rather than silently corrupting DISA "
+                 "fix text"
+                 % (checks, rep.get("vectors", "?"), rep.get("generated_vectors", "?")))
+        d.append("escapeRegex(): every regex metacharacter present is backslash-escaped and none "
+                 "is left bare; the pattern compiles, matches its own input, and does not match "
+                 "what only the UNescaped pattern would match")
+        d.append("%s negative control(s) ran first: the probe drives its own battery against "
+                 "known-broken escapers (identity, drop-the-character, half-escaped) and refuses "
+                 "to report a PASS unless it just failed all of them (AL-GATE3-001)"
+                 % rep.get("negative_controls", "?"))
+        d.append("escapers lifted verbatim out of the shipped file (%d bytes, %s), not read from "
+                 "template.html and not re-implemented in Python"
+                 % (rep.get("escaper_bytes", len(block)), ", ".join("%s()" % n for n in ESCAPERS)))
+    return f, d
+
+
+# ---------------------------------------------------------------------------
 # independent source parses (never re-uses extract/)
 # ---------------------------------------------------------------------------
 
@@ -678,7 +1124,9 @@ def verify_pins():
     path = os.path.join(STIG_SRC, "SHA256SUMS")
     if not os.path.exists(path):
         return ["stig-src/SHA256SUMS is missing — refusing to parse unpinned sources"], details
-    for line in open(path, encoding="utf-8"):
+    with open(path, encoding="utf-8") as fh:
+        sum_lines = fh.readlines()
+    for line in sum_lines:
         line = line.strip()
         if line:
             digest, name = line.split(None, 1)
@@ -778,6 +1226,21 @@ def island_escape_failures(island):
     return out
 
 
+def empty_set_failure(what, why):
+    """The one sentence AL-GATE3-004 asks every per-item gate to be able to say.
+
+    Q9 has said it since CR-T-07 — "a release with no CAT I rules at all means
+    the severity parse dropped them silently, which would make this gate pass by
+    having nothing to check" — and Q11 has guarded `not embedded`. The reasoning
+    was never specific to CAT I rules or to the CCI map: a loop that only records
+    a failure when it finds something wrong WITH an item reports PASS on no items
+    at all, which is the loudest possible silence.
+    """
+    return ("zero %s — %s. This gate finds a failure only by finding something wrong with an "
+            "item, so an empty set passes it by having nothing to check; the emptiness is "
+            "therefore the finding (AL-GATE3-004)" % (what, why))
+
+
 def gate_q1(ctx):
     f, d = [], []
     html = ctx["html"]
@@ -843,7 +1306,8 @@ def gate_q1(ctx):
     if not os.path.exists(side):
         f.append("sha256 sidecar missing")
     else:
-        want = open(side, encoding="utf-8").read().split()[0]
+        with open(side, encoding="utf-8") as fh:
+            want = fh.read().split()[0]
         got = sha256_file(ctx["artifact"])
         if want != got:
             f.append("sha256 sidecar %s does not match the artifact %s" % (want[:16], got[:16]))
@@ -867,6 +1331,14 @@ def gate_q2(ctx):
     # STIG prose and matching a word like "fetch" inside it is not a network call.
     net_js = re.findall(r"\b(fetch\s*\(|XMLHttpRequest|WebSocket|navigator\.sendBeacon|import\s*\()", shell)
     cdn = [lit for lit in CDN_LITERALS if lit in shell]
+    # The text scans above read the DOTTED, written-out spelling and nothing
+    # else. network_call_failures() reads the app script structurally: a
+    # bracketed name, a name fused out of literals inline or through a variable,
+    # a bare reference that is never called on the same line, and a CDN host
+    # assembled the same way (Gate 3, Q2 row; MCR-SEC-014's D2 rule applied to
+    # the air gap rather than to the render sinks).
+    structural = network_call_failures(ctx["app_script"])
+    f.extend(structural)
     for bad, msg in [(ext_script, "external <script src>"), (ext_css, "external stylesheet"),
                      (ext_link, "external <link href>"), (ext_img, "remote <img>"),
                      (ext_media, "embedded media element with a src/data attribute"),
@@ -880,13 +1352,28 @@ def gate_q2(ctx):
                  "no non-data url(), zero http(s) src/href")
         d.append("no fetch/XMLHttpRequest/WebSocket/sendBeacon/dynamic import in the app script")
         d.append("no CDN literals (%s)" % ", ".join(CDN_LITERALS))
+        d.append("and none of them reached the other way round either: %d computed member "
+                 "accesses in the app script read, no bracketed API name, no API name and no CDN "
+                 "host fused out of string literals — inline, through a variable, or across "
+                 "statements — and no bare reference to one, called or not. Residual, stated "
+                 "rather than claimed away: a name produced at RUN TIME from something that is "
+                 "not a string literal is invisible to any scan of the source, here exactly as in "
+                 "Q17 (MCR-SEC-014)" % len(computed_member_expressions(ctx["app_script"])))
     return f, d
 
 
 def gate_q3(ctx):
     f, d = [], []
     data = ctx["data"]
-    need = ("title", "url_or_man", "retrieved_on", "license_class")
+    # AL-GATE3-005: which fields are required is read out of extract/schema.py,
+    # never restated here. The CHECK stays independent (that is the point of Q3);
+    # only the constant is shared, and the read failing is a FAIL, not a default.
+    try:
+        need = provenance_fields()
+        classes = license_classes()
+    except (OSError, ValueError) as exc:
+        f.append("could not read the provenance rule out of extract/schema.py: %s" % exc)
+        return f, d
 
     def check(where, src):
         if not isinstance(src, dict):
@@ -895,13 +1382,25 @@ def gate_q3(ctx):
         for field in need:
             if not src.get(field):
                 f.append("%s: source.%s missing" % (where, field))
-        if src.get("license_class") not in ("verbatim-ok", "paraphrase-only"):
-            f.append("%s: license_class '%s' is not verbatim-ok or paraphrase-only"
-                     % (where, src.get("license_class")))
+        if src.get("license_class") not in classes:
+            f.append("%s: license_class '%s' is not one of %s"
+                     % (where, src.get("license_class"), ", ".join(classes)))
 
-    for e in data["commands"]["entries"]:
+    entries = data["commands"]["entries"]
+    tools = data["tools"]["tools"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries to re-check the provenance of",
+            "the provenance law is the reason a reader can trust a rendered command at root, and "
+            "a build that embeds no commands cannot have honoured it"))
+    if not tools:
+        f.append(empty_set_failure(
+            "tools to re-check the provenance of",
+            "every command entry names a tool, so no tools means no entries either — or an "
+            "extraction that dropped them"))
+    for e in entries:
         check("command entry %s" % e.get("id"), e.get("source"))
-    for t in data["tools"]["tools"]:
+    for t in tools:
         check("tools entry %s" % t.get("id"), t.get("source"))
     for v in VERSIONS:
         check("rules_rhel%s" % v, (data["rules"][v].get("_meta") or {}).get("source"))
@@ -914,13 +1413,22 @@ def gate_q3(ctx):
     check("dangerous", data["dangerous"].get("source"))
     if not f:
         d.append("every command entry, tool, flag dictionary, rules dataset, the CCI map and the "
-                 "destructive-pattern table carry title/url_or_man/retrieved_on/license_class")
+                 "destructive-pattern table carry %s" % "/".join(need))
+        d.append("the required field list was read out of extract/schema.py's PROVENANCE_FIELDS, "
+                 "not restated here: Q3 stays an INDEPENDENT re-check of the artifact, but it can "
+                 "no longer be a WEAKER one than the build-time check it doubles against — which "
+                 "is what it had silently become, missing 'version' (AL-GATE3-005)")
     return f, d
 
 
 def gate_q4(ctx):
     f, d = [], []
     entries = ctx["data"]["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "verify/undo/blast IS the product's promise, and a build with no entries keeps it "
+            "the way an empty book keeps a promise to be accurate"))
     for e in entries:
         if not e.get("verify") or not e.get("undo") or e.get("blast") not in ("green", "yellow", "red"):
             f.append("entry %s: verify/undo/blast promise broken" % e.get("id"))
@@ -929,18 +1437,90 @@ def gate_q4(ctx):
     return f, d
 
 
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+SCRIPT_BLOCK_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.S)
+
+
+def marker_kind(marker):
+    """What sort of claim a feature marker makes, derived from its own text.
+
+    Gate 3, Q5 row: the markers "stand in for structural product claims ('rail
+    renderer exists'), which is a stronger claim to be making from a substring
+    hit". True of most of them and NOT of all of them, which is why this is a
+    classifier and not a blanket rule:
+
+      code   `function renderRail(`, `var KEYMAP=`, `document.addEventListener(`
+             — a claim about code, which must be in the app script and not in a
+             comment or a string.
+      html   `id="rail"` — a claim about the static document, which must be in
+             the markup and not inside a JS string or an HTML comment.
+      text   `Not available in RHEL `, `UNVERIFIED_FLAG_COPY`, `@media print`,
+             `MCR-ASSEMBLER-BEGIN` — user-visible copy, a CSS at-rule, a comment
+             marker. Copy LIVES in a string literal and the assembler marker
+             lives in a comment BY DESIGN, so for these a substring hit over the
+             whole file is the right and only check.
+
+    Derived rather than declared on purpose: MARKERS stays a list of 3-tuples,
+    so a tranche that adds markers does not also have to classify them, and two
+    branches adding markers do not collide over a schema change.
+    """
+    if marker.startswith('id="'):
+        return "html"
+    if re.match(r"^(function|var)\s+[A-Za-z_$]", marker) or marker.startswith("document."):
+        return "code"
+    return "text"
+
+
+def marker_present(html, marker):
+    """Is this marker really there, in the place its kind requires?"""
+    kind = marker_kind(marker)
+    if kind == "text":
+        return marker in html
+    if kind == "html":
+        markup = SCRIPT_BLOCK_RE.sub(" ", html)
+        markup = HTML_COMMENT_RE.sub(" ", markup)
+        return marker in markup
+    script = app_script_of(html)
+    masked = mask_js_literals(script)
+    # The marker must START at a position that survived masking — i.e. at real
+    # code. Several markers deliberately END inside a string literal
+    # (`var APP_NAME="`, `document.addEventListener("click"`), so the marker is
+    # matched against the RAW script and only its starting position is asked to
+    # be code. A marker sitting wholly inside a comment or a string has its first
+    # character blanked, and is not counted.
+    at = script.find(marker)
+    while at >= 0:
+        if masked[at] == script[at]:
+            return True
+        at = script.find(marker, at + 1)
+    return False
+
+
 def gate_q5(ctx):
     f, d, p = [], [], []
     html = ctx["html"]
+    kinds = {"code": 0, "html": 0, "text": 0}
     for name, marker, phase in MARKERS:
-        if marker in html:
+        if marker_present(html, marker):
+            kinds[marker_kind(marker)] += 1
             continue
         if phase:
             p.append("%s — not in this build yet (%s)" % (name, phase))
         else:
-            f.append("feature marker missing: %s (%s)" % (name, marker))
+            f.append("feature marker missing: %s (%s, expected as %s)"
+                     % (name, marker, {"code": "live code in the app script, not a comment or a "
+                                               "string",
+                                       "html": "an element in the static markup, not a JS string "
+                                               "or an HTML comment",
+                                       "text": "text anywhere in the shipped file"}[marker_kind(marker)]))
     d.append("%d/%d markers present, %d pending"
              % (len(MARKERS) - len(f) - len(p), len(MARKERS), len(p)))
+    d.append("%d structural markers found in LIVE CODE (masked: a definition named only in a "
+             "comment, a doc string or dead string data does not count), %d region markers found "
+             "in the static markup outside every <script> and HTML comment, and %d text markers "
+             "— copy, a CSS at-rule and the assembler's own comment marker, which belong in a "
+             "string or a comment and are matched as text on purpose"
+             % (kinds["code"], kinds["html"], kinds["text"]))
     if "unverified" not in html:
         f.append("no-guess copy for an uncurated flag explanation is absent")
     else:
@@ -962,85 +1542,32 @@ def gate_q6(ctx):
     return f, d
 
 
-def strip_js_comments(src):
-    """Blank out // and /* */ comments, preserving offsets and line numbers.
-
-    Conservative by design: it tracks string state so a comment marker inside a
-    string literal is left alone. Regex literals in this codebase never open with
-    '//' or '/*', so they are not mistaken for comments.
-    """
-    out = list(src)
-    i, n, quote = 0, len(src), None
-    while i < n:
-        c = src[i]
-        if quote:
-            if c == "\\":
-                i += 2
-                continue
-            if c == quote:
-                quote = None
-            i += 1
-            continue
-        if c in "\"'`":
-            quote = c
-            i += 1
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "*":
-            j = src.find("*/", i + 2)
-            j = n if j < 0 else j + 2
-            for k in range(i, j):
-                if out[k] != "\n":
-                    out[k] = " "
-            i = j
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "/":
-            j = src.find("\n", i)
-            j = n if j < 0 else j
-            for k in range(i, j):
-                out[k] = " "
-            i = j
-            continue
-        if c == "/":
-            # A regex literal, if a regex can legally start here. Skipping it whole
-            # keeps a quote character inside a character class (/[&<>"']/g) from
-            # throwing the string tracker out of phase for the rest of the file.
-            prev = ""
-            k = i - 1
-            while k >= 0 and src[k] in " \t\r\n":
-                k -= 1
-            if k >= 0:
-                prev = src[k]
-            if prev == "" or prev in "(,=:[!&|?{};+-*%~^":
-                j, in_class = i + 1, False
-                while j < n:
-                    ch = src[j]
-                    if ch == "\\":
-                        j += 2
-                        continue
-                    if ch == "[":
-                        in_class = True
-                    elif ch == "]":
-                        in_class = False
-                    elif ch == "/" and not in_class:
-                        break
-                    elif ch == "\n":
-                        break
-                    j += 1
-                i = j + 1
-                continue
-        i += 1
-    return "".join(out)
+STORAGE_RE = re.compile(r"\b(?:localStorage|sessionStorage)\b")
 
 
 def try_block_spans(src):
-    """Brace-matched [start, end) spans of every try{...} block in the script."""
+    """Brace-matched [start, end) spans of every try{...} block in the script.
+
+    AL-GATE3-003. This used to count raw `{` and `}` characters. One unbalanced
+    brace inside a string literal inside a `try` body shifted the depth, the span
+    ran past its own `catch`, and it absorbed the sibling code after it — so a
+    genuinely unguarded storage call was reported as guarded. Silently, which is
+    the worst way for a gate to be wrong.
+
+    The masking is done HERE, not by the caller. Deciding what is a brace and
+    what is a character inside a literal is this function's own job; a caller
+    that has to remember to launder its input first is a caller that will one day
+    forget. Masking is idempotent, so a caller that masks anyway costs nothing.
+    Spans index into the string that was passed in: the mask preserves offsets.
+    """
+    masked = mask_js_literals(src)
     spans = []
-    for m in re.finditer(r"\btry\s*\{", src):
+    for m in re.finditer(r"\btry\s*\{", masked):
         depth, i = 0, m.end() - 1
-        while i < len(src):
-            if src[i] == "{":
+        while i < len(masked):
+            if masked[i] == "{":
                 depth += 1
-            elif src[i] == "}":
+            elif masked[i] == "}":
                 depth -= 1
                 if depth == 0:
                     spans.append((m.start(), i + 1))
@@ -1049,22 +1576,43 @@ def try_block_spans(src):
     return spans
 
 
-def gate_q7(ctx):
+def storage_guard_failures(script):
+    """Q7's judgement over a piece of JS. Returns (failures, details).
+
+    Factored out of gate_q7 so tests/test_storage_guard.py can drive the gate
+    with the desync constructs from AL-GATE3-003 rather than only its span
+    finder. A gate whose decision cannot be called from a test is a gate nobody
+    can watch fail.
+    """
     f, d = [], []
-    script = strip_js_comments(ctx["app_script"])
-    spans = try_block_spans(script)
-    hits = list(re.finditer(r"\b(?:localStorage|sessionStorage)\b", script))
+    masked = mask_js_literals(script)
+    spans = try_block_spans(masked)
+    hits = list(STORAGE_RE.finditer(masked))
     if not hits:
-        f.append("no storage access found at all — the storage guard should exist")
+        f.append("no storage access found at all in the app script — Q7 proves the storage guard "
+                 "holds, and a gate with nothing to check reports PASS by having found nothing. "
+                 "STORE is not optional: if it were genuinely removed, this line is the one that "
+                 "has to be edited on purpose")
     for m in hits:
         if not any(s <= m.start() < e for s, e in spans):
-            line = script[:m.start()].count("\n") + 1
-            f.append("storage identifier '%s' at app-script line %d is not inside a try{...}catch block"
-                     % (m.group(0), line))
+            line = masked[:m.start()].count("\n") + 1
+            f.append("storage identifier '%s' at app-script line %d is not inside a try{...}catch "
+                     "block" % (m.group(0), line))
     if not f:
-        d.append("all %d localStorage/sessionStorage references sit inside one of %d try/catch blocks"
-                 % (len(hits), len(spans)))
-    if "var SCHEMA=1;" not in script:
+        d.append("all %d localStorage/sessionStorage references sit inside one of %d try/catch "
+                 "blocks — braces counted over a lexically masked copy, so a brace inside a "
+                 "string, template or regex literal cannot stretch a span past its own catch "
+                 "and swallow an unguarded sibling (AL-GATE3-003)" % (len(hits), len(spans)))
+    return f, d
+
+
+def gate_q7(ctx):
+    f, d = [], []
+    script = ctx["app_script"]
+    sf, sd = storage_guard_failures(script)
+    f.extend(sf)
+    d.extend(sd)
+    if "var SCHEMA=1;" not in mask_js_literals(script):
         f.append("storage records are not schema-versioned")
     else:
         d.append("storage records are schema-versioned and namespaced (mdcr.v1.)")
@@ -1079,6 +1627,11 @@ def gate_q8(ctx):
         meta = ds.get("_meta") or {}
         embedded = ds.get("rules", [])
         src, total = ctx["source_rules"][v]
+        if not embedded:
+            f.append(empty_set_failure(
+                "rules embedded for RHEL %s" % v,
+                "this gate reconciles the embedded count against _meta, and 0 == 0 is the one "
+                "pair of numbers that agrees no matter what the extractor did"))
         if meta.get("rule_count") != len(embedded):
             f.append("rules_rhel%s: _meta.rule_count %s != %d embedded"
                      % (v, meta.get("rule_count"), len(embedded)))
@@ -1103,6 +1656,14 @@ def gate_q8(ctx):
             f.append("rules_rhel%s: _meta.generator '%s' is not an extractor Q15 re-runs"
                      % (v, meta.get("generator")))
     entries = data["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "the entry count and _meta.entry_count agree trivially at zero"))
+    if not data["cci_nist"].get("cci"):
+        f.append(empty_set_failure(
+            "CCI mappings",
+            "the mapping count and _meta.entry_count agree trivially at zero"))
     if len(entries) != (data["commands"].get("_meta") or {}).get("entry_count"):
         f.append("commands.json _meta.entry_count != %d embedded entries" % len(entries))
     else:
@@ -1317,6 +1878,11 @@ def gate_q11(ctx):
 def gate_q12(ctx):
     f, d = [], []
     entries = ctx["data"]["commands"]["entries"]
+    if not entries:
+        f.append(empty_set_failure(
+            "command entries",
+            "four-version completeness is the claim on the cover of this product; with no "
+            "entries it is complete the way a blank page is"))
     for e in entries:
         if "template" in e:
             # A generator spec (CR-T-17+) composes its command at render time from
@@ -1352,6 +1918,9 @@ def gate_q12(ctx):
         d.append("all %d entries carry all four RHEL keys with an explicit value in every one "
                  "(build.py resolved same_as pointers before embedding)" % len(entries))
     tools = ctx["data"]["tools"]["tools"]
+    if not tools:
+        f.append(empty_set_failure(
+            "tools", "no tool declares availability for all four releases because no tool is here"))
     for t in tools:
         if set((t.get("availability") or {}).keys()) != set(VERSIONS):
             f.append("tools entry %s: availability keys != {7,8,9,10}" % t.get("id"))
@@ -1370,8 +1939,23 @@ def gate_q13(ctx):
     have_sources = os.path.exists(sources_json)
     source_ids = set()
     if have_sources:
-        source_ids = set(json.load(open(sources_json, encoding="utf-8")).get("sources", {}).keys())
+        with open(sources_json, encoding="utf-8") as fh:
+            source_ids = set(json.load(fh).get("sources", {}).keys())
     n_stig = 0
+    if not data["commands"]["entries"]:
+        f.append(empty_set_failure(
+            "command entries whose stig_id/rule_id/tool/category links resolve",
+            "referential integrity over an empty set of references is not a property anybody "
+            "wanted proved"))
+    if not tool_ids:
+        f.append(empty_set_failure(
+            "tool ids to resolve entry.tool against",
+            "an empty target set makes every future membership test a failure, not a pass, so "
+            "this one is caught here rather than as a flood of confusing entry errors later"))
+    if not categories:
+        f.append(empty_set_failure(
+            "categories to resolve entry.category against",
+            "same shape as the tool index above"))
     for e in data["commands"]["entries"]:
         if e.get("tool") not in tool_ids:
             f.append("entry %s: tool '%s' is not in tools.json" % (e.get("id"), e.get("tool")))
@@ -1408,56 +1992,143 @@ def gate_q13(ctx):
     return f, d
 
 
-def gate_q14(ctx):
-    f, d = [], []
-    raw_dir = os.path.join(REPO, "content-src", "raw")
-    staged = []
-    for sub in ("man", "help", "redhat", "git"):
-        p = os.path.join(REPO, "content-src", sub)
-        if os.path.isdir(p):
-            staged.append(sub)
-    if not os.path.isdir(raw_dir) and not staged:
-        d.append("no raw sources present under content-src/ — nothing to collide with; "
-                 "the 8-gram collision check activates when CR-T-09/CR-T-10 stage man and guide text")
-        return f, d
-    # 8-gram collision check against every staged raw source (ADR-001 §7.3 Q14)
+SHINGLE_N = 8                       # ADR-001 §7.3 Q14. The promise is an 8-gram.
+STAGED_SUBDIRS = ("man", "help", "redhat", "git")
+
+
+def shingles(text):
+    """Every SHINGLE_N-word run in text, normalised. Pure."""
+    toks = re.sub(r"[^a-z0-9\s-]", " ", text.lower()).split()
+    return set(tuple(toks[i:i + SHINGLE_N])
+               for i in range(max(0, len(toks) - (SHINGLE_N - 1))))
+
+
+def raw_source_paths(repo=REPO):
+    """(staged subdirectory names, every .txt/.md path under them). Pure but for I/O."""
+    staged = [sub for sub in STAGED_SUBDIRS if os.path.isdir(os.path.join(repo, "content-src", sub))]
+    bases = list(staged)
+    if os.path.isdir(os.path.join(repo, "content-src", "raw")):
+        bases.append("raw")
     corpus = []
-    for sub in staged + (["raw"] if os.path.isdir(raw_dir) else []):
-        base = os.path.join(REPO, "content-src", sub)
-        for root, _dirs, files in os.walk(base):
-            for name in files:
+    for sub in bases:
+        for root, _dirs, files in os.walk(os.path.join(repo, "content-src", sub)):
+            for name in sorted(files):
                 if name.endswith((".txt", ".md")):
                     corpus.append(os.path.join(root, name))
+    return staged, corpus
 
-    def shingles(text):
-        toks = re.sub(r"[^a-z0-9\s-]", " ", text.lower()).split()
-        return set(tuple(toks[i:i + 8]) for i in range(max(0, len(toks) - 7)))
+
+def raw_shingles(repo=REPO):
+    grams = set()
+    for path in raw_source_paths(repo)[1]:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            grams |= shingles(fh.read())
+    return grams
+
+
+def curated_texts(entry):
+    """Every curated string on an entry that Q14 compares against raw sources."""
+    texts = []
+    for v in VERSIONS:
+        val = (entry.get("rhel_versions") or {}).get(v) or {}
+        if val.get("notes"):
+            texts.append(val["notes"])
+        if (val.get("changed_in_note") or {}).get("what"):
+            texts.append(val["changed_in_note"]["what"])
+    for fl in (entry.get("flags") or []):
+        if fl.get("explain"):
+            texts.append(fl["explain"])
+    return texts
+
+
+def paraphrase_failures(entries, raw_grams):
+    """Q14's collision check. Pure: no ctx, no globals, no I/O.
+
+    gate_q14 and tests/test_paraphrase.py both call this, so the gate that runs
+    in CI is the gate the planted fixture proves. ADR-001 §7.3 asked for that
+    test file; until AL-GATE3's Gate 3 review, Q14 was the only gate in this file
+    with no way to drive it at all.
+    """
+    f = []
+    for e in entries:
+        if (e.get("source") or {}).get("license_class") != "paraphrase-only":
+            continue
+        for t in curated_texts(e):
+            shared = shingles(t) & raw_grams
+            if shared:
+                f.append("entry %s: %d-gram lifted from a paraphrase-only source: \"%s\""
+                         % (e.get("id"), SHINGLE_N, " ".join(sorted(shared)[0])))
+    return f
+
+
+def raw_coverage_failures(data, repo=REPO):
+    """A populated flag dictionary whose raw sources are not staged (AL-GATE3-004 shape).
+
+    flags_rhel<N>.json is EXTRACTED from the man and --help text under
+    content-src/raw/rhel<N>/. If the dictionary ships populated and that
+    directory is absent or empty, Q14 is comparing curated content against a
+    corpus it did not come from — and reporting PASS, because an empty corpus
+    collides with nothing. The gate's own "nothing staged yet" note is honest
+    only while nothing was extracted; this is the line that keeps it honest
+    afterwards.
+    """
+    f = []
+    for v in VERSIONS:
+        if not ((data.get("flags") or {}).get(v) or {}).get("clis"):
+            continue
+        base = os.path.join(repo, "content-src", "raw", "rhel%s" % v)
+        present = []
+        if os.path.isdir(base):
+            for root, _dirs, files in os.walk(base):
+                present += [n for n in files if n.endswith((".txt", ".md"))]
+        if not present:
+            f.append("flags_rhel%s ships a populated CLI dictionary and content-src/raw/rhel%s/ "
+                     "holds no .txt/.md source — that dictionary was extracted FROM those files, "
+                     "so Q14 is checking the curated text against a corpus it did not come from. "
+                     "An empty corpus collides with nothing and this gate would report PASS by "
+                     "having nothing to compare (AL-GATE3-004 applied to Q14)" % (v, v))
+    return f
+
+
+def gate_q14(ctx):
+    f, d = [], []
+    data = ctx["data"]
+    staged, corpus = raw_source_paths()
+
+    coverage = raw_coverage_failures(data)
+    f.extend(coverage)
+
+    if not corpus:
+        if coverage:
+            return f, d
+        paraphrase = [e for e in data["commands"]["entries"]
+                      if (e.get("source") or {}).get("license_class") == "paraphrase-only"]
+        if paraphrase:
+            f.append("%d command entry/entries are licensed paraphrase-only and NOT ONE raw source "
+                     "is staged under content-src/ — the collision check has nothing to collide "
+                     "with, so it passes by having nothing to check. Either stage the sources the "
+                     "text was written from or stop claiming paraphrase-only (AL-GATE3-004)"
+                     % len(paraphrase))
+            return f, d
+        d.append("no raw sources present under content-src/ and no entry is licensed "
+                 "paraphrase-only — nothing to collide with, and nothing claiming to have been "
+                 "paraphrased; the %d-gram collision check activates when CR-T-09/CR-T-10 stage "
+                 "man and guide text" % SHINGLE_N)
+        return f, d
 
     raw_grams = set()
     for path in corpus:
-        raw_grams |= shingles(open(path, encoding="utf-8", errors="replace").read())
-    hits = 0
-    for e in ctx["data"]["commands"]["entries"]:
-        if (e.get("source") or {}).get("license_class") != "paraphrase-only":
-            continue
-        texts = []
-        for v in VERSIONS:
-            val = (e.get("rhel_versions") or {}).get(v) or {}
-            if val.get("notes"):
-                texts.append(val["notes"])
-            if (val.get("changed_in_note") or {}).get("what"):
-                texts.append(val["changed_in_note"]["what"])
-        for fl in (e.get("flags") or []):
-            if fl.get("explain"):
-                texts.append(fl["explain"])
-        for t in texts:
-            shared = shingles(t) & raw_grams
-            if shared:
-                hits += 1
-                f.append("entry %s: 8-gram lifted from a paraphrase-only source: \"%s\""
-                         % (e.get("id"), " ".join(list(shared)[0])))
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            raw_grams |= shingles(fh.read())
+    f.extend(paraphrase_failures(data["commands"]["entries"], raw_grams))
     if not f:
-        d.append("%d raw source file(s) shingled; no curated paraphrase shares an 8-gram with them" % len(corpus))
+        d.append("%d raw source file(s) shingled into %d distinct %d-grams; no curated paraphrase "
+                 "shares one with them"
+                 % (len(corpus), len(raw_grams), SHINGLE_N))
+        d.append("every release whose flag dictionary ships populated has its raw man/--help text "
+                 "staged under content-src/raw/, so the corpus this gate compares against is the "
+                 "corpus the content was written from%s"
+                 % (" (staged: %s)" % ", ".join(staged) if staged else ""))
     return f, d
 
 
@@ -1550,6 +2221,11 @@ def gate_q16(ctx):
     data = ctx["data"]
     captures = (data["expected_output"].get("captures") or {})
     n_exp = 0
+    if not data["commands"]["entries"]:
+        f.append(empty_set_failure(
+            "command entries whose expected_output and verified receipts to check",
+            "'expected output is captured, never typed' is a claim about entries, and there are "
+            "none to make it about"))
     for e in data["commands"]["entries"]:
         for s in (e.get("stig") or []):
             if s.get("expected_output"):
@@ -1630,6 +2306,83 @@ def gate_q17(ctx):
     return f, d
 
 
+# Every count gate_q18 reports out of the harness's JSON. AL-GATE3-006: these
+# used to be read with rep["checks"] and friends, so a report that PARSED but was
+# key-incomplete — a partial write, a field renamed in hostile_harness.js and not
+# mirrored here, a future --json shape change — raised an uncaught KeyError in
+# the middle of qa.py instead of printing a named FAIL. It failed closed (Python
+# exits non-zero), so it was never a silent pass; it was a stack trace that looks
+# identical whether the harness broke or whether it caught something real.
+HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected",
+                       "quoted_safe", "positive_controls", "invariants", "assembler_bytes")
+
+
+def harness_report_failures(rep, returncode, stderr=""):
+    """Consume the hostile harness's JSON report. Returns (failures, details).
+
+    Nothing in here trusts the shape of `rep`. Q18 is the gate that stands
+    between a form field and a command a human runs as root, and its own failure
+    mode should be as legible as every other gate's: one FAIL line, naming the
+    reason, never a traceback.
+    """
+    f, d = [], []
+    if not isinstance(rep, dict):
+        f.append("the harness report is a JSON %s, not an object — qa.py and "
+                 "tests/hostile_harness.js disagree about the shape of --json output, and this "
+                 "gate is reading something it does not understand (AL-GATE3-006)"
+                 % type(rep).__name__)
+        return f, d
+
+    failures = rep.get("failures")
+    if failures is None:
+        failures = []
+    elif not isinstance(failures, list):
+        f.append("the harness report's 'failures' is a %s, not a list — the one field this gate "
+                 "reads to decide PASS or FAIL is not the field it expected (AL-GATE3-006)"
+                 % type(failures).__name__)
+        failures = []
+    for line in failures:
+        f.append("hostile input: %s" % line)
+
+    missing = [k for k in HARNESS_REPORT_KEYS if k not in rep]
+    if missing:
+        f.append("the harness report is missing the field(s) %s. A report that PARSES but does "
+                 "not carry what this gate reads means the harness and qa.py have drifted apart, "
+                 "or the harness died partway through writing it — either way nothing here has "
+                 "been proved (AL-GATE3-006)" % ", ".join(missing))
+    wrong = [k for k in HARNESS_REPORT_KEYS
+             if k in rep and (isinstance(rep[k], bool) or not isinstance(rep[k], int))]
+    if wrong:
+        f.append("the harness report carries a non-integer where this gate expects a count: %s "
+                 "(AL-GATE3-006)"
+                 % ", ".join("%s=%r" % (k, rep[k]) for k in wrong))
+
+    if not missing and not wrong and not rep["checks"]:
+        f.append("the harness reported ZERO checks. A sweep that ran nothing rejects nothing and "
+                 "quotes nothing safely, so it passes by having done no work — the same empty-set "
+                 "fail-open Q9 has guarded since CR-T-07 (AL-GATE3-004)")
+
+    if returncode != 0 and not failures:
+        f.append("the harness exited %d without naming a failure: %s" % (returncode, (stderr or "")[:300]))
+
+    if not f:
+        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
+                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
+                 "single-quoted token"
+                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
+                    rep["rejected"], rep["quoted_safe"]))
+        d.append("%d positive controls (every field type's benign value still assembles on every "
+                 "release, in every argument shape) and %d invariants — a validator that rejected "
+                 "everything would fail this gate, not pass it"
+                 % (rep["positive_controls"], rep["invariants"]))
+        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
+                 % rep["assembler_bytes"])
+        d.append("the report was checked for shape before it was believed: every count this line "
+                 "prints was proved present and integral first, so a truncated or renamed report "
+                 "is a FAIL line and never a traceback (AL-GATE3-006)")
+    return f, d
+
+
 def gate_q18(ctx):
     """Hostile-input harness — threat-model-v1 §11 merge-gate #4, plus gate #9.
 
@@ -1688,24 +2441,34 @@ def gate_q18(ctx):
     except ValueError:
         f.append("the harness produced no JSON report: %s" % (err or out)[:400])
         return f, d
-    for line in rep.get("failures", []):
-        f.append("hostile input: %s" % line)
-    if proc.returncode != 0 and not rep.get("failures"):
-        f.append("the harness exited %d without naming a failure: %s" % (proc.returncode, err[:300]))
-    if not f:
-        d.append("%d checks over %d field types x %d vectors x %d releases x 3 argument shapes, plus "
-                 "5 rich-rule sub-fields: %d rejected outright, %d accepted and provably confined to a "
-                 "single-quoted token"
-                 % (rep["checks"], rep["field_types"], rep["vectors"], rep["versions"],
-                    rep["rejected"], rep["quoted_safe"]))
-        d.append("%d positive controls (every field type's benign value still assembles on every "
-                 "release, in every argument shape) and %d invariants — a validator that rejected "
-                 "everything would fail this gate, not pass it"
-                 % (rep["positive_controls"], rep["invariants"]))
-        d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
-                 % rep["assembler_bytes"])
+    rf, rd = harness_report_failures(rep, proc.returncode, err)
+    f.extend(rf)
+    d.extend(rd)
     return f, d
 
+
+def gate_q19(ctx):
+    """Escaper behaviour — the functions ESCAPE, not merely exist (AL-GATE3-001).
+
+    Q17 audits call sites: every value reaching a render sink is a literal, an
+    accumulator this gate derived and audited in turn, or an
+    esc()/escapeAttr()/escapeRegex() call. That is a real property and it stays.
+    What it cannot be is a proof that those three functions do anything, because
+    `function esc(s){return s;}` changes no call site at all — Al Kowalski's
+    Gate 3 review reproduced exactly that against render_sink_failures() and got
+    back zero failures over four audited expressions.
+
+    So this gate stops reading and starts running. The three definitions are
+    lifted verbatim out of the SHIPPED artifact — the same discipline Q18's
+    harness applies to the assembler block, for the same reason: the code that
+    clears the gate has to be the code that crosses the air gap. They go through
+    tests/escaper_probe.js under node against a hostile corpus, and the probe
+    proves it can fail, on this runner, on every run, before it reports anything.
+
+    Node is REQUIRED, as it is for Q18. An escaping check that downgrades itself
+    to PENDING when the runner is thin is a fail-open wearing a politer word.
+    """
+    return escaper_failures(ctx["shell"])
 
 LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
 COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
@@ -1727,7 +2490,7 @@ def _long_options_in_raw(raw_dir, cli):
     return found
 
 
-def gate_q19(ctx):
+def gate_q20(ctx):
     """MCR-SEC-020 (condition E5) — dictionary coverage, and citations that point at the flag.
 
     Marcus Reed's finding was not that the flag dictionary has a gap. It was that
@@ -1825,7 +2588,7 @@ def gate_q19(ctx):
 
     # (b) MCR-SEC-019: a cited raw line must show an option the generator emits.
     if data is None:
-        p.append("no parsed island — the citation half of Q19 needs content/commands.json via the "
+        p.append("no parsed island — the citation half of Q20 needs content/commands.json via the "
                  "built artifact")
         return f, d, p
     cited = 0
@@ -1913,7 +2676,8 @@ def build_ctx():
     if not artifact:
         print("FAIL: no dist/md-code-red_*.html — run python3 build.py first")
         sys.exit(1)
-    html = open(artifact, encoding="utf-8").read()
+    with open(artifact, encoding="utf-8") as fh:
+        html = fh.read()
     m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
     island = m.group(1) if m else ""
     data = None
@@ -1970,7 +2734,8 @@ GATES = [
     ("Q16", "Capture backing (expected_output and verified receipts)", gate_q16),
     ("Q17", "Render safety (no inline handlers, innerHTML audit, esc/escapeAttr present)", gate_q17),
     ("Q18", "Command-assembly safety (hostile-input harness, quoting-domain separation)", gate_q18),
-    ("Q19", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q19),
+    ("Q19", "Escaper behaviour (esc/escapeAttr/escapeRegex actually escape, run under node)", gate_q19),
+    ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 
@@ -2011,7 +2776,7 @@ def main():
     for gid, name, fn in GATES:
         if only and gid not in only:
             continue
-        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "JS"):
+        if ctx["data"] is None and gid not in ("Q1", "Q2", "Q6", "Q17", "Q18", "Q19", "Q20", "JS"):
             print("%-4s SKIP  %s" % (gid, name))
             print("       data island did not parse — see Q1")
             continue

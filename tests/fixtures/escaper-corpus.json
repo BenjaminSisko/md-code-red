@@ -1,0 +1,495 @@
+{
+ "_meta": {
+  "purpose": "The hostile corpus for qa.py Q19, the escaper property gate (AL-GATE3-001). Q17 proves esc()/escapeAttr() are CALLED at every render sink; it cannot prove they escape anything, and a one-line `return s;` in either body defeats it with no change to any call site. These vectors are run through the functions lifted out of the SHIPPED artifact, under node, by tests/escaper_probe.js.",
+  "generated_by": "hand-written; the control, invisible and surrogate vectors are built from code points rather than typed, because a raw bidi override in this file is exactly what qa.py Q17's trojan-source scan exists to catch",
+  "source": {
+   "title": "OWASP Cheat Sheet Series \u2014 Cross Site Scripting Prevention / XSS Filter Evasion",
+   "url_or_man": "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html",
+   "version": "cheatsheetseries, retrieved 2026-09-17",
+   "retrieved_on": "2026-09-17",
+   "license_class": "paraphrase-only"
+  }
+ },
+ "generated": [
+  {
+   "class": "length",
+   "repeat": "<",
+   "count": 100000,
+   "why": "a very long run of the one character esc() must expand: 100k in, 600k out"
+  },
+  {
+   "class": "length",
+   "repeat": ".",
+   "count": 20000,
+   "why": "a very long run of a regex metacharacter, for escapeRegex()"
+  },
+  {
+   "class": "length",
+   "repeat": "&amp;",
+   "count": 5000,
+   "why": "a very long run of an entity reference, so the round trip is not a short-string fluke"
+  }
+ ],
+ "vectors": [
+  {
+   "class": "html metacharacter",
+   "value": "&",
+   "why": "a bare ampersand is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "<",
+   "why": "a bare less-than is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": ">",
+   "why": "a bare greater-than is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "\"",
+   "why": "a bare double quote is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "'",
+   "why": "a bare single quote is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "/",
+   "why": "a bare solidus is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "`",
+   "why": "a bare backtick is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "=",
+   "why": "a bare equals is the character an escaper exists to remove from the output"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "&<>\"'/`=",
+   "why": "every metacharacter at once: an escaper that handles one and drops another"
+  },
+  {
+   "class": "html metacharacter",
+   "value": "a<b>c&d\"e'f",
+   "why": "metacharacters interleaved with ordinary text, so a round trip has to preserve both"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<script>alert(1)</script>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "\"><img src=x onerror=alert(1)>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "'><svg/onload=alert(1)>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<img src=\"x\" onerror=\"alert(1)\">",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "</script><script>alert(1)</script>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<body onload=alert(1)>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<iframe srcdoc=\"&lt;script&gt;alert(1)&lt;/script&gt;\"></iframe>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<<script>alert(1);//<</script>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "javascript:alert(1)",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "\" autofocus onfocus=alert(1) x=\"",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "' onmouseover='alert(1)",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "\"; alert(1); //",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<a href=\"javascript:alert(1)\">x</a>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<style>@import url(x)</style>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "xss cheat-sheet",
+   "value": "<svg><animate onbegin=alert(1) attributeName=x dur=1s>",
+   "why": "OWASP XSS filter-evasion basics"
+  },
+  {
+   "class": "nested entity",
+   "value": "&amp;lt;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&lt;script&gt;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&amp;amp;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&#60;script&#62;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&#x3c;script&#x3e;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&quot;&#39;&grave;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&;",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&amp",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "nested entity",
+   "value": "&#",
+   "why": "text that is already an entity reference: escaping must be reversible, and a decoder must land back on the input, not on one more or one less round"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u0000b",
+   "why": "NUL"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\bb",
+   "why": "backspace"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u000bb",
+   "why": "vertical tab"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u001bb",
+   "why": "ESC"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u007fb",
+   "why": "DEL"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u200bb",
+   "why": "zero-width space"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u200eb",
+   "why": "left-to-right mark"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u2028b",
+   "why": "line separator \u2014 a raw JS line terminator"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u2029b",
+   "why": "paragraph separator"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u202db",
+   "why": "left-to-right override"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u202eb",
+   "why": "right-to-left override"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\u2066b",
+   "why": "left-to-right isolate"
+  },
+  {
+   "class": "control or invisible",
+   "value": "a\ufeffb",
+   "why": "zero-width no-break space"
+  },
+  {
+   "class": "surrogate half",
+   "value": "\ud800",
+   "why": "a lone high surrogate"
+  },
+  {
+   "class": "surrogate half",
+   "value": "\udfff",
+   "why": "a lone low surrogate"
+  },
+  {
+   "class": "surrogate half",
+   "value": "a\ud800b",
+   "why": "a lone high surrogate between ordinary characters"
+  },
+  {
+   "class": "surrogate half",
+   "value": "\ud83d\ude00",
+   "why": "a well-formed astral pair must survive untouched"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": ".",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "*",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "+",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "?",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "^",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "$",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "{",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "}",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "(",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": ")",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "|",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "[",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "]",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "\\",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": ".*",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "a.c",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "^$",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "(?:x)",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "[a-z]+",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "\\d{2,3}",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "a|b",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "(((",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "]]]",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": "\\\\",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "regex metacharacter",
+   "value": ".*.*.*.*.*.*.*!",
+   "why": "escapeRegex() has to turn this into a pattern that matches itself and nothing else"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "\uff1cscript\uff1e",
+   "why": "fullwidth less-than/greater-than look-alikes"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "\u2039script\u203a",
+   "why": "single angle quotation marks"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "../../etc/passwd",
+   "why": "path traversal"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "$(id)",
+   "why": "command substitution"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "`id`",
+   "why": "backtick command substitution"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "; rm -rf /",
+   "why": "statement separator"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "a\nb",
+   "why": "an embedded newline"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "a\r\nb",
+   "why": "an embedded CRLF"
+  },
+  {
+   "class": "look-alike or shell-shaped",
+   "value": "a\tb",
+   "why": "an embedded tab"
+  },
+  {
+   "class": "benign",
+   "value": "",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  },
+  {
+   "class": "benign",
+   "value": " ",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  },
+  {
+   "class": "benign",
+   "value": "hello world",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  },
+  {
+   "class": "benign",
+   "value": "systemctl status sshd",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  },
+  {
+   "class": "benign",
+   "value": "RHEL-09-000001",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  },
+  {
+   "class": "benign",
+   "value": "Set PermitRootLogin to no.",
+   "why": "a checker that mangles ordinary text is as broken as one that passes hostile text; these must round-trip and must not grow entities they do not need"
+  }
+ ]
+}

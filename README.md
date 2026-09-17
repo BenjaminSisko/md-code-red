@@ -46,7 +46,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   the one free-text type, so `lvextend -L 'ticket RFC-1234'` no longer assembles. The LVM placeholder
   now distinguishes `10G` (set to) from `+10G` (grow by), which nothing in the UI did. **MCR-SEC-019 /
   MCR-SEC-020 (E5)** — `gen-fw-allow-service`'s citation repointed from `#L310` (`--add-service`, an
-  option it does not emit) to `#L538`, and a new **gate Q19** measures the flag dictionary against the
+  option it does not emit) to `#L538`, and a new **gate Q20** measures the flag dictionary against the
   raw captures for all 44 tool/release pairs and checks that every generator citation shows the option
   that generator actually emits. The dictionary gap is accepted with a date and a ticket in
   `docs/POAM.md` and `content-src/flag_coverage_baseline.json`; what was missing was not the coverage
@@ -61,8 +61,12 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   `5315fef`, and `1389487` (78 harness + 5 unit failures) before `dee9005`. E2 was already met at
   `996b504`. Also new: `tests/test_positional_crosscheck.py`, which re-runs Marcus's exhaustive shift
   sweep extended with option-shaped literals — 3,258 schema-accepted shapes, 104,256 runs, 0 shift
-  violations, and shown failing against the pre-fix tree. Gates: `build.py` reproducible / `qa.py`
-  Q1–Q19 PASS / `unittest` 57 OK (was 51) / harness 81,577 checks 0 FAILED (was 76,225).
+  violations, and shown failing against the pre-fix tree. Merged with `origin/main` at `da2ab47` (the
+  Gate 3 qa.py hardening), where the new coverage gate takes the number **Q20** because Q19 is now the
+  escaper property gate. Gates on the merged tree, from a clean `dist/`: `build.py` reproducible /
+  `qa.py` **Q1–Q20 PASS** / `unittest` **141 OK** (135 from the hardening merge + 6 added here) /
+  harness **81,577 checks, 0 FAILED** (was 76,225) / artifact sha256
+  `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`.
 
 - **2026-09-17** — Guided-form generators CR-T-17..25, branch `salm/milo/generators` (Milo Vance).
   24 generator specs across the 9 tool areas Zee assigned this tranche: firewall-cmd (default zone,
@@ -96,6 +100,39 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   pattern blast escalation (`yum remove` → yellow) in a real browser against `dist/` over a local HTTP
   server. Gates: `build.py` / `qa.py` (Q1-Q18 PASS) / `python3 -m unittest discover -s tests` (51 OK) /
   `node tests/hostile_harness.js` (0 FAILED) all green before and after.
+- **2026-09-17** — QA gate hardening against fail-open, branch `salm/milo/qa-hardening`
+  (Milo Vance). Al Kowalski's BQP Gate 3 diff review of `qa.py` returned **PASS WITH ISSUES**
+  with one HIGH finding and five MEDIUM/LOW. `qa.py` is the merge gate, so its own defects are
+  trust-path defects, and every fix here landed with the gate first shown to FAIL.
+  **AL-GATE3-001 (HIGH)** — Q17 proved `esc()`/`escapeAttr()` are *called* at every render sink
+  and could never prove they *escape*: a one-line `return s;` in either body defeated the whole
+  render-safety property with zero change to any call site (`render_sink_failures()` returned
+  `([], 4)` on identity escapers). New **Q19** lifts the three escapers verbatim out of the
+  shipped artifact and RUNS them under node against 92 hostile vectors plus 3 generated long
+  ones — every HTML metacharacter, the OWASP XSS basics, already-escaped and doubly-escaped
+  entity text, C0/C1 and bidi and zero-width characters, lone surrogate halves, every regex
+  metacharacter. `esc()` must leave no raw `< > " '` and no bare `&` **and** round-trip exactly,
+  so an escaper that *deletes* the dangerous character fails too rather than silently corrupting
+  DISA fix text. The probe fails three known-broken escapers before it will report a PASS.
+  **AL-GATE3-003 (MED)** — one unbalanced brace inside a string literal inside a `try{}` block
+  desynced Q7's brace counter and rated a genuinely unguarded `localStorage` call "guarded";
+  braces are now counted over a lexically masked copy. **AL-GATE3-004 (MED)** — Q3/Q4/Q8/Q12/
+  Q13/Q16 all reported PASS on a bundle with no entries, no tools and no rules; every one now
+  fails, naming what was empty, carrying across the reasoning Q9 has had since CR-T-07.
+  **AL-GATE3-005 (MED)** — Q3's provenance field list had drifted *weaker* than
+  `extract/schema.py`'s, missing `version`; it is now read out of that file's text, a shared
+  constant and never a shared code path. **AL-GATE3-006 (LOW)** — a harness report that parsed
+  but was key-incomplete crashed Q18 with an uncaught `KeyError` instead of printing a named
+  FAIL. **Q2** gained the MCR-SEC-014 treatment the render sinks already had: a network API
+  reached by a bracketed name, a name fused from string literals, or an alias never called on
+  the same line is now caught. **Q5** markers are classified from their own text and must appear
+  where their kind lives — code in live code, region ids in the markup, user-visible copy in a
+  string, which is the only place copy can be. **Q14** finally has the `tests/test_paraphrase.py`
+  ADR-001 §7.3 promised, and refuses a build whose populated flag dictionary has no raw sources
+  staged. New `docs/QA_GATES.md` lists every gate, what it proves, its negative control and its
+  residuals, and collects the ADR-001 §7 items that are now stale, for Al. Gates: 19 → 20
+  (Q1–Q19 + JS), all PASS. Tests: 51 → 135, all OK. Harness 63,536 checks / 0 failed. Artifact
+  byte-identical (`template.html` untouched), sha256 `5fb9b7ad…`.
 
 - **2026-09-17** — Re-review conditions D1 and D2: MCR-SEC-013 and MCR-SEC-014, branch
   `salm/milo/sec-013-014` (Milo Vance). Marcus Reed's re-review of the fix tranche returned
@@ -259,6 +296,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 - [IDEAS.md](IDEAS.md) — Feature backlog and decision log
 - [WORKFLOW.md](WORKFLOW.md) — Content pipeline and refresh cycles
 - [TEST_PLAN.md](TEST_PLAN.md) — QA charter and validation protocols
+- [QA_GATES.md](QA_GATES.md) — Every gate: what it proves, its negative control, its residuals
 - [ARCHITECTURE_BIBLE.md](ARCHITECTURE_BIBLE.md) — System design and data models
 - [CODE_STANDARDS.md](CODE_STANDARDS.md) — Engineering patterns and security rules
 - [SSP.md](SSP.md) — Security compliance and controls (NIST 800-53)

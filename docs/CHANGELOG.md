@@ -89,14 +89,15 @@ and the refusal reason, and the only place in the UI that distinguishes `10G` (s
 `+10G` (grow it by). The four `comment` fields Marcus called defensible stay free text; his unrated
 note on `chronyd -Q` is recorded in `docs/POAM.md` instead of being dropped.
 
-#### MCR-SEC-019 and MCR-SEC-020 — condition E5 — gate Q19
+#### MCR-SEC-019 and MCR-SEC-020 — condition E5 — gate Q20
 
 `gen-fw-allow-service` cited `firewall-cmd.man.txt#L310` — `--add-service`, an option it does not
 emit, since it composes a rich rule. Repointed to `#L538`. **CLOSED.**
 
 The dictionary finding was never "there is a gap": it was that nothing could see one, because Q15
-re-runs the extractor and diffs the output against itself. New gate **Q19** has two halves, both
-shown able to fail before commit:
+re-runs the extractor and diffs the output against itself. New gate **Q20** has two halves, both
+shown able to fail before commit (it is Q20, not Q19: the merge with `origin/main` at `da2ab47`
+brought in Q19, the escaper property gate from Al Kowalski's Gate 3 review):
 
 - **Coverage** — distinct long options in each committed raw capture against the dictionary, for all
   44 tool/release pairs, compared to `content-src/flag_coverage_baseline.json`, which records the gap
@@ -153,8 +154,16 @@ discriminator), and `assembleCommand()` in three places (the field-flag branch a
 call `flagJoin()`; the lit branch refuses a dual-key token and pushes option-shaped literals into
 `flags[]`). Two rows were added to the `FIELD_TYPES` table for E4.
 
-**Gates:** `build.py` OK and reproducible · `qa.py` **Q1–Q19 PASS** · `unittest discover` **57 OK**
-(was 51) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225).
+**Merged with `origin/main` at `da2ab47`** (the Gate 3 `qa.py` hardening merge). Only `qa.py`,
+`README.md` and `docs/CHANGELOG.md` conflicted; both doc conflicts kept both sides, and in `qa.py`
+both new gates were kept — theirs stays **Q19** (escaper behaviour, already referenced by
+`docs/QA_GATES.md`) and this branch's coverage gate became **Q20**. `template.html`,
+`extract/schema.py`, `content/` and every test file auto-merged.
+
+**Gates on the merged tree, from a clean `dist/`:** `build.py` OK and reproducible · `qa.py`
+**Q1–Q20 PASS** (21 gates with `JS`) · `unittest discover` **141 OK** (135 from the hardening merge,
+plus the 6 added here) · `node tests/hostile_harness.js` **81,577 checks, 0 FAILED** (was 76,225) ·
+artifact sha256 `9eb3402689e8c4f68f914a8154515aa117b999da646e9fb6c0bb1ce8c40bab2b`.
 
 ### Added — CR-T-17..25 guided-form generators (2026-09-17, branch `salm/milo/generators`)
 
@@ -212,6 +221,126 @@ the 24 generator entries with the full hostile-vector set, in that entry's own t
 synthetic analog (12,689 checks; the harness's existing per-field-type sweep stays as-is and still runs
 first). `python3 build.py && python3 qa.py && python3 -m unittest discover -s tests && node
 tests/hostile_harness.js` all green.
+### Fixed — BQP Gate 3 review of `qa.py`: AL-GATE3-001/003/004/005/006, plus Q2/Q5/Q14 (2026-09-17, branch `salm/milo/qa-hardening`)
+
+Al Kowalski's Gate 3 diff review of `qa.py` as trust-path code returned **PASS WITH ISSUES**:
+one HIGH, five MEDIUM/LOW, and two rows of the per-gate table marked "fail-open risk found"
+with no negative control. `qa.py` is the merge gate — a bug in it fails open and nothing
+downstream notices — so every fix below landed as a pair of commits: the gate shown to FAIL
+first, then the change that turns it green.
+
+**AL-GATE3-001 (HIGH) — the escapers were never proven to escape.** `segment_ok()` treats any
+segment matching `^(esc|escapeAttr|escapeRegex)\s*\(` as safe, full stop, and `gate_q17` checks
+that the strings `"function esc("` and `"function escapeAttr("` exist. Together those prove a
+function under that name is defined and every render path funnels through a call to it. They
+cannot prove the body does anything. Al's reproduction:
+
+```python
+qa.render_sink_failures(shell_with_identity_escapers)
+# -> ([], 4)   — zero failures, 4 expressions "audited"
+```
+
+`function esc(s){return s;}` defeats the product's entire XSS defence with **zero change to any
+call site**, and every call site keeps looking exactly as safe as it does today.
+
+**Q19** closes it by running the functions instead of reading them. `extract_js_function()`
+brace-matches `esc`, `escapeAttr` and `escapeRegex` out of the SHIPPED artifact over a lexically
+masked copy — the same discipline `hostile_harness.js` applies to the assembler block, for the
+same reason: the code that clears the gate has to be the code that crosses the air gap. The three
+functions go to `tests/escaper_probe.js` under node against 92 declared vectors and 3 generated
+ones (100k, 20k and 5k characters). The properties:
+
+* `esc()` — no raw `<`, `>`, `"` or `'` in the output, every `&` opens a well-formed entity, and
+  a strict decoder round-trips the output back to **the exact input**. The round trip is not
+  decoration: an escaper that *deletes* the dangerous characters is XSS-safe and would silently
+  eat every `<` in a DISA fix text, and a no-raw-metacharacter test alone would rate it clean.
+* `escapeAttr()` — all of the above plus no raw `` ` `` and no raw `=`, which is the reason it
+  exists as a separate function from `esc()`.
+* `escapeRegex()` — every metacharacter present is backslash-escaped and none left bare, the
+  pattern compiles, matches its own input, and does **not** match what only the unescaped pattern
+  would (`a.c` must not match `abc`) — the half an identity function would otherwise pass.
+
+The probe runs its own battery against three known-broken escapers (identity, drop-the-character,
+half-escaped) **before reporting anything**, and refuses to report a PASS if any comes back clean.
+Node is required, as for Q18: an escaping check that downgrades itself to PENDING on a thin runner
+is a fail-open wearing a politer word. Mutation evidence: 76 named failures against the shipped
+artifact with `return s;` spliced into `esc()`; 0 against it as it ships.
+
+**AL-GATE3-003 (MEDIUM) — Q7's brace counter desynced on a literal.** `try_block_spans()` counted
+raw `{`/`}`. One unbalanced brace inside a string literal inside a `try` body shifted the depth, so
+the span ran past its own `catch` and swallowed the sibling code after it — and a genuinely
+unguarded `localStorage` call in that sibling code was reported as one of the audited try/catch
+references. New `mask_js_literals()` returns a same-length, same-line-breaks copy with comments
+blanked entirely and the *contents* of strings, template literals and regex literals blanked, their
+delimiters kept. The masking happens inside the span finder, not in its caller: a caller that has
+to remember to launder its input is a caller that will one day forget, which is how this arrived.
+Driven five ways in `tests/test_storage_guard.py`, including the closing-brace half that would
+*shorten* a span and produce a false FAIL — a gate that cries wolf gets switched off.
+
+**AL-GATE3-004 (MEDIUM) — six gates passed on an empty bundle.** Q3, Q4, Q8, Q12, Q13 and Q16 all
+reported PASS with no entries, no tools and no rules, because a per-item loop records a failure only
+by finding something wrong *with* an item. Q9 has guarded its own empty case since CR-T-07 with the
+reasoning written out in a comment; that reasoning was never about CAT I rules. One shared
+`empty_set_failure()` helper, and every gate says why *its* empty set is suspicious. Q7 and Q18 grew
+the same guard in their own commits. Recorded and not fixed: `extract/schema.py`'s `content_errors()`
+has the same shape one layer down, so an empty `commands.json` still clears build-time validation —
+out of this branch's scope, caught by all six gates at the merge gate, written down in
+`docs/QA_GATES.md`.
+
+**AL-GATE3-005 (MEDIUM) — Q3 had drifted weaker than the check it doubles.** `qa.py` required four
+provenance fields; `extract/schema.py` requires five. The missing one was `version`, the field
+schema.py's own docstring calls mandatory because "a source that cannot say which version of the
+document it came from cannot be re-checked". Masked only because `build.py` runs the stricter check
+first. `parse_schema_tuple()` now reads `PROVENANCE_FIELDS` and `LICENSE_CLASSES` out of
+`extract/schema.py`'s **text** — the same no-import discipline `load_build_constants()` uses on
+`build.py`. The constant is shared; the independent *check* Q3 exists to be is not. An unreadable or
+empty tuple is a FAIL, never a fallback.
+
+**AL-GATE3-006 (LOW) — a malformed harness report crashed Q18.** `rep["checks"]` and seven siblings
+were read unguarded, so a harness exiting 0 with key-incomplete JSON raised `KeyError('checks')` mid
+run, with no `try/except` anywhere in `main()`. It failed closed — Python exits non-zero — so it was
+never a silent pass; it was a stack trace that reads identically whether the harness broke or whether
+it caught something real. `harness_report_failures()` now trusts nothing about the report's shape:
+non-object bodies, a non-list `failures`, missing counts, counts of the wrong type (`True` is an
+`int` in Python and is not a count) and zero checks are each one FAIL line naming the reason.
+
+**Q2 — the air gap could be spelled around.** The scan was `re.findall` for `fetch(`,
+`XMLHttpRequest`, `WebSocket`, `navigator.sendBeacon`, `import(`. Al placed it in the same
+structural class as the Q17 computed-member gap MCR-SEC-014 closed, but undocumented and untested
+rather than accepted and recorded. `network_call_failures()` applies D2's rule to the air gap and
+adds the shape Q17 never needs: a render sink is always *written*, a network API only has to be
+*reached*, so `var f = fetch;` is the whole bypass. Four routes closed — the name in real code
+called or not, the name in brackets, the name fused out of string literals (inline, through a
+variable, or split across a literal and a variable), and a CDN host assembled the same way — with
+ten controls covering every computed-member shape `template.html` writes.
+
+**Q5 — a marker in a comment counted as a feature.** A substring match over the whole file, standing
+in for structural claims like "the rail renderer exists". `marker_kind()` derives the kind from the
+marker's own text, leaving `MARKERS` a list of 3-tuples so tranches that add markers do not collide
+over a schema change: `code` markers must start at a position that survived masking, `html` markers
+must be in the markup outside every `<script>` and HTML comment, and `text` markers — user-visible
+copy, a CSS at-rule, the assembler's own comment marker — are matched as text **on purpose**,
+because copy lives in a string literal and there is nowhere else for it to live.
+
+**Q14 — the gate nobody could drive.** ADR-001 §7.3 promised `tests/test_paraphrase.py`; it did not
+exist, and Al's table carried Q14 as the one gate he could not rule out a fail-open for because there
+was nothing to run. Q14 is split into pure pieces the way Q10 and Q17 already were, and the test file
+plants a sentence lifted at run time out of a real staged source, checks honest paraphrase still
+passes, checks the same sentence on a `verbatim-ok` entry still passes, and pins the 7-versus-8 word
+boundary in both directions. Q14 also gained a refusal: a release whose flag dictionary ships
+populated with no raw sources staged under `content-src/raw/rhel<N>/` is a FAIL, because the
+dictionary was extracted *from* those files and without them the gate is comparing curated content
+against a corpus it did not come from.
+
+**New: `docs/QA_GATES.md`.** Every gate, what it proves stated narrowly, where it has been watched
+failing, and what a PASS explicitly does not mean — including the four rows that still have no
+negative control, named rather than left to be found. It also collects the ADR-001 §7 items that are
+now stale (the superseded 8 MB ceiling, §7.3 still numbering Q1–Q17, the Q14 promise now met, the
+Q10 parity layer that must not be removed as redundant) for Al, whose document it is.
+
+Gates 19 → 20 (Q1–Q19 plus `JS`), all PASS. Unit tests 51 → 135, all OK. Hostile harness 63,536
+checks, 0 failed. `template.html` untouched, so the artifact is byte-identical: sha256
+`5fb9b7adfd8b60feb90baa96f43b2d622c78158959672d5c60940fcd87bd16ad`, reproducible across rebuilds.
 
 ### Fixed — re-review conditions D1/D2: MCR-SEC-013, MCR-SEC-014 (2026-09-17, branch `salm/milo/sec-013-014`)
 
