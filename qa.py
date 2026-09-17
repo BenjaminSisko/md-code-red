@@ -287,7 +287,8 @@ def find_artifact():
 
 def load_build_constants():
     """Read APP_NAME/APP_VERSION out of build.py without importing it."""
-    src = open(os.path.join(REPO, "build.py"), encoding="utf-8").read()
+    with open(os.path.join(REPO, "build.py"), encoding="utf-8") as fh:
+        src = fh.read()
     out = {}
     for key in ("APP_NAME", "APP_VERSION", "CLASSIFICATION"):
         m = re.search(r'^%s\s*=\s*"([^"]+)"' % key, src, re.M)
@@ -529,6 +530,144 @@ def fused_literal_concatenations(src):
             continue
         out.append(("".join(l[1:-1] for l in lits), chunk))
     return out
+
+
+def computed_member_expressions(src):
+    """Every `<expr>[<prop>]` in src, as (prop, context) — reads as well as writes.
+
+    computed_property_expressions() above only looks at ASSIGNMENTS, which is all
+    Q17 needs: a render sink is written, never read. Q2 needs the other half. A
+    network API is REACHED, and it can be reached by a read that never becomes a
+    call on the same line (`var f = window["fe"+"tch"];`). The property is
+    recovered by walking back from the `]` and matching brackets, so a nested
+    index is read whole.
+    """
+    out = []
+    for m in re.finditer(r"\]", src):
+        depth, j = 0, m.start()
+        while j >= 0:
+            if src[j] == "]":
+                depth += 1
+            elif src[j] == "[":
+                depth -= 1
+                if depth == 0:
+                    break
+            j -= 1
+        if j <= 0:
+            continue                       # unbalanced, or an array literal at offset 0
+        if src[j - 1] in " \t\r\n=(,:[{;+":
+            continue                       # `[1,2]` is an array literal, not a member access
+        out.append((src[j + 1:m.start()].strip(), src[max(0, j - 30):m.end()].strip()))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Air-gap law: reaching the network without spelling its name (Q2).
+#
+# Q2 was a text scan: `fetch(`, `XMLHttpRequest`, `WebSocket`,
+# `navigator.sendBeacon`, `import(`. Al Kowalski's Gate 3 review put it in the
+# same structural class as the Q17 computed-member gap MCR-SEC-014 closed, but
+# undocumented and untested rather than accepted and recorded — a computed call
+# (`window["fe"+"tch"]()`) or an alias (`var f=fetch; f()`) is invisible to it.
+#
+# So the D2 rule, mirrored: a name spelled in brackets, a name fused inline out
+# of string literals, and a name assembled through a variable across statements
+# are all the name. Plus the shape Q17 does not need — the bare REFERENCE. A
+# render sink is always written; a network API only has to be reached, and
+# `var f = fetch;` never spells a call at all.
+#
+# What this does NOT catch is the same residual Q17 states rather than claims
+# away: a name produced at run time from something that is not a string literal.
+# No scan of the source can see that, and this gate does not pretend to. It is an
+# accident-prevention gate over hand-written code CODEOWNERS reviews.
+# ---------------------------------------------------------------------------
+NETWORK_APIS = ("fetch", "XMLHttpRequest", "WebSocket", "EventSource", "sendBeacon",
+                "importScripts", "Worker", "SharedWorker", "RTCPeerConnection", "navigator")
+NETWORK_NAME_RE = re.compile(r"(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|"
+                             r"importScripts|SharedWorker|Worker|RTCPeerConnection)")
+NETWORK_BARE_RE = re.compile(r"\b(fetch|XMLHttpRequest|WebSocket|EventSource|importScripts|"
+                             r"SharedWorker|Worker|RTCPeerConnection)\b|"
+                             r"\bnavigator\s*\.\s*sendBeacon\b|\bimport\s*\(")
+
+
+def network_call_failures(script):
+    """Every route from this app script to a network API. Returns a list of failures.
+
+    Pure: takes JavaScript, returns strings. gate_q2 and
+    tests/test_airgap_and_markers.py both call it.
+    """
+    f = []
+    masked = mask_js_literals(script)
+
+    # 1. The name, written out, anywhere in real code — a CALL is not required.
+    #    `var f = fetch;` is the whole of the bypass, and the call site that
+    #    follows it need not be in this file's line of sight.
+    seen = set()
+    for m in NETWORK_BARE_RE.finditer(masked):
+        name = m.group(0).strip()
+        if name in seen:
+            continue
+        seen.add(name)
+        f.append("network-capable API '%s' is named in the app script at line %d. This product "
+                 "ships one HTML file because it runs where there is no route off the machine; "
+                 "there is no correct reference to a network API in it, called or not"
+                 % (name, masked[:m.start()].count("\n") + 1))
+
+    # 2. The name in brackets, or built out of literals — MCR-SEC-014's D2 rule,
+    #    applied to the air gap instead of to the render sinks.
+    for prop, context in computed_member_expressions(script):
+        if is_literal(prop):
+            hit = NETWORK_NAME_RE.search(prop[1:-1])
+            if hit:
+                f.append("computed member access naming '%s' — `window[\"fetch\"]` is the same "
+                         "API as `window.fetch`, written the other way round, and every text scan "
+                         "here reads the dotted spelling: %s" % (hit.group(0), context[:70]))
+            continue
+        if IDENT_RE.match(prop):
+            lits = []
+            for expr in assignments_to(script, prop):
+                lits.extend(l[1:-1] for l in STRING_LIT_RE.findall(expr))
+            hit = NETWORK_NAME_RE.search("".join(lits))
+            if hit:
+                f.append("computed member access `[%s]` where the source builds '%s' into '%s' "
+                         "from string literals — an API name assembled across statements is still "
+                         "that API's name: %s" % (prop, hit.group(0), prop, context[:70]))
+            continue
+        # A property expression that is neither one literal nor one identifier:
+        # fuse every literal it contributes, plus every literal assigned to each
+        # identifier term, and read the result. `window["fe"+part]` with
+        # `part="tch"` elsewhere spells the API name across two places at once.
+        pieces = []
+        for seg in split_top_level(prop):
+            seg = seg.strip()
+            if is_literal(seg):
+                pieces.append(seg[1:-1])
+            elif IDENT_RE.match(seg):
+                for expr in assignments_to(script, seg):
+                    pieces.extend(l[1:-1] for l in STRING_LIT_RE.findall(expr))
+        hit = NETWORK_NAME_RE.search("".join(pieces))
+        if hit:
+            f.append("computed member access whose property expression (%s) fuses to '%s' out of "
+                     "string literals in this file — splitting an API name over a literal and a "
+                     "variable is still spelling it: %s" % (prop[:40], hit.group(0), context[:70]))
+
+    # 3. Any concatenation of string literals that spells one, wherever it sits.
+    for fused, chunk in fused_literal_concatenations(script):
+        hit = NETWORK_NAME_RE.search(fused)
+        if hit:
+            f.append("a concatenation of string literals spells '%s' (%s) — network API names are "
+                     "not assembled from pieces in an air-gapped product"
+                     % (hit.group(0), chunk[:70]))
+
+    # 4. A CDN host built the same way, which the CDN_LITERALS scan cannot see.
+    for fused, chunk in fused_literal_concatenations(script):
+        low = fused.lower()
+        for lit in CDN_LITERALS:
+            if lit in low:
+                f.append("a concatenation of string literals spells the CDN literal '%s' (%s)"
+                         % (lit, chunk[:70]))
+                break
+    return f
 
 
 def computed_sink_failures(src):
@@ -978,7 +1117,9 @@ def verify_pins():
     path = os.path.join(STIG_SRC, "SHA256SUMS")
     if not os.path.exists(path):
         return ["stig-src/SHA256SUMS is missing — refusing to parse unpinned sources"], details
-    for line in open(path, encoding="utf-8"):
+    with open(path, encoding="utf-8") as fh:
+        sum_lines = fh.readlines()
+    for line in sum_lines:
         line = line.strip()
         if line:
             digest, name = line.split(None, 1)
@@ -1158,7 +1299,8 @@ def gate_q1(ctx):
     if not os.path.exists(side):
         f.append("sha256 sidecar missing")
     else:
-        want = open(side, encoding="utf-8").read().split()[0]
+        with open(side, encoding="utf-8") as fh:
+            want = fh.read().split()[0]
         got = sha256_file(ctx["artifact"])
         if want != got:
             f.append("sha256 sidecar %s does not match the artifact %s" % (want[:16], got[:16]))
@@ -1182,6 +1324,14 @@ def gate_q2(ctx):
     # STIG prose and matching a word like "fetch" inside it is not a network call.
     net_js = re.findall(r"\b(fetch\s*\(|XMLHttpRequest|WebSocket|navigator\.sendBeacon|import\s*\()", shell)
     cdn = [lit for lit in CDN_LITERALS if lit in shell]
+    # The text scans above read the DOTTED, written-out spelling and nothing
+    # else. network_call_failures() reads the app script structurally: a
+    # bracketed name, a name fused out of literals inline or through a variable,
+    # a bare reference that is never called on the same line, and a CDN host
+    # assembled the same way (Gate 3, Q2 row; MCR-SEC-014's D2 rule applied to
+    # the air gap rather than to the render sinks).
+    structural = network_call_failures(ctx["app_script"])
+    f.extend(structural)
     for bad, msg in [(ext_script, "external <script src>"), (ext_css, "external stylesheet"),
                      (ext_link, "external <link href>"), (ext_img, "remote <img>"),
                      (ext_media, "embedded media element with a src/data attribute"),
@@ -1195,6 +1345,13 @@ def gate_q2(ctx):
                  "no non-data url(), zero http(s) src/href")
         d.append("no fetch/XMLHttpRequest/WebSocket/sendBeacon/dynamic import in the app script")
         d.append("no CDN literals (%s)" % ", ".join(CDN_LITERALS))
+        d.append("and none of them reached the other way round either: %d computed member "
+                 "accesses in the app script read, no bracketed API name, no API name and no CDN "
+                 "host fused out of string literals — inline, through a variable, or across "
+                 "statements — and no bare reference to one, called or not. Residual, stated "
+                 "rather than claimed away: a name produced at RUN TIME from something that is "
+                 "not a string literal is invisible to any scan of the source, here exactly as in "
+                 "Q17 (MCR-SEC-014)" % len(computed_member_expressions(ctx["app_script"])))
     return f, d
 
 
@@ -1273,18 +1430,90 @@ def gate_q4(ctx):
     return f, d
 
 
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+SCRIPT_BLOCK_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.S)
+
+
+def marker_kind(marker):
+    """What sort of claim a feature marker makes, derived from its own text.
+
+    Gate 3, Q5 row: the markers "stand in for structural product claims ('rail
+    renderer exists'), which is a stronger claim to be making from a substring
+    hit". True of most of them and NOT of all of them, which is why this is a
+    classifier and not a blanket rule:
+
+      code   `function renderRail(`, `var KEYMAP=`, `document.addEventListener(`
+             — a claim about code, which must be in the app script and not in a
+             comment or a string.
+      html   `id="rail"` — a claim about the static document, which must be in
+             the markup and not inside a JS string or an HTML comment.
+      text   `Not available in RHEL `, `UNVERIFIED_FLAG_COPY`, `@media print`,
+             `MCR-ASSEMBLER-BEGIN` — user-visible copy, a CSS at-rule, a comment
+             marker. Copy LIVES in a string literal and the assembler marker
+             lives in a comment BY DESIGN, so for these a substring hit over the
+             whole file is the right and only check.
+
+    Derived rather than declared on purpose: MARKERS stays a list of 3-tuples,
+    so a tranche that adds markers does not also have to classify them, and two
+    branches adding markers do not collide over a schema change.
+    """
+    if marker.startswith('id="'):
+        return "html"
+    if re.match(r"^(function|var)\s+[A-Za-z_$]", marker) or marker.startswith("document."):
+        return "code"
+    return "text"
+
+
+def marker_present(html, marker):
+    """Is this marker really there, in the place its kind requires?"""
+    kind = marker_kind(marker)
+    if kind == "text":
+        return marker in html
+    if kind == "html":
+        markup = SCRIPT_BLOCK_RE.sub(" ", html)
+        markup = HTML_COMMENT_RE.sub(" ", markup)
+        return marker in markup
+    script = app_script_of(html)
+    masked = mask_js_literals(script)
+    # The marker must START at a position that survived masking — i.e. at real
+    # code. Several markers deliberately END inside a string literal
+    # (`var APP_NAME="`, `document.addEventListener("click"`), so the marker is
+    # matched against the RAW script and only its starting position is asked to
+    # be code. A marker sitting wholly inside a comment or a string has its first
+    # character blanked, and is not counted.
+    at = script.find(marker)
+    while at >= 0:
+        if masked[at] == script[at]:
+            return True
+        at = script.find(marker, at + 1)
+    return False
+
+
 def gate_q5(ctx):
     f, d, p = [], [], []
     html = ctx["html"]
+    kinds = {"code": 0, "html": 0, "text": 0}
     for name, marker, phase in MARKERS:
-        if marker in html:
+        if marker_present(html, marker):
+            kinds[marker_kind(marker)] += 1
             continue
         if phase:
             p.append("%s — not in this build yet (%s)" % (name, phase))
         else:
-            f.append("feature marker missing: %s (%s)" % (name, marker))
+            f.append("feature marker missing: %s (%s, expected as %s)"
+                     % (name, marker, {"code": "live code in the app script, not a comment or a "
+                                               "string",
+                                       "html": "an element in the static markup, not a JS string "
+                                               "or an HTML comment",
+                                       "text": "text anywhere in the shipped file"}[marker_kind(marker)]))
     d.append("%d/%d markers present, %d pending"
              % (len(MARKERS) - len(f) - len(p), len(MARKERS), len(p)))
+    d.append("%d structural markers found in LIVE CODE (masked: a definition named only in a "
+             "comment, a doc string or dead string data does not count), %d region markers found "
+             "in the static markup outside every <script> and HTML comment, and %d text markers "
+             "— copy, a CSS at-rule and the assembler's own comment marker, which belong in a "
+             "string or a comment and are matched as text on purpose"
+             % (kinds["code"], kinds["html"], kinds["text"]))
     if "unverified" not in html:
         f.append("no-guess copy for an uncurated flag explanation is absent")
     else:
@@ -1690,7 +1919,8 @@ def gate_q13(ctx):
     have_sources = os.path.exists(sources_json)
     source_ids = set()
     if have_sources:
-        source_ids = set(json.load(open(sources_json, encoding="utf-8")).get("sources", {}).keys())
+        with open(sources_json, encoding="utf-8") as fh:
+            source_ids = set(json.load(fh).get("sources", {}).keys())
     n_stig = 0
     if not data["commands"]["entries"]:
         f.append(empty_set_failure(
@@ -2253,7 +2483,8 @@ def build_ctx():
     if not artifact:
         print("FAIL: no dist/md-code-red_*.html — run python3 build.py first")
         sys.exit(1)
-    html = open(artifact, encoding="utf-8").read()
+    with open(artifact, encoding="utf-8") as fh:
+        html = fh.read()
     m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
     island = m.group(1) if m else ""
     data = None
