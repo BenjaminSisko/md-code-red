@@ -1,0 +1,32 @@
+{
+ "chage": {
+  "page": "chage",
+  "section": null,
+  "source": "help"
+ },
+ "journalctl": {
+  "page": "journalctl",
+  "section": null,
+  "source": "help"
+ },
+ "systemctl": {
+  "page": "systemctl",
+  "section": null,
+  "source": "help"
+ },
+ "useradd": {
+  "page": "useradd",
+  "section": null,
+  "source": "help"
+ },
+ "usermod": {
+  "page": "usermod",
+  "section": null,
+  "source": "help"
+ },
+ "yum": {
+  "page": "yum",
+  "section": null,
+  "source": "help"
+ }
+}

@@ -73,6 +73,80 @@ Fail-first: `tests/fixtures/schema/invalid/verified_true_without_receipt.json` (
 `verified_receipt_on_unavailable_version.json` and `verified_receipt_on_same_as_version.json`
 (new), plus a Q16 capture-backing case and a two-hop same_as drift case — each asserted failing
 before its fix landed. See the branch's own commits for the failing-then-passing hashes.
+### Added — CR-T-12: the RHEL 7 flag dictionary, from a UBI7 container (2026-09-17, branch `salm/milo/flags-rhel7`)
+
+There is no RHEL 7 host in the lab. Under the Founder's delegation (DECISION_LOG 2026-09-18), a
+rootless UBI7 container on saratoga (RHEL 10.2) stood in as the RHEL 7 source:
+`registry.access.redhat.com/ubi7/ubi:latest`, digest
+`sha256:046e525722f14702c360dc6092324af7c21656e76b0c254b067871f1d4d3df68`. No sudo, no host
+package installs, no host configuration changes; the container was removed after extraction, the
+image kept.
+
+**Extractor.** `extract/extract_flags.py` gained `--container` (plus `--container-image` /
+`--container-image-digest`, recorded into `_meta` only): `ssh_run()` now wraps every one of its
+already-read-only commands (`man -P cat`, `<tool> --help`, `rpm -qf`, `command -v`) one hop
+further in, through `podman exec <container> sh -c '...'` on the named `--host`, instead of the
+alternative of teaching the whole extractor to run inside the container against localhost — the
+container has no Python, would need the script copied in, and would write raw captures inside the
+container's own ephemeral filesystem instead of straight into this repo's `content-src/raw/`. The
+`--host`/`--rhel` cross-check (`HOSTS[host]["rhel_version"] != rhel`) is skipped when `--container`
+is given, since the container's guest OS, not the SSH host's, is what's being read. `_meta.host` is
+written as `"ubi7 container on saratoga"` (never the bare host alias, so a RHEL 7 dictionary never
+reads as if saratoga's own RHEL 10 were the source), and a new `kernel_caveat` field says plainly
+that the `kernel` field is the container's shared HOST kernel (containers don't have their own) and
+that kernel- and systemd-manager-dependent behaviour was NOT observed or exercised — only each
+tool's own `--help`/man text as shipped in its package. No other function changed; every existing
+direct-host extraction (`defiant`, `saratoga`) is byte-for-byte unaffected (`--container` unset,
+`CONTAINER_EXEC` stays `None`).
+
+**What the container could actually provide.** UBI7's public repos (`ubi-7`, `-optional`,
+`-extras`, `-rhscl` — 240 packages total, no subscription) do not carry `man`/`man-db` at all, so
+every tool here is `--help`-only (no man pages exist to install). Of the 22 P0 tools, 6 already had
+a binary in the base image or installed cleanly from those repos — `systemctl`, `journalctl`
+(systemd), `yum` (base image), `useradd`/`usermod`/`chage` (shadow-utils) — and were extracted.
+The other 16 could not be, and are recorded `available: false` with the real reason, the same
+honest treatment `podman`/`dnf` already get for genuinely not existing on RHEL 7: `firewalld`,
+`NetworkManager`, `lvm2`, `audit`, `rsyslog`, `chrony`, `policycoreutils-python(-utils)` are not
+in UBI7's public repos at all (they live in RHEL 7 Base/Extras channels UBI's CDN does not mirror);
+`openssh-server`/`openssh-clients` and `git` resolve in `ubi-7` but their dependency chains
+(`libfipscheck`, `libedit`, `perl` and its sub-modules) do not — nothing to `--skip-broken` around
+without pulling in packages from outside the public UBI7 channel, which was out of scope (no other
+source, no subscription-manager registration). `dnf` and `podman` are correctly `available: false`
+for RHEL 7 itself (neither ever shipped there).
+
+**Coverage baseline.** `content-src/flag_coverage_baseline.json` gained a `coverage["7"]` block
+for the 6 available tools (same method as the RHEL 8/10 rows: distinct long options in the
+committed raw capture vs. the dictionary, `accepted_missing` set to the honest gap at authoring
+time) and a `_rhel7_note` explaining two things: (1) `qa.py`'s Q20 `RAW_DIR_FOR` is hardcoded to
+`{"8": "rhel8", "10": "rhel10"}` and was not extended to `"7"` — Q20 does not gate RHEL 7 coverage
+yet, so this block does not widen anything Q20 checks; it is recorded for the same reason the RHEL
+8/10 rows were, and for whoever extends `RAW_DIR_FOR` next. (2) `firewall-cmd` is absent from the
+block: `firewalld` isn't installable from UBI7's public repos, so there is no RHEL 7 firewall-cmd
+capture to have the RHEL 8/10 synopsis-line regex gap (`README.md`'s Content authoring note) show
+up in — the gap is very likely present on RHEL 7 too (it's in the parser, not the host), just not
+observable with this source. Same ratchet owner and date as the rest of the file: Caleb Stone,
+retires 2026-09-25 — no separate date invented for RHEL 7.
+
+**`qa.py` Q15 (the one change outside `extract/` this task made, and it says so as instructed):**
+its FLAGS special case filtered `flags_rhel8.json`/`flags_rhel10.json` out of
+`make_pending_skeletons.py`'s drift report because those two were real data being diffed against
+an empty-placeholder script; `flags_rhel7.json` needed the same filter now that CR-T-12 populated
+it too, so `flags_reextracted` gained `"flags_rhel7.json"` and the offline `--check --rhel <v>`
+re-parse loop gained `"7"` (docstring updated to match; RHEL 9 stays with the placeholder script,
+unaffected, pending CR-T-11). Without this, Q15 fails permanently the moment the RHEL 7 dictionary
+stops being empty — not a host-abstraction change, but the same one-line pattern CR-T-09/10
+already established, now extended a third time.
+
+`tests/fixtures/evidence/firewalld-service-active.rhel9.txt`'s committed `Content fingerprint` line
+updated to match: the data island's sha256 changed because `flags_rhel7.json` grew real content
+(38 flags, 90 unparsed hints across 6 tools), not because the entry's own command, flags or
+citation changed — confirmed by diffing the real export before and after; every other line is
+identical.
+
+Gates: `build.py` reproducible (identical sha256 from a clean copy of `content/`+`content-src/`+
+`extract/`+`build.py`+`template.html`+`stig-src/`) / `qa.py` (Q1-Q22, JS: PASS) /
+`python3 -m unittest discover -s tests` (176 OK) / `node tests/hostile_harness.js` (81577 checks,
+0 FAILED) all green.
 
 ### Fixed — H1/H2/H3: pre-merge corrections from Marcus Reed (2026-09-17, branch `salm/milo/panels-conditions`)
 
