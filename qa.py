@@ -2007,6 +2007,9 @@ def gate_q13(ctx):
             f.append("entry %s: tool '%s' is not in tools.json" % (e.get("id"), e.get("tool")))
         if "explain_tool" in e and e.get("explain_tool") not in tool_ids:
             f.append("entry %s: explain_tool '%s' is not in tools.json" % (e.get("id"), e.get("explain_tool")))
+        if "privilege" in e and e.get("privilege") not in ("root",):
+            f.append("entry %s: privilege '%s' is not a recognised privilege level"
+                     % (e.get("id"), e.get("privilege")))
         if e.get("category") not in categories:
             f.append("entry %s: category '%s' is not in commands.json categories" % (e.get("id"), e.get("category")))
         for s in (e.get("stig") or []):

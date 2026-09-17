@@ -1,7 +1,8 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, explain_tool?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
   "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
+  "privilege_rule": "Optional, one of extract/schema.py's PRIVILEGES (\"root\" today). Set when the entry's OWN assembled command needs elevated privilege to run on a STIG'd host that the command text itself never requests (no sudo/su in the template) -- distinct from blast, which rates what the command DOES once it runs, not what it takes to run it. The UI shows a privilege badge next to blast and the evidence exporter records a Requires: line, so the content validation protocol's safety rule (no sudo used during a capture run) can defer the entry correctly instead of silently skipping it (G4(e); gen-sshd-test-config, sshd_config not world-readable on defiant/saratoga, CR-T-34).",
   "curated": true,
   "status": "CR-T-02 skeleton (3 curated entries) + CR-T-17..25 generator specs (24 entries): guided forms for firewall-cmd, nmcli, journalctl, lvm, sshd, useradd/usermod, systemctl, dnf/yum, semanage/setsebool, chage, auditctl/ausearch, rsyslog, chronyd, podman. Full catalog authoring is still CR-T-33.",
   "rhel_version_value_shapes": [
@@ -749,7 +750,8 @@
    "id": "gen-sshd-test-config",
    "tool": "sshd",
    "category": "ssh / sshd config",
-   "intent": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon",
+   "privilege": "root",
+   "intent": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon -- requires root: sshd_config is not world-readable on a STIG'd host",
    "fields": [
     {
      "name": "path",
