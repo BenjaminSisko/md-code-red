@@ -1742,56 +1742,143 @@ def gate_q13(ctx):
     return f, d
 
 
-def gate_q14(ctx):
-    f, d = [], []
-    raw_dir = os.path.join(REPO, "content-src", "raw")
-    staged = []
-    for sub in ("man", "help", "redhat", "git"):
-        p = os.path.join(REPO, "content-src", sub)
-        if os.path.isdir(p):
-            staged.append(sub)
-    if not os.path.isdir(raw_dir) and not staged:
-        d.append("no raw sources present under content-src/ — nothing to collide with; "
-                 "the 8-gram collision check activates when CR-T-09/CR-T-10 stage man and guide text")
-        return f, d
-    # 8-gram collision check against every staged raw source (ADR-001 §7.3 Q14)
+SHINGLE_N = 8                       # ADR-001 §7.3 Q14. The promise is an 8-gram.
+STAGED_SUBDIRS = ("man", "help", "redhat", "git")
+
+
+def shingles(text):
+    """Every SHINGLE_N-word run in text, normalised. Pure."""
+    toks = re.sub(r"[^a-z0-9\s-]", " ", text.lower()).split()
+    return set(tuple(toks[i:i + SHINGLE_N])
+               for i in range(max(0, len(toks) - (SHINGLE_N - 1))))
+
+
+def raw_source_paths(repo=REPO):
+    """(staged subdirectory names, every .txt/.md path under them). Pure but for I/O."""
+    staged = [sub for sub in STAGED_SUBDIRS if os.path.isdir(os.path.join(repo, "content-src", sub))]
+    bases = list(staged)
+    if os.path.isdir(os.path.join(repo, "content-src", "raw")):
+        bases.append("raw")
     corpus = []
-    for sub in staged + (["raw"] if os.path.isdir(raw_dir) else []):
-        base = os.path.join(REPO, "content-src", sub)
-        for root, _dirs, files in os.walk(base):
-            for name in files:
+    for sub in bases:
+        for root, _dirs, files in os.walk(os.path.join(repo, "content-src", sub)):
+            for name in sorted(files):
                 if name.endswith((".txt", ".md")):
                     corpus.append(os.path.join(root, name))
+    return staged, corpus
 
-    def shingles(text):
-        toks = re.sub(r"[^a-z0-9\s-]", " ", text.lower()).split()
-        return set(tuple(toks[i:i + 8]) for i in range(max(0, len(toks) - 7)))
+
+def raw_shingles(repo=REPO):
+    grams = set()
+    for path in raw_source_paths(repo)[1]:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            grams |= shingles(fh.read())
+    return grams
+
+
+def curated_texts(entry):
+    """Every curated string on an entry that Q14 compares against raw sources."""
+    texts = []
+    for v in VERSIONS:
+        val = (entry.get("rhel_versions") or {}).get(v) or {}
+        if val.get("notes"):
+            texts.append(val["notes"])
+        if (val.get("changed_in_note") or {}).get("what"):
+            texts.append(val["changed_in_note"]["what"])
+    for fl in (entry.get("flags") or []):
+        if fl.get("explain"):
+            texts.append(fl["explain"])
+    return texts
+
+
+def paraphrase_failures(entries, raw_grams):
+    """Q14's collision check. Pure: no ctx, no globals, no I/O.
+
+    gate_q14 and tests/test_paraphrase.py both call this, so the gate that runs
+    in CI is the gate the planted fixture proves. ADR-001 §7.3 asked for that
+    test file; until AL-GATE3's Gate 3 review, Q14 was the only gate in this file
+    with no way to drive it at all.
+    """
+    f = []
+    for e in entries:
+        if (e.get("source") or {}).get("license_class") != "paraphrase-only":
+            continue
+        for t in curated_texts(e):
+            shared = shingles(t) & raw_grams
+            if shared:
+                f.append("entry %s: %d-gram lifted from a paraphrase-only source: \"%s\""
+                         % (e.get("id"), SHINGLE_N, " ".join(sorted(shared)[0])))
+    return f
+
+
+def raw_coverage_failures(data, repo=REPO):
+    """A populated flag dictionary whose raw sources are not staged (AL-GATE3-004 shape).
+
+    flags_rhel<N>.json is EXTRACTED from the man and --help text under
+    content-src/raw/rhel<N>/. If the dictionary ships populated and that
+    directory is absent or empty, Q14 is comparing curated content against a
+    corpus it did not come from — and reporting PASS, because an empty corpus
+    collides with nothing. The gate's own "nothing staged yet" note is honest
+    only while nothing was extracted; this is the line that keeps it honest
+    afterwards.
+    """
+    f = []
+    for v in VERSIONS:
+        if not ((data.get("flags") or {}).get(v) or {}).get("clis"):
+            continue
+        base = os.path.join(repo, "content-src", "raw", "rhel%s" % v)
+        present = []
+        if os.path.isdir(base):
+            for root, _dirs, files in os.walk(base):
+                present += [n for n in files if n.endswith((".txt", ".md"))]
+        if not present:
+            f.append("flags_rhel%s ships a populated CLI dictionary and content-src/raw/rhel%s/ "
+                     "holds no .txt/.md source — that dictionary was extracted FROM those files, "
+                     "so Q14 is checking the curated text against a corpus it did not come from. "
+                     "An empty corpus collides with nothing and this gate would report PASS by "
+                     "having nothing to compare (AL-GATE3-004 applied to Q14)" % (v, v))
+    return f
+
+
+def gate_q14(ctx):
+    f, d = [], []
+    data = ctx["data"]
+    staged, corpus = raw_source_paths()
+
+    coverage = raw_coverage_failures(data)
+    f.extend(coverage)
+
+    if not corpus:
+        if coverage:
+            return f, d
+        paraphrase = [e for e in data["commands"]["entries"]
+                      if (e.get("source") or {}).get("license_class") == "paraphrase-only"]
+        if paraphrase:
+            f.append("%d command entry/entries are licensed paraphrase-only and NOT ONE raw source "
+                     "is staged under content-src/ — the collision check has nothing to collide "
+                     "with, so it passes by having nothing to check. Either stage the sources the "
+                     "text was written from or stop claiming paraphrase-only (AL-GATE3-004)"
+                     % len(paraphrase))
+            return f, d
+        d.append("no raw sources present under content-src/ and no entry is licensed "
+                 "paraphrase-only — nothing to collide with, and nothing claiming to have been "
+                 "paraphrased; the %d-gram collision check activates when CR-T-09/CR-T-10 stage "
+                 "man and guide text" % SHINGLE_N)
+        return f, d
 
     raw_grams = set()
     for path in corpus:
-        raw_grams |= shingles(open(path, encoding="utf-8", errors="replace").read())
-    hits = 0
-    for e in ctx["data"]["commands"]["entries"]:
-        if (e.get("source") or {}).get("license_class") != "paraphrase-only":
-            continue
-        texts = []
-        for v in VERSIONS:
-            val = (e.get("rhel_versions") or {}).get(v) or {}
-            if val.get("notes"):
-                texts.append(val["notes"])
-            if (val.get("changed_in_note") or {}).get("what"):
-                texts.append(val["changed_in_note"]["what"])
-        for fl in (e.get("flags") or []):
-            if fl.get("explain"):
-                texts.append(fl["explain"])
-        for t in texts:
-            shared = shingles(t) & raw_grams
-            if shared:
-                hits += 1
-                f.append("entry %s: 8-gram lifted from a paraphrase-only source: \"%s\""
-                         % (e.get("id"), " ".join(list(shared)[0])))
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            raw_grams |= shingles(fh.read())
+    f.extend(paraphrase_failures(data["commands"]["entries"], raw_grams))
     if not f:
-        d.append("%d raw source file(s) shingled; no curated paraphrase shares an 8-gram with them" % len(corpus))
+        d.append("%d raw source file(s) shingled into %d distinct %d-grams; no curated paraphrase "
+                 "shares one with them"
+                 % (len(corpus), len(raw_grams), SHINGLE_N))
+        d.append("every release whose flag dictionary ships populated has its raw man/--help text "
+                 "staged under content-src/raw/, so the corpus this gate compares against is the "
+                 "corpus the content was written from%s"
+                 % (" (staged: %s)" % ", ".join(staged) if staged else ""))
     return f, d
 
 
