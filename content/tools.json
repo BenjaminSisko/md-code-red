@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 18
+  "tool_count": 19
  },
  "tools": [
   {
@@ -532,6 +532,37 @@
     "10": {
      "available": true,
      "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10. chronyd only; ntpd is not available."
+    }
+   },
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "podman",
+   "label": "podman",
+   "category": "podman",
+   "availability": {
+    "7": {
+     "available": false,
+     "reason": "Not available as a supported package on RHEL 7 (base or Extras); podman is RHEL 8+.",
+     "alternative": null
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified — RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10 — the podman(1) top-level page only; subcommand-specific options are documented."
     }
    },
    "source": {

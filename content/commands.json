@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 25
+  "entry_count": 27
  },
  "categories": [
   "firewall-cmd",
@@ -1474,6 +1474,94 @@
    },
    "verified": false,
    "notes": "RHEL 7 uses chronyd by default for NTP (chrony package). The legacy ntpd daemon is available as an alternative from the separate ntp package but is not installed or enabled by default on any pinned release (RHEL 7 System Administrator's Guide, ch. 18-19) — chronyd is the only NTP daemon this toolkit generates commands for."
+  },
+  {
+   "id": "gen-podman-ps",
+   "tool": "podman",
+   "category": "podman",
+   "intent": "List containers",
+   "fields": [
+    {
+     "name": "all",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "podman"
+    },
+    {
+     "lit": "ps"
+    },
+    {
+     "lit": "-a",
+     "requires": "all"
+    }
+   ],
+   "verify": "The command's own table output IS the verification — one row per container (running only, or every container with -a).",
+   "undo": "Nothing to undo — ps only lists container state.",
+   "blast": "green",
+   "source": {
+    "id": "src-man-podman-ps-r8",
+    "title": "podman-ps(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 1 podman-ps",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ],
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+  },
+  {
+   "id": "gen-podman-stop",
+   "tool": "podman",
+   "category": "podman",
+   "intent": "Stop a running container",
+   "fields": [
+    {
+     "name": "container",
+     "type": "service",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "podman"
+    },
+    {
+     "lit": "stop"
+    },
+    {
+     "field": "container"
+    }
+   ],
+   "verify": "podman ps no longer lists the container as Up.",
+   "undo": "podman start <container> starts it again (state and data in the container are unaffected by stop).",
+   "blast": "yellow",
+   "source": {
+    "id": "src-man-podman-stop-r8",
+    "title": "podman-stop(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "url_or_man": "man 1 podman-stop",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": false,
+   "versions": [
+    "8",
+    "9",
+    "10"
+   ],
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   }
  ]
 }
