@@ -226,11 +226,17 @@ node tests/hostile_harness.js
 
 `docs/QA_GATES.md` is the authority on what each of the 22 gates proves, how it
 has been watched fail, and what it explicitly does not cover -- read it, not a
-summary of it. Q6's leak scan (`TODO`/`FIXME`/`XXX`/`lorem ipsum`/
-`example.com`/`CHANGEME`) and Q21's raw-character scan (every tracked file, not
-just the shipped artifact) both run over documentation the same as over code --
-a companion doc with an unresolved TODO or a raw invisible/bidi character fails
-the build exactly like a code defect would.
+summary of it. Two gates have scope worth knowing precisely, because it is
+narrower or wider than it sounds: Q6's leak scan (`TODO`/`FIXME`/`XXX`/
+`lorem ipsum`/`example.com`/`CHANGEME`) reads only the extracted app script
+(`ctx["shell"]`) -- a `TODO` left in a companion doc does **not** fail Q6. Q21's
+raw-character scan, by contrast, reads every file `git ls-files` reports --
+all 271 tracked files in this build, documentation included, nothing excluded
+-- so a raw invisible/bidi/zero-width character in a companion doc fails Q21
+exactly like one in code would, even though a leftover `TODO` in the same file
+would not fail anything. Companion docs should still carry neither: Q6's
+narrower scope is not permission to leave a `TODO` in `docs/`, only a fact
+worth knowing when deciding which gate would actually catch one.
 
 ---
 
