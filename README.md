@@ -16,6 +16,20 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-18** -- Gate 3 tag blockers 1, 2, 4 + Q20 RHEL 7 reach, branch
+  `salm/milo/gate3-blockers` (Milo Vance). Closes AL-GATE3-009 (`flags_rhel9.json`
+  named a generator, `extract/extract_rhel_flags.py`, that never existed; Q8/Q15
+  now check every FLAGS dataset's declared generator), AL-GATE3-010 (Q20 now
+  reaches the six RHEL 7 baseline rows -- `RAW_DIR_FOR` plus reading
+  `.help.txt`, no baseline widened), and AL-GATE3-011: **`content/glossary.json`
+  is dropped from `build.py`'s `CONTENT` map for the alpha** -- it shipped
+  embedded and unreachable (no renderer, no search-index kind), and is now
+  removed from the artifact while the file itself stays committed for a later
+  tranche that wires a real glossary view. `qa.py` gained a check
+  (`content_family_liveness_failures()`, Q8) that would have caught this on
+  its own and will catch a regression back to it. Artifact: 9.2 KB smaller;
+  content fingerprint and sha256 both changed, as expected for any content
+  change to the embedded island.
 - **2026-09-18** -- Stage 07 companion docs, branch `salm/sam/docs-alpha` (Sam Kim).
   `docs/USER_GUIDE.md`, this README, `docs/ARCHITECTURE_BIBLE.md`,
   `docs/WORKFLOW.md` and `docs/CODE_STANDARDS.md` rewritten from the shipped

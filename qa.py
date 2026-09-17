@@ -81,6 +81,16 @@ GENERATORS = (
     "extract/import_captures.py",         # expected_output.json (CR-T-34, from tests/captures/)
 )
 
+# extract/extract_flags.py is re-run by Q15 too (below), but through its own
+# --check --rhel <v> loop, not the generic GENERATORS loop above -- --rhel is
+# required, so it cannot run under a bare --check the way the scripts above
+# do. A FLAGS dataset is allowed to declare it as its generator (AL-GATE3-009):
+# a dataset naming anything outside this combined set is naming a script Q15
+# never re-runs, which is exactly the hand-edit-or-orphan state Q15 exists to
+# catch.
+FLAGS_GENERATOR = "extract/extract_flags.py"
+RERUN_GENERATORS = GENERATORS + (FLAGS_GENERATOR,)
+
 CDN_LITERALS = ("cdnjs", "jsdelivr", "unpkg", "googleapis", "gstatic", "cdn.")
 
 # ---------------------------------------------------------------------------
@@ -1665,8 +1675,56 @@ def gate_q7(ctx):
     return f, d
 
 
+# AL-GATE3-011: content/glossary.json shipped in the island, bound to
+# DATASETS.GLOSSARY at template.html's data-island loader, and read by
+# nothing -- grep -n GLOSSARY template.html turned up exactly one line, its
+# own assignment. Nothing caught that because nothing checked it: Q8 counts
+# embedded records, Q3 checks provenance, and neither asks whether anything
+# RENDERS a family. This is that check, for every family build.py's CONTENT
+# map embeds -- the module variable DATASETS binds each one to must be
+# referenced somewhere in the shipped app script besides its own assignment.
+#
+# expected_output is the one documented exception. build.py folds
+# data["expected_output"]["captures"] onto each matching rule record's own
+# .expected_output field before the island is serialized (the "captures
+# joined onto rules" step) -- so its content is not unreachable, it is
+# reachable through RULES, which this same check confirms is live. The raw
+# top-level copy is a redundant duplicate of already-embedded data, not an
+# orphan; collapsing that duplicate is a real size win but a separate,
+# narrower finding than AL-GATE3-011 and is not this ticket.
+#
+# This table is maintained BY HAND in step with build.py's CONTENT map — the
+# same discipline load_build_constants() and GENERATORS already rely on
+# (qa.py reads build.py's text rather than importing it). glossary is not
+# listed here: dropping a family from CONTENT means it is no longer this
+# check's business, the same day it stops being build.py's.
+CONTENT_FAMILY_TOKENS = {
+    "COMMANDS": "commands", "TOOLS": "tools", "DANGEROUS": "dangerous",
+    "RULES": "rules", "FLAGS": "flags",
+    "CCI_NIST": "cci_nist", "EXPECTED": "expected_output",
+}
+CONTENT_FAMILY_JOINED_ELSEWHERE = {"EXPECTED"}
+_TOKEN_RE_CACHE = {}
+
+
+def content_family_liveness_failures(app_script):
+    f = []
+    for token, family in sorted(CONTENT_FAMILY_TOKENS.items()):
+        if token in CONTENT_FAMILY_JOINED_ELSEWHERE:
+            continue
+        rx = _TOKEN_RE_CACHE.get(token)
+        if rx is None:
+            rx = _TOKEN_RE_CACHE[token] = re.compile(r"\b%s\b" % token)
+        if len(rx.findall(app_script)) <= 1:
+            f.append("%s (CONTENT family '%s') is bound to DATASETS.%s in the data-island "
+                      "loader and referenced nowhere else in the shipped app script -- "
+                      "embedded payload nothing reads (AL-GATE3-011)" % (token, family, token))
+    return f
+
+
 def gate_q8(ctx):
     f, d = [], []
+    f.extend(content_family_liveness_failures(ctx.get("app_script") or ""))
     data = ctx["data"]
     for v in VERSIONS:
         ds = data["rules"][v]
@@ -1716,8 +1774,15 @@ def gate_q8(ctx):
         d.append("commands: %d entries, count matches _meta" % len(entries))
     for v in VERSIONS:
         fl = data["flags"][v]
+        fl_meta = fl.get("_meta") or {}
+        # AL-GATE3-009: a FLAGS dataset's declared generator was never checked
+        # against anything — flags_rhel9.json shipped naming a script
+        # (extract/extract_rhel_flags.py) that has never existed in this repo.
+        if fl_meta.get("generator") not in RERUN_GENERATORS:
+            f.append("flags_rhel%s: _meta.generator '%s' is not an extractor Q15 re-runs"
+                     % (v, fl_meta.get("generator")))
         d.append("flags_rhel%s: %d CLI dictionaries (%s)"
-                 % (v, len(fl.get("clis", {})), (fl.get("_meta") or {}).get("status", "")[:48]))
+                 % (v, len(fl.get("clis", {})), fl_meta.get("status", "")[:48]))
     cci_meta = data["cci_nist"].get("_meta") or {}
     n_cci = len(data["cci_nist"].get("cci", {}))
     if cci_meta.get("entry_count") != n_cci:
@@ -2381,18 +2446,26 @@ def gate_q15(ctx):
     # Every generated dataset must name a generator this gate actually re-runs.
     # Otherwise a file could declare an extractor that is never executed and drift
     # unnoticed — which is precisely the hand-edit this gate exists to catch.
+    # AL-GATE3-009: this used to build `declared` from RULES and CCI only, so a
+    # FLAGS dataset's _meta.generator was never compared against anything --
+    # flags_rhel9.json shipped naming extract/extract_rhel_flags.py, a script
+    # that has never existed, and this gate reported PASS. FLAGS datasets are
+    # included below, and RERUN_GENERATORS (not the bare GENERATORS tuple)
+    # is the allowed set, since extract/extract_flags.py is re-run above
+    # through its own --check --rhel <v> loop rather than the generic one.
     data = ctx["data"]
-    declared = set()
+    declared = {}
     for v in VERSIONS:
-        declared.add(((data["rules"][v].get("_meta") or {}).get("generator")))
-    declared.add((data["cci_nist"].get("_meta") or {}).get("generator"))
-    unrerun = sorted(g for g in declared if g and g not in GENERATORS)
+        declared["rules_rhel%s" % v] = (data["rules"][v].get("_meta") or {}).get("generator")
+        declared["flags_rhel%s" % v] = (data["flags"][v].get("_meta") or {}).get("generator")
+    declared["cci_nist"] = (data["cci_nist"].get("_meta") or {}).get("generator")
+    unrerun = sorted((name, gen) for name, gen in declared.items() if gen and gen not in RERUN_GENERATORS)
     if unrerun:
-        f.append("generated dataset(s) declare a generator this gate does not re-run: %s"
-                 % ", ".join(unrerun))
+        f.append("dataset(s) declare a generator this gate does not re-run: %s"
+                 % ", ".join("%s: '%s'" % (name, gen) for name, gen in unrerun))
     else:
-        d.append("every RULES and CCI dataset declares a generator that this gate re-ran: %s"
-                 % ", ".join(sorted(declared - {None})))
+        d.append("every RULES, FLAGS and CCI dataset declares a generator that this gate re-ran: %s"
+                 % ", ".join(sorted({g for g in declared.values() if g})))
     return f, d
 
 
@@ -2910,15 +2983,26 @@ def gate_q19(ctx):
 
 LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
 COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
-RAW_DIR_FOR = {"8": "rhel8", "10": "rhel10"}
+# AL-GATE3-010: "7" was absent, so content-src/flag_coverage_baseline.json's six
+# coverage["7"] rows (chage, journalctl, systemctl, useradd, usermod, yum) were
+# read by nothing.
+RAW_DIR_FOR = {"7": "rhel7", "8": "rhel8", "10": "rhel10"}
 
 
 def _long_options_in_raw(raw_dir, cli):
-    """Distinct long options the committed raw capture for this tool mentions."""
+    """Distinct long options the committed raw capture for this tool mentions.
+
+    RHEL 8/10 raw dumps are man pages (`.man.txt`). UBI7 has no man-db (CR-T-12),
+    so every RHEL 7 dump under content-src/raw/rhel7/ is `--help` output
+    (`.help.txt`) instead. AL-GATE3-010: filtering to `.man.txt` only made this
+    return None for every RHEL 7 tool -- the raw files existed and were never
+    looked at. Both suffixes are read; the long-option regex does not care which
+    kind of text it is scanning.
+    """
     if not os.path.isdir(raw_dir):
         return None
     files = sorted(f for f in os.listdir(raw_dir)
-                   if f.startswith(cli + ".") and f.endswith(".man.txt"))
+                   if f.startswith(cli + ".") and f.endswith((".man.txt", ".help.txt")))
     if not files:
         return None
     found = set()
