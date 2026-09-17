@@ -295,6 +295,56 @@ def load_build_constants():
     return out
 
 
+SCHEMA_PATH = os.path.join(REPO, "extract", "schema.py")
+
+
+def parse_schema_tuple(src, name):
+    """A module-level tuple of string literals out of extract/schema.py's TEXT.
+
+    AL-GATE3-005. Q3 re-checks provenance at the artifact level, independently of
+    the extractor — that independence is the same rule Q10's docstring states for
+    the XCCDF parse, and it is worth keeping. What is not worth keeping is Q3
+    ALSO carrying its own idea of which fields are required, because that copy
+    silently drifted: qa.py wanted four fields, extract/schema.py wanted five,
+    and the missing one was `version`, the field schema.py's own docstring calls
+    mandatory because "a source that cannot say which version of the document it
+    came from cannot be re-checked".
+
+    So: the CONSTANT is shared, the CHECK is not. It is read out of the file the
+    same way load_build_constants() reads APP_VERSION out of build.py, with no
+    import and no code path in common.
+
+    Raises rather than returning a default. A gate that falls back to an idea of
+    its own when it cannot read the source of truth is the weaker-copy problem
+    again, with extra steps.
+    """
+    m = re.search(r"^%s\s*=\s*\(([^)]*)\)" % re.escape(name), src, re.M)
+    if not m:
+        raise ValueError("extract/schema.py declares no module-level %s tuple that qa.py can "
+                         "read — Q3's independent re-check has no source of truth for which "
+                         "fields are required (AL-GATE3-005)" % name)
+    fields = tuple(re.findall(r"""["']([^"']+)["']""", m.group(1)))
+    if not fields:
+        raise ValueError("extract/schema.py's %s is empty — an empty requirement list is a gate "
+                         "that requires nothing (AL-GATE3-005)" % name)
+    return fields
+
+
+def provenance_fields():
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        return parse_schema_tuple(f.read(), "PROVENANCE_FIELDS")
+
+
+def license_classes():
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        return parse_schema_tuple(f.read(), "LICENSE_CLASSES")
+
+
+def parse_provenance_fields(src):
+    """parse_schema_tuple(src, "PROVENANCE_FIELDS"), kept as its own name for tests."""
+    return parse_schema_tuple(src, "PROVENANCE_FIELDS")
+
+
 def split_top_level(expr, sep="+"):
     """Split a JS expression on a top-level operator, respecting strings/parens."""
     parts, buf, depth, quote, i = [], "", 0, None, 0
@@ -1151,7 +1201,15 @@ def gate_q2(ctx):
 def gate_q3(ctx):
     f, d = [], []
     data = ctx["data"]
-    need = ("title", "url_or_man", "retrieved_on", "license_class")
+    # AL-GATE3-005: which fields are required is read out of extract/schema.py,
+    # never restated here. The CHECK stays independent (that is the point of Q3);
+    # only the constant is shared, and the read failing is a FAIL, not a default.
+    try:
+        need = provenance_fields()
+        classes = license_classes()
+    except (OSError, ValueError) as exc:
+        f.append("could not read the provenance rule out of extract/schema.py: %s" % exc)
+        return f, d
 
     def check(where, src):
         if not isinstance(src, dict):
@@ -1160,9 +1218,9 @@ def gate_q3(ctx):
         for field in need:
             if not src.get(field):
                 f.append("%s: source.%s missing" % (where, field))
-        if src.get("license_class") not in ("verbatim-ok", "paraphrase-only"):
-            f.append("%s: license_class '%s' is not verbatim-ok or paraphrase-only"
-                     % (where, src.get("license_class")))
+        if src.get("license_class") not in classes:
+            f.append("%s: license_class '%s' is not one of %s"
+                     % (where, src.get("license_class"), ", ".join(classes)))
 
     entries = data["commands"]["entries"]
     tools = data["tools"]["tools"]
@@ -1191,7 +1249,11 @@ def gate_q3(ctx):
     check("dangerous", data["dangerous"].get("source"))
     if not f:
         d.append("every command entry, tool, flag dictionary, rules dataset, the CCI map and the "
-                 "destructive-pattern table carry title/url_or_man/retrieved_on/license_class")
+                 "destructive-pattern table carry %s" % "/".join(need))
+        d.append("the required field list was read out of extract/schema.py's PROVENANCE_FIELDS, "
+                 "not restated here: Q3 stays an INDEPENDENT re-check of the artifact, but it can "
+                 "no longer be a WEAKER one than the build-time check it doubles against — which "
+                 "is what it had silently become, missing 'version' (AL-GATE3-005)")
     return f, d
 
 
