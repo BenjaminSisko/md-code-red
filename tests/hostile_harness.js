@@ -241,6 +241,76 @@ function bareText(words) {
 
 var UNQUOTED_OK = /^[A-Za-z0-9_./=:@%+,\- ]*$/;
 
+/* ---------------------------------------------- the VALIDITY oracle --------
+ * MCR-SEC-021 / MCR-SEC-015, conditions E1 and E6. Everything above this point
+ * is a CONTAINMENT oracle: it proves a hostile value cannot escape its single
+ * quotes and cannot change the command's shell-visible shape. It says nothing
+ * about whether the shape itself is a legal invocation of the tool — which is
+ * precisely how 20 short-option tokens joined with '=' passed 76,225 checks.
+ *
+ * optionSyntaxErrors() is the general half of the missing oracle: getopt(3)
+ * syntax, asserted on every benign command this harness assembles. The specific
+ * half is tests/fixtures/golden-commands.json, which states the exact command
+ * every generator must emit.
+ *
+ *   short option (single dash):  -X value   or  -Xvalue   — NEVER -X=value,
+ *       because getopt() hands the '=' to the program as optarg[0].
+ *   long option  (double dash):  --name=value  or  --name value  — both legal;
+ *       this product emits the '=' form, and E1 must not "fix" it away.
+ */
+var SHORT_OPT_EQ_RE = /^-[A-Za-z0-9][A-Za-z0-9-]*=/;
+var LONG_OPT_RE = /^--[A-Za-z0-9][A-Za-z0-9-]*(=|$)/;
+var SHORT_OPT_RE = /^-[A-Za-z0-9][A-Za-z0-9-]*$/;
+
+function optionSyntaxErrors(command) {
+  var errs = [];
+  var words = tokenize(command);
+  if (words === null) {
+    return ["does not tokenise as balanced shell words"];
+  }
+  for (var i = 0; i < words.length; i++) {
+    var bare = words[i].bare;
+    if (bare.charAt(0) !== "-" || bare.length < 2) continue;   /* not option-shaped */
+    if (bare === "--") continue;                               /* end-of-options marker */
+    if (bare.charAt(1) === "-") {
+      if (!LONG_OPT_RE.test(bare)) {
+        errs.push("word " + i + " " + JSON.stringify(words[i].raw) +
+                  " is double-dashed but is not a long option");
+      }
+      continue;
+    }
+    if (SHORT_OPT_EQ_RE.test(bare)) {
+      errs.push("word " + i + " " + JSON.stringify(words[i].raw) + " joins a SHORT option to its " +
+                "value with '='. getopt(3) passes the '=' through as the first character of the " +
+                "argument, so the tool receives a value that is not the one on screen " +
+                "(MCR-SEC-015). A short option takes '-X value' or glued '-Xvalue'");
+      continue;
+    }
+    if (!SHORT_OPT_RE.test(bare)) {
+      errs.push("word " + i + " " + JSON.stringify(words[i].raw) +
+                " is single-dashed but is not a short option token");
+    }
+  }
+  return errs;
+}
+
+/* The long options a spec's template binds to a value. E1 removes the '='
+   join from SHORT options only; if it also removed it from long ones, every
+   firewall-cmd and journalctl generator would still assemble and every
+   containment check would still pass. These flags are what proves it did not. */
+function longValueFlags(spec) {
+  var out = [], t = (spec && spec.template) || [];
+  for (var i = 0; i < t.length; i++) {
+    var tok = t[i];
+    if (!tok || typeof tok.flag !== "string") continue;
+    if (tok.flag.indexOf("--") !== 0) continue;
+    if (tok.field === undefined && tok.richRule === undefined) continue;   /* bare option */
+    if (tok.eq === false) continue;                                        /* declared space-joined */
+    out.push(tok.flag);
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------- specs */
 
 function flagSpec(type, def, versions) {
@@ -1005,6 +1075,107 @@ function main() {
     }
   }
 
+  /* ---- CR-T-17..25: the GOLDEN-COMMAND table (MCR-SEC-015 / E1, E6) -------
+     The sweep above is a containment oracle and nothing more. This is the
+     validity oracle Marcus Reed's D4 review required: for every generator, on
+     every release, the exact command it must emit for a stated set of benign
+     values, hand-authored from each tool's man page in
+     tests/fixtures/golden-commands.json and never generated from the assembler.
+
+     Three assertions per row, plus two completeness assertions over the table:
+       1. EXACT equality with the golden string (or null where the generator is
+          gated off that release — null, never a shortened command).
+       2. getopt(3) syntax, via optionSyntaxErrors(): no short option may be
+          joined to its value with '='.
+       3. every long option the template binds to a value still carries its
+          '=' join, so the E1 fix cannot over-correct and quietly turn
+          `--unit='sshd.service'` into `--unit 'sshd.service'` unnoticed.
+     ...and the blast rating the row declares, computed against the REAL
+     content/dangerous.json table rather than an empty one. */
+  var golden = JSON.parse(fs.readFileSync(path.join(REPO, "tests", "fixtures",
+                                                    "golden-commands.json"), "utf8"));
+  var goldenRows = golden.generators || {};
+  var realPatterns = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "dangerous.json"),
+                                                 "utf8")).patterns) || [];
+  var goldenChecks = 0, syntaxChecks = 0;
+  for (var gs = 0; gs < specEntries.length; gs++) {
+    var gentry = specEntries[gs];
+    var grow = Object.prototype.hasOwnProperty.call(goldenRows, gentry.id) ? goldenRows[gentry.id] : null;
+    if (grow === null) {
+      stats.failures.push("golden table: generator " + gentry.id + " has no row in tests/fixtures/" +
+                          "golden-commands.json. A generator whose exact command is not written down " +
+                          "is covered by the containment oracle only, which is how MCR-SEC-015 shipped");
+      continue;
+    }
+    var glongs = longValueFlags(gentry);
+    for (var gv2 = 0; gv2 < VERSIONS.length; gv2++) {
+      var gver = VERSIONS[gv2];
+      if (!Object.prototype.hasOwnProperty.call(grow.commands || {}, gver)) {
+        stats.failures.push("golden table: " + gentry.id + " has no expected command for RHEL " + gver);
+        continue;
+      }
+      var want = grow.commands[gver];
+      goldenChecks++;
+      var gres;
+      try {
+        gres = A.assembleCommand(gentry, gver, grow.values || {}, { patterns: realPatterns });
+      } catch (ge) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": assembler threw " + ge.message);
+        continue;
+      }
+      var gotCommand = gres === null ? null : gres.command;
+      if (gotCommand !== want) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": expected " +
+                            JSON.stringify(want) + " but the assembler produced " +
+                            JSON.stringify(gotCommand) + " — " + (grow.pins || ""));
+        continue;
+      }
+      if (gres === null) continue;                 /* correctly gated off this release */
+      if (gres.blast !== grow.blast) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": blast is '" + gres.blast +
+                            "', the table says '" + grow.blast + "'");
+      }
+      syntaxChecks++;
+      var gsyn = optionSyntaxErrors(gres.command);
+      if (gsyn.length) {
+        stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": " + gsyn.join("; ") +
+                            " — in " + JSON.stringify(gres.command));
+      }
+      for (var gl = 0; gl < glongs.length; gl++) {
+        syntaxChecks++;
+        if (gres.command.indexOf(glongs[gl] + "='") < 0) {
+          stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": long option " +
+                              glongs[gl] + " lost its '=' join in " + JSON.stringify(gres.command) +
+                              " — E1 removes the '=' from SHORT options only");
+        }
+      }
+    }
+  }
+  var goldenIds = Object.keys(goldenRows);
+  for (var gi = 0; gi < goldenIds.length; gi++) {
+    var known = false;
+    for (var gk = 0; gk < specEntries.length; gk++) {
+      if (specEntries[gk].id === goldenIds[gi]) { known = true; break; }
+    }
+    if (!known) {
+      stats.failures.push("golden table: row '" + goldenIds[gi] + "' names a generator that is not " +
+                          "in content/commands.json — a stale expectation proves nothing");
+    }
+  }
+  /* negative control: the syntax oracle must be able to fail, on the exact
+     defect MCR-SEC-015 reported and on the long form it must NOT flag. */
+  if (!optionSyntaxErrors("auditctl -w='/etc/motd' -p='r' -k='identity'").length) {
+    stats.failures.push("invariant: the option-syntax oracle rated MCR-SEC-015's own reproduction " +
+                        "as valid getopt syntax — it cannot fail and therefore proves nothing");
+  }
+  if (optionSyntaxErrors("firewall-cmd --set-default-zone='public' --permanent").length) {
+    stats.failures.push("invariant: the option-syntax oracle flagged a correct GNU long option");
+  }
+  if (optionSyntaxErrors("rsyslogd -N1 -f '/etc/rsyslog.conf'").length) {
+    stats.failures.push("invariant: the option-syntax oracle flagged the glued short option -N1, " +
+                        "which is legal");
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -1149,6 +1320,8 @@ function main() {
     destructive_pattern_checks: patternChecks,
     content_spec_checks: contentSpecChecks,
     content_spec_entries: specEntries.length,
+    golden_command_checks: goldenChecks,
+    option_syntax_checks: syntaxChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1157,7 +1330,7 @@ function main() {
        + 2 tokeniser negative controls + 2 rich-rule-oracle negative controls
        + 2 blast invariants + the MCR-SEC-001 regression (1 vector check + 1 per
        release + 1 typed) */
-    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length),
+    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length) + 3,
     failures: stats.failures
   };
   if (asJson) {
@@ -1183,6 +1356,10 @@ function main() {
     console.log("  " + contentSpecChecks + " content-spec checks: every field of every one of the " +
                 specEntries.length + " REAL generator entries in content/commands.json (CR-T-17..25), " +
                 "fuzzed with the same hostile vector set in its own template, not a synthetic analog");
+    console.log("  " + goldenChecks + " golden-command checks (VALIDITY oracle: the exact command " +
+                "every generator must emit, per release, hand-authored from the man pages in " +
+                "tests/fixtures/golden-commands.json) and " + syntaxChecks + " getopt(3) option-syntax " +
+                "checks (no short option joined with '='; every long option keeps its '=')");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

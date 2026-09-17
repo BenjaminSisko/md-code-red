@@ -1,0 +1,279 @@
+{
+ "_doc": "The VALIDITY oracle for every shipped generator (MCR-SEC-015 / MCR-SEC-021, conditions E1 and E6).",
+ "_why": "tests/hostile_harness.js proved CONTAINMENT and nothing else: every hostile value is rejected or confined to one single-quoted shell token whose skeleton matches the benign control. It never asserted that the benign control is a VALID invocation of its tool, which is exactly how 20 short-option tokens joined with '=' across 11 of 24 generators passed 76,225 checks. This table is the missing oracle. Every row states the exact command a generator must emit for a stated set of benign values, on a stated release.",
+ "_authority": "Hand-authored from each tool's own man page and getopt(3) semantics — NEVER generated from the assembler. A table regenerated from the code it tests is a transcript, not an oracle. When a row and the assembler disagree, the row is presumed right until the man page says otherwise.",
+ "_rules_pinned": [
+  "A GNU long option takes its argument as --name=value (or --name value); both are accepted by getopt_long, and this product emits the '=' form.",
+  "A single-dash SHORT option takes its argument as '-X value' or glued as '-Xvalue'. It NEVER takes '-X=value': getopt(3) passes the '=' through as the first character of optarg. `chage -M=60` sets maxdays to the string '=60'; `auditctl -w=/etc/motd` watches nothing; `useradd -c=RFC-1234 -s=/bin/bash` sets a wrong GECOS and an invalid login shell without erroring.",
+  "A bare option with no argument (auditctl's -w value aside: `sshd -T`, `useradd -m`, `usermod -a`, `podman ps -a`, `setsebool -P`, `lvextend -r`, `firewall-cmd --permanent`, `journalctl --no-pager`, `journalctl --boot`) is emitted as its own word.",
+  "Every operator-supplied value is single-quoted, on both sides of the join. That is MCR-SEC-004 and it does not change here."
+ ],
+ "_completeness": "The harness fails if a generator entry in content/commands.json has no row here, and fails if a row here names a generator that does not exist. A new generator cannot ship without stating the command it produces.",
+ "_null_means": "commands.<release> === null means the generator is gated off that release and assembleCommand() must return null — not a shortened command.",
+ "generators": {
+  "gen-fw-set-default-zone": {
+   "pins": "firewall-cmd long option keeps the '=' join",
+   "values": { "zone": "public" },
+   "blast": "yellow",
+   "commands": {
+    "7": "firewall-cmd --set-default-zone='public'",
+    "8": "firewall-cmd --set-default-zone='public'",
+    "9": "firewall-cmd --set-default-zone='public'",
+    "10": "firewall-cmd --set-default-zone='public'"
+   }
+  },
+  "gen-fw-open-port": {
+   "pins": "--add-rich-rule= carries the composed rule as one single-quoted word; the rule's own grammar is checked by the rich-rule oracle",
+   "values": { "family": "ipv4", "source": "10.1.0.0/16", "port": "8443", "proto": "tcp", "act": "accept" },
+   "blast": "yellow",
+   "commands": {
+    "7": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "8": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "9": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "10": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'"
+   }
+  },
+  "gen-fw-allow-service": {
+   "pins": "the service element is composed into the rich rule, not passed as --add-service (MCR-SEC-019 is about this generator's citation)",
+   "values": { "family": "ipv4", "source": "10.1.0.0/16", "svc": "ssh", "act": "accept" },
+   "blast": "yellow",
+   "commands": {
+    "7": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "8": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "9": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "10": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'"
+   }
+  },
+  "gen-nmcli-static-ipv4": {
+   "pins": "nmcli takes property/value PAIRS, not options: every setting name is an unquoted literal followed by a quoted value",
+   "values": { "con": "lab-eth0", "ifname": "eth0", "address": "192.168.1.50/24", "gateway": "192.168.1.1" },
+   "blast": "yellow",
+   "commands": {
+    "7": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+    "8": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+    "9": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+    "10": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual"
+   }
+  },
+  "gen-journalctl-unit-logs": {
+   "pins": "four long options keep the '=' join; --boot is a conditional bare option literal",
+   "values": { "unit": "sshd.service", "priority": "err", "since": "today", "thisboot": "yes" },
+   "blast": "green",
+   "commands": {
+    "7": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot",
+    "8": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot",
+    "9": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot",
+    "10": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
+   }
+  },
+  "gen-lvcreate-new-lv": {
+   "pins": "lvcreate(8): -L takes a size and -n a name, both space-joined; the volume group is the trailing positional argument",
+   "values": { "size": "10G", "name": "lv0", "vg": "vg0" },
+   "blast": "yellow",
+   "commands": {
+    "7": "lvcreate -L '10G' -n 'lv0' 'vg0'",
+    "8": "lvcreate -L '10G' -n 'lv0' 'vg0'",
+    "9": "lvcreate -L '10G' -n 'lv0' 'vg0'",
+    "10": "lvcreate -L '10G' -n 'lv0' 'vg0'"
+   }
+  },
+  "gen-lvextend-grow": {
+   "pins": "lvextend(8): -L takes a size (the '+' prefix means GROW BY rather than SET TO); -r is a bare option and the LV path is positional",
+   "values": { "size": "+10G", "resizefs": "yes", "lvpath": "/dev/vg0/lv0" },
+   "blast": "yellow",
+   "commands": {
+    "7": "lvextend -L '+10G' -r '/dev/vg0/lv0'",
+    "8": "lvextend -L '+10G' -r '/dev/vg0/lv0'",
+    "9": "lvextend -L '+10G' -r '/dev/vg0/lv0'",
+    "10": "lvextend -L '+10G' -r '/dev/vg0/lv0'"
+   }
+  },
+  "gen-sshd-test-config": {
+   "pins": "sshd(8): -T is bare, -f takes the config path space-joined",
+   "values": { "path": "/etc/ssh/sshd_config" },
+   "blast": "green",
+   "commands": {
+    "7": "sshd -T -f '/etc/ssh/sshd_config'",
+    "8": "sshd -T -f '/etc/ssh/sshd_config'",
+    "9": "sshd -T -f '/etc/ssh/sshd_config'",
+    "10": "sshd -T -f '/etc/ssh/sshd_config'"
+   }
+  },
+  "gen-useradd-create": {
+   "pins": "useradd(8): -m is bare; -c (GECOS), -G (groups) and -s (shell) are space-joined. The '=' join silently sets GECOS to '=RFC-1234' and the login shell to '=/bin/bash' without an error — MCR-SEC-015's second unsafe case.",
+   "values": { "username": "svcacct", "comment": "RFC-1234", "groups": "wheel", "shell": "/bin/bash" },
+   "blast": "yellow",
+   "commands": {
+    "7": "useradd -m -c 'RFC-1234' -G 'wheel' -s '/bin/bash' 'svcacct'",
+    "8": "useradd -m -c 'RFC-1234' -G 'wheel' -s '/bin/bash' 'svcacct'",
+    "9": "useradd -m -c 'RFC-1234' -G 'wheel' -s '/bin/bash' 'svcacct'",
+    "10": "useradd -m -c 'RFC-1234' -G 'wheel' -s '/bin/bash' 'svcacct'"
+   }
+  },
+  "gen-usermod-add-group": {
+   "pins": "usermod(8): -a is bare and MUST accompany -G, or -G REPLACES every supplementary group; -G is space-joined",
+   "values": { "username": "svcacct", "groups": "wheel" },
+   "blast": "yellow",
+   "commands": {
+    "7": "usermod -a -G 'wheel' 'svcacct'",
+    "8": "usermod -a -G 'wheel' 'svcacct'",
+    "9": "usermod -a -G 'wheel' 'svcacct'",
+    "10": "usermod -a -G 'wheel' 'svcacct'"
+   }
+  },
+  "gen-systemctl-query": {
+   "pins": "systemctl takes a SUBCOMMAND and a unit, both positional; a POSIX shell removes the quoting before execve so argv[1] is the bare word",
+   "values": { "action": "status", "unit": "sshd.service" },
+   "blast": "green",
+   "commands": {
+    "7": "systemctl 'status' 'sshd.service'",
+    "8": "systemctl 'status' 'sshd.service'",
+    "9": "systemctl 'status' 'sshd.service'",
+    "10": "systemctl 'status' 'sshd.service'"
+   }
+  },
+  "gen-systemctl-manage": {
+   "pins": "same shape as the query generator; every branch of the action enum is swept separately for blast",
+   "values": { "action": "start", "unit": "sshd.service" },
+   "blast": "yellow",
+   "commands": {
+    "7": "systemctl 'start' 'sshd.service'",
+    "8": "systemctl 'start' 'sshd.service'",
+    "9": "systemctl 'start' 'sshd.service'",
+    "10": "systemctl 'start' 'sshd.service'"
+   }
+  },
+  "gen-dnf-package": {
+   "pins": "dnf does not exist on RHEL 7 — null, not a shortened command",
+   "values": { "action": "install", "pkg": "firewalld" },
+   "blast": "green",
+   "commands": {
+    "7": null,
+    "8": "dnf 'install' 'firewalld'",
+    "9": "dnf 'install' 'firewalld'",
+    "10": "dnf 'install' 'firewalld'"
+   }
+  },
+  "gen-yum-package": {
+   "pins": "yum is offered on all four releases (RHEL 8+ aliases it to dnf)",
+   "values": { "action": "install", "pkg": "firewalld" },
+   "blast": "green",
+   "commands": {
+    "7": "yum 'install' 'firewalld'",
+    "8": "yum 'install' 'firewalld'",
+    "9": "yum 'install' 'firewalld'",
+    "10": "yum 'install' 'firewalld'"
+   }
+  },
+  "gen-setsebool-set": {
+   "pins": "setsebool(8): -P is a bare option meaning PERSISTENT. It is conditional on the persist field, and it is an OPTION, not an argument slot — dropping it shifts nothing (MCR-SEC-018 / MCR-SEC-022).",
+   "values": { "boolean": "httpd_can_network_connect", "state": "on", "persist": "yes" },
+   "blast": "yellow",
+   "commands": {
+    "7": "setsebool -P 'httpd_can_network_connect' 'on'",
+    "8": "setsebool -P 'httpd_can_network_connect' 'on'",
+    "9": "setsebool -P 'httpd_can_network_connect' 'on'",
+    "10": "setsebool -P 'httpd_can_network_connect' 'on'"
+   }
+  },
+  "gen-semanage-port-add": {
+   "pins": "semanage-port(8): 'port' and '-a' are literals; -t (type) and -p (protocol) are space-joined; the port is positional",
+   "values": { "porttype": "http_port_t", "proto": "tcp", "port": "8443" },
+   "blast": "yellow",
+   "commands": {
+    "7": "semanage port -a -t 'http_port_t' -p 'tcp' '8443'",
+    "8": "semanage port -a -t 'http_port_t' -p 'tcp' '8443'",
+    "9": "semanage port -a -t 'http_port_t' -p 'tcp' '8443'",
+    "10": "semanage port -a -t 'http_port_t' -p 'tcp' '8443'"
+   }
+  },
+  "gen-chage-list": {
+   "pins": "chage(1): -l is bare and the user name is positional",
+   "values": { "username": "svcacct" },
+   "blast": "green",
+   "commands": {
+    "7": "chage -l 'svcacct'",
+    "8": "chage -l 'svcacct'",
+    "9": "chage -l 'svcacct'",
+    "10": "chage -l 'svcacct'"
+   }
+  },
+  "gen-chage-set-aging": {
+   "pins": "chage(1): -M/-m/-W each take a number, space-joined. `chage -M=60` errors with \"invalid numeric argument '=60'\" — loud, but still wrong.",
+   "values": { "username": "svcacct", "maxdays": "60", "mindays": "7", "warndays": "14" },
+   "blast": "yellow",
+   "commands": {
+    "7": "chage -M '60' -m '7' -W '14' 'svcacct'",
+    "8": "chage -M '60' -m '7' -W '14' 'svcacct'",
+    "9": "chage -M '60' -m '7' -W '14' 'svcacct'",
+    "10": "chage -M '60' -m '7' -W '14' 'svcacct'"
+   }
+  },
+  "gen-auditctl-watch": {
+   "pins": "auditctl(8): -w (watch path), -p (permissions) and -k (key) are all space-joined. This is MCR-SEC-015's worst case: `auditctl -w='/etc/motd'` does NOT error in a way an operator recognises, so a STIG control is recorded as applied when no watch exists.",
+   "values": { "path": "/etc/motd", "perms": "r", "key": "identity" },
+   "blast": "yellow",
+   "commands": {
+    "7": "auditctl -w '/etc/motd' -p 'r' -k 'identity'",
+    "8": "auditctl -w '/etc/motd' -p 'r' -k 'identity'",
+    "9": "auditctl -w '/etc/motd' -p 'r' -k 'identity'",
+    "10": "auditctl -w '/etc/motd' -p 'r' -k 'identity'"
+   }
+  },
+  "gen-ausearch-by-key": {
+   "pins": "ausearch(8): -k and -ts are MULTI-CHARACTER single-dash options and still take their argument space-joined, never with '='",
+   "values": { "key": "identity", "start": "today" },
+   "blast": "green",
+   "commands": {
+    "7": "ausearch -k 'identity' -ts 'today'",
+    "8": "ausearch -k 'identity' -ts 'today'",
+    "9": "ausearch -k 'identity' -ts 'today'",
+    "10": "ausearch -k 'identity' -ts 'today'"
+   }
+  },
+  "gen-rsyslogd-test-config": {
+   "pins": "rsyslogd(8): -N1 is a glued short option written as a single literal token; -f is space-joined",
+   "values": { "path": "/etc/rsyslog.conf" },
+   "blast": "green",
+   "commands": {
+    "7": "rsyslogd -N1 -f '/etc/rsyslog.conf'",
+    "8": "rsyslogd -N1 -f '/etc/rsyslog.conf'",
+    "9": "rsyslogd -N1 -f '/etc/rsyslog.conf'",
+    "10": "rsyslogd -N1 -f '/etc/rsyslog.conf'"
+   }
+  },
+  "gen-chronyd-one-shot-check": {
+   "pins": "chronyd(8): -Q takes one whole chrony directive as a single space-joined argument",
+   "values": { "directive": "server time.mil iburst" },
+   "blast": "green",
+   "commands": {
+    "7": "chronyd -Q 'server time.mil iburst'",
+    "8": "chronyd -Q 'server time.mil iburst'",
+    "9": "chronyd -Q 'server time.mil iburst'",
+    "10": "chronyd -Q 'server time.mil iburst'"
+   }
+  },
+  "gen-podman-ps": {
+   "pins": "podman is not offered on RHEL 7; -a is a conditional bare option literal",
+   "values": { "all": "yes" },
+   "blast": "green",
+   "commands": {
+    "7": null,
+    "8": "podman ps -a",
+    "9": "podman ps -a",
+    "10": "podman ps -a"
+   }
+  },
+  "gen-podman-stop": {
+   "pins": "podman is not offered on RHEL 7; the container is positional",
+   "values": { "container": "web01" },
+   "blast": "yellow",
+   "commands": {
+    "7": null,
+    "8": "podman stop 'web01'",
+    "9": "podman stop 'web01'",
+    "10": "podman stop 'web01'"
+   }
+  }
+ }
+}
