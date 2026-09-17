@@ -16,6 +16,35 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — CR-T-12, branch `salm/milo/flags-rhel7` (Milo Vance): `flags_rhel7.json` is
+  populated for the first time, from a rootless UBI7 container on saratoga standing in for the
+  RHEL 7 host the lab doesn't have (`registry.access.redhat.com/ubi7/ubi:latest`, digest
+  `sha256:046e525722f14702c360dc6092324af7c21656e76b0c254b067871f1d4d3df68`; no sudo, no host
+  package installs, container removed after, image kept). `extract/extract_flags.py` gained
+  `--container` (podman-exec routing inside `ssh_run()`, the same read-only commands one hop
+  further in — smaller than teaching the whole extractor to run inside the container), and
+  `_meta.host`/`kernel_caveat` say plainly this is a container standing in for RHEL 7, not
+  saratoga's own RHEL 10. UBI7's public repos carry no `man`/`man-db` at all, so every tool is
+  `--help`-only; of the 22 P0 tools, 6 had a binary available (`systemctl`, `journalctl`, `yum`,
+  `useradd`, `usermod`, `chage`) and are extracted (38 flags, 90 unparsed raw hints). The other 16
+  are honestly `available: false`: `dnf`/`podman` because neither ever shipped on RHEL 7 (same
+  treatment those two already had), the rest (`firewalld`, `NetworkManager`, `lvm2`, `audit`,
+  `rsyslog`, `chrony`, `policycoreutils-python`, `openssh-server`, `git`) because their packages
+  or dependency chains (`perl`, `libfipscheck`, `libedit`) are not in UBI7's public repos — nothing
+  worked around, no other source substituted. `content-src/flag_coverage_baseline.json` gained a
+  `coverage["7"]` block for the 6 available tools plus a note that Q20 (`qa.py`'s `RAW_DIR_FOR`)
+  is not extended to RHEL 7 here, so this does not widen anything the gate currently checks, and
+  that `firewall-cmd`'s RHEL 8/10 synopsis-line regex gap almost certainly reproduces on RHEL 7 too
+  but isn't observable without a `firewalld` capture — same ratchet owner/date, Caleb Stone,
+  2026-09-25. One change outside `extract/`: `qa.py`'s Q15 FLAGS special case (the filter that
+  keeps a populated flags dictionary from permanently "drifting" against the empty-placeholder
+  skeleton script) gained `flags_rhel7.json`, extending the exact pattern CR-T-09/10 already used
+  for RHEL 8/10 a third time — not a host-abstraction change, but required the moment RHEL 7 stopped
+  being empty. `tests/fixtures/evidence/firewalld-service-active.rhel9.txt`'s committed content
+  fingerprint updated to match the new data island (confirmed byte-diff: only that one line moved).
+  Gates: `build.py` reproducible / `qa.py` (Q1-Q22, JS: PASS) / `python3 -m unittest discover -s
+  tests` (176 OK) / `node tests/hostile_harness.js` (81577 checks, 0 FAILED) all green.
+
 - **2026-09-17** — H1/H2/H3, branch `salm/milo/panels-conditions` (Milo Vance), Marcus Reed's
   three post-G4 conditions before merge. **H1 (correction):** `gen-chronyd-one-shot-check` goes
   back to `blast: "green"` — G4(d) wrongly raised it to yellow on Caleb Stone's CR-T-34 note that

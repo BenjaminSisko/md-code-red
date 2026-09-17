@@ -62,6 +62,14 @@ HOSTS = {
     "saratoga": {"rhel_version": "10"},
 }
 
+# CR-T-12: there is no RHEL 7 host in the lab. The read-only commands this
+# extractor already runs (man -P cat / <tool> --help / rpm -qf / command -v)
+# are routed one extra hop, through `podman exec` into a rootless UBI7
+# container on an existing --host, instead of adding a whole second
+# extraction path. Set by main() from --container; left None for the normal
+# direct-SSH-to-a-real-host case, which is unaffected (see ssh_run() below).
+CONTAINER_EXEC = None
+
 # P0 tool set (MD CODE RED task brief, CR-T-09/10). `pages` lists every man
 # page this tool's dictionary is built from, in the order they are read. A
 # page equal to the tool id is the tool's own CLI page; a page that differs
@@ -112,7 +120,15 @@ def ssh_run(host, remote_cmd, timeout=30):
     Uses the ssh alias's own config (key auth already wired per-host); no
     password prompts, no state changes. BatchMode=yes so a broken/missing key
     fails fast instead of hanging on a prompt.
+
+    CR-T-12: when CONTAINER_EXEC is set, every one of these still-read-only
+    commands is run one hop further in, via `podman exec <container> sh -c
+    '<remote_cmd>'` on the SSH host — same transport, same command set, the
+    container is just where they execute. No other function in this file
+    changes; they all go through here.
     """
+    if CONTAINER_EXEC:
+        remote_cmd = "podman exec %s sh -c %s" % (CONTAINER_EXEC, _shquote(remote_cmd))
     proc = subprocess.run(
         ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, remote_cmd],
         capture_output=True, text=True, timeout=timeout,
@@ -481,7 +497,8 @@ def save_raw_manifest(rhel_version, manifest):
 def extract_tool_live(host, tool_id, pages, rhel_version, manifest):
     binpath = command_path(host, tool_id)
     if not binpath:
-        return {"available": False, "reason": "rpm not installed / '%s' not found via command -v on %s" % (tool_id, host)}
+        where = "container %s on %s" % (CONTAINER_EXEC, host) if CONTAINER_EXEC else host
+        return {"available": False, "reason": "rpm not installed / '%s' not found via command -v on %s" % (tool_id, where)}
     pkg = package_nvra(host, binpath)
     result = {"available": True, "package": pkg, "pages": [], "flags": [], "unparsed": []}
     raw_subdir = os.path.join(RAW_DIR, "rhel%s" % rhel_version)
@@ -687,10 +704,16 @@ def check_against_raw(rhel_version):
 # --------------------------------------------------------------------------
 
 def main():
+    global CONTAINER_EXEC
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--host", choices=sorted(HOSTS), help="SSH alias to extract from live")
     ap.add_argument("--rhel", choices=("7", "8", "9", "10"), required=True)
     ap.add_argument("--check", action="store_true", help="offline: re-parse content-src/raw/ and diff, no SSH")
+    ap.add_argument("--container", help="CR-T-12: podman container name on --host to exec the same "
+                     "read-only commands inside, when --rhel names a release --host itself isn't "
+                     "(e.g. a UBI7 container on a RHEL 10 host standing in for a RHEL 7 source)")
+    ap.add_argument("--container-image", help="with --container: image ref, recorded in _meta only")
+    ap.add_argument("--container-image-digest", help="with --container: image digest, recorded in _meta only")
     args = ap.parse_args()
 
     if args.check:
@@ -705,11 +728,42 @@ def main():
 
     if not args.host:
         sys.exit("FATAL: --host is required unless --check is given")
-    if HOSTS[args.host]["rhel_version"] != args.rhel:
+    # A --container is a stand-in guest OS, not the SSH host's own release —
+    # that's the whole point of it, so the direct host/--rhel cross-check
+    # below is skipped only in that case; the direct-host path is unchanged.
+    if not args.container and HOSTS[args.host]["rhel_version"] != args.rhel:
         sys.exit("FATAL: %s is RHEL %s, not RHEL %s" % (args.host, HOSTS[args.host]["rhel_version"], args.rhel))
 
-    print("extracting FLAGS for RHEL %s from %s (read-only, no sudo)..." % (args.rhel, args.host))
+    CONTAINER_EXEC = args.container
+    if args.container:
+        print("extracting FLAGS for RHEL %s from container %s on %s (read-only, no sudo)..."
+              % (args.rhel, args.container, args.host))
+    else:
+        print("extracting FLAGS for RHEL %s from %s (read-only, no sudo)..." % (args.rhel, args.host))
     data = run_extract(args.host, args.rhel)
+    if args.container:
+        # host_facts() read /etc/redhat-release and uname -r through the
+        # container — the release string is genuinely the container's own
+        # (UBI7 ships a real /etc/redhat-release), but uname -r is a kernel
+        # syscall a container can't sandbox: it reports the SSH host's real
+        # kernel, not a RHEL 7 one. Say so plainly rather than let a RHEL 10
+        # kernel string sit unremarked in a RHEL 7 dictionary's _meta.
+        data["_meta"]["host"] = "ubi7 container on %s" % args.host
+        data["_meta"]["status"] = data["_meta"]["status"].replace(
+            "extracted from %s " % args.host, "extracted from ubi7 container on %s " % args.host)
+        data["_meta"]["source"]["title"] = data["_meta"]["source"]["title"].replace(
+            "on a RHEL 7 host (%s)" % args.host, "in a UBI7 container on %s, standing in for a RHEL 7 host (CR-T-12, no RHEL 7 host in the lab)" % args.host)
+        data["_meta"]["underlying_ssh_host"] = args.host
+        data["_meta"]["container_name"] = args.container
+        data["_meta"]["container_image"] = args.container_image
+        data["_meta"]["container_image_digest"] = args.container_image_digest
+        data["_meta"]["kernel_caveat"] = (
+            "kernel field above is the container's shared host kernel (%s on %s), not a genuine "
+            "RHEL 7 kernel — containers don't have their own; kernel- and systemd-manager-dependent "
+            "behaviour (actual unit activation, live journald/systemd-logind state, etc.) was NOT "
+            "observed or exercised, only each tool's own --help/man text as shipped in the package"
+            % (data["_meta"]["kernel"], args.host)
+        )
     path = write_flags_json(args.rhel, data)
     n_tools = len(data["clis"])
     n_avail = sum(1 for e in data["clis"].values() if e.get("available") is not False)
