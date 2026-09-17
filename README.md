@@ -16,6 +16,39 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-18** -- Stage 07 companion docs, branch `salm/sam/docs-alpha` (Sam Kim).
+  `docs/USER_GUIDE.md`, this README, `docs/ARCHITECTURE_BIBLE.md`,
+  `docs/WORKFLOW.md` and `docs/CODE_STANDARDS.md` rewritten from the shipped
+  artifact (`rm -rf dist && python3 build.py`) and the QA gates rather than
+  from the original PRD. Three real user journeys documented as they actually
+  run today: guided-form generation (24 of 27 entries), STIG evidence via the
+  command palette (the STIG Search and Ansible rail items are documented as
+  placeholders, per `renderToolList()`'s own sidebar copy, not as features),
+  and reviewing a command's blast level before copying it (no entry in this
+  build is rated red, so the confirmation banner is documented as tested but
+  not currently observable). The full `KEYMAP` table, the three per-version
+  verification badges, Copy vs. Copy with comment, the evidence export's
+  field list and content fingerprint (and how an ISSM checks one offline
+  against the About panel), search, favorites/recent, print, theme and About
+  are written from `template.html` directly. `docs/USER_GUIDE.md` gains an
+  honest Known Limitations section with numbers read off the build: 27
+  entries/19 tools, RHEL 7 flags parsed for 6 of the probed tools from a UBI7
+  container (no RHEL 7 host in the lab), RHEL 9 has no flag dictionary or
+  captures yet, only 5 STIG ID/version pairs carry a captured expected
+  output, and 0 of the 2,009 flag-dictionary entries carry a curated
+  explanation (only 4 flags anywhere in the build do, on the 3 static
+  entries). `docs/ARCHITECTURE_BIBLE.md`'s sections are filled from
+  `extract/schema.py`, `build.py`, `template.html` and `docs/QA_GATES.md`
+  (pointed to, not duplicated) rather than from ADR-001, which stays an
+  internal SALM record. `docs/TEST_PLAN.md`/`docs/SSP.md`/`docs/POAM.md` TODOs
+  that are now answered are removed; `docs/POAM.md` gains the Q20 flag-
+  coverage baseline's 2026-09-25 expiry and the RHEL 9/RHEL 7 content gaps as
+  open items with owners. `docs/IDEAS.md` gains four Proposed entries raised
+  in review: a per-tool syntax oracle, a `qa.py` module split, an ELS host to
+  stand in for RHEL 7, and a second RHEL SME. No file under `content/`,
+  `extract/`, `tests/`, or `template.html` itself is touched by this branch;
+  `python3 qa.py` (Q1-Q22 + JS) passes on the unmodified artifact, and the
+  unit test and hostile-harness counts are unchanged because no code changed.
 - **2026-09-18** — Q16 closes J1/J2/J3 (VER-001/002/003), branch `salm/milo/receipt-guards`
   (Milo Vance). Marcus Reed's Verified-per-version review approved the per-version receipt
   schema with three conditions. **J1**: 12 of the 18 shipped receipts sat on generator entries,
@@ -514,19 +547,49 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   STIG sources pinned in `stig-src/` (RHEL 7 V3R15, 8 V2R8, 9 V2R9, 10 V1R2, CCI 2025-01-23) with SHA-256.
   Companion doc skeleton in `docs/`. CI: build → QA gate → pin check → size report → artifact; gitleaks.
 
+## Attribution
+
+Reproduced verbatim from SALM's Content Licensing Ruling v1, the same text shown
+in the running tool's About panel (`Ctrl+Alt+5`, `ATTRIBUTION_BLOCK` in
+`template.html`):
+
+```
+Content Sources & Licensing:
+
+This toolkit embeds content derived from the following sources under their respective terms:
+
+- DISA STIG & CCI Lists (Public Domain, US Government work) - https://www.cyber.mil/stigs/
+- NIST SP 800-53 Rev 5 / OSCAL (CC0 1.0, Public Domain) - https://github.com/usnistgov/oscal-content
+- ComplianceAsCode Project (BSD-3-Clause License) - https://github.com/ComplianceAsCode/content
+- Red Hat Enterprise Linux Documentation (CC-BY-SA 3.0) - https://docs.redhat.com/
+- Linux man-pages & GNU Utilities (GPL-2.0-or-later) - https://www.kernel.org/doc/man-pages/
+- Ansible Project (GPLv3) - https://github.com/ansible/ansible
+
+Paraphrased content, remediation code, and identifiers are integrated to provide a unified toolkit for RHEL 9 compliance. Full compliance details: [link to detailed licensing document].
+```
+
+See `NOTICE` at the repo root for the fuller, per-family derivation statement
+(what is verbatim public-domain text versus paraphrase-only, and where each
+family's raw source is staged for a licensing audit).
+
 ## Documentation
 
-- [USER_GUIDE.md](USER_GUIDE.md) — Core workflows and UI reference
-- [CHANGELOG.md](CHANGELOG.md) — Version history and feature timeline
-- [IDEAS.md](IDEAS.md) — Feature backlog and decision log
-- [WORKFLOW.md](WORKFLOW.md) — Content pipeline and refresh cycles
-- [TEST_PLAN.md](TEST_PLAN.md) — QA charter and validation protocols
-- [QA_GATES.md](QA_GATES.md) — Every gate: what it proves, its negative control, its residuals
-- [ARCHITECTURE_BIBLE.md](ARCHITECTURE_BIBLE.md) — System design and data models
-- [CODE_STANDARDS.md](CODE_STANDARDS.md) — Engineering patterns and security rules
-- [SSP.md](SSP.md) — Security compliance and controls (NIST 800-53)
-- [POAM.md](POAM.md) — Open findings and remediation plans
+- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) -- Core workflows and UI reference
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) -- Version history and feature timeline
+- [docs/IDEAS.md](docs/IDEAS.md) -- Feature backlog and decision log
+- [docs/WORKFLOW.md](docs/WORKFLOW.md) -- Content pipeline and refresh cycles
+- [docs/TEST_PLAN.md](docs/TEST_PLAN.md) -- QA charter and validation protocols
+- [docs/QA_GATES.md](docs/QA_GATES.md) -- Every gate: what it proves, its negative control, its residuals
+- [docs/ARCHITECTURE_BIBLE.md](docs/ARCHITECTURE_BIBLE.md) -- System design and data models
+- [docs/CODE_STANDARDS.md](docs/CODE_STANDARDS.md) -- Engineering patterns and security rules
+- [docs/SSP.md](docs/SSP.md) -- Security compliance and controls (NIST 800-53)
+- [docs/POAM.md](docs/POAM.md) -- Open findings and remediation plans
 
-**Status:** In Design. Security Review pending.
+**Status:** Build stage, Phase 1 engineering scope on `main`. `python3 qa.py`
+passes all 22 gates plus the JS syntax check; see `docs/QA_GATES.md` for what
+each gate proves and does not prove, and `docs/POAM.md` for open findings.
+Known content gaps (RHEL 9 flags, RHEL 7 host coverage, uncurated flag
+explanations) are listed in `docs/USER_GUIDE.md`'s Known Limitations section,
+not hidden in this status line.
 
 **Contact:** Zee (Engineering) | Jordan Patel (PM) | Sam Kim (Technical Writer)
