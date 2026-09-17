@@ -1,0 +1,327 @@
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"raw_captures","generator":"extract/mine_commands.py","line_count":326,"reasons":{"config-fragment":8,"output-fragment":142,"prose":167,"unparseable":9},"rhel_version":"8","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"a":{"l":11,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-a|--activate y|n|ay"}
+{"a":{"l":12,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-A|--autobackup y|n"}
+{"a":{"l":14,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-A|--autobackup y|n"}
+{"a":{"l":1429,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"config-fragment","x":"ly: -i specifies the total number of stripes, but -m specifies the num‐"}
+{"a":{"l":485,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"config-fragment","x":"-D"}
+{"a":{"l":487,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"config-fragment","x":"-A exclude,always -F exe=/usr/bin/sudo"}
+{"a":{"l":68,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-k|--setactivationskip y|n"}
+{"a":{"l":85,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-W|--wipesignatures y|n"}
+{"a":{"l":10,"p":"content-src/raw/rhel8/git.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]"}
+{"a":{"l":11,"p":"content-src/raw/rhel8/git.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[--config-env=<name>=<envvar>] <command> [<args>]"}
+{"a":{"l":11,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--alloc contiguous|cling|cling_by_tags|normal|anywhere|inherit"}
+{"a":{"l":1157,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"\"My wired connection\" name."}
+{"a":{"l":1167,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"00:3A:98:7C:42:D3."}
+{"a":{"l":1192,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"\"Cafe Hotspot 1\" SSID using password \"caffeine\". This is mainly"}
+{"a":{"l":12,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--addtag Tag"}
+{"a":{"l":1214,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"connection's autoconnect flag."}
+{"a":{"l":1230,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"connection\""}
+{"a":{"l":1235,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"'ethernet-2' connection."}
+{"a":{"l":1242,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"192.168.1.1, 10.10.1.5/8, 10.0.0.11\""}
+{"a":{"l":1256,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"(vpnc) configuration."}
+{"a":{"l":13,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--alloc contiguous|cling|cling_by_tags|normal|anywhere|inherit"}
+{"a":{"l":13,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--commandprofile String"}
+{"a":{"l":14,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--config String"}
+{"a":{"l":1425,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"--type raid5 -l 100%FREE -n mylv vg00"}
+{"a":{"l":1440,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"-V 1t -L 100m -i 2 -I 64 -c 256 vg00"}
+{"a":{"l":1457,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"-L 100G -n mylv vg00 /dev/slow1"}
+{"a":{"l":15,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-H|--cache"}
+{"a":{"l":15,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-d|--debug"}
+{"a":{"l":16,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachedevice PV"}
+{"a":{"l":16,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--devices PV"}
+{"a":{"l":17,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachemetadataformat auto|1|2"}
+{"a":{"l":17,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--devicesfile String"}
+{"a":{"l":18,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachemode writethrough|writeback|passthrough"}
+{"a":{"l":18,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--driverloaded y|n"}
+{"a":{"l":19,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachepolicy String"}
+{"a":{"l":19,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-l|--extents [+]Number[PERCENT]"}
+{"a":{"l":19,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"user)"}
+{"a":{"l":20,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachepool LV"}
+{"a":{"l":20,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-f|--force"}
+{"a":{"l":21,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachesettings String"}
+{"a":{"l":21,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-h|--help"}
+{"a":{"l":22,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachesize Size[m|UNIT]"}
+{"a":{"l":22,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--journal String"}
+{"a":{"l":23,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--cachevol LV"}
+{"a":{"l":23,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--lockopt String"}
+{"a":{"l":24,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-c|--chunksize Size[k|UNIT]"}
+{"a":{"l":24,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--longhelp"}
+{"a":{"l":25,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--commandprofile String"}
+{"a":{"l":25,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-m|--mirrors Number"}
+{"a":{"l":26,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--compression y|n"}
+{"a":{"l":26,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-n|--nofsck"}
+{"a":{"l":27,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--config String"}
+{"a":{"l":27,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nohints"}
+{"a":{"l":28,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-C|--contiguous y|n"}
+{"a":{"l":28,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nolocking"}
+{"a":{"l":29,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-d|--debug"}
+{"a":{"l":29,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nosync"}
+{"a":{"l":30,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--deduplication y|n"}
+{"a":{"l":30,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--noudevsync"}
+{"a":{"l":31,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--devices PV"}
+{"a":{"l":31,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--poolmetadatasize [+]Size[m|UNIT]"}
+{"a":{"l":32,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--devicesfile String"}
+{"a":{"l":32,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--profile String"}
+{"a":{"l":33,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--discards passdown|nopassdown|ignore"}
+{"a":{"l":33,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-q|--quiet"}
+{"a":{"l":34,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--driverloaded y|n"}
+{"a":{"l":34,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--reportformat basic|json"}
+{"a":{"l":35,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--errorwhenfull y|n"}
+{"a":{"l":35,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-r|--resizefs"}
+{"a":{"l":36,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-l|--extents Number[PERCENT]"}
+{"a":{"l":36,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-L|--size [+]Size[m|UNIT]"}
+{"a":{"l":367,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# ausearch --start today --loginuid john -i"}
+{"a":{"l":37,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-h|--help"}
+{"a":{"l":37,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-i|--stripes Number"}
+{"a":{"l":370,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# ausearch --start today -m avc -i"}
+{"a":{"l":373,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# ausearch --start today --format text"}
+{"a":{"l":376,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# ausearch --start today -m TTY -i --escape shell_quote"}
+{"a":{"l":38,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-K|--ignoreactivationskip"}
+{"a":{"l":38,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-I|--stripesize Size[k|UNIT]"}
+{"a":{"l":39,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--ignoremonitoring"}
+{"a":{"l":39,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-t|--test"}
+{"a":{"l":40,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--journal String"}
+{"a":{"l":40,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--type linear|striped|snapshot|raid|mirror|thin|thin-pool|vdo|"}
+{"a":{"l":41,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--lockopt String"}
+{"a":{"l":42,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--longhelp"}
+{"a":{"l":42,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--usepolicies"}
+{"a":{"l":43,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-j|--major Number"}
+{"a":{"l":43,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-v|--verbose"}
+{"a":{"l":44,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--[raid]maxrecoveryrate Size[k|UNIT]"}
+{"a":{"l":44,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--version"}
+{"a":{"l":45,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--metadataprofile String"}
+{"a":{"l":45,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-y|--yes"}
+{"a":{"l":455,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# By pid:"}
+{"a":{"l":457,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# By executable path"}
+{"a":{"l":46,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--minor Number"}
+{"a":{"l":47,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--[raid]minrecoveryrate Size[k|UNIT]"}
+{"a":{"l":48,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--mirrorlog core|disk"}
+{"a":{"l":484,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# Remove all existing rules"}
+{"a":{"l":486,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"# Never record sudo invocations"}
+{"a":{"l":49,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-m|--mirrors Number"}
+{"a":{"l":50,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--monitor y|n"}
+{"a":{"l":51,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-n|--name String"}
+{"a":{"l":52,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nohints"}
+{"a":{"l":53,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nolocking"}
+{"a":{"l":54,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--nosync"}
+{"a":{"l":55,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--noudevsync"}
+{"a":{"l":56,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-p|--permission rw|r"}
+{"a":{"l":563,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"-u/--unit= should be used.  journalctl -u name expands to a complex"}
+{"a":{"l":567,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"+ UNIT=name.service _PID=1"}
+{"a":{"l":568,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"+ OBJECT_SYSTEMD_UNIT=name.service _UID=0"}
+{"a":{"l":569,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"output-fragment","x":"+ COREDUMP_UNIT=name.service _UID=0 MESSAGE_ID=fc2e22bc6ee647b6b90729ab34a250b1"}
+{"a":{"l":57,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-M|--persistent y|n"}
+{"a":{"l":58,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--poolmetadatasize Size[m|UNIT]"}
+{"a":{"l":59,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--poolmetadataspare y|n"}
+{"a":{"l":60,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--profile String"}
+{"a":{"l":61,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-q|--quiet"}
+{"a":{"l":62,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--raidintegrity y|n"}
+{"a":{"l":63,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--raidintegrityblocksize Number"}
+{"a":{"l":64,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--raidintegritymode String"}
+{"a":{"l":65,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-r|--readahead auto|none|Number"}
+{"a":{"l":66,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-R|--regionsize Size[m|UNIT]"}
+{"a":{"l":67,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--reportformat basic|json"}
+{"a":{"l":69,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--setautoactivation y|n"}
+{"a":{"l":70,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-L|--size Size[m|UNIT]"}
+{"a":{"l":71,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-s|--snapshot"}
+{"a":{"l":72,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-i|--stripes Number"}
+{"a":{"l":73,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-I|--stripesize Size[k|UNIT]"}
+{"a":{"l":74,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-t|--test"}
+{"a":{"l":75,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-T|--thin"}
+{"a":{"l":76,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--thinpool LV"}
+{"a":{"l":77,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--type linear|striped|snapshot|raid|mirror|thin|thin-pool|vdo|"}
+{"a":{"l":79,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--vdo"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/git.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ option_args ]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ option_args ]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ option_args ]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"text,boolean,permissive,dontaudit,ibpkey,ibendport}"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/sshd.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[-E log_file] [-f config_file] [-g login_grace_time]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/vgcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ option_args ]"}
+{"a":{"l":80,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--vdopool LV"}
+{"a":{"l":81,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--vdosettings String"}
+{"a":{"l":82,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-v|--verbose"}
+{"a":{"l":83,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"--version"}
+{"a":{"l":84,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-V|--virtualsize Size[m|UNIT]"}
+{"a":{"l":86,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-y|--yes"}
+{"a":{"l":87,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"-Z|--zero y|n"}
+{"a":{"l":9,"p":"content-src/raw/rhel8/git.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]"}
+{"a":{"l":9,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ position_args ]"}
+{"a":{"l":9,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ position_args ]"}
+{"a":{"l":9,"p":"content-src/raw/rhel8/sshd.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[-h host_key_file] [-o option] [-p port] [-u len]"}
+{"a":{"l":11,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"import Import local customizations"}
+{"a":{"l":1119,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"This section presents various examples of nmcli usage. If you want even"}
+{"a":{"l":1120,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"more, please refer to nmcli-examples(7) manual page."}
+{"a":{"l":1123,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"tells you whether NetworkManager is running or not."}
+{"a":{"l":1126,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows the overall status of NetworkManager."}
+{"a":{"l":1129,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"switches Wi-Fi off."}
+{"a":{"l":1132,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"lists all connections NetworkManager has."}
+{"a":{"l":1135,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows all configured connections in multi-line mode."}
+{"a":{"l":1138,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"lists all currently active connections."}
+{"a":{"l":1141,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows all connection profile names and their auto-connect property."}
+{"a":{"l":1144,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows details for \"My default em1\" connection profile."}
+{"a":{"l":1147,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows details for \"My Home Wi-Fi\" connection profile with all"}
+{"a":{"l":1148,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"passwords. Without --show-secrets option, secrets would not be"}
+{"a":{"l":1152,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows details for \"My default em1\" active connection, like IP, DHCP"}
+{"a":{"l":1153,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"information, etc."}
+{"a":{"l":1156,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows static configuration details of the connection profile with"}
+{"a":{"l":1160,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"activates the connection profile with name \"My wired connection\" on"}
+{"a":{"l":1161,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"interface eth0. The -p option makes nmcli show progress of the"}
+{"a":{"l":1165,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"connects the Wi-Fi connection with UUID"}
+{"a":{"l":1166,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"6b028a27-6dc9-4411-9886-e9ad1dd43761 to the AP with BSSID"}
+{"a":{"l":1170,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows the status for all devices."}
+{"a":{"l":1173,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"disconnects a connection on interface em2 and marks the device as"}
+{"a":{"l":1174,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"unavailable for auto-connecting. As a result, no connection will"}
+{"a":{"l":1175,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"automatically be activated on the device until the device's"}
+{"a":{"l":1176,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"'autoconnect' is set to TRUE or the user manually activates a"}
+{"a":{"l":1180,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows details for wlan0 interface; only GENERAL and WIFI-PROPERTIES"}
+{"a":{"l":1181,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"sections will be shown."}
+{"a":{"l":1184,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"shows all available connection profiles for your Wi-Fi interface"}
+{"a":{"l":1188,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"lists available Wi-Fi access points known to NetworkManager."}
+{"a":{"l":1191,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"creates a new connection named \"My cafe\" and then connects it to"}
+{"a":{"l":1193,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"useful when connecting to \"Cafe Hotspot 1\" for the first time. Next"}
+{"a":{"l":1194,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"time, it is better to use nmcli con up id \"My cafe\" so that the"}
+{"a":{"l":1195,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"existing connection profile can be used and no additional is"}
+{"a":{"l":1199,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"creates a hotspot profile and connects it. Prints the hotspot"}
+{"a":{"l":1200,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"password the user should use to connect to the hotspot from other"}
+{"a":{"l":1204,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"starts IPv4 connection sharing using em1 device. The sharing will"}
+{"a":{"l":1205,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"be active until the device is disconnected."}
+{"a":{"l":1208,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"temporarily adds an IP address to a device. The address will be"}
+{"a":{"l":1209,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"removed when the same connection is activated again."}
+{"a":{"l":1212,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"non-interactively adds an Ethernet connection tied to eth0"}
+{"a":{"l":1213,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"interface with automatic IP configuration (DHCP), and disables the"}
+{"a":{"l":1217,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"non-interactively adds a VLAN connection with ID 55. The connection"}
+{"a":{"l":1218,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"will use eth0 and the VLAN interface will be named Maxipes-fik."}
+{"a":{"l":1221,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"link-local"}
+{"a":{"l":1222,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"non-interactively adds a connection that will use eth0 Ethernet"}
+{"a":{"l":1223,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"interface and only have an IPv6 link-local address configured."}
+{"a":{"l":1226,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"edits existing \"ethernet-em1-2\" connection in the interactive"}
+{"a":{"l":1231,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"adds a new Ethernet connection in the interactive editor."}
+{"a":{"l":1234,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"modifies 'autoconnect' property in the 'connection' setting of"}
+{"a":{"l":1238,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"modifies 'mtu' property in the 'wifi' setting of 'Home Wi-Fi'"}
+{"a":{"l":1243,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"sets manual addressing and the addresses in em1-1 profile."}
+{"a":{"l":1246,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"appends a Google public DNS server to DNS servers in ABC profile."}
+{"a":{"l":1249,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"removes the specified IP address from (static) profile ABC."}
+{"a":{"l":1252,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"imports an OpenVPN configuration to NetworkManager."}
+{"a":{"l":1255,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"exports NetworkManager VPN profile corp-vpnc as standard Cisco"}
+{"a":{"l":13,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"export Output local customizations"}
+{"a":{"l":1345,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"For more examples see http://fedoraproject.org/wiki/FirewallD"}
+{"a":{"l":1347,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Example 1"}
+{"a":{"l":1348,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Enable http service in default zone. This is runtime only change, i.e."}
+{"a":{"l":1349,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"effective until restart."}
+{"a":{"l":1353,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Example 2"}
+{"a":{"l":1354,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Enable port 443/tcp immediately and permanently in default zone. To"}
+{"a":{"l":1355,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"make the change effective immediately and also after restart we need"}
+{"a":{"l":1356,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"two commands. The first command makes the change in runtime"}
+{"a":{"l":1357,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"configuration, i.e. makes it effective immediately, until restart. The"}
+{"a":{"l":1358,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"second command makes the change in permanent configuration, i.e. makes"}
+{"a":{"l":1359,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"it effective after restart."}
+{"a":{"l":1383,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a striped LV with 3 stripes, a stripe size of 8KiB and a size of"}
+{"a":{"l":1384,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"100MiB.  The LV name is chosen by lvcreate."}
+{"a":{"l":1387,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a raid1 LV with two images, and a useable size of 500 MiB.  This"}
+{"a":{"l":1388,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"operation requires two devices, one for each mirror image. RAID metada‐"}
+{"a":{"l":1389,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"ta (superblock and bitmap) is also included on the two devices."}
+{"a":{"l":1392,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a mirror LV with two images, and a  useable  size  of  500  MiB."}
+{"a":{"l":1393,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"This  operation  requires  three devices: two for mirror images and one"}
+{"a":{"l":1394,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"for a disk log."}
+{"a":{"l":1397,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a mirror LV with 2 images, and a useable size of 500 MiB.   This"}
+{"a":{"l":1398,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"operation requires 2 devices because the log is in memory."}
+{"a":{"l":1401,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a copy-on-write snapshot of an LV:"}
+{"a":{"l":1404,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a copy-on-write snapshot with a size sufficient for overwriting"}
+{"a":{"l":1405,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"20% of the size of the original LV."}
+{"a":{"l":1408,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a sparse LV with 1TiB of virtual space, and  actual  space  just"}
+{"a":{"l":1409,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"under 100MiB."}
+{"a":{"l":1412,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a linear LV with a usable size of 64MiB on specific physical ex‐"}
+{"a":{"l":1416,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a RAID5 LV with a usable size of 5GiB, 3 stripes, a stripe  size"}
+{"a":{"l":1417,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"of 64KiB, using a total of 4 devices (including one for parity)."}
+{"a":{"l":1420,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a  RAID5  LV using all of the free space in the VG and spanning"}
+{"a":{"l":1421,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"all the PVs in the VG (note that the command will  fail  if  there  are"}
+{"a":{"l":1422,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"more  than  8  PVs in the VG, in which case -i 7 must be used to get to"}
+{"a":{"l":1423,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"the current maximum of 8 devices including parity for RaidLVs)."}
+{"a":{"l":1427,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create RAID10 LV with a usable size of 5GiB, using 2 stripes, each on a"}
+{"a":{"l":1428,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"two-image  mirror. (Note that the -i and -m arguments behave different‐"}
+{"a":{"l":1430,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"ber of images in addition to the first image)."}
+{"a":{"l":1433,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a 1TiB thin LV mythin, with 256GiB thinpool tpool0 in vg00."}
+{"a":{"l":1436,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a 1TiB thin LV, first creating a new thin pool for it, where the"}
+{"a":{"l":1437,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"thin pool has 100MiB of space, uses 2 stripes, has a 64KiB stripe size,"}
+{"a":{"l":1438,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"and 256KiB chunk size."}
+{"a":{"l":1441,"p":"content-src/raw/rhel8/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"For examples how to use systemctl in comparsion with old service and"}
+{"a":{"l":1442,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a thin snapshot of a thin LV (the size option must not be used,"}
+{"a":{"l":1442,"p":"content-src/raw/rhel8/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"chkconfig command please see: Managing System Services[2]"}
+{"a":{"l":1443,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"otherwise a copy-on-write snapshot would be created)."}
+{"a":{"l":1446,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a thin snapshot of the  read-only  inactive  LV  named  \"origin\""}
+{"a":{"l":1447,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"which becomes an external origin for the thin snapshot LV."}
+{"a":{"l":1450,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a  cache  pool  from a fast physical device. The cache pool can"}
+{"a":{"l":1451,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"then be used to cache an LV."}
+{"a":{"l":1454,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a cache LV, first creating a new origin LV on  a  slow  physical"}
+{"a":{"l":1455,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"device, then combining the new origin LV with an existing cache pool."}
+{"a":{"l":1459,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a VDO LV vdo0 with VDOPoolLV size of 10GiB and name vpool1."}
+{"a":{"l":15,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"login Manage login mappings between linux users  and  SELinux  confined"}
+{"a":{"l":16,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"users"}
+{"a":{"l":18,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"user  Manage  SELinux  confined  users (Roles and levels for an SELinux"}
+{"a":{"l":21,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"port Manage network port type definitions"}
+{"a":{"l":23,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"interface Manage network interface type definitions"}
+{"a":{"l":25,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"module Manage SELinux policy modules"}
+{"a":{"l":27,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"node Manage network node type definitions"}
+{"a":{"l":29,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"fcontext Manage file context mapping definitions"}
+{"a":{"l":31,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"boolean Manage booleans to selectively enable functionality"}
+{"a":{"l":33,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"permissive Manage process type enforcement mode"}
+{"a":{"l":330,"p":"content-src/raw/rhel8/vgcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a VG with two PVs, using the default physical extent size."}
+{"a":{"l":337,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Initialize a partition and a full device."}
+{"a":{"l":340,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"If  a device is a 4KiB sector drive that compensates for windows parti‐"}
+{"a":{"l":341,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"tioning (sector 7 is the lowest aligned logical block, the 4KiB sectors"}
+{"a":{"l":342,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"start at LBA -1, and consequently sector 63 is aligned on a 4KiB bound‐"}
+{"a":{"l":343,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"ary) manually account for this when initializing for use by LVM."}
+{"a":{"l":35,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"dontaudit Disable/Enable dontaudit rules in policy"}
+{"a":{"l":366,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"prose","x":"Search for a specific user:"}
+{"a":{"l":369,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"prose","x":"Check the SELinux log for any denials today"}
+{"a":{"l":37,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"ibpkey Manage infiniband pkey type definitions"}
+{"a":{"l":372,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"prose","x":"Output logs in text format"}
+{"a":{"l":375,"p":"content-src/raw/rhel8/ausearch.man.txt","x":"EXAMPLES"},"r":"prose","x":"Output TTY events interpreted and shell escaped"}
+{"a":{"l":39,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"ibendport Manage infiniband end port type definitions"}
+{"a":{"l":397,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"Extend the size of an LV by 54MiB, using a specific PV."}
+{"a":{"l":400,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"Extend the size of an LV by the amount of free space on  PV  /dev/sdk3."}
+{"a":{"l":401,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"This is equivalent to specifying \"-l +100%PVS\" on the command line."}
+{"a":{"l":404,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"Extend an LV by 16MiB using specific physical extents."}
+{"a":{"l":407,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"Extend  an  LV  to use all remaining free space in volume group and all"}
+{"a":{"l":408,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"EXAMPLES"},"r":"prose","x":"resize its filesystem with fsadm(8)."}
+{"a":{"l":41,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"prose","x":"vdo-pool|cache|cache-pool|writecache"}
+{"a":{"l":453,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To see all syscalls made by a specific program:"}
+{"a":{"l":460,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To see files opened by a specific user:"}
+{"a":{"l":464,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To see unsuccessful openat calls:"}
+{"a":{"l":468,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To watch a file for changes (2 ways to express):"}
+{"a":{"l":473,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To recursively watch a directory for changes (2 ways to express):"}
+{"a":{"l":478,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To see if an admin is accessing other user's files:"}
+{"a":{"l":482,"p":"content-src/raw/rhel8/auditctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"This is an example rules file:"}
+{"a":{"l":535,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Without arguments, all collected logs are shown unfiltered:"}
+{"a":{"l":539,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"With one match specified, all entries with a field matching the"}
+{"a":{"l":540,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
+{"a":{"l":545,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two different fields are matched, only entries matching both"}
+{"a":{"l":546,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expressions at the same time are shown:"}
+{"a":{"l":550,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two matches refer to the same field, all entries matching either"}
+{"a":{"l":551,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
+{"a":{"l":555,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If the separator \"+\" is used, two expressions may be combined in a"}
+{"a":{"l":556,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"logical OR. The following will show all messages from the Avahi service"}
+{"a":{"l":557,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"process with the PID 28097 plus all messages from the D-Bus service"}
+{"a":{"l":558,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"(from any of its processes):"}
+{"a":{"l":562,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"To show all fields emitted by a unit and about the unit, option"}
+{"a":{"l":564,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"filter similar to"}
+{"a":{"l":566,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"_SYSTEMD_UNIT=name.service"}
+{"a":{"l":571,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"(see systemd.journal-fields(5) for an explanation of those patterns)."}
+{"a":{"l":573,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Show all logs generated by the D-Bus executable:"}
+{"a":{"l":577,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Show all kernel logs from previous boot:"}
+{"a":{"l":581,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Show a live log display from a system service apache.service:"}
+{"a":{"l":7,"p":"content-src/raw/rhel8/yum.man.txt","x":"SYNOPSIS"},"r":"prose","x":"dnf [options] <command> [<args>...]"}
+{"a":{"l":78,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"prose","x":"vdo-pool|cache|cache-pool|writecache"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"SYNOPSIS"},"r":"prose","x":"device | agent | monitor} [COMMAND] [ARGUMENTS...]"}
+{"a":{"l":8,"p":"content-src/raw/rhel8/rsyslogd.man.txt","x":"SYNOPSIS"},"r":"prose","x":"level ] [ -o fullconf ] [ -C ] [ -v ]"}
+{"a":{"l":9,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"...  positional arguments:"}
+{"a":{"l":1149,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"displayed."}
+{"a":{"l":1162,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"activation."}
+{"a":{"l":1177,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"connection."}
+{"a":{"l":1185,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"wlp3s0."}
+{"a":{"l":1196,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"created."}
+{"a":{"l":1201,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"devices."}
+{"a":{"l":1227,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"editor."}
+{"a":{"l":1239,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"connection."}
+{"a":{"l":1413,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"tents."}

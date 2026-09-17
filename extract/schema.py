@@ -22,7 +22,18 @@ import re
 
 VERSIONS = ("7", "8", "9", "10")
 BLASTS = ("green", "yellow", "red")
-LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
+# "cc-by-sa-3.0" is the THIRD class, added for the Red Hat product-documentation
+# command lines (licensing ruling v1 Ruling 2, Alex Okafor, 2026-09-18: EMBED
+# WITH CONDITIONS). It is not "verbatim-ok" -- that class means public-domain
+# DISA text this product may reproduce freely -- and it is not "paraphrase-only",
+# because the ruling permits the COMMAND LINE itself to be embedded. It carries
+# obligations the other two do not: per-command attribution (guide title, URL,
+# "(c) Red Hat, Inc., CC BY-SA 3.0 Unported"), a full CC BY-SA notice in the
+# About panel, and the surrounding PROSE staying paraphrase-only with no
+# exception. The ruling is explicitly a judgment call, and attribution alone may
+# not discharge share-alike if counsel later disagrees -- nothing in this
+# codebase may be written as though it settles the question.
+LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only", "cc-by-sa-3.0")
 # G4(e): an entry's OWN command needs elevated privilege to run on a STIG'd
 # host that the shipped command itself never requests (sudo/su) -- distinct
 # from blast, which rates what the command DOES once it runs, not what it
@@ -33,6 +44,48 @@ LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
 # privilege is declared. A small closed set, not a free string, so a future
 # author cannot invent a fourth privilege level the UI has no copy for.
 PRIVILEGES = ("root",)
+
+# ---------------------------------------------------------------------------
+# TROJAN_RANGES -- the ONE table of characters that must never appear raw
+# (threat model v2, M8: "one trojan range table, never a second copy").
+#
+# qa.py states the same table for its own gates (Q17 on the shipped artifact,
+# Q21 on every tracked file) because qa.py imports nothing from extract/ on
+# principle -- a gate that re-uses the extractor's code path cannot catch the
+# extractor being wrong. tests/test_schema.py asserts the two statements are
+# IDENTICAL, element for element, exactly as it already does for the field-type
+# and rich-rule slot tables, so they cannot drift.
+#
+# Written as numbers, never as the characters and never as backslash-u escapes
+# inside a literal, so this file stays clean for Q21's own scan.
+# ---------------------------------------------------------------------------
+TROJAN_RANGES = [
+    (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping tab/LF/CR
+    (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
+    (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
+    (0x200B, 0x200F), (0x2028, 0x2029), (0x202A, 0x202E),     # zero-width, line/paragraph
+                                                              #   separators, bidi overrides
+    (0x2060, 0x206F),                                         # word joiner, invisible format
+                                                              #   and bidi isolates, 2065 included
+    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
+]
+TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
+
+
+def escape_trojan(text):
+    """Every character of TROJAN_RANGES rewritten as the six ASCII characters
+    that NAME it, so a file recording hostile source text is itself readable,
+    diffable and clean under Q21 (threat model v2, M1).
+
+    M1 is a real contradiction, not a hypothetical: ADR-002 routes
+    trojan-carrying source lines into content-src/residue/, Q21 refuses raw
+    control/bidi/zero-width characters in EVERY tracked file with
+    TROJAN_SCAN_EXCLUDE = (), and the first bidirectional override in a vendor
+    PDF would break the build. Excluding residue from Q21 would re-open
+    MCR-SEC-024 by hand. Escaping on the way in resolves it without weakening
+    either rule.
+    """
+    return TROJAN_RE.sub(lambda m: "\\u%04X" % ord(m.group()), str(text))
 
 # ---------------------------------------------------------------------------
 # Header-bound strings must be single-line (MCR-SEC-003).
@@ -922,4 +975,418 @@ def content_errors(data, source_ids=None, have_sources_json=False):
     dupes = sorted(set(i for i in ids if ids.count(i) > 1))
     if dupes:
         errs.append("duplicate command entry ids: %s" % ", ".join(dupes))
+
+    # The mined vendor-reference family. Checked against the CURATED ids so a
+    # mined record can never occupy an id the assembler would resolve.
+    if "reference_commands" in data:
+        errs += reference_commands_errors(data.get("reference_commands"), curated_ids=ids)
+    return errs
+
+
+# ---------------------------------------------------------------------------
+# command-head resolution and stage splitting (ADR-002 ruling 1, Al Kowalski)
+#
+# WHY. qa.py Q22 asserts "the declared tool is the invoked binary" by taking the
+# first word of a command and stripping ONE leading "sudo". Measured against the
+# command text this product now mines out of DISA check/fix prose, that rule is
+# wrong on a large fraction of real lines: 57% are sudo-headed (several of those
+# with sudo's OWN options in front of the binary) and 462 are multi-stage
+# pipelines. A gate that is wrong that often gets loosened until it proves
+# nothing, so the resolution is fixed here instead, once, and shared.
+#
+# TWO INDEPENDENT STATEMENTS, ON PURPOSE. This module is the authority for
+# content (build.py and extract/ import it). qa.py keeps its own implementation
+# of the same rule, as it does for the provenance and header-bound field rules,
+# because a gate that re-uses the extractor's code path cannot catch the
+# extractor being wrong. tests/test_command_head.py runs BOTH over one fixture
+# table and asserts they agree -- and asserts that the NAIVE rule this replaces
+# gets those same rows wrong, so the table cannot be satisfied by weakening the
+# resolver back to where it started.
+#
+# WHAT IS AND IS NOT DESCENDED INTO. `sudo`, `doas`, `env`, `nohup`, `timeout`,
+# `nice`, `ionice`, `stdbuf`, `setsid`, `xargs`, `command`, `exec`, `time` and
+# `runuser` are transparent wrappers: the binary the operator cares about is
+# behind them. `su`, `sh`, `bash` and `sudo -s`/`sudo -i` are NOT -- they take
+# their command as a quoted STRING argument, and the binary this line invokes
+# really is su/sh/bash. Guessing at the contents of a quoted -c argument would
+# be inventing a fact; the honest head is the wrapper itself.
+# ---------------------------------------------------------------------------
+
+# wrapper -> options of that wrapper which consume a following argument.
+#
+# DELIBERATELY SMALL (threat model v2, M4). ADR-002 named sudo, sudo -u X, env
+# VAR=v, nohup, timeout N and xargs. Marcus Reed narrowed that and the narrowing
+# is adopted: `env VAR=value`, `su -c` and `sh -c`/`bash -c` prefixes go to
+# RESIDUE, not parsing. His reason -- asking a gate to grow a parser puts a
+# parser in the trust path -- is the right one, so this table holds only the
+# wrappers that are both unambiguous and unavoidable: `sudo` heads 57% of the
+# command text this product mines, and dropping it would mis-file the majority
+# of the catalog under a tool called "sudo".
+#
+# NOT here, on purpose: env (M4), su/sh/bash (their -c argument is a quoted
+# string this module will not guess the contents of -- M4 routes those lines to
+# residue), and the long tail (nice, ionice, stdbuf, setsid, runuser, command,
+# exec, time). For that tail the wrapper IS the invoked binary and is reported
+# as such; that is a true statement with no parsing behind it.
+TRANSPARENT_WRAPPERS = {
+    "sudo": ("-u", "-g", "-p", "-C", "-U", "-r", "-t", "-h", "-D", "-R",
+             "--user", "--group", "--prompt", "--role", "--type", "--close-from",
+             "--host", "--chdir", "--chroot"),
+    "doas": ("-u", "-C"),
+    "nohup": (),
+    "xargs": ("-I", "-i", "-n", "-P", "-d", "-E", "-e", "-s", "-a", "-L", "-l",
+              "--replace", "--max-args", "--max-procs", "--delimiter", "--eof",
+              "--max-chars", "--arg-file", "--max-lines"),
+    "timeout": ("-s", "-k", "--signal", "--kill-after"),
+}
+# Wrappers whose first non-option POSITIONAL argument is their own (a duration,
+# not the program): `timeout 5 systemctl ...`.
+WRAPPER_EATS_ONE_POSITIONAL = ("timeout",)
+# A wrapper option that means "run a shell", so there is no further binary to
+# resolve to and the wrapper itself is the head.
+WRAPPER_STOPS_HERE = ("-s", "-i", "--shell", "--login", "-c")
+
+# Heads whose command is a quoted string argument. M4: a line headed by one of
+# these is REFUSED, not parsed -- it is recorded in residue instead. Naming them
+# here keeps the refusal a property of the shared table rather than a rule each
+# caller reinvents.
+REFUSED_HEADS = ("su", "sh", "bash", "ksh", "zsh", "dash", "env", "chroot", "eval")
+
+ENV_ASSIGN_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+# Top-level stage separators. `|&` is bash's "pipe stderr too"; `|` covers it.
+STAGE_SEPARATORS = ("||", "&&", "|", ";", "\n")
+
+
+def split_tokens(cmd):
+    """Whitespace tokens, honouring single and double quotes.
+
+    Not a shell parser and never used as one: the command TEXT is always kept
+    exactly as the source wrote it. This exists only to find the program name.
+    """
+    out, buf, quote = [], "", None
+    for ch in str(cmd):
+        if quote:
+            buf += ch
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf += ch
+            continue
+        if ch.isspace():
+            if buf:
+                out.append(buf)
+                buf = ""
+            continue
+        buf += ch
+    if buf:
+        out.append(buf)
+    return out
+
+
+def split_stages(cmd):
+    """Top-level pipeline/list stages, in order, quotes and $( ) respected.
+
+    A command substitution is NOT a stage: `stat -c %U $(ls -d /x | head -1)`
+    runs stat, and the pipe inside the substitution belongs to the substitution.
+    """
+    stages, buf, quote, depth, i = [], "", None, 0, 0
+    s = str(cmd)
+    while i < len(s):
+        ch = s[i]
+        if quote:
+            buf += ch
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf += ch
+            i += 1
+            continue
+        if ch == "`":
+            depth += 1 if depth == 0 else -1     # backticks toggle rather than nest
+            buf += ch
+            i += 1
+            continue
+        if s.startswith("$(", i):
+            depth += 1
+            buf += "$("
+            i += 2
+            continue
+        if ch == "(" and depth > 0:
+            depth += 1
+            buf += ch
+            i += 1
+            continue
+        if ch == ")" and depth > 0:
+            depth -= 1
+            buf += ch
+            i += 1
+            continue
+        if depth == 0:
+            hit = None
+            for sep in STAGE_SEPARATORS:
+                if s.startswith(sep, i):
+                    hit = sep
+                    break
+            if hit:
+                stages.append(buf.strip())
+                buf = ""
+                i += len(hit)
+                continue
+        buf += ch
+        i += 1
+    stages.append(buf.strip())
+    return [st for st in stages if st]
+
+
+def command_head(stage):
+    """The binary ONE stage invokes, resolved through the transparent wrappers.
+
+    Returns the token as written (so an absolute path stays absolute); use
+    head_binary() for the basename. None when the stage names no program.
+    """
+    toks = split_tokens(stage)
+    i = 0
+    while True:
+        while i < len(toks) and ENV_ASSIGN_RE.match(toks[i]):
+            i += 1
+        if i >= len(toks):
+            return None
+        name = toks[i].rsplit("/", 1)[-1]
+        if name not in TRANSPARENT_WRAPPERS:
+            return toks[i]
+        opts_with_arg = TRANSPARENT_WRAPPERS[name]
+        i += 1
+        stop = False
+        while i < len(toks) and toks[i].startswith("-") and toks[i] != "-":
+            opt = toks[i]
+            if opt == "--":
+                i += 1
+                break
+            if opt in WRAPPER_STOPS_HERE:
+                stop = True
+                break
+            i += 1
+            if opt in opts_with_arg:
+                i += 1
+        if stop:
+            # `sudo -i`, `sudo -s`, `runuser -c '...'`: the program run is a shell
+            # the wrapper starts, and its -c argument is a quoted string this
+            # module will not guess the contents of. The wrapper IS the head.
+            return name
+        if name in WRAPPER_EATS_ONE_POSITIONAL and i < len(toks):
+            i += 1
+        if i >= len(toks):
+            return name                              # a bare wrapper invokes itself
+    # unreachable
+
+
+def head_binary(stage):
+    """command_head() as a bare program name (basename, no path)."""
+    head = command_head(stage)
+    return head.rsplit("/", 1)[-1] if head else None
+
+
+def stage_binaries(cmd):
+    """The binary each top-level stage invokes, in order, duplicates kept.
+
+    ADR-002 ruling 1: a multi-stage command is asserted PER STAGE, never for the
+    line -- `sudo grep x /etc/f | grep -v '^#'` runs grep twice and `sshd -T |
+    awk '{print $1}'` runs two different binaries, and a gate that only looks at
+    the line's first word cannot tell those apart.
+    """
+    return [head_binary(st) for st in split_stages(cmd)]
+
+
+def naive_head(cmd):
+    """The rule this replaces, kept so a test can prove the fixture has teeth.
+
+    NEVER call this for a real answer. It is the pre-ADR-002 Q22 rule: first
+    word, one leading `sudo` stripped.
+    """
+    words = str(cmd).split()
+    if words and words[0] == "sudo":
+        words = words[1:]
+    return words[0] if words else None
+
+
+# ---------------------------------------------------------------------------
+# reference_commands -- the mined vendor-reference family (extract/mine_commands.py)
+#
+# A GENERATED family, and a DIFFERENT TIER from content/commands.json. The 27
+# curated entries carry verify text, undo text, a reviewed blast rating and 18
+# human capture receipts. A mined record carries none of that and must never be
+# able to look as though it does, so this schema REFUSES the keys that would
+# make it look curated -- above all `verified`. ADR-002: "no extractor may ever
+# write a verified receipt -- the schema must refuse it, so a miner cannot
+# invent one while Q16 stays true and silent." That is this function.
+#
+# KEY NAMING. Fields that carry a CLAIM (`tier`, `authority`, `license_class`)
+# are spelled out in full: a reader of the data island must not have to decode
+# an abbreviation to find out how strong a claim a record is making. Bulk fields
+# (`t` tool, `c` command, `k` kind, `v` versions, `st` stage binaries, `o`
+# occurrences) are compact, the same trade the RULES datasets already make.
+# ---------------------------------------------------------------------------
+
+REFERENCE_KINDS = ("invocation", "synopsis")
+# ADR-002 ruling 2. `governing`: DISA STIG check/fix text, for the release that
+# STIG governs -- a requirement, attributable to DISA. `documentary`: a man page
+# or --help capture -- how a binary documents itself, and no requirement at all.
+# Computed from the source, never declared by hand, and never flattened together.
+REFERENCE_AUTHORITIES = ("governing", "documentary")
+# Keys whose presence would make a mined record indistinguishable from a curated
+# one. There is no legitimate reason for an extractor to emit any of them.
+REFERENCE_FORBIDDEN_KEYS = (
+    "verified", "receipt", "capture", "expected_output", "blast", "blast_floor",
+    "rhel_versions", "template", "fields", "stig", "flags", "verify", "undo",
+    "intent", "category", "privilege", "same_as",
+)
+REFERENCE_OCC_FIELDS = ("v", "l")
+
+
+def reference_record_errors(rec, i, source_ids, seen_ids, curated_ids):
+    errs = []
+    where = "reference_commands[%d]" % i
+    if not isinstance(rec, dict):
+        return [where + " is not an object"]
+    rid = rec.get("id")
+    where = "reference_commands %s" % (rid or "#%d" % i)
+    if not isinstance(rid, str) or not rid.startswith("ref-"):
+        errs.append("%s: id must be a string starting with 'ref-' -- the prefix is what keeps a "
+                    "mined record out of the curated id space the assembler resolves against"
+                    % where)
+    elif rid in seen_ids:
+        errs.append("%s: duplicate reference command id" % where)
+    elif rid in curated_ids:
+        errs.append("%s: id collides with a curated commands.json entry id -- entryById() would "
+                    "resolve one of them and the operator could not tell which" % where)
+    if rid:
+        seen_ids.add(rid)
+
+    present = [k for k in REFERENCE_FORBIDDEN_KEYS if k in rec]
+    if present:
+        errs.append("%s: carries the key(s) %s. A mined record is vendor reference text: it has "
+                    "no verify/undo/blast/receipt and an extractor may never write one. The "
+                    "curated catalog's 18 human receipts mean something only because nothing "
+                    "else can claim one (ADR-002)" % (where, ", ".join(present)))
+
+    if rec.get("tier") != "reference":
+        errs.append("%s: tier is %r, and every record in this family is 'reference'"
+                    % (where, rec.get("tier")))
+    if not isinstance(rec.get("verbatim_span"), bool):
+        errs.append("%s: verbatim_span must be true or false -- it is the flag that decides "
+                    "whether this text may be quoted as the vendor's own in an evidence export "
+                    "(threat model v2, M3), and an absent flag is not a false one" % where)
+    if rec.get("verbatim_span") and rec.get("trunc"):
+        errs.append("%s: is flagged truncated AND verbatim_span -- a line the vendor's own page "
+                    "wrapped and cut is not a usable span of anything" % where)
+    if rec.get("verbatim_span") and rec.get("authority") != "governing":
+        # Not an error in itself, but the pair is what the evidence gate reads,
+        # so a documentary record claiming a governing-only property is worth
+        # saying out loud rather than leaving for the UI to interpret.
+        pass
+    if rec.get("authority") not in REFERENCE_AUTHORITIES:
+        errs.append("%s: authority %r is not one of %s -- it is COMPUTED from the source "
+                    "(DISA check/fix text governs; a man page documents) and must never be blank"
+                    % (where, rec.get("authority"), ", ".join(REFERENCE_AUTHORITIES)))
+    if rec.get("k") not in REFERENCE_KINDS:
+        errs.append("%s: kind %r is not one of %s" % (where, rec.get("k"), ", ".join(REFERENCE_KINDS)))
+    if rec.get("license_class") not in LICENSE_CLASSES:
+        errs.append("%s: license_class %r is not one of %s"
+                    % (where, rec.get("license_class"), ", ".join(LICENSE_CLASSES)))
+
+    cmd = rec.get("c")
+    if not isinstance(cmd, str) or not cmd.strip():
+        errs.append("%s: c (the command text) is empty" % where)
+    else:
+        cp = control_char_name(cmd)
+        if cp:
+            errs.append("%s: command text contains the control character %s -- a mined line "
+                        "reaches the clipboard and the evidence export" % (where, cp))
+    tool = rec.get("t")
+    if not isinstance(tool, str) or not tool.strip():
+        errs.append("%s: t (the tool this command is filed under) is empty" % where)
+    elif isinstance(cmd, str) and cmd.strip():
+        # ADR-002 ruling 1: the declared tool IS the resolved head of stage one,
+        # through the wrapper chain -- not the first word.
+        stages = stage_binaries(cmd)
+        head = stages[0] if stages else None
+        if head and head != tool:
+            errs.append("%s: declared tool '%s' but stage one invokes '%s'" % (where, tool, head))
+        declared_stages = rec.get("st")
+        if len(stages) > 1:
+            if declared_stages != stages:
+                errs.append("%s: st %r does not match the per-stage binaries %r -- a multi-stage "
+                            "command is asserted per stage, never for the line"
+                            % (where, declared_stages, stages))
+        elif declared_stages is not None:
+            errs.append("%s: single-stage command declares st %r" % (where, declared_stages))
+
+    versions = rec.get("v")
+    if not isinstance(versions, list) or not versions or any(v not in VERSIONS for v in versions):
+        errs.append("%s: v %r is not a non-empty subset of %s" % (where, versions, ", ".join(VERSIONS)))
+
+    occ = rec.get("o")
+    if not isinstance(occ, list) or not occ:
+        errs.append("%s: o (occurrences) is empty -- a record with no citation is a command with "
+                    "no source, which is the one thing this product never ships" % where)
+        return errs
+    for j, o in enumerate(occ):
+        at = "%s: o[%d]" % (where, j)
+        if not isinstance(o, dict):
+            errs.append(at + " is not an object")
+            continue
+        for field in REFERENCE_OCC_FIELDS:
+            if o.get(field) in (None, ""):
+                errs.append("%s: missing %s" % (at, field))
+        if o.get("v") not in VERSIONS:
+            errs.append("%s: rhel version %r is not one of %s" % (at, o.get("v"), ", ".join(VERSIONS)))
+        shapes = [k for k in ("s", "g", "p") if o.get(k)]
+        if len(shapes) != 1:
+            errs.append("%s: an occurrence cites exactly ONE of a STIG rule (s), a Red Hat guide "
+                        "(g) or a staged capture file (p) -- it named %s"
+                        % (at, ", ".join(shapes) or "none of them"))
+            continue
+        ref = {"s": "disa-rhel%s-stig", "g": "redhat-rhel%s-guides",
+               "p": "raw-rhel%s"}[shapes[0]] % o.get("v")
+        if source_ids and ref not in source_ids:
+            errs.append("%s: derived source_ref '%s' does not resolve in _meta.sources" % (at, ref))
+        if isinstance(versions, list) and o.get("v") not in versions:
+            errs.append("%s: cites RHEL %s, which is not in this record's v %r"
+                        % (at, o.get("v"), versions))
+    return errs
+
+
+def reference_commands_errors(ds, curated_ids=()):
+    """The whole reference_commands family."""
+    errs = []
+    meta = (ds or {}).get("_meta") or {}
+    records = (ds or {}).get("commands")
+    if not meta.get("generator"):
+        errs.append("reference_commands: _meta.generator missing (a generated file declares its "
+                    "extractor, and Q15 re-runs it)")
+    if meta.get("tier") != "reference":
+        errs.append("reference_commands: _meta.tier must be 'reference'")
+    errs += provenance_errors("reference_commands _meta", meta.get("source"))
+    sources = meta.get("sources")
+    if not isinstance(sources, dict) or not sources:
+        errs.append("reference_commands: _meta.sources is empty -- every occurrence resolves its "
+                    "provenance through it")
+        sources = {}
+    for sid in sorted(sources):
+        errs += provenance_errors("reference_commands _meta.sources['%s']" % sid, sources[sid])
+    if not isinstance(records, list):
+        return errs + ["reference_commands: commands is not a list"]
+    if meta.get("record_count") != len(records):
+        errs.append("reference_commands: _meta.record_count %s != %d embedded records"
+                    % (meta.get("record_count"), len(records)))
+    seen = set()
+    source_ids = set(sources)
+    curated = set(curated_ids or ())
+    for i, rec in enumerate(records):
+        errs += reference_record_errors(rec, i, source_ids, seen, curated)
     return errs

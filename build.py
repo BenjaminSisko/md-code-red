@@ -70,6 +70,12 @@ CONTENT = {
     "flags_10": "flags_rhel10.json",
     "cci_nist": "cci_nist.json",
     "expected_output": "expected_output.json",
+    # generated — extract/mine_commands.py. A DIFFERENT TIER from `commands`
+    # above: vendor reference text mined out of the STIG check/fix prose, the
+    # staged man/--help captures and the staged Red Hat product documentation.
+    # It carries no verify/undo/blast/receipt and extract/schema.py refuses
+    # those keys on it, so it can never be mistaken for the curated catalog.
+    "reference_commands": "reference_commands.json",
 }
 
 CONTENT_SRC_SOURCES = os.path.join(REPO, "content-src", "SOURCES.json")
@@ -268,6 +274,12 @@ def build():
           % (size / 1024.0 / 1024.0, size))
     print("  sha256: %s" % digest)
     print("  content fingerprint (data island sha256): %s" % content_fingerprint)
+    ref = data["reference_commands"]
+    ref_meta = ref.get("_meta") or {}
+    print("  %d REFERENCE commands (tier: reference, not curated, not host-verified) "
+          "across %d tools, %d of them evidence-eligible verbatim spans"
+          % (len(ref.get("commands", [])), ref_meta.get("distinct_tools", 0),
+             ref_meta.get("evidence_eligible_count", 0)))
     print("  %d command entries, %d tools, %d embedded STIG rules (%s), %d CCI mappings"
           % (len(data["commands"]["entries"]),
              len(data["tools"].get("tools", [])),
