@@ -61,7 +61,7 @@
    "status": "pending \u2014 no RHEL 9 host read yet (CR-T-09/10/11/12)"
   }
  },
- "git_commit": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+ "git_commit": "ed1d5db361678d2da9d922199c1f8e92a1fcae9f",
  "receipt_count": 18,
  "review_lineage": {
   "adr": "ADR-001-engine-and-content -- ACCEPTED, section 9 signed by Avery Quinn, 2026-09-18",
