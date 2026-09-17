@@ -104,7 +104,10 @@ MARKERS = [
     ("field validator", "function validateField(", None),
     ("spec validator (which field is wrong)", "function validateSpec(", None),
     ("POSIX shell quoting", "function shQuote(", None),
-    ("YAML quoting (separate escaping domain)", "function yamlQuote(", None),
+    # MCR-SEC-010: the YAML quoter was dead code with no call site, so Q18's
+    # quoting-domain gate passed on a domain that did not exist. It is removed
+    # and reported PENDING until the Ansible generator gives it a real sink.
+    ("YAML quoting (separate escaping domain)", "function yamlQuote(", "CR-T-17..25"),
     ("rich-rule composition from validated sub-fields", "function composeRichRule(", None),
     ("blast evaluation against the destructive table", "function blastFor(", None),
     ("red-blast confirmation banner", "function renderBlastBanner(", None),
@@ -113,6 +116,14 @@ MARKERS = [
     ("palette controller", "function openPalette(", None),
     ("palette search", "function paletteMatches(", None),
     ("clipboard (no network, no download)", "function copyText(", None),
+    # MCR-SEC-012 / threat-model-v1 §9: the screen, the clipboard and the future
+    # exporter read ONE rendered-state object, never four recomputations.
+    ("single rendered-state object", "function computeResult(", None),
+    ("clipboard payload composed once per interaction", "function withCopyPayloads(", None),
+    ("clipboard header: every line '# '-prefixed", "function commentPayload(", None),
+    ("de-quoted projection for the destructive table", "function unquoteCommand(", None),
+    ("rich-rule slot allow-list", "var RICHRULE_SLOT_TYPES=", None),
+    ("template flag/lit token allow-lists", "var FLAG_TOKEN_RE=", None),
     # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
@@ -177,8 +188,11 @@ TROJAN_RANGES = [
     (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping \t \n \r
     (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
     (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
-    (0x200B, 0x200F), (0x202A, 0x202E),                       # zero-width and bidi overrides
-    (0x2060, 0x2064), (0x2066, 0x206F),                       # word joiner and bidi isolates
+    (0x200B, 0x200F), (0x2028, 0x2029), (0x202A, 0x202E),     # zero-width, line/paragraph
+                                                              #   separators, bidi overrides
+    (0x2060, 0x206F),                                         # word joiner, invisible format
+                                                              #   and bidi isolates, 2065
+                                                              #   included (MCR-SEC-009)
     (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
 ]
 TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
@@ -1468,15 +1482,25 @@ def gate_q18(ctx):
 
     # gate #9, quoting-domain confusion: the three escaping domains must never nest.
     shell = ctx["shell"]
-    for outer, inner in (("shQuote", "yamlQuote"), ("yamlQuote", "shQuote"),
-                         ("shQuote", "esc"), ("yamlQuote", "esc"),
+    # MCR-SEC-010: SHELL-ONLY until the Ansible generator lands (CR-T-17+). The
+    # YAML half of this gate used to pass on a quoter with no call site, which
+    # read as "Ansible YAML output is proven safe" and was not true. If a YAML
+    # quoter comes back, it must come back with a YAML-parsing oracle in the
+    # harness in the same commit — the harness enforces that and fails here.
+    for outer, inner in (("shQuote", "esc"), ("shQuote", "escapeAttr"),
                          ("esc", "shQuote"), ("escapeAttr", "shQuote")):
         if re.search(r"\b%s\s*\(\s*%s\s*\(" % (outer, inner), shell):
-            f.append("quoting-domain confusion: %s(%s(...)) — a shell quoter, a YAML quoter and a "
-                     "DOM escaper are three different jobs (threat-model-v1 §3.2)" % (outer, inner))
+            f.append("quoting-domain confusion: %s(%s(...)) — a shell quoter and a DOM escaper are "
+                     "two different jobs (threat-model-v1 §3.2)" % (outer, inner))
+    if "yamlQuote" in shell:
+        f.append("a YAML quoter is present in the shipped shell. MCR-SEC-010 removed the dead one; "
+                 "the sink that brings it back ships a YAML-parsing oracle in "
+                 "tests/hostile_harness.js in the SAME commit, and this gate's YAML half is "
+                 "re-enabled then — not before")
     if not f:
-        d.append("no shQuote/yamlQuote/esc call is nested inside another — the three escaping "
-                 "domains stay separate (threat-model-v1 §11 gate 9)")
+        d.append("no shQuote/esc/escapeAttr call is nested inside another — the escaping domains "
+                 "stay separate (threat-model-v1 §11 gate 9). SHELL-ONLY: there is no YAML sink in "
+                 "this build and no dead YAML quoter pretending otherwise (MCR-SEC-010)")
 
     node = shutil.which("node")
     if not node:

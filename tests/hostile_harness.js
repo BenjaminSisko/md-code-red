@@ -62,9 +62,19 @@ function extractAssembler(file) {
                       "' — it must stay pure, or this gate tests nothing");
     }
   }
+  /* MCR-SEC-010. The dead YAML quoter is gone and Q18's quoting-domain check is
+     shell-only until the Ansible generator lands. If a YAML sink brings a quoter
+     back, its oracle ships in the same commit as the sink — this harness refuses
+     to run otherwise, rather than proving shell containment and calling it YAML
+     containment (that mistake is MCR-SEC-005b). */
+  if (block.indexOf("yamlQuote") >= 0 && block.indexOf("PARSE_YAML_ORACLE") < 0) {
+    throw new Error("a YAML quoter is back in the assembler block with no YAML oracle in this " +
+                    "harness. MCR-SEC-010: the sink, the quoter and a YAML-parsing oracle ship " +
+                    "together or not at all");
+  }
   var factory = new Function(
     "\"use strict\";\n" + block + "\n" +
-    "return {shQuote:shQuote,yamlQuote:yamlQuote,validateField:validateField," +
+    "return {shQuote:shQuote,validateField:validateField," +
     "validateSpec:validateSpec,assembleCommand:assembleCommand," +
     "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES," +
     "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap," +
@@ -977,8 +987,6 @@ function main() {
     inv.push("MCR-SEC-001 regression: a service-typed slot accepted rich-rule syntax as a value");
   }
   if (A.shQuote("it's") !== "'it'\\''s'") inv.push("shQuote() does not use the POSIX '\\'' idiom");
-  if (A.yamlQuote("it's") !== "'it''s'") inv.push("yamlQuote() does not use the YAML '' idiom");
-  if (A.shQuote("x") === A.yamlQuote("it's")) inv.push("shQuote and yamlQuote are not distinct");
   if (A.shQuote("plain") !== "'plain'") inv.push("shQuote() has a bare-value bypass — quoting must be uniform");
 
   /* a required field left empty must yield null on every version */
@@ -1036,11 +1044,12 @@ function main() {
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
-    /* quoting idioms (4) + empty-required, version gating and gated enums
-       (3 per release) + 2 tokeniser negative controls + 2 rich-rule-oracle
-       negative controls + 2 blast invariants + the MCR-SEC-001 regression
-       (1 vector check + 1 per release + 1 typed) */
-    invariants: 4 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length),
+    /* shQuote idiom and uniformity (2) + the MCR-SEC-010 no-YAML-quoter guard
+       (1) + empty-required, version gating and gated enums (3 per release)
+       + 2 tokeniser negative controls + 2 rich-rule-oracle negative controls
+       + 2 blast invariants + the MCR-SEC-001 regression (1 vector check + 1 per
+       release + 1 typed) */
+    invariants: 2 + 1 + VERSIONS.length * 3 + 2 + 2 + 2 + (2 + VERSIONS.length),
     failures: stats.failures
   };
   if (asJson) {

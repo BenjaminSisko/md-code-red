@@ -110,6 +110,14 @@ class HostileInputTests(unittest.TestCase):
                          "length", "quote breaking", "NUL", "invisible character"):
             self.assertIn(required, classes, "fixture is missing the %s vector class" % required)
 
+    def test_the_invisible_character_class_covers_the_line_separators(self):
+        """MCR-SEC-009: U+2028/U+2029/U+2065 were the gap in INVISIBLE_RE."""
+        values = "".join(v["value"] for v in self.fixture["vectors"]
+                         if v["class"] == "invisible character")
+        for cp in (0x2028, 0x2029, 0x2065):
+            self.assertIn(chr(cp), values,
+                          "no fixture vector carries U+%04X" % cp)
+
     def test_fixture_declares_its_provenance(self):
         src = self.fixture["_meta"]["source"]
         for key in ("title", "url_or_man", "version", "retrieved_on", "license_class"):

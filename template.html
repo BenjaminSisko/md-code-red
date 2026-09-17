@@ -293,10 +293,20 @@ var STORE=(function(){
    safe by CI is the same code the jump box runs. Adding a DOM or DATA
    reference in here silently turns that gate into a test of nothing.
 
-   Three escaping domains, three functions, never interchanged
-   (threat-model-v1 §3.2): esc()/escapeAttr() render to the DOM, shQuote()
-   quotes for a POSIX shell, yamlQuote() quotes for YAML. qa.py Q18 fails the
-   build if one is ever nested inside another.
+   Escaping domains are never interchanged (threat-model-v1 §3.2):
+   esc()/escapeAttr() render to the DOM, shQuote() quotes for a POSIX shell.
+   qa.py Q18 fails the build if one is ever nested inside another.
+
+   There is deliberately NO YAML quoter here yet. One existed, was correct, and
+   had no call site at all — assembleCommand() has no YAML output path, so Q18's
+   quoting-domain gate was passing on a domain that did not exist and the
+   harness's YAML invariant only asserted the function's behaviour to itself
+   (MCR-SEC-010). A dead escaper reads as "Ansible YAML output is proven safe",
+   which was not true and would have been inherited by the CR-T-25 review as a
+   false clean bill. It is removed; the quoting-domain check is SHELL-ONLY until
+   the Ansible generator lands. When the first YAML sink arrives (CR-T-17+), the
+   quoter and a YAML-parsing oracle in tests/hostile_harness.js ship in the SAME
+   commit — the harness refuses to run if a YAML quoter reappears without one.
    ========================================================================== */
 
 /* The version-gating sentence lives inside the block so the block is entirely
@@ -310,16 +320,18 @@ var GATED_COPY="Not available in RHEL ";
 function shQuote(s){
   return "'"+String(s).replace(/'/g,"'\\''")+"'";
 }
-/* YAML single-quoted scalar. A different domain with a different escape rule
-   ('' not '\''), which is the entire reason it is a separate function. */
-function yamlQuote(s){
-  return "'"+String(s).replace(/'/g,"''")+"'";
-}
 
 /* Characters that never belong in ANY field, checked before the per-type
    allow-list so the rejection reason names the real problem. */
 var CTRL_RE=/[\u0000-\u001F\u007F-\u009F]/;
-var INVISIBLE_RE=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\u3164\uFE00-\uFE0F\uFEFF\uFFA0]/;
+/* MCR-SEC-009. U+2028 LINE SEPARATOR, U+2029 PARAGRAPH SEPARATOR and U+2065 —
+   the one unassigned code point inside the invisible-format block — were the
+   gap. They are inert inside a POSIX single-quoted token, but .codeline .lc
+   renders white-space:pre, so a rendered command could show a line break the
+   copied one-line string does not have: render/copy divergence in the same
+   family as MCR-SEC-003. The 2060-206F range is now closed end to end rather
+   than in two pieces with 2065 sitting between them. */
+var INVISIBLE_RE=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u206F\u3164\uFE00-\uFE0F\uFEFF\uFFA0]/;
 var ASCII_RE=/^[\x20-\x7E]+$/;
 
 function inList(arr,v){
@@ -874,13 +886,43 @@ function flagExplain(toolId,flag){
   }
   return null;
 }
-function currentResult(){
+/* ---- one rendered-state object per interaction (MCR-SEC-012) --------------
+   threat-model-v1 §9 and §4 require that the copy path and the evidence
+   exporter "read from the same rendered-state object the screen displays, never
+   recompute independently". The implementation recomputed: renderEditor(),
+   renderBlastBanner(), renderInspector() and doCopy() each called
+   assembleCommand() afresh — four independent computations of the thing the
+   operator is about to run as root.
+
+   Nothing diverged, because assembleCommand() is pure (the harness enforces
+   that: no document, no window, no storage, no DATASETS, no STATE inside the
+   block) and STATE does not change between a render and a copy. It diverges the
+   moment any input to assembly stops being deterministic — a timestamp, a
+   capture record, a lazily built index — and by then the divergence is between
+   what the ISSM signed and what the admin ran.
+
+   RESULT is that object. It is computed once per interaction, keyed on the state
+   assembly reads, and dropped at the start of every renderAll(). The gutter, the
+   banner, the inspector, the clipboard preview, doCopy() and the CR-T-28
+   exporter all read it. */
+var RESULT={key:null,value:null};
+function resultKey(){ return STATE.version+"|"+String(STATE.entryId); }
+function computeResult(){
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
   var res=assembleCommand(entry,STATE.version,{},{patterns:PATTERNS});
   if(!res) return null;
   return withCopyPayloads(res,entry);
+}
+function invalidateResult(){ RESULT.key=null; RESULT.value=null; }
+function currentResult(){
+  var key=resultKey();
+  if(RESULT.key!==key){
+    RESULT.key=key;
+    RESULT.value=computeResult();
+  }
+  return RESULT.value;
 }
 
 /* The lines of the comment header, as plain label+value text. They are NOT
@@ -1342,6 +1384,7 @@ function togglePanel(which){
 }
 
 function renderAll(){
+  invalidateResult();          /* one interaction, one assembly (MCR-SEC-012) */
   renderRail();
   renderVersionSelector();
   renderToolList();
