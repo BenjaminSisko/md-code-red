@@ -4,6 +4,66 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Fixed — Q16 closes J1/J2/J3, the Verified-per-version review's conditions (2026-09-18, branch `salm/milo/receipt-guards`)
+
+Marcus Reed's Verified-per-version review (VER-001/002/003) approved the per-version receipt
+schema with three conditions — all guard gaps, no live false claims: every one of the 18
+shipped receipts was accurate today, but three guards behind them were narrower than they
+looked.
+
+- **J1 (MED, VER-001)** — `qa.py` Q16's drift check exempted generator entries outright
+  (`if "template" not in e:`), so 12 of the 18 receipts had no binding to the command the build
+  actually assembles: a template edit could change what a generator emits without invalidating
+  any receipt that described the old behaviour. `gate_q16()` now diffs a generator receipt's
+  `capture.command_as_run` against `tests/fixtures/golden-commands.json` for that
+  entry/version — the same hand-authored validity oracle `tests/hostile_harness.js` already
+  holds generators to. Fail-first: `tests/test_q16_receipts.py::Q16GoldenTableBinding` (4 cases)
+  reproduces the gap directly against `gate_q16()` — a missing golden table, a missing row, and
+  a template-drift case shaped exactly like Marcus's own repro (`gen-journalctl-unit-logs`
+  template `+= {lit:"--extra"}`) — all three red against `qa.py` at
+  `848fe7aae89de0f528f0507a37e0d08e343b0ce8d67b889936ef8655b58e4c06`, green after the fix.
+  Content debt this exposed and closed in the same fix: `gen-chage-list`'s golden row was
+  pinned to `username: svcacct`, which does not exist on either lab host — the real,
+  receipted capture ran `adm-linux` instead (documented in the capture's own
+  `field_substitutions`). The golden row is now pinned to the value that was actually,
+  verifiably run; the other 5 generator receipts already matched their golden rows exactly.
+- **J2 (MED, VER-002)** — the two-person rule was `by == captured_by`, byte-for-byte. Eight of
+  Marcus's nine hostile variants bypassed it (lowercase, uppercase, leading/trailing space, a
+  doubled space, a non-breaking space, and a trailing `"(SME)"` parenthetical); the ninth,
+  a deliberate alias (`"C. Stone"`), cannot be closed by any string comparison of names at
+  all — no normalisation rule catches someone who chooses to write a different name. Both
+  names are now normalised (`normalize_person_name()`: casefold, collapse all Unicode
+  whitespace including NBSP to one space, strip one trailing parenthetical) **and** checked
+  against a new closed roster, `content-src/roster.json` (Caleb Stone and Renata Osei as SMEs,
+  Riley Park as QA, extensible as intake lands) — `receipt.by` must hold the QA role,
+  `capture.captured_by` must hold the SME role. The gate's own PASS diagnostics now state the
+  residual in words, the way Q17's and Q20's already do: the deliberate-alias path is closed
+  because the name fails to resolve against the roster, never because it is detected as an
+  alias of a real person. Fail-first: `tests/test_q16_receipts.py::Q16TwoPersonRoster` (8 cases,
+  including all nine of Marcus's variants via a `subTest` sweep) red against `qa.py` at
+  `369ebc5a67c5961ef90200d2c3740c19a2dd7dd86a9a96e9186217593c61ac41`, green after the fix.
+- **J3 (LOW, VER-003)** — a receipt's `host` and `capture` fields were free text with no closed
+  grammar; a hostile capture path only happened to fail because the named file did not exist on
+  disk, not because its shape was refused, and a hostile `host` string passed outright.
+  `RECEIPT_HOST_RE` (`^[a-z0-9][a-z0-9.-]{1,62}$`, the app's own hostname-field grammar, reused)
+  now gates `host`; `RECEIPT_CAPTURE_PATH_RE`
+  (`^tests/captures/(7|8|9|10)/[a-z0-9-]+\.json$`) now gates `capture`, closing markup and
+  `../` traversal; a receipt's `host` must also equal its own capture record's `host`. `by`'s
+  grammar is the roster itself (J2) — no separate rule needed. Fail-first:
+  `tests/test_q16_receipts.py::Q16ClosedGrammars` (4 cases: `<img src=x onerror=alert(1)>` in
+  `host` and in `capture`, a `../../../etc/passwd.json` traversal, and a `host` that disagrees
+  with its capture's own `host`) red against `qa.py` at
+  `c178987a5611d57221dc4dab7c7f05849313614968247bade9cdb1f5be41d9ac`, green after the fix.
+
+`tests/test_q16_receipts.py` grew from 4 to 21 cases. Full gate green throughout, rechecked at
+every commit: `rm -rf dist && python3 build.py && python3 qa.py` -> QA GATE: PASS, artifact
+sha256 unchanged at `bb950d9088060ed619c5e1178cc128b9b91d69d9240e9847001d1963573a9f06`;
+`python3 -m unittest discover -s tests` -> 204 tests OK (was 187); `node
+tests/hostile_harness.js` -> 81577 checks, 0 FAILED, byte-identical to the prior three
+tranches — this change touches `qa.py`, `content-src/roster.json` (new) and
+`tests/fixtures/golden-commands.json` (one content correction) only; the shell, the assembler
+and the data island are untouched.
+
 ### Changed — `verified` is per RHEL version, not per entry (2026-09-17/18, branch `salm/milo/verified-per-version`)
 
 CEO ruling closing Riley Park's first capture review (`capture-review-run1-2026-09-18.md`
