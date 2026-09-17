@@ -1,0 +1,1699 @@
+{
+ "_meta": {
+  "core_version": "2.21.1",
+  "generator": "extract/extract_ansible_doc.py"
+ },
+ "authorized_key": {
+  "example": "- name: Set authorized key taken from file\n  ansible.posix.authorized_key:\n    user: charlie\n    state: present\n    key: \"{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}\"",
+  "extra_params": [
+   "comment",
+   "follow",
+   "manage_dir",
+   "path",
+   "validate_certs"
+  ],
+  "fqcn": "ansible.posix.authorized_key",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The username on the remote host whose authorized_keys file will be modified.",
+    "name": "user",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The SSH public key(s), as a string or (since Ansible 1.9) url (https://github.com/username.keys).",
+    "name": "key",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether the given key (with the given key_options) should or should not be in the file.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Whether to remove all other non-specified keys from the authorized_keys file.",
+    "name": "exclusive",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A string of ssh key options to be prepended to the key in the authorized_keys file.",
+    "name": "key_options",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Adds or removes an SSH authorized key",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "blockinfile": {
+  "example": "# Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'",
+  "extra_params": [
+   "append_newline",
+   "attributes",
+   "encoding",
+   "group",
+   "insertbefore",
+   "marker_begin",
+   "marker_end",
+   "mode",
+   "owner",
+   "prepend_newline",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "unsafe_writes",
+   "validate"
+  ],
+  "fqcn": "ansible.builtin.blockinfile",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The file to modify.",
+    "name": "path",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": "",
+    "desc": "The text to insert inside the marker lines.",
+    "name": "block",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "# {mark} ANSIBLE MANAGED BLOCK",
+    "desc": "The marker line template.",
+    "name": "marker",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether the block should be there or not.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "If specified and no begin/ending O(marker) lines are found, the block will be inserted after the last match of specified regular expression.",
+    "name": "insertafter",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.",
+    "name": "backup",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Create a new file if it does not exist.",
+    "name": "create",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Insert/update/remove a text block surrounded by marker lines",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "command": {
+  "example": "- name: Return motd to registered var\n  ansible.builtin.command: cat /etc/motd\n  register: mymotd\n\n# free-form (string) arguments, all arguments on one line",
+  "extra_params": [
+   "argv",
+   "expand_argument_vars",
+   "free_form",
+   "stdin",
+   "stdin_add_newline",
+   "strip_empty_ends"
+  ],
+  "fqcn": "ansible.builtin.command",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The command to run.",
+    "name": "cmd",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Change into this directory before running the command.",
+    "name": "chdir",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A filename or (since 2.0) glob pattern. If a matching file already exists, this step will not be run.",
+    "name": "creates",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A filename or (since 2.0) glob pattern. If a matching file exists, this step will be run.",
+    "name": "removes",
+    "required": false,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Execute commands on targets",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "copy": {
+  "example": "- name: Copy file with owner and permissions\n  ansible.builtin.copy:\n    src: /srv/myfiles/foo.conf\n    dest: /etc/foo.conf\n    owner: foo\n    group: foo\n    mode: '0644'",
+  "extra_params": [
+   "attributes",
+   "checksum",
+   "decrypt",
+   "directory_mode",
+   "follow",
+   "force",
+   "local_follow",
+   "remote_src",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "unsafe_writes"
+  ],
+  "fqcn": "ansible.builtin.copy",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Local path to a file to copy to the remote server.",
+    "name": "src",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Remote absolute path where the file should be copied to.",
+    "name": "dest",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user that should own the filesystem object, as would be fed to chown.",
+    "name": "owner",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group that should own the filesystem object, as would be fed to chown.",
+    "name": "group",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The permissions of the destination file or directory.",
+    "name": "mode",
+    "required": false,
+    "type": "raw"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.",
+    "name": "backup",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "When used instead of O(src), sets the contents of a file directly to the specified value.",
+    "name": "content",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The validation command to run before copying the updated file into the final destination.",
+    "name": "validate",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Copy files to remote locations",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "cron": {
+  "example": "- name: Ensure a job that runs at 2 and 5 exists. Creates an entry like \"0 5,2 * * ls -alh > /dev/null\"\n  ansible.builtin.cron:\n    name: \"check dirs\"\n    minute: \"0\"\n    hour: \"5,2\"\n    job: \"ls -alh > /dev/null\"",
+  "extra_params": [
+   "backup",
+   "cron_file",
+   "disabled",
+   "env",
+   "insertafter",
+   "insertbefore"
+  ],
+  "fqcn": "ansible.builtin.cron",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Description of a crontab entry or, if O(env) is set, the name of environment variable.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The command to execute or, if O(env) is set, the value of environment variable.",
+    "name": "job",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "*",
+    "desc": "Minute when the job should run (V(0-59), V(*), V(*/2), and so on).",
+    "name": "minute",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "*",
+    "desc": "Hour when the job should run (V(0-23), V(*), V(*/2), and so on).",
+    "name": "hour",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "*",
+    "desc": "Day of the month the job should run (V(1-31), V(*), V(*/2), and so on).",
+    "name": "day",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "*",
+    "desc": "Month of the year the job should run (V(JAN-DEC) or V(1-12), V(*), V(*/2), and so on).",
+    "name": "month",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "*",
+    "desc": "Day of the week that the job should run (V(SUN-SAT) or V(0-6), V(*), and so on).",
+    "name": "weekday",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The specific user whose crontab should be modified.",
+    "name": "user",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether to ensure the job or environment variable is present or absent.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "annually",
+     "daily",
+     "hourly",
+     "monthly",
+     "reboot",
+     "weekly",
+     "yearly"
+    ],
+    "default": null,
+    "desc": "Special time specification nickname.",
+    "name": "special_time",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage cron.d and crontab entries",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "dnf": {
+  "example": "- name: Install the latest version of Apache\n  ansible.builtin.dnf:\n    name: httpd\n    state: latest",
+  "extra_params": [
+   "allow_downgrade",
+   "allowerasing",
+   "autoremove",
+   "best",
+   "bugfix",
+   "cacheonly",
+   "conf_file",
+   "disable_excludes",
+   "disable_gpg_check",
+   "disable_plugin",
+   "download_dir",
+   "download_only",
+   "enable_plugin",
+   "exclude",
+   "install_weak_deps",
+   "installroot",
+   "list",
+   "lock_timeout",
+   "nobest",
+   "releasever",
+   "skip_broken",
+   "sslverify",
+   "update_only",
+   "use_backend",
+   "validate_certs"
+  ],
+  "fqcn": "ansible.builtin.dnf",
+  "params": [
+   {
+    "choices": [],
+    "default": [],
+    "desc": "A package name or package specifier with version, like name-1.0. When using state=latest, this can be '*' which means run: dnf -y update. You can also pass a url or a local path to an rpm file. To operate on several packages this can accept a comma separated string of packages or a list of packages.",
+    "name": "name",
+    "required": false,
+    "type": "list"
+   },
+   {
+    "choices": [
+     "absent",
+     "present",
+     "installed",
+     "removed",
+     "latest"
+    ],
+    "default": null,
+    "desc": "Whether to install (V(present), V(latest)), or remove (V(absent)) a package.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": [],
+    "desc": "Repoid of repositories to enable for the install/update operation. These repos will not persist beyond the transaction. When specifying multiple repos, separate them with a \",\".",
+    "name": "enablerepo",
+    "required": false,
+    "type": "list"
+   },
+   {
+    "choices": [],
+    "default": [],
+    "desc": "Repoid of repositories to disable for the install/update operation. These repos will not persist beyond the transaction. When specifying multiple repos, separate them with a ,.",
+    "name": "disablerepo",
+    "required": false,
+    "type": "list"
+   },
+   {
+    "choices": [],
+    "default": "no",
+    "desc": "Force dnf to check if cache is out of date and redownload if needed. Has an effect only if O(state=present) or O(state=latest).",
+    "name": "update_cache",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": "no",
+    "desc": "If set to V(true), and O(state=latest) then only installs updates that have been marked security related.",
+    "name": "security",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Manages packages with the dnf package manager",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "fetch": {
+  "example": "- name: Store file into /tmp/fetched/host.example.com/tmp/somefile\n  ansible.builtin.fetch:\n    src: /tmp/somefile\n    dest: /tmp/fetched",
+  "extra_params": [
+   "fail_on_missing"
+  ],
+  "fqcn": "ansible.builtin.fetch",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The file on the remote system to fetch.",
+    "name": "src",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A directory to save the file into.",
+    "name": "dest",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Allows you to override the default behavior of appending hostname/path/to/file to the destination.",
+    "name": "flat",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": true,
+    "desc": "Verify that the source and destination checksums match after the files are fetched.",
+    "name": "validate_checksum",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Fetch files from remote nodes",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "file": {
+  "example": "- name: Change file ownership, group and permissions\n  ansible.builtin.file:\n    path: /etc/foo.conf\n    owner: foo\n    group: foo\n    mode: '0644'",
+  "extra_params": [
+   "access_time",
+   "access_time_format",
+   "attributes",
+   "follow",
+   "force",
+   "modification_time",
+   "modification_time_format",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "unsafe_writes"
+  ],
+  "fqcn": "ansible.builtin.file",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Path to the file being managed.",
+    "name": "path",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [
+     "absent",
+     "directory",
+     "file",
+     "hard",
+     "link",
+     "touch"
+    ],
+    "default": null,
+    "desc": "If V(absent), directories will be recursively deleted, and files or symlinks will be unlinked. In the case of a directory, if diff is declared, you will see the files and folders deleted listed under path_contents. Note that V(absent) will not cause ansible.builtin.file to fail if the O(path) does not exist as the state did not change.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user that should own the filesystem object, as would be fed to chown.",
+    "name": "owner",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group that should own the filesystem object, as would be fed to chown.",
+    "name": "group",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The permissions the resulting filesystem object should have.",
+    "name": "mode",
+    "required": false,
+    "type": "raw"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Recursively set the specified file attributes on directory contents.",
+    "name": "recurse",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Path of the file to link to.",
+    "name": "src",
+    "required": false,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Manage files and file properties",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "firewalld": {
+  "example": "- name: Permanently enable https service, also enable it immediately if possible\n  ansible.posix.firewalld:\n    service: https\n    state: enabled\n    permanent: true\n    immediate: true\n    offline: true",
+  "extra_params": [
+   "forward",
+   "icmp_block",
+   "icmp_block_inversion",
+   "masquerade",
+   "offline",
+   "port_forward",
+   "protocol",
+   "target",
+   "timeout"
+  ],
+  "fqcn": "ansible.posix.firewalld",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of a service to add/remove to/from firewalld.",
+    "name": "service",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of a port or port range to add/remove to/from firewalld.",
+    "name": "port",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The firewalld zone to add/remove to/from.",
+    "name": "zone",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "disabled",
+     "enabled",
+     "present"
+    ],
+    "default": null,
+    "desc": "Enable or disable a setting.",
+    "name": "state",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Whether to apply this change to the permanent firewalld configuration.",
+    "name": "permanent",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Whether to apply this change to the runtime firewalld configuration.",
+    "name": "immediate",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Rich rule to add/remove to/from firewalld.",
+    "name": "rich_rule",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The source/network you would like to add/remove to/from firewalld.",
+    "name": "source",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The interface you would like to add/remove to/from a zone in firewalld.",
+    "name": "interface",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage arbitrary ports/services with firewalld",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "get_url": {
+  "example": "- name: Download foo.conf\n  ansible.builtin.get_url:\n    url: http://example.com/path/file.conf\n    dest: /etc/foo.conf\n    mode: '0440'",
+  "extra_params": [
+   "attributes",
+   "backup",
+   "ciphers",
+   "client_cert",
+   "client_key",
+   "decompress",
+   "force",
+   "force_basic_auth",
+   "headers",
+   "http_agent",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "timeout",
+   "tmp_dest",
+   "unredirected_headers",
+   "unsafe_writes",
+   "url_password",
+   "url_username",
+   "use_gssapi",
+   "use_netrc",
+   "use_proxy"
+  ],
+  "fqcn": "ansible.builtin.get_url",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "HTTP, HTTPS, or FTP URL in the form (http|https|ftp://[user[:pass]]@host.domain[:port]/path).",
+    "name": "url",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Absolute path of where to download the file to.",
+    "name": "dest",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user that should own the filesystem object, as would be fed to chown.",
+    "name": "owner",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group that should own the filesystem object, as would be fed to chown.",
+    "name": "group",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The permissions the resulting filesystem object should have.",
+    "name": "mode",
+    "required": false,
+    "type": "raw"
+   },
+   {
+    "choices": [],
+    "default": "",
+    "desc": "If a checksum is passed to this parameter, the digest of the destination file will be calculated after it is downloaded to ensure its integrity and verify that the transfer completed successfully. Format: <algorithm>:<checksum|url>, for example checksum=\"sha256:D98291AC[...]B6DC7B97\", checksum=\"sha256:http://example.com/path/sha256sum.txt\".",
+    "name": "checksum",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": true,
+    "desc": "If V(false), SSL certificates will not be validated.",
+    "name": "validate_certs",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Downloads files from HTTP, HTTPS, or FTP to node",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "group": {
+  "example": "- name: Ensure group \"somegroup\" exists\n  ansible.builtin.group:\n    name: somegroup\n    state: present",
+  "extra_params": [
+   "force",
+   "gid_max",
+   "gid_min",
+   "local",
+   "non_unique"
+  ],
+  "fqcn": "ansible.builtin.group",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group to manage.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether the group should be present or not on the remote host.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Optional GID to set for the group.",
+    "name": "gid",
+    "required": false,
+    "type": "int"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "If V(yes), indicates that the group created is a system group.",
+    "name": "system",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Add or remove groups",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "hostname": {
+  "example": "- name: Set a hostname\n  ansible.builtin.hostname:\n    name: web01",
+  "extra_params": [],
+  "fqcn": "ansible.builtin.hostname",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the host.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "alpine",
+     "debian",
+     "freebsd",
+     "generic",
+     "macos",
+     "macosx",
+     "darwin",
+     "openbsd",
+     "openrc",
+     "redhat",
+     "sles",
+     "solaris",
+     "systemd"
+    ],
+    "default": null,
+    "desc": "Which strategy to use to update the hostname.",
+    "name": "use",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage hostname",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "lineinfile": {
+  "example": "# NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'",
+  "extra_params": [
+   "attributes",
+   "backrefs",
+   "encoding",
+   "firstmatch",
+   "group",
+   "mode",
+   "owner",
+   "search_string",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "unsafe_writes"
+  ],
+  "fqcn": "ansible.builtin.lineinfile",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The file to modify.",
+    "name": "path",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The line to insert/replace into the file.",
+    "name": "line",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The regular expression to look for in every line of the file.",
+    "name": "regexp",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether the line should be there or not.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Used with O(state=present).",
+    "name": "insertafter",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Used with O(state=present).",
+    "name": "insertbefore",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.",
+    "name": "backup",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Used with O(state=present).",
+    "name": "create",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The validation command to run before copying the updated file into the final destination.",
+    "name": "validate",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage lines in text files",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "mount": {
+  "example": "# Before 2.3, option 'name' was used instead of 'path'",
+  "extra_params": [
+   "backup",
+   "dump",
+   "fstab",
+   "opts_no_log",
+   "passno"
+  ],
+  "fqcn": "ansible.posix.mount",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Path to the mount point (e.g. /mnt/files).",
+    "name": "path",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Device (or NFS volume, or something else) to be mounted on path.",
+    "name": "src",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Filesystem type.",
+    "name": "fstype",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Mount options (see fstab(5), or vfstab(4) on Solaris).",
+    "name": "opts",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "absent_from_fstab",
+     "mounted",
+     "present",
+     "unmounted",
+     "remounted",
+     "ephemeral"
+    ],
+    "default": null,
+    "desc": "If V(mounted), the device will be actively mounted and appropriately configured in fstab. If the mount point is not present, the mount point will be created.",
+    "name": "state",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": true,
+    "desc": "Determines if the filesystem should be mounted on boot.",
+    "name": "boot",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Control active and configured mount points",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "reboot": {
+  "example": "- name: Unconditionally reboot the machine with all defaults\n  ansible.builtin.reboot:",
+  "extra_params": [
+   "boot_time_command",
+   "connect_timeout",
+   "post_reboot_delay",
+   "pre_reboot_delay",
+   "reboot_command",
+   "search_paths"
+  ],
+  "fqcn": "ansible.builtin.reboot",
+  "params": [
+   {
+    "choices": [],
+    "default": 600,
+    "desc": "Maximum seconds to wait for machine to reboot and respond to a test command.",
+    "name": "reboot_timeout",
+    "required": false,
+    "type": "int"
+   },
+   {
+    "choices": [],
+    "default": "Reboot initiated by Ansible",
+    "desc": "Message to display to users before reboot.",
+    "name": "msg",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": "whoami",
+    "desc": "Command to run on the rebooted host and expect success from to determine the machine is ready for further tasks.",
+    "name": "test_command",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Reboot a machine",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "seboolean": {
+  "example": "- name: Set httpd_can_network_connect flag on and keep it persistent across reboots\n  ansible.posix.seboolean:\n    name: httpd_can_network_connect\n    state: true\n    persistent: true",
+  "extra_params": [
+   "ignore_selinux_state"
+  ],
+  "fqcn": "ansible.posix.seboolean",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the boolean to configure.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Desired boolean value.",
+    "name": "state",
+    "required": true,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Set to V(true) if the boolean setting should survive a reboot.",
+    "name": "persistent",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Toggles SELinux booleans",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "selinux": {
+  "example": "- name: Enable SELinux\n  ansible.posix.selinux:\n    policy: targeted\n    state: enforcing",
+  "extra_params": [
+   "configfile",
+   "update_kernel_param"
+  ],
+  "fqcn": "ansible.posix.selinux",
+  "params": [
+   {
+    "choices": [
+     "disabled",
+     "enforcing",
+     "permissive"
+    ],
+    "default": null,
+    "desc": "The SELinux mode.",
+    "name": "state",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The name of the SELinux policy to use (e.g. targeted) will be required unless O(state=disabled).",
+    "name": "policy",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Change policy and state of SELinux",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "service": {
+  "example": "- name: Start service httpd, if not started\n  ansible.builtin.service:\n    name: httpd\n    state: started",
+  "extra_params": [
+   "arguments",
+   "pattern",
+   "runlevel",
+   "sleep",
+   "use"
+  ],
+  "fqcn": "ansible.builtin.service",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the service.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "reloaded",
+     "restarted",
+     "started",
+     "stopped"
+    ],
+    "default": null,
+    "desc": "V(started)/V(stopped) are idempotent actions that will not run commands unless necessary.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Whether the service should start on boot.",
+    "name": "enabled",
+    "required": false,
+    "type": "bool"
+   }
+  ],
+  "short_desc": "Manage services",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "shell": {
+  "example": "- name: Execute the command in remote shell; stdout goes to the specified file on the remote\n  ansible.builtin.shell: somescript.sh >> somelog.txt",
+  "extra_params": [
+   "free_form",
+   "stdin",
+   "stdin_add_newline"
+  ],
+  "fqcn": "ansible.builtin.shell",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The command to run followed by optional arguments.",
+    "name": "cmd",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Change into this directory before running the command.",
+    "name": "chdir",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A filename, when it already exists, this step will not be run.",
+    "name": "creates",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A filename, when it does not exist, this step will not be run.",
+    "name": "removes",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Change the shell used to execute the command.",
+    "name": "executable",
+    "required": false,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Execute shell commands on targets",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "slurp": {
+  "example": "- name: Find out what the remote machine's mounts are\n  ansible.builtin.slurp:\n    src: /proc/mounts\n  register: mounts",
+  "extra_params": [
+   "armor"
+  ],
+  "fqcn": "ansible.builtin.slurp",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The file on the remote system to fetch. This must be a file, not a directory.",
+    "name": "src",
+    "required": true,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Slurps a file from remote nodes",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "sysctl": {
+  "example": "# Set vm.swappiness to 5 in /etc/sysctl.conf\n- ansible.posix.sysctl:\n    name: vm.swappiness\n    value: '5'\n    state: present\n\n# Remove kernel.panic entry from /etc/sysctl.conf\n- ansible.posix.sysctl:\n    name: kernel.panic\n    state: absent\n    sysctl_file: /etc/sysctl.conf\n\n# Set kernel.panic to 3 in /tmp/test_sysctl.conf\n- ansible.posix.sysctl:\n    name: kernel.panic\n    value: '3'\n    sysctl_file: /tmp/test_sysctl.conf\n    reload: false\n\n# Enable resource limits management in FreeBSD\n- ansible.posix.sysctl:\n    name: kern.racct.enable\n    value: '1'\n    sysctl_file: /boot/loader.conf\n    reload: false\n\n# Set ip forwarding on in /proc and verify token value with the sysctl command\n- ansible.posix.sysctl:\n    name: net.ipv4.ip_forward\n    value: '1'\n    sysctl_set: true\n\n# Set ip forwar",
+  "extra_params": [
+   "ignoreerrors",
+   "sysctl_set"
+  ],
+  "fqcn": "ansible.posix.sysctl",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The dot-separated path (also known as O(key)) specifying the sysctl variable.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Desired value of the sysctl key.",
+    "name": "value",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "present",
+     "absent"
+    ],
+    "default": "present",
+    "desc": "Whether the entry should be present or absent in the sysctl file.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": true,
+    "desc": "If V(true), performs a /sbin/sysctl -p if the O(sysctl_file) is updated. If V(false), does not reload sysctl even if the O(sysctl_file) is updated.",
+    "name": "reload",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": "/etc/sysctl.conf",
+    "desc": "Specifies the absolute path to sysctl.conf, if not /etc/sysctl.conf.",
+    "name": "sysctl_file",
+    "required": false,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Manage entries in sysctl.conf.",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "systemd_service": {
+  "example": "- name: Make sure a service unit is running\n  ansible.builtin.systemd_service:\n    state: started\n    name: httpd",
+  "extra_params": [
+   "daemon_reexec",
+   "force",
+   "no_block"
+  ],
+  "fqcn": "ansible.builtin.systemd_service",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the unit. This parameter takes the name of exactly one unit to work with.",
+    "name": "name",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "reloaded",
+     "restarted",
+     "started",
+     "stopped"
+    ],
+    "default": null,
+    "desc": "V(started)/V(stopped) are idempotent actions that will not run commands unless necessary. V(restarted) will always bounce the unit. V(reloaded) will always reload and if the service is not running at the moment of the reload, it is started.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Whether the unit should start on boot. At least one of O(state) or O(enabled) are required.",
+    "name": "enabled",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Run daemon-reload before doing any other operations, to make sure systemd has read any changes.",
+    "name": "daemon_reload",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Whether the unit should be masked or not. A masked unit is impossible to start.",
+    "name": "masked",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [
+     "system",
+     "user",
+     "global"
+    ],
+    "default": "system",
+    "desc": "Run systemctl within a given service manager scope, either as the default system scope V(system), the current user's scope V(user), or the scope of all users V(global).",
+    "name": "scope",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage systemd units",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "template": {
+  "example": "- name: Template a file to /etc/file.conf\n  ansible.builtin.template:\n    src: /mytemplates/foo.j2\n    dest: /etc/file.conf\n    owner: bin\n    group: wheel\n    mode: '0644'",
+  "extra_params": [
+   "attributes",
+   "block_end_string",
+   "block_start_string",
+   "comment_end_string",
+   "comment_start_string",
+   "follow",
+   "force",
+   "lstrip_blocks",
+   "newline_sequence",
+   "output_encoding",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "trim_blocks",
+   "unsafe_writes",
+   "variable_end_string",
+   "variable_start_string"
+  ],
+  "fqcn": "ansible.builtin.template",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Path of a Jinja2 formatted template on the Ansible controller.",
+    "name": "src",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Location to render the template to on the remote machine.",
+    "name": "dest",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user that should own the filesystem object, as would be fed to chown.",
+    "name": "owner",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group that should own the filesystem object, as would be fed to chown.",
+    "name": "group",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The permissions the resulting filesystem object should have.",
+    "name": "mode",
+    "required": false,
+    "type": "raw"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.",
+    "name": "backup",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The validation command to run before copying the updated file into the final destination.",
+    "name": "validate",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Template a file out to a target host",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "timezone": {
+  "example": "- name: Set timezone to Asia/Tokyo\n  become: true\n  community.general.timezone:\n    name: Asia/Tokyo",
+  "extra_params": [
+   "hwclock"
+  ],
+  "fqcn": "community.general.timezone",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the timezone for the system clock.",
+    "name": "name",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Configure timezone setting",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "unarchive": {
+  "example": "- name: Extract foo.tgz into /var/lib/foo\n  ansible.builtin.unarchive:\n    src: foo.tgz\n    dest: /var/lib/foo",
+  "extra_params": [
+   "attributes",
+   "copy",
+   "decrypt",
+   "exclude",
+   "extra_opts",
+   "include",
+   "io_buffer_size",
+   "keep_newer",
+   "list_files",
+   "selevel",
+   "serole",
+   "setype",
+   "seuser",
+   "unsafe_writes",
+   "validate_certs"
+  ],
+  "fqcn": "ansible.builtin.unarchive",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "If O(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If O(remote_src=yes), path on the target server to existing archive file to unpack.",
+    "name": "src",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Remote absolute path where the archive should be unpacked.",
+    "name": "dest",
+    "required": true,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "Set to V(true) to indicate the archived file is already on the remote system and not local to the Ansible controller.",
+    "name": "remote_src",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user that should own the filesystem object, as would be fed to chown.",
+    "name": "owner",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the group that should own the filesystem object, as would be fed to chown.",
+    "name": "group",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "The permissions the resulting filesystem object should have.",
+    "name": "mode",
+    "required": false,
+    "type": "raw"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "If the specified absolute path (file or directory) already exists, this step will not be run.",
+    "name": "creates",
+    "required": false,
+    "type": "path"
+   }
+  ],
+  "short_desc": "Unpacks an archive after (optionally) copying it from the local machine",
+  "source": "ansible-doc (core 2.21.1)"
+ },
+ "user": {
+  "example": "- name: Add the user 'johnd' with a specific uid and a primary group of 'admin'\n  ansible.builtin.user:\n    name: johnd\n    comment: John Doe\n    uid: 1040\n    group: admin",
+  "extra_params": [
+   "authorization",
+   "expires",
+   "force",
+   "generate_ssh_key",
+   "group",
+   "hidden",
+   "local",
+   "login_class",
+   "move_home",
+   "non_unique",
+   "password",
+   "password_expire_account_disable",
+   "password_expire_max",
+   "password_expire_min",
+   "password_expire_warn",
+   "password_lock",
+   "profile",
+   "remove",
+   "role",
+   "seuser",
+   "skeleton",
+   "ssh_key_bits",
+   "ssh_key_comment",
+   "ssh_key_file",
+   "ssh_key_passphrase",
+   "ssh_key_type",
+   "uid",
+   "uid_max",
+   "uid_min",
+   "umask",
+   "update_password"
+  ],
+  "fqcn": "ansible.builtin.user",
+  "params": [
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Name of the user to create, remove or modify.",
+    "name": "name",
+    "required": true,
+    "type": "str"
+   },
+   {
+    "choices": [
+     "absent",
+     "present"
+    ],
+    "default": "present",
+    "desc": "Whether the account should exist or not, taking action if the state is different from what is stated.",
+    "name": "state",
+    "required": false,
+    "type": "str"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "A list of supplementary groups which the user is also a member of.",
+    "name": "groups",
+    "required": false,
+    "type": "list"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "If V(true), add the user to the groups specified in O(groups).",
+    "name": "append",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Optionally set the user's shell.",
+    "name": "shell",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Optionally set the user's home directory.",
+    "name": "home",
+    "required": false,
+    "type": "path"
+   },
+   {
+    "choices": [],
+    "default": true,
+    "desc": "Unless set to V(false), a home directory will be made for the user when the account is created or if the home directory does not exist.",
+    "name": "create_home",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": false,
+    "desc": "When creating an account O(state=present), setting this to V(true) makes the user a system account.",
+    "name": "system",
+    "required": false,
+    "type": "bool"
+   },
+   {
+    "choices": [],
+    "default": null,
+    "desc": "Optionally sets the description (aka GECOS) of user account.",
+    "name": "comment",
+    "required": false,
+    "type": "str"
+   }
+  ],
+  "short_desc": "Manage user accounts",
+  "source": "ansible-doc (core 2.21.1)"
+ }
+}

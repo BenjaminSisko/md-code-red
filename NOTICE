@@ -1,0 +1,19 @@
+Grey Beard Ansible — Field Kit
+
+This is an independent tool, not affiliated with, endorsed by, or supported by
+Red Hat, Inc., the Ansible project, or any vendor.
+
+Content derivation:
+- Ansible module schemas, parameter documentation, and CLI flag descriptions are
+  extracted programmatically from the locally installed ansible-core
+  distribution's own documentation tooling (ansible-doc --json, <cli> --help),
+  under its documented usage. Extraction is version-stamped (see
+  content/modules.json _meta).
+- RHEL administration content is paraphrased from Red Hat Enterprise Linux
+  product documentation and man pages; entries carry a `source` field naming
+  the origin. No extended verbatim vendor passages are included.
+- Error signatures and decision trees are original work informed by the
+  referenced documentation and operational experience.
+
+"Ansible" and "Red Hat" are trademarks of Red Hat, Inc., used here only to
+identify the software the tool documents.

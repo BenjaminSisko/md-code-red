@@ -1,0 +1,30 @@
+{
+ "_meta": {"schema": "Estate Dossier field definitions. Values are entered in the tool and stored in localStorage (gba.dossier.v1) — never in this repo. sections: id, title, hint, fields[] {key, label, kind(text|textarea|table), columns[] for tables}"},
+ "sections": [
+  {"id": "ds-identity", "title": "This estate", "hint": "The two-minute orientation for whoever opens this next.", "fields": [
+   {"key": "site", "label": "Site / enclave name", "kind": "text"},
+   {"key": "control_node", "label": "Ansible control node (hostname, OS, where it lives)", "kind": "text"},
+   {"key": "repo", "label": "Playbook source of truth (git remote, branch, how it syncs)", "kind": "text"},
+   {"key": "ansible_ver", "label": "ansible-core version on the control node (ansible --version)", "kind": "text"},
+   {"key": "summary", "label": "One-paragraph description of what this estate does", "kind": "textarea"}
+  ]},
+  {"id": "ds-hosts", "title": "Host groups & quirks", "hint": "The tribal knowledge: which groups exist and what's weird about individual machines. 'db02's clock drifts' belongs here.", "fields": [
+   {"key": "groups", "label": "Groups", "kind": "table", "columns": ["Group", "What it is", "Count", "Notes"]},
+   {"key": "quirks", "label": "Per-host quirks ledger", "kind": "table", "columns": ["Host", "Quirk", "Workaround", "Since"]}
+  ]},
+  {"id": "ds-access", "title": "Access & escalation", "hint": "How automation authenticates and how YOU escalate. Descriptions and locations only — NEVER passwords or key material.", "fields": [
+   {"key": "auth", "label": "Automation auth model (user, key location, become policy)", "kind": "textarea"},
+   {"key": "vault", "label": "Vault password handling (who holds it, where the file lives — not the secret itself)", "kind": "text"},
+   {"key": "oob", "label": "Out-of-band/console access per host class (iDRAC, KVM, walk to rack B)", "kind": "textarea"}
+  ]},
+  {"id": "ds-rhythm", "title": "Operating rhythm", "hint": "When it's safe to make noise.", "fields": [
+   {"key": "windows", "label": "Maintenance windows", "kind": "table", "columns": ["System/group", "Window", "Approval needed?"]},
+   {"key": "jobs", "label": "Scheduled jobs (cron/timers) worth knowing", "kind": "table", "columns": ["Where", "Schedule", "What it does", "Owner"]},
+   {"key": "backups", "label": "Backup coverage & last verified restore", "kind": "table", "columns": ["What", "How", "Schedule", "Last RESTORE test"]}
+  ]},
+  {"id": "ds-people", "title": "People & escalation", "hint": "Who to call, and when calling is the right move. Panic page step 6 points here.", "fields": [
+   {"key": "contacts", "label": "Contacts", "kind": "table", "columns": ["Role", "Name", "Reach via", "Call when"]},
+   {"key": "escalation", "label": "Escalation rule of thumb", "kind": "textarea"}
+  ]}
+ ]
+}

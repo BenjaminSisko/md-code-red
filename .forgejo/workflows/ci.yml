@@ -1,0 +1,45 @@
+# MD CODE RED CI — HTML profile. Every PR and every push to main. Worker branches never trigger on push.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Build single file from sources (never patch an assembled file)
+        run: python3 build.py
+      - name: QA gate (air-gap law, provenance, schema, decoder humility, leaks)
+        run: python3 qa.py
+      - name: STIG source pins intact
+        run: cd stig-src && shasum -a 256 -c SHA256SUMS
+      - name: Size report (informational — Founder ruled no ceiling, 2026-09-17)
+        run: |
+          for f in *.html dist/*.html; do [ -f "$f" ] && printf "%s\t%s bytes\n" "$f" "$(stat -c %s "$f")"; done; true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: md-code-red-build
+          path: |
+            *.html
+            dist/*.html
+          if-no-files-found: ignore
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: gitleaks (full history)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Workflow files are protected
+        run: echo "Changes to .forgejo/workflows/** require Devon Park review (branch protection pattern)."

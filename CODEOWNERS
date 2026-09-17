@@ -1,0 +1,6 @@
+# MD CODE RED code ownership (ADR-001; Zee assigns developers, Stage 04 Plan)
+*                       @benny
+/.forgejo/workflows/    @benny
+/stig-src/              @benny
+/content/               @benny
+/extract/               @benny

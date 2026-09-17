@@ -1,0 +1,86 @@
+{
+ "_meta": {"schema": "list: id, title, kind(ritual|recon|panic|forbidden|path), intro, items[] — ritual/panic items: {text, why}; recon items: {cmd, expect, ifnot}; forbidden items: {rule, story}; path items: {phase, text}"},
+ "lists": [
+  {"id": "c-preflight", "title": "Pre-flight — before ANY playbook touches production", "kind": "ritual", "intro": "Run this every time, even when you're sure. Especially when you're sure. Aviation runs checklists precisely because the pilots are experts, not despite it.",
+   "items": [
+    {"text": "ansible-playbook <play> --syntax-check", "why": "Catches YAML and structure errors in seconds. The cheapest gate there is."},
+    {"text": "ansible-playbook <play> --list-hosts", "why": "Confirms the blast radius. Read every hostname. If the list surprises you, STOP."},
+    {"text": "ansible-playbook <play> --check --diff --limit <one-host>", "why": "Dry-run on one victim. Read the diff like you'll be quizzed on it. Remember command/shell tasks don't honor check mode."},
+    {"text": "Run for real with --limit <one-host>, then VERIFY on that host by hand", "why": "One host proves the change; the recap alone proves nothing. stat the file, curl the service, whatever 'working' means here."},
+    {"text": "Now the fleet — and watch the recap for unreachable= and failed=", "why": "Non-zero unreachable on a normal day means inventory drift — chase it today, not someday."},
+    {"text": "Log what you ran and the recap counts in the ops log / scar ledger", "why": "Future-you, three weeks from now, will need to know what changed today."}
+   ]},
+  {"id": "c-friday", "title": "Friday close-out ritual", "kind": "ritual", "intro": "Twenty minutes on Friday buys a calm Monday. Do not skip the commit.",
+   "items": [
+    {"text": "git status in the playbook repo — commit or stash everything, push to origin", "why": "Uncommitted Friday work is Monday's mystery. The repo is the source of truth only if the truth is in it."},
+    {"text": "ansible all -m ping > /tmp/census-$(date +%F).txt — save the fleet census", "why": "A dated reachability snapshot. When something's down Monday, you'll know if it died over the weekend or before."},
+    {"text": "systemctl list-units --failed on the control node", "why": "Leave your own house clean. A sick control node poisons every diagnosis."},
+    {"text": "df -h on the control node — anything above 80%?", "why": "Disks fill on weekends when nobody's watching. 80% Friday is 100% Sunday night."},
+    {"text": "Write tomorrow-you one line: what's half-done and where you left it", "why": "The context you dump now is the context Monday-you won't have to rebuild."}
+   ]},
+  {"id": "c-panic", "title": "PANIC — something is wrong and I don't know what", "kind": "panic", "intro": "Stop typing. Breathe. You are not the first person here, and this page has your back. Do these in order — no skipping ahead to fixes.",
+   "items": [
+    {"text": "STOP the bleeding: if a playbook is mid-run and wrecking things, Ctrl-C it. That aborts the run immediately — but tasks already launched on targets will finish on their own.", "why": "A stopped bad run is recoverable. Note which hosts had already started before you killed it — those are your blast radius.", "cmd": null},
+    {"text": "Do NOT 'fix' anything yet. Write down (paper is fine): what you ran, when, what you expected, what you saw.", "why": "The first fix attempted in panic usually destroys the evidence and often makes it worse."},
+    {"text": "Establish blast radius: which hosts did it touch? Scroll the recap or the log, and preview the same command's targets:", "why": "One host wrong is an incident. Fifty hosts wrong is a different procedure — know which you're in.", "cmd": "ansible-playbook <same-playbook> --list-hosts"},
+    {"text": "Check the fleet's pulse:", "why": "Facts beat fear. Often the damage is smaller than the adrenaline says.", "cmd": "ansible all -m ping\nansible <affected-group> -m command -a 'systemctl list-units --failed' 2>/dev/null"},
+    {"text": "Read the actual error — paste it into the Error Decoder and read the matched explanation fully before acting.", "why": "The decoder maps symptoms to diseases. Treating the disease beats treating the symptom.", "nav": "decoders", "navdec": "err", "navlabel": "open the Error Decoder"},
+    {"text": "If data may be lost or a system is compromised: hands off, escalate per the dossier's contact list. That is strength, not weakness.", "why": "Recovery and forensics both degrade with every keystroke on the patient. Knowing when to stop IS the senior skill.", "nav": "dossier", "navlabel": "open the contact list (dossier)"},
+    {"text": "Afterward — same day — write the scar ledger entry.", "why": "The ledger is how this seat gets safer every year. Pay it forward.", "nav": "scars", "navlabel": "open the Scar Ledger"}
+   ]},
+  {"id": "c-dayone", "title": "Day One recon — know your terrain before touching anything", "kind": "recon", "intro": "Run these read-only commands on the control node your first day (and on any unfamiliar box, forever). Each one draws part of the map. Nothing here changes state.",
+   "items": [
+    {"cmd": "ansible --version", "expect": "Version, and 'config file =' pointing at the config you expect.", "ifnot": "A None or surprising config file means settings come from somewhere you haven't found yet. Chase it before anything else — precedence: $ANSIBLE_CONFIG, ./ansible.cfg, ~/.ansible.cfg, /etc/ansible/ansible.cfg."},
+    {"cmd": "ansible-config dump --only-changed", "expect": "A short list of deliberate-looking overrides, each naming its origin file.", "ifnot": "Settings you can't explain = archaeology required. Each one was someone's scar; find the story before you 'clean it up'."},
+    {"cmd": "ansible-inventory --graph", "expect": "A group tree that matches what you were told this estate looks like.", "ifnot": "Empty or weird tree: wrong inventory path in config, or the inventory lives somewhere else. ansible-config dump | grep -i inventory."},
+    {"cmd": "ansible-inventory --host localhost", "expect": "Either an error ('Could not match') — good, implicit localhost — or vars including ansible_connection: local.", "ifnot": "localhost defined WITHOUT ansible_connection=local means delegation will SSH to your own control node and hang. Scar #001. Fix before your first playbook run."},
+    {"cmd": "ansible all -m ping", "expect": "SUCCESS/pong from every host (or a known, documented list of exceptions).", "ifnot": "Every failure is either inventory drift or a dead host. Triage each with the UNREACHABLE tree; update the dossier."},
+    {"cmd": "ls -la $(dirname $(ansible --version | awk -F'= ' '/config file/{print $2}')) 2>/dev/null; ls -la .", "expect": "The repo/config directory NOT world-writable; ansible.cfg a real file (or a symlink you can explain).", "ifnot": "World-writable directory = Ansible silently ignores ./ansible.cfg. Symlinks: know which end is the real file — git versions what the repo path holds."},
+    {"cmd": "git -C <playbook-repo> log --oneline -10 && git status", "expect": "Recent, sensible commits; clean tree.", "ifnot": "A dirty tree or stale history means the repo may NOT be the real source of truth yet. Find out what is before editing anything."},
+    {"cmd": "systemctl list-units --failed && df -h", "expect": "0 failed units; all filesystems under 80%.", "ifnot": "A sick control node lies to you in a hundred small ways. Heal the doctor first."},
+    {"cmd": "last -n 10", "expect": "Logins you can account for.", "ifnot": "Unknown logins on the automation controller are a security question — ask it today."},
+    {"cmd": "crontab -l; ls /etc/cron.d/ 2>/dev/null; systemctl list-timers --no-pager | head", "expect": "You can explain every scheduled job and timer, or the dossier can.", "ifnot": "Unknown scheduled jobs are landmines with timers. Read each script it calls; paste any known CLI commands inside them into the Command Decoder (the decoder can't explain arbitrary scripts — read those yourself). Write findings into the dossier."},
+    {"cmd": "chronyc tracking && chronyc sources", "expect": "System clock synchronised to a source; offset well under a second.", "ifnot": "Clock drift on an air-gapped enclave breaks Kerberos/TLS/2FA and makes cross-host log timelines lie. Find the enclave's time source (dossier) and fix chrony.conf before trusting any log forensics."}
+   ]},
+  {"id": "c-forbidden", "title": "The Forbidden List", "kind": "forbidden", "intro": "Rules with scars behind them. Break one knowingly and you'd better be able to explain why to the next person who sits here.",
+   "items": [
+    {"rule": "Never run ansible all -m shell (or command) with a state-changing command and no --limit.", "story": "One typo'd sed against 'all' rewrites a config on every machine you own in under a minute. The fleet-wide fix took a weekend; the --limit would have taken four seconds."},
+    {"rule": "Never usermod -G without -a.", "story": "A new admin 'added' a user to one group and silently removed them from six, including the one that granted sudo. Lockout, on a Friday, naturally. -aG or nothing."},
+    {"rule": "Never edit sudoers with anything but visudo (or drop-ins validated by visudo -c).", "story": "One missing colon in sudoers disables sudo for every human on the box. With root login disabled too, that's a console walk — or a rescue boot."},
+    {"rule": "Never 'fix' SELinux by disabling it.", "story": "It 'fixed' the app in thirty seconds and failed the audit in thirty days — and the relabel on re-enable took the service down for hours. The real fix was one restorecon."},
+    {"rule": "Never rm from a find you haven't run bare first.", "story": "find with a subtly wrong -mtime deleted current logs instead of old ones. The bare run would have shown the mistake in the first ten lines of output."},
+    {"rule": "Never kill -9 as the first resort, and never on databases.", "story": "SIGKILL'd database, corrupted WAL, restore from backup — four hours. systemctl stop would have taken ninety seconds."},
+    {"rule": "Never reboot a box you can't console into, without knowing WHY it's sick.", "story": "The reboot 'fixed' it right up until the box didn't come back — the disk was dying, and the reboot was the coup de grâce. Uptime was the only thing keeping the evidence alive."},
+    {"rule": "Never put secrets in playbooks, inventory, or logs in plaintext. Vault or nothing.", "story": "A password in group_vars went to the git remote; the remote got mirrored; the mirror got shared. Rotation, apology tour, new rule. ansible-vault exists precisely for this."},
+    {"rule": "Never run a playbook you haven't read against hosts that matter.", "story": "A downloaded 'hardening' playbook helpfully disabled password AND key auth. Read every task; --list-tasks is the two-second X-ray."}
+   ]},
+  {"id": "c-bootstrap", "title": "New host enrollment — from cabled to fleet member", "kind": "ritual", "intro": "The ladder for bringing a fresh RHEL box under Ansible control. Every rung exists elsewhere in this kit; this is the order.",
+   "items": [
+    {"text": "Verify the host's SSH fingerprint out-of-band (console), then enroll it: ssh-keyscan <host> >> ~/.ssh/known_hosts", "why": "Pre-populating known_hosts is what lets batch runs never hang on a host-key prompt — without blanket-disabling checking."},
+    {"text": "Create the automation user on the host (console or -k first contact): useradd + wheel/sudoers policy per the dossier's auth model", "why": "Automation should never run as your personal account — attribution and revocation both need a dedicated user."},
+    {"text": "Install the automation key: ssh-copy-id -i <key.pub> <user>@<host> (or the authorized_key snippet once Ansible can reach it)", "why": "Key auth is what makes the fleet drivable without invisible password prompts."},
+    {"text": "sudoers drop-in for the automation user (NOPASSWD or vaulted become per site policy) — validate with visudo -c", "why": "become without a password plan = the silent-hang scar. Decide the policy now, on purpose."},
+    {"text": "Add the host to inventory in its right group; commit the inventory change to git", "why": "The repo is the source of truth — a host that exists only in your terminal history doesn't exist."},
+    {"text": "Prove the whole ladder: ansible <host> -m ping, then ansible <host> -m setup -a 'filter=ansible_distribution*'", "why": "pong proves transport AND Python module execution; facts prove the box is fully conversational."},
+    {"text": "Record the host and any quirks in the Estate Dossier", "why": "Day-one you wished someone had done this. Be the someone."}
+   ]},
+  {"id": "c-306090", "title": "30 / 60 / 90 — from surviving to owning the seat", "kind": "path", "intro": "Check items off as you demonstrate them (progress saves in this browser). Done doesn't mean 'read about it' — it means 'did it on a real or lab box'.",
+   "items": [
+    {"phase": "30", "text": "Complete Day One recon on the control node; every finding written into the Estate Dossier"},
+    {"phase": "30", "text": "Run the full pre-flight ritual on a real change, --limit one host, verified by hand"},
+    {"phase": "30", "text": "Read every play in the repo top to bottom; decode anything cryptic with the Command Decoder"},
+    {"phase": "30", "text": "Drill: diagnose the hanging-playbook scenario without looking at the answer"},
+    {"phase": "30", "text": "Read scar ledger entries #001 and #002 and explain both diseases out loud to someone (or a rubber duck)"},
+    {"phase": "60", "text": "Author a new playbook with the Task Builder; ship it through the full pre-flight ritual"},
+    {"phase": "60", "text": "Handle one real failure using the decision trees; add anything new to the scar ledger"},
+    {"phase": "60", "text": "Rekey or verify ansible-vault handling; prove you can rotate the vault password safely"},
+    {"phase": "60", "text": "Drill: the disk-full and service-down scenarios, cold"},
+    {"phase": "60", "text": "Explain runtime-vs-permanent in firewalld and enable-vs-start in systemd without notes"},
+    {"phase": "90", "text": "Complete an OS patch cycle (dnf) on a host group with rollback plan and verification"},
+    {"phase": "90", "text": "Add one new decision tree or five new command entries from your own experience — export annotations and merge them"},
+    {"phase": "90", "text": "Run a restore test: prove one backup actually restores. Backups that were never restored are rumors"},
+    {"phase": "90", "text": "Teach one thing from this kit to someone else. Teaching is the exit exam"},
+    {"phase": "90", "text": "Write your own letter paragraph for the next person. You're the greybeard now — start acting like it"}
+   ]}
+ ]
+}

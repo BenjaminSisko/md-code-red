@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<!-- Grey Beard Ansible — Field Kit · v__VERSION__ · built __BUILT_DATE__ · single-file, air-gap safe -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Benny — Grey Beard Ansible">
+<meta name="description" content="Offline Ansible + RHEL survival console: intent-indexed commands, generators, decoders, decision trees, and institutional memory. One file, zero network.">
+<title>Grey Beard Ansible — Field Kit</title>
+<style>
+/* ============ tokens ============ */
+:root{
+  --bg:#0c1017; --bg2:#101623; --panel:#141c2b; --panel2:#1a2436; --border:#243147;
+  --text:#dbe4f0; --dim:#8fa0b8; --faint:#5c6b82;
+  --accent:#5eead4; --accent2:#93c5fd; --amber:#fbbf24;
+  --ok:#34d399; --warn:#fbbf24; --crit:#f87171;
+  --code-bg:#0a0e15;
+  --radius:8px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f4f6f9; --bg2:#eef1f6; --panel:#ffffff; --panel2:#f1f4f9; --border:#d4dbe6;
+    --text:#1a2333; --dim:#51607a; --faint:#8494ab;
+    --accent:#0d9488; --accent2:#2563eb; --amber:#b45309;
+    --ok:#059669; --warn:#b45309; --crit:#dc2626;
+    --code-bg:#f6f8fa;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto} *{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.55}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre,textarea.code,input.code{font-family:var(--mono);font-size:13px}
+code{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;overflow-x:auto;line-height:1.5;white-space:pre}
+h2{font-size:20px;margin-bottom:4px}
+h3{font-size:16px;margin:18px 0 8px}
+p{margin:8px 0}
+button{font-family:var(--font);font-size:13px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#06251f;border-color:var(--accent);font-weight:600}
+button.small{padding:2px 8px;font-size:12px}
+input[type=text],input[type=number],select,textarea{background:var(--code-bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:14px;width:100%}
+input:focus,select:focus,textarea:focus,button:focus{outline:2px solid var(--accent);outline-offset:1px}
+label{font-size:12.5px;color:var(--dim);display:block;margin:8px 0 3px}
+label b.req{color:var(--crit)}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--border);padding:6px 9px;text-align:left;font-size:13.5px;vertical-align:top}
+th{background:var(--panel2);color:var(--dim);font-weight:600}
+details{border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin:8px 0;background:var(--panel)}
+summary{cursor:pointer;color:var(--accent2);font-weight:600}
+::selection{background:var(--accent);color:#06251f}
+
+/* ============ layout ============ */
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:18px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.brand .mark{flex:none}
+.brand h1{font-size:15px;line-height:1.25}
+.brand small{display:block;color:var(--dim);font-weight:400;font-size:11px}
+.toc a{display:flex;gap:8px;padding:5px 8px;border-radius:6px;color:var(--dim);font-size:13.5px;align-items:baseline}
+.toc a:hover{background:var(--panel);text-decoration:none;color:var(--text)}
+.toc a.active{background:var(--panel2);color:var(--accent);font-weight:600}
+.toc a .vis{margin-left:auto;color:var(--ok);font-size:11px}
+.toc-group{margin:12px 0 3px;font-size:10.5px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+main{padding:26px 34px 80px;max-width:1060px}
+section.page{display:none}
+section.page.on{display:block}
+.sec-intro{color:var(--dim);max-width:72ch;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:10px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--dim);font-size:13px}
+.tiny{color:var(--faint);font-size:11.5px}
+.pill{display:inline-block;border:1px solid var(--border);border-radius:99px;padding:1px 9px;font-size:11.5px;color:var(--dim)}
+
+/* blast badges — color + word, never color alone */
+.blast{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;border-radius:99px;padding:1px 9px;border:1px solid var(--border);white-space:nowrap}
+.blast i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.blast.green i{background:var(--ok)} .blast.green{color:var(--ok)}
+.blast.yellow i{background:var(--warn)} .blast.yellow{color:var(--warn)}
+.blast.red i{background:var(--crit)} .blast.red{color:var(--crit);border-color:var(--crit)}
+
+/* search + entries */
+#searchbox{font-size:16px;padding:12px 14px}
+.entry{border:1px solid var(--border);border-radius:var(--radius);background:var(--panel);padding:12px 14px;margin:9px 0}
+.entry.sel{border-color:var(--accent)}
+.entry .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.entry .intent{font-weight:600}
+.entry pre{margin:8px 0 6px;position:relative}
+.entry .meta{font-size:12px;color:var(--faint);margin-top:6px}
+.mentor{border-left:3px solid var(--amber);background:var(--panel2);padding:6px 10px;margin:7px 0;font-size:13px;color:var(--dim);font-style:italic}
+.mentor b{color:var(--amber);font-style:normal}
+.vu{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px;margin-top:6px}
+.vu dt{color:var(--faint)} .vu dd{color:var(--dim)}
+.copybtn{float:right;margin-left:10px}
+.notewrap{margin-top:8px}
+.notewrap textarea{min-height:52px;font-family:var(--mono);font-size:12.5px}
+.catchips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.catchips button.on{border-color:var(--accent);color:var(--accent)}
+
+/* generators */
+.gen-nav{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 16px}
+.gen-nav button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.genpanel{display:none}.genpanel.on{display:block}
+.out-wrap textarea{min-height:260px;white-space:pre;font-family:var(--mono);font-size:13px}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:4px 14px}
+.cart{border:1px dashed var(--border);border-radius:var(--radius);padding:8px 12px;margin:10px 0}
+.cart li{margin-left:18px;font-size:13px;color:var(--dim)}
+
+/* decoders */
+.decoded{margin-top:12px}
+.decoded .tok{border-bottom:1px dotted var(--faint)}
+.dc-line{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:12px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:13.5px}
+.dc-line code{white-space:nowrap}
+.verdict{border-radius:var(--radius);padding:10px 14px;margin-top:12px;border:1px solid var(--border);font-size:14px}
+.verdict.green{border-color:var(--ok)} .verdict.yellow{border-color:var(--warn)} .verdict.red{border-color:var(--crit)}
+.lint-hit{border-left:3px solid var(--warn);padding:6px 10px;margin:6px 0;background:var(--panel2);font-size:13px}
+
+/* trees */
+.tree-node{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:10px 0}
+.tree-node .q{font-weight:600;margin-bottom:10px}
+.tree-opts{display:flex;flex-direction:column;gap:7px}
+.tree-opts button{text-align:left}
+.tree-answer{border-left:4px solid var(--accent)}
+.crumbs{font-size:12px;color:var(--faint);margin:6px 0}
+
+/* checklists */
+.ck{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-bottom:1px solid var(--border)}
+.ck input[type=checkbox]{width:16px;height:16px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.ck .why{color:var(--faint);font-size:12.5px}
+.ck.done .t{color:var(--faint);text-decoration:line-through}
+.progressbar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:8px 0}
+.progressbar i{display:block;height:100%;background:var(--accent)}
+
+/* panic */
+#panic .card{border-left:4px solid var(--crit)}
+#panic .step{font-size:15px}
+.panic-calm{font-size:17px;color:var(--accent);margin:10px 0}
+
+/* letter overlay */
+#letter-ov{position:fixed;inset:0;background:rgba(4,7,12,.82);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#letter-ov.on{display:flex}
+#letter-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:680px;max-height:86vh;overflow-y:auto;padding:28px 32px}
+#letter-card h2{color:var(--amber)}
+#letter-card .body p{margin:12px 0}
+
+.foot{border-top:1px solid var(--border);margin-top:40px;padding-top:14px;color:var(--faint);font-size:12px;max-width:1060px}
+.kbd{border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-family:var(--mono);font-size:12px;background:var(--panel2)}
+
+/* mobile */
+.toc-toggle{display:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .toc{display:flex;flex-wrap:wrap;gap:4px}
+  .toc a{border:1px solid var(--border);border-radius:99px;padding:3px 10px}
+  .toc a .vis{display:none}
+  .toc-group{display:none}
+  main{padding:18px 14px 60px}
+  .grid2{grid-template-columns:1fr}
+}
+/* print — re-tint to paper */
+@media print{
+  :root{--bg:#fff;--bg2:#fff;--panel:#fff;--panel2:#f2f2f2;--border:#bbb;--text:#111;--dim:#333;--faint:#555;--code-bg:#f6f6f6;--accent:#00695c;--accent2:#0d47a1;--amber:#8d6e00;--ok:#1b5e20;--warn:#8d6e00;--crit:#b71c1c}
+  .sidebar,.copybtn,.notewrap,button,#searchbox,.catchips,.gen-nav,.toc-toggle,#letter-ov{display:none!important}
+  section.page{display:block!important;page-break-before:always}
+  .entry,.card,.tree-node,tr{page-break-inside:avoid}
+  body{font-size:12px}
+  a{color:var(--text)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="brand">
+    <svg class="mark" width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="7" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M9 12 h16 M9 17 h11 M9 22 h14" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/><circle cx="26" cy="22" r="2.2" fill="var(--amber)"/></svg>
+    <h1>Grey Beard Ansible<small>Field Kit · v__VERSION__</small></h1>
+  </div>
+  <nav class="toc" id="toc" aria-label="Sections">
+    <div class="toc-group">Survive</div>
+    <a href="#home" data-sec="home"><span>Search &amp; Commands</span></a>
+    <a href="#panic" data-sec="panic"><span>Panic</span></a>
+    <a href="#trees" data-sec="trees"><span>Decision Trees</span></a>
+    <a href="#decoders" data-sec="decoders"><span>Decoders</span></a>
+    <div class="toc-group">Operate</div>
+    <a href="#generators" data-sec="generators"><span>Generators</span></a>
+    <a href="#snippets" data-sec="snippets"><span>Snippets</span></a>
+    <a href="#rituals" data-sec="rituals"><span>Rituals</span></a>
+    <a href="#dayone" data-sec="dayone"><span>Day One Recon</span></a>
+    <div class="toc-group">Learn</div>
+    <a href="#drills" data-sec="drills"><span>Drills</span></a>
+    <a href="#path" data-sec="path"><span>30 / 60 / 90</span></a>
+    <a href="#glossary" data-sec="glossary"><span>Glossary</span></a>
+    <div class="toc-group">Continuity</div>
+    <a href="#scars" data-sec="scars"><span>Scar Ledger</span></a>
+    <a href="#forbidden" data-sec="forbidden"><span>Forbidden List</span></a>
+    <a href="#dossier" data-sec="dossier"><span>Estate Dossier</span></a>
+    <a href="#about" data-sec="about"><span>About &amp; Export</span></a>
+  </nav>
+  <p class="tiny" style="margin-top:16px"><span class="kbd">/</span> search · <span class="kbd">p</span> panic · <span class="kbd">Esc</span> close</p>
+</aside>
+
+<main>
+  <!-- ============ HOME: search + intent index ============ -->
+  <section class="page" id="home">
+    <h2>What do you want to do?</h2>
+    <p class="sec-intro">Search everything — commands, decision trees, glossary, scars, drills — or browse by intent below. Badges show blast radius: <span class="blast green"><i></i>read-only</span> <span class="blast yellow"><i></i>one host</span> <span class="blast red"><i></i>fleet</span></p>
+    <input type="text" id="searchbox" placeholder="try: dry run · localhost hangs · open a port · disk full · vault" aria-label="Search the field kit" autocomplete="off">
+    <div id="search-results"></div>
+    <div id="browse">
+      <div class="catchips" id="cat-ansible"></div>
+      <div class="catchips" id="cat-rhel"></div>
+      <div id="entry-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ PANIC ============ -->
+  <section class="page" id="panic">
+    <h2>Something is wrong and I don't know what</h2>
+    <p class="panic-calm">Stop typing. Breathe. You are not the first person here — this page has your back.</p>
+    <div id="panic-list"></div>
+  </section>
+
+  <!-- ============ TREES ============ -->
+  <section class="page" id="trees">
+    <h2>Decision trees — start from the symptom</h2>
+    <p class="sec-intro">Pick what you're <em>seeing</em>, not what you think is wrong. Answer each question; every path ends in a diagnosis, a fix, and the lesson underneath it.</p>
+    <div id="tree-picker" class="catchips"></div>
+    <div id="tree-run"></div>
+  </section>
+
+  <!-- ============ DECODERS ============ -->
+  <section class="page" id="decoders">
+    <h2>Paste it — understand it</h2>
+    <div class="gen-nav" id="dec-nav">
+      <button data-dec="cmd" class="on">Command Decoder</button>
+      <button data-dec="err">Error Decoder</button>
+      <button data-dec="lint">Gotcha Linter</button>
+      <button data-dec="prec">Variable Precedence</button>
+    </div>
+    <div class="genpanel on" id="dec-cmd">
+      <p class="sec-intro">Paste any <code>ansible*</code> command, or a common RHEL command, and get every piece explained — ending with a blast-radius verdict. Unknown flags are reported as unknown, never guessed.</p>
+      <input type="text" class="code" id="dc-input" aria-label="Command to decode" placeholder="ansible 'webservers:!web03' -m shell -a 'systemctl restart httpd' --become">
+      <div class="row" style="margin-top:8px"><button class="primary" id="dc-go">Decode</button></div>
+      <div class="decoded" id="dc-out"></div>
+    </div>
+    <div class="genpanel" id="dec-err">
+      <p class="sec-intro">Paste the error output from a failed run. Known signatures map to plain English, the disease behind the symptom, first moves, and the right decision tree.</p>
+      <textarea class="code" id="ed-input" rows="6" aria-label="Error text to decode" placeholder="Paste stderr / the failed task output here"></textarea>
+      <div class="row" style="margin-top:8px"><button class="primary" id="ed-go">Diagnose</button></div>
+      <div id="ed-out"></div>
+    </div>
+    <div class="genpanel" id="dec-lint">
+      <p class="sec-intro">Scans pasted playbook YAML for the ten classic wounds (tabs, missing colon-space, unquoted <code>{{</code>…). This is <b>not</b> a YAML parser — <code>ansible-playbook --syntax-check</code> on the box is the authority.</p>
+      <textarea class="code" id="lint-input" rows="10" aria-label="YAML to lint" placeholder="Paste playbook YAML here"></textarea>
+      <div class="row" style="margin-top:8px"><button class="primary" id="lint-go">Scan</button></div>
+      <div id="lint-out"></div>
+    </div>
+    <div class="genpanel" id="dec-prec">
+      <p class="sec-intro">The official ladder, weakest to strongest. When a variable "has the wrong value," two rungs are fighting — click two to see which wins. <span class="tiny">Source: ansible-documentation, variable precedence.</span></p>
+      <div id="prec-list"></div>
+      <div id="prec-verdict" class="verdict" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- ============ GENERATORS ============ -->
+  <section class="page" id="generators">
+    <h2>Describe it — get correct syntax</h2>
+    <p class="sec-intro">Forms enforce required fields and legal values, so invalid output is unrepresentable. Module forms are generated from vendor <code>ansible-doc</code> schemas (core <span id="gen-corever"></span>).</p>
+    <div class="gen-nav" id="gen-nav"></div>
+    <div id="gen-panels"></div>
+  </section>
+
+  <!-- ============ SNIPPETS ============ -->
+  <section class="page" id="snippets">
+    <h2>Battle-tested blocks</h2>
+    <p class="sec-intro">Each snippet is annotated with the trap it avoids. Copy, adapt names, run the pre-flight ritual.</p>
+    <div id="snippet-list"></div>
+  </section>
+
+  <!-- ============ RITUALS ============ -->
+  <section class="page" id="rituals">
+    <h2>Rituals</h2>
+    <p class="sec-intro">Checklists are the cheapest safety equipment ever invented. These reset each time you open them — they're per-run, on purpose.</p>
+    <div id="ritual-list"></div>
+  </section>
+
+  <!-- ============ DAY ONE ============ -->
+  <section class="page" id="dayone">
+    <h2>Day One recon — know your terrain</h2>
+    <div id="dayone-list"></div>
+  </section>
+
+  <!-- ============ DRILLS ============ -->
+  <section class="page" id="drills">
+    <h2>Drills — train before the real firefight</h2>
+    <p class="sec-intro">Stage each scenario on a <b>throwaway VM</b> — never lab or production infrastructure. Work the problem; open hints one at a time; the answer stays hidden until you ask.</p>
+    <div id="drill-list"></div>
+  </section>
+
+  <!-- ============ PATH ============ -->
+  <section class="page" id="path">
+    <h2>30 / 60 / 90 — from surviving to owning the seat</h2>
+    <div id="path-list"></div>
+  </section>
+
+  <!-- ============ GLOSSARY ============ -->
+  <section class="page" id="glossary">
+    <h2>Glossary — plain English first, real name always</h2>
+    <div id="gloss-list"></div>
+  </section>
+
+  <!-- ============ SCARS ============ -->
+  <section class="page" id="scars">
+    <h2>Scar Ledger</h2>
+    <p class="sec-intro">Every incident becomes a page, and the seat gets safer every year. When the estate teaches you something, write it down here — that's the deal.</p>
+    <div id="scar-list"></div>
+  </section>
+
+  <!-- ============ FORBIDDEN ============ -->
+  <section class="page" id="forbidden">
+    <h2>The Forbidden List</h2>
+    <div id="forbidden-list"></div>
+  </section>
+
+  <!-- ============ DOSSIER ============ -->
+  <section class="page" id="dossier">
+    <h2>Estate Dossier — the irreplaceable part</h2>
+    <p class="sec-intro">Everything here describes <b>this</b> estate — the knowledge no vendor doc has. Saved in this browser only (never in the file itself). Print it; export it from About. <b>Never</b> write passwords or key material here.</p>
+    <div id="dossier-form"></div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="page" id="about">
+    <h2>About, export &amp; the fine print</h2>
+    <div class="card">
+      <h3 style="margin-top:0">Read the letter again</h3>
+      <button id="btn-letter">Open the letter</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Export your annotations</h3>
+      <p class="muted">Downloads a JSON patch of your margin notes and dossier. Carry it low-side and merge it into the next build (<code>python3 build.py --merge patch.json</code>) so the kit grows with you.</p>
+      <button class="primary" id="btn-export">Export annotations (JSON)</button>
+      <span class="tiny" id="export-note"></span>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Version</h3>
+      <p class="muted">v__VERSION__ · built __BUILT_DATE__ · dictionaries extracted from ansible-core <span id="about-corever"></span>.</p>
+      <div id="about-changelog"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Running an older Ansible?</h3>
+      <p class="muted">Day One's first command is <code>ansible --version</code> — believe what it says. On
+      <b>ansible 2.9 or older</b> (common on RHEL 8-era boxes): fully-qualified names like
+      <code>ansible.builtin.copy</code> do not resolve (that routing arrived in 2.10) and
+      <code>systemd_service</code> was still called <code>systemd</code> (renamed in 2.14). Tick
+      <b>"ansible 2.9 compatibility"</b> in the Task Builder and generated plays use the short names
+      2.9 understands — on 2.9 the posix-collection modules (firewalld, authorized_key, mount…) were
+      built-in short names too. On 2.10+, keep FQCNs, and install any needed collections with the
+      "Install a collection offline" entry. This kit's flag dictionaries were extracted from
+      ansible-core <span id="compat-corever"></span>; an older CLI may lack some listed flags — the
+      decoder will honestly call your older CLI's real flags UNKNOWN if they differ.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Honesty line</h3>
+      <p class="muted">This kit's dictionaries are curated and dated. The authorities are on your box: <code>ansible-doc</code>, <code>man</code>, <code>/usr/share/doc</code>, and each daemon's own validator. When this file and your box disagree, the box wins. The kit never guesses: anything it doesn't know, it says so.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    Grey Beard Ansible — Field Kit · v__VERSION__ · one self-contained file · no network calls, ever ·
+    progress and notes live in this browser's localStorage only · vendor content paraphrased from
+    ansible-doc/--help (ansible-core), Red Hat RHEL documentation, and man pages — independent tool,
+    not affiliated with or endorsed by Red Hat, Inc. or the Ansible project.
+  </footer>
+</main>
+</div>
+
+<!-- letter overlay -->
+<div id="letter-ov" role="dialog" aria-modal="true" aria-label="Letter to the successor">
+  <div id="letter-card">
+    <h2>Read this first</h2>
+    <div class="body" id="letter-body"></div>
+    <div class="row" style="margin-top:16px"><button class="primary" id="letter-close">I'm ready — and I make the pre-flight promise</button></div>
+  </div>
+</div>
+
+<script id="gba-data" type="application/json">/*__DATA__*/</script>
+<script>
+"use strict";
+(function(){
+/* ============ old-browser polyfills (ESR-era Firefox on air-gapped boxes) ============ */
+if(window.NodeList && !NodeList.prototype.forEach) NodeList.prototype.forEach=Array.prototype.forEach;
+if(!Element.prototype.matches) Element.prototype.matches=Element.prototype.msMatchesSelector||Element.prototype.webkitMatchesSelector;
+if(!Element.prototype.closest) Element.prototype.closest=function(s){var n=this;while(n&&n.nodeType===1){if(n.matches(s))return n;n=n.parentElement||n.parentNode;}return null;};
+/* ================= boot ================= */
+var DATA;
+try { DATA = JSON.parse(document.getElementById("gba-data").textContent); }
+catch(e){
+  document.querySelector("main").innerHTML =
+    "<div class='card'><h2>Not built yet</h2><p>This is the template. Run <code>python3 build.py</code> to inject content and produce <code>grey-beard-ansible.html</code>.</p></div>";
+  return;
+}
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
+function el(id){return document.getElementById(id);}
+/* localStorage, guarded — some browsers block storage on file:// */
+function lsGet(k,fb){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):fb; }catch(e){ return fb; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+var NOTES = lsGet("gba.notes.v1",{});
+var COREVER = (DATA.modules._meta && DATA.modules._meta.core_version) || "?";
+
+/* ================= copy ================= */
+function copyText(t,btn){
+  function done(ok){ if(btn){ var o=btn.textContent; btn.textContent= ok?"copied":"select+copy failed"; setTimeout(function(){btn.textContent=o;},1200);} }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){done(true);},function(){fallback();});
+  } else fallback();
+  function fallback(){
+    var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    var ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta); done(ok);
+  }
+}
+function textOf(src){
+  if(!src) return "";
+  if(src.tagName==="TEXTAREA"||src.tagName==="INPUT") return src.value;
+  /* strip embedded controls (copy buttons) so only the command text is copied */
+  var clone=src.cloneNode(true);
+  var kids=clone.querySelectorAll("button,.copybtn");
+  for(var i=0;i<kids.length;i++) kids[i].parentNode.removeChild(kids[i]);
+  return clone.textContent;
+}
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-copy]"); if(!b) return;
+  var src=el(b.getAttribute("data-copy"));
+  copyText(src ? textOf(src) : b.getAttribute("data-copytext")||"", b);
+});
+
+/* ================= router ================= */
+var VISITED = lsGet("gba.visited.v1",{});
+function show(sec){
+  var target=document.getElementById(sec);
+  if(!target || !target.classList.contains("page")) sec="home";
+  document.querySelectorAll("section.page").forEach(function(s){s.classList.toggle("on",s.id===sec);});
+  document.querySelectorAll("#toc a").forEach(function(a){
+    a.classList.toggle("active",a.getAttribute("data-sec")===sec);
+  });
+  VISITED[sec]=1; lsSet("gba.visited.v1",VISITED); markVisited();
+  lsSet("gba.lastsec.v1",sec);
+  if(sec==="rituals") RENDERED.rituals=0;   /* rituals are per-run: re-render (and so reset) on every entry */
+  if(RENDER[sec] && !RENDERED[sec]){ RENDER[sec](); RENDERED[sec]=1; }
+  window.scrollTo(0,0);
+}
+function markVisited(){
+  document.querySelectorAll("#toc a").forEach(function(a){
+    var s=a.getAttribute("data-sec");
+    var v=a.querySelector(".vis");
+    if(VISITED[s]){ if(!v){ v=document.createElement("span"); v.className="vis"; v.textContent="\u2713"; a.appendChild(v);} }
+  });
+}
+window.addEventListener("hashchange",function(){ show(location.hash.replace("#","")||"home"); });
+/* nav() works even where the hash can't change (some sandboxed viewers) */
+function nav(sec){ try{ location.hash=sec; }catch(e){} show(sec); }
+document.getElementById("toc").addEventListener("click",function(ev){
+  var a=ev.target.closest("a[data-sec]"); if(!a) return;
+  ev.preventDefault(); nav(a.getAttribute("data-sec"));
+});
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-nav]"); if(!b) return;
+  var sec=b.getAttribute("data-nav"); nav(sec);
+  var tree=b.getAttribute("data-treeopen");
+  if(tree) setTimeout(function(){ startTree(tree); },30);
+  var dec=b.getAttribute("data-decopen");
+  if(dec) setTimeout(function(){ var t=document.querySelector("#dec-nav [data-dec='"+dec+"']"); if(t) t.click(); },30);
+});
+
+/* ================= shared render helpers ================= */
+function blastBadge(b){
+  var word={green:"read-only",yellow:"one host",red:"fleet"}[b]||b;
+  return "<span class='blast "+esc(b)+"'><i></i>"+esc(word)+"</span>";
+}
+var UID=0;
+function cmdBlock(cmd){
+  var id="c"+(++UID);
+  return "<pre id='"+id+"'><button class='copybtn small' data-copy='"+id+"'>copy</button>"+esc(cmd)+"</pre>";
+}
+function entryCard(e,withNote){
+  var h="<div class='entry' data-eid='"+esc(e.id)+"'><div class='head'><span class='intent'>"+esc(e.intent)+"</span> "+blastBadge(e.blast)+" <span class='pill'>"+esc(e.world)+" · "+esc(e.category)+"</span></div>";
+  h+=cmdBlock(e.command);
+  h+="<p class='muted'>"+esc(e.notes)+"</p>";
+  if(e.mentor_note) h+="<div class='mentor'><b>Margin note:</b> "+esc(e.mentor_note)+"</div>";
+  h+="<dl class='vu'><dt>Verify:</dt><dd>"+esc(e.verify)+"</dd><dt>Undo:</dt><dd>"+esc(e.undo)+"</dd></dl>";
+  h+="<div class='meta'>"+esc(e.source)+" · verified "+esc(e.verified)+"</div>";
+  if(withNote!==false){
+    var note=NOTES[e.id]||"";
+    h+="<div class='notewrap'><button class='small note-toggle' data-eid='"+esc(e.id)+"'>"+(note?"edit your note":"+ add your note")+"</button>"
+      +"<textarea class='note-ta code' data-eid='"+esc(e.id)+"' style='display:"+(note?"block":"none")+";margin-top:6px' aria-label='Your note for this entry' placeholder='Your annotation — exported from About'>"+esc(note)+"</textarea></div>";
+  }
+  return h+"</div>";
+}
+document.addEventListener("click",function(ev){
+  var t=ev.target.closest(".note-toggle"); if(!t) return;
+  var ta=t.parentElement.querySelector(".note-ta");
+  ta.style.display = ta.style.display==="none" ? "block" : "none";
+  if(ta.style.display==="block") ta.focus();
+});
+document.addEventListener("input",function(ev){
+  if(!ev.target.classList || !ev.target.classList.contains("note-ta")) return;
+  var id=ev.target.getAttribute("data-eid");
+  var v=ev.target.value.trim();
+  if(v) NOTES[id]=v; else delete NOTES[id];
+  lsSet("gba.notes.v1",NOTES);
+});
+
+/* ================= search ================= */
+var INDEX=[];
+function buildIndex(){
+  DATA.commands.entries.forEach(function(e){
+    INDEX.push({kind:"command",title:e.intent,hay:(e.intent+" "+e.command+" "+e.notes+" "+(e.tags||[]).join(" ")+" "+e.category).toLowerCase(),obj:e});
+  });
+  DATA.snippets.snippets.forEach(function(s){
+    INDEX.push({kind:"snippet",title:s.title,hay:(s.title+" "+s.trap+" "+s.yaml).toLowerCase(),obj:s,sec:"snippets"});
+  });
+  DATA.trees.trees.forEach(function(t){
+    INDEX.push({kind:"tree",title:t.title,hay:(t.title+" "+t.symptom+" "+t.world).toLowerCase(),obj:t,sec:"trees"});
+  });
+  DATA.glossary.terms.forEach(function(g){
+    INDEX.push({kind:"glossary",title:g.term,hay:(g.term+" "+g.plain+" "+g.real).toLowerCase(),obj:g,sec:"glossary"});
+  });
+  DATA.scars.scars.forEach(function(s){
+    INDEX.push({kind:"scar",title:s.id+" — "+s.title,hay:(s.title+" "+s.symptom+" "+s.root_cause+" "+(s.tags||[]).join(" ")).toLowerCase(),obj:s,sec:"scars"});
+  });
+  DATA.drills.drills.forEach(function(d){
+    INDEX.push({kind:"drill",title:d.title,hay:(d.title+" "+d.scenario+" "+d.validates).toLowerCase(),obj:d,sec:"drills"});
+  });
+  DATA.errors.signatures.forEach(function(s){
+    INDEX.push({kind:"error",title:s.title,hay:(s.title+" "+s.meaning+" "+s.disease).toLowerCase(),obj:s,sec:"decoders"});
+  });
+}
+function search(q){
+  var terms=q.toLowerCase().split(/\s+/).filter(function(t){return t.length>1;});
+  if(!terms.length) return [];
+  var res=terms.map(function(t){ return new RegExp("\\b"+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")); });
+  var need=Math.ceil(terms.length/2);   // majority of terms must hit (word-start match)
+  return INDEX.map(function(it){
+    var score=0,matched=0,title=it.title.toLowerCase();
+    res.forEach(function(re){
+      var hitT=re.test(title), hitH=re.test(it.hay);
+      if(hitT) score+=3;
+      if(hitH) score+=1;
+      if(hitT||hitH) matched++;
+    });
+    return matched>=need?{score:score+matched*2,it:it}:null;
+  }).filter(Boolean).sort(function(a,b){return b.score-a.score;}).slice(0,20);
+}
+function renderResults(list){
+  var out=el("search-results");
+  el("browse").style.display = list.length? "none":"block";
+  if(!list.length){ out.innerHTML=""; return; }
+  var h="";
+  list.forEach(function(r){
+    var it=r.it;
+    if(it.kind==="command"){ h+=entryCard(it.obj); }
+    else {
+      var sub={snippet:"Snippet",tree:"Decision tree",glossary:"Glossary",scar:"Scar ledger",drill:"Drill",error:"Error signature"}[it.kind];
+      h+="<div class='entry'><div class='head'><span class='intent'>"+esc(it.title)+"</span> <span class='pill'>"+sub+"</span></div>"
+        +"<p class='muted'>"+esc(it.obj.symptom||it.obj.plain||it.obj.trap||it.obj.meaning||it.obj.scenario||it.obj.lesson||"")+"</p>"
+        +"<button class='small' data-nav='"+it.sec+"'"+(it.kind==="tree"?" data-treeopen='"+esc(it.obj.id)+"'":"")+">open "+sub.toLowerCase()+"</button></div>";
+    }
+  });
+  out.innerHTML=h;
+}
+/* ================= home browse ================= */
+var CURCAT=null;
+function renderBrowse(){
+  var worlds=[["ansible","cat-ansible"],["rhel","cat-rhel"]];
+  worlds.forEach(function(w){
+    var host=el(w[1]); var h="<span class='pill' style='align-self:center'>"+(w[0]==="ansible"?"Ansible":"RHEL")+"</span>";
+    DATA.commands.categories[w[0]].forEach(function(c){
+      h+="<button data-cat='"+esc(w[0]+"|"+c)+"'>"+esc(c)+"</button>";
+    });
+    host.innerHTML=h;
+  });
+  document.querySelectorAll("[data-cat]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var key=b.getAttribute("data-cat");
+      CURCAT = CURCAT===key? null : key;
+      document.querySelectorAll("[data-cat]").forEach(function(x){x.classList.toggle("on",x.getAttribute("data-cat")===CURCAT);});
+      renderEntryList();
+    });
+  });
+  renderEntryList();
+}
+function renderEntryList(){
+  var host=el("entry-list");
+  if(!CURCAT){ host.innerHTML="<p class='muted'>Pick a category above, or just search. <span class='tiny'>("+DATA.commands.entries.length+" entries loaded)</span></p>"; return; }
+  var p=CURCAT.split("|");
+  host.innerHTML=DATA.commands.entries.filter(function(e){return e.world===p[0]&&e.category===p[1];}).map(function(e){return entryCard(e);}).join("");
+}
+
+/* ================= panic / rituals / dayone / forbidden / path ================= */
+function renderPanic(){
+  var list=DATA.checklists.lists.filter(function(l){return l.kind==="panic";})[0];
+  el("panic-list").innerHTML=list.items.map(function(it,i){
+    var h="<div class='card'><div class='step'><b>"+(i+1)+".</b> "+esc(it.text)+"</div>";
+    if(it.cmd) h+=cmdBlock(it.cmd);
+    if(it.nav) h+="<div class='row' style='margin:8px 0'><button data-nav='"+esc(it.nav)+"'"+(it.navdec?" data-decopen='"+esc(it.navdec)+"'":"")+">"+esc(it.navlabel||("open "+it.nav))+"</button></div>";
+    return h+"<p class='ck why' style='border:none'>"+esc(it.why)+"</p></div>";
+  }).join("");
+}
+function ritualHTML(l){
+  var h="<div class='card'><h3 style='margin-top:0'>"+esc(l.title)+"</h3><p class='muted'>"+esc(l.intro)+"</p>";
+  l.items.forEach(function(it,i){
+    var id=l.id+"-"+i;
+    h+="<div class='ck'><input type='checkbox' id='"+id+"' aria-label='"+esc(it.text)+"'><div><label for='"+id+"' class='t' style='color:var(--text);font-size:14px;margin:0'>"+esc(it.text)+"</label><div class='why'>"+esc(it.why)+"</div></div></div>";
+  });
+  return h+"<div class='row' style='margin-top:8px'><button class='small' data-reset='"+esc(l.id)+"'>reset</button></div></div>";
+}
+function renderRituals(){
+  var kinds=DATA.checklists.lists.filter(function(l){return l.kind==="ritual";});
+  el("ritual-list").innerHTML=kinds.map(ritualHTML).join("");
+  document.querySelectorAll("[data-reset]").forEach(function(b){
+    b.addEventListener("click",function(){
+      b.closest(".card").querySelectorAll("input[type=checkbox]").forEach(function(c){c.checked=false;});
+    });
+  });
+}
+function renderDayone(){
+  var list=DATA.checklists.lists.filter(function(l){return l.kind==="recon";})[0];
+  var st=lsGet("gba.dayone.v1",{});
+  var h="<p class='sec-intro'>"+esc(list.intro)+"</p>";
+  list.items.forEach(function(it,i){
+    var id="d1-"+i;
+    h+="<div class='card'><div class='row'><input type='checkbox' style='width:16px;height:16px;accent-color:var(--accent)' id='"+id+"' "+(st[i]?"checked":"")+" aria-label='Recon step done'><b style='font-size:14px'>Step "+(i+1)+"</b></div>"
+      +cmdBlock(it.cmd)
+      +"<dl class='vu'><dt>Expect:</dt><dd>"+esc(it.expect)+"</dd><dt>If not:</dt><dd>"+esc(it.ifnot)+"</dd></dl></div>";
+  });
+  el("dayone-list").innerHTML=h;
+  list.items.forEach(function(it,i){
+    el("d1-"+i).addEventListener("change",function(ev){
+      var s=lsGet("gba.dayone.v1",{}); if(ev.target.checked) s[i]=1; else delete s[i]; lsSet("gba.dayone.v1",s);
+    });
+  });
+}
+function renderForbidden(){
+  var list=DATA.checklists.lists.filter(function(l){return l.kind==="forbidden";})[0];
+  el("forbidden-list").innerHTML="<p class='sec-intro'>"+esc(list.intro)+"</p>"+list.items.map(function(it){
+    return "<div class='card' style='border-left:4px solid var(--crit)'><b>"+esc(it.rule)+"</b><p class='muted' style='margin-top:6px'><b style='color:var(--faint)'>The story:</b> "+esc(it.story)+"</p></div>";
+  }).join("");
+}
+function renderPath(){
+  var list=DATA.checklists.lists.filter(function(l){return l.kind==="path";})[0];
+  var st=lsGet("gba.path.v1",{});
+  var phases={"30":[],"60":[],"90":[]};
+  list.items.forEach(function(it,i){ phases[it.phase].push({it:it,i:i}); });
+  var done=Object.keys(st).length, total=list.items.length;
+  var h="<p class='sec-intro'>"+esc(list.intro)+"</p>";
+  h+="<div class='progressbar' aria-label='Progress'><i style='width:"+Math.round(done/total*100)+"%'></i></div><p class='tiny'>"+done+" / "+total+" demonstrated</p>";
+  ["30","60","90"].forEach(function(ph){
+    h+="<div class='card'><h3 style='margin-top:0'>First "+ph+" days</h3>";
+    phases[ph].forEach(function(x){
+      var id="pp-"+x.i;
+      h+="<div class='ck "+(st[x.i]?"done":"")+"'><input type='checkbox' id='"+id+"' "+(st[x.i]?"checked":"")+" aria-label='Path item'><label class='t' for='"+id+"' style='color:var(--text);font-size:14px;margin:0'>"+esc(x.it.text)+"</label></div>";
+    });
+    h+="</div>";
+  });
+  el("path-list").innerHTML=h;
+  list.items.forEach(function(it,i){
+    var c=el("pp-"+i); if(!c) return;
+    c.addEventListener("change",function(ev){
+      var s=lsGet("gba.path.v1",{}); if(ev.target.checked) s[i]=1; else delete s[i]; lsSet("gba.path.v1",s);
+      RENDERED.path=0; RENDER.path(); RENDERED.path=1;
+    });
+  });
+}
+
+/* ================= glossary / scars / snippets / drills ================= */
+function renderGlossary(){
+  el("gloss-list").innerHTML=DATA.glossary.terms.map(function(g){
+    return "<div class='card'><b>"+esc(g.term)+"</b><p style='margin:4px 0'>"+esc(g.plain)+"</p><p class='muted'>"+esc(g.real)+"</p><p class='tiny'>Authority: "+esc(g.ref)+"</p></div>";
+  }).join("");
+}
+function renderScars(){
+  el("scar-list").innerHTML=DATA.scars.scars.map(function(s){
+    return "<div class='card' style='border-left:4px solid var(--amber)'><div class='head'><b>"+esc(s.id)+"</b> · "+esc(s.date)+" — <b>"+esc(s.title)+"</b></div>"
+      +"<dl class='vu' style='margin-top:8px'><dt>Symptom:</dt><dd>"+esc(s.symptom)+"</dd><dt>Root cause:</dt><dd>"+esc(s.root_cause)+"</dd><dt>Fix:</dt><dd>"+esc(s.fix)+"</dd><dt>Lesson:</dt><dd><b>"+esc(s.lesson)+"</b></dd></dl>"
+      +"<div class='meta' style='margin-top:6px'>"+(s.tags||[]).map(function(t){return "<span class='pill'>"+esc(t)+"</span> ";}).join("")+"</div></div>";
+  }).join("");
+}
+function renderSnippets(){
+  el("snippet-list").innerHTML=DATA.snippets.snippets.map(function(s){
+    return "<div class='card'><b>"+esc(s.title)+"</b><p class='muted'>Trap avoided: "+esc(s.trap)+"</p>"
+      +(s.requires?"<div class='mentor'><b>Requires:</b> "+esc(s.requires)+"</div>":"")
+      +cmdBlock(s.yaml)+"<p class='tiny'>"+esc(s.source)+" · verified "+esc(s.verified)+"</p></div>";
+  }).join("");
+}
+function renderDrills(){
+  el("drill-list").innerHTML=DATA.drills.drills.map(function(d,di){
+    var hints=d.hints.map(function(h,i){
+      return "<details><summary>Hint "+(i+1)+"</summary><p class='muted'>"+esc(h)+"</p></details>";
+    }).join("");
+    return "<div class='card'><b>"+esc(d.title)+"</b>"
+      +"<dl class='vu' style='margin-top:8px'><dt>Stage it:</dt><dd>"+esc(d.setup)+"</dd><dt>You see:</dt><dd>"+esc(d.scenario)+"</dd></dl>"
+      +hints
+      +"<details><summary>The answer (earn it first)</summary><p><b>Diagnosis:</b> "+esc(d.answer.diagnosis)+"</p><p class='muted'><b>Walkthrough:</b> "+esc(d.answer.walkthrough)+"</p></details>"
+      +"<p class='tiny'>Proves: "+esc(d.validates)+"</p></div>";
+  }).join("");
+}
+
+/* ================= trees ================= */
+var TREE=null, NODE=null, CRUMBS=[];
+function renderTreePicker(){
+  el("tree-picker").innerHTML=DATA.trees.trees.map(function(t){
+    return "<button data-tree='"+esc(t.id)+"'><b>"+esc(t.world==="ansible"?"Ansible":"RHEL")+":</b> "+esc(t.title)+"</button>";
+  }).join("");
+  document.querySelectorAll("[data-tree]").forEach(function(b){
+    b.addEventListener("click",function(){ startTree(b.getAttribute("data-tree")); });
+  });
+}
+function startTree(id){
+  TREE=DATA.trees.trees.filter(function(t){return t.id===id;})[0];
+  NODE="start"; CRUMBS=[];
+  document.querySelectorAll("[data-tree]").forEach(function(x){x.classList.toggle("on",x.getAttribute("data-tree")===id);});
+  renderNode();
+}
+function renderNode(){
+  var host=el("tree-run");
+  if(!TREE){ host.innerHTML=""; return; }
+  var n=TREE.nodes[NODE];
+  var h="<div class='crumbs'>"+esc(TREE.title)+(CRUMBS.length?" · "+CRUMBS.map(esc).join(" · "):"")+"</div>";
+  if(n.q){
+    h+="<div class='tree-node'><div class='q'>"+esc(n.q)+"</div><div class='tree-opts'>";
+    n.options.forEach(function(o,i){ h+="<button data-next='"+esc(o.next)+"' data-lab='"+esc(o.label)+"'>"+esc(o.label)+"</button>"; });
+    h+="</div></div>";
+  } else {
+    var a=n.answer;
+    h+="<div class='tree-node tree-answer'><p><b>Diagnosis:</b> "+esc(a.diagnosis)+"</p><p><b>Fix:</b> "+esc(a.fix)+"</p><div class='mentor'><b>Lesson:</b> "+esc(a.lesson)+"</div></div>";
+  }
+  h+="<div class='row'><button class='small' id='tree-restart'>restart this tree</button></div>";
+  host.innerHTML=h;
+  host.querySelectorAll("[data-next]").forEach(function(b){
+    b.addEventListener("click",function(){ CRUMBS.push(b.getAttribute("data-lab")); NODE=b.getAttribute("data-next"); renderNode(); });
+  });
+  var r=el("tree-restart"); if(r) r.addEventListener("click",function(){ NODE="start"; CRUMBS=[]; renderNode(); });
+}
+
+/* ================= decoders ================= */
+document.querySelectorAll("#dec-nav button").forEach(function(b){
+  b.addEventListener("click",function(){
+    document.querySelectorAll("#dec-nav button").forEach(function(x){x.classList.toggle("on",x===b);});
+    document.querySelectorAll("#decoders .genpanel").forEach(function(p){p.classList.remove("on");});
+    el("dec-"+b.getAttribute("data-dec")).classList.add("on");
+  });
+});
+/* --- command decoder --- */
+function tokenize(s){
+  var out=[],m,re=/'([^']*)'|"([^"]*)"|(\S+)/g;
+  while((m=re.exec(s))) out.push(m[1]!==undefined?m[1]:(m[2]!==undefined?m[2]:m[3]));
+  return out;
+}
+function explainPattern(p){
+  var parts=p.split(":"),bits=[];
+  parts.forEach(function(seg){
+    if(!seg) return;
+    var neg=seg[0]==="!",inter=seg[0]==="&";
+    var name=neg||inter?seg.slice(1):seg;
+    var kind=name==="all"?"every host in inventory":(name.indexOf("*")>=0?"hosts matching the glob '"+name+"'":"the host/group '"+name+"'");
+    if(neg) bits.push("excluding "+kind);
+    else if(inter) bits.push("intersected with "+kind);
+    else bits.push(bits.length?"plus "+kind:kind);
+  });
+  return bits.join(", ");
+}
+function flagMap(cliKey){
+  var d=DATA.flags[cliKey]; if(!d) return null;
+  var map={};
+  d.flags.forEach(function(f){ f.flags.forEach(function(n){ if(!map[n]) map[n]=f.desc||"(no description in --help)"; }); });
+  return map;
+}
+function decodeCmd(){
+  var raw=el("dc-input").value.trim(); var out=el("dc-out");
+  if(!raw){ out.innerHTML=""; return; }
+  var toks=tokenize(raw);
+  var bin=(toks[0]||"").split("/").pop();
+  if(bin==="sudo"){ toks=toks.slice(1); var lines0=[["sudo","run the rest as root (or another user with -u)"]]; bin=(toks[0]||"").split("/").pop(); }
+  var lines=[], verdict=null, positionals=[], i, mod=null, modArgs=null, becomes=false, limited=null, checkish=false, readonlyFlags=0;
+  if(typeof lines0!=="undefined"){ lines=lines0; lines0=undefined; }
+  var isAnsible = bin.indexOf("ansible")===0 && DATA.flags[bin];
+  var rhel = DATA.rhelFlags.clis[bin];
+  if(!isAnsible && !rhel){
+    out.innerHTML="<div class='verdict'>I don't have a dictionary for <code>"+esc(bin)+"</code> — and I don't guess. Check <code>man "+esc(bin)+"</code> on the box (or <code>"+esc(bin)+" --help</code>).</div>";
+    return;
+  }
+  var map = isAnsible? flagMap(bin): null;
+  lines.push([bin, isAnsible? ("Ansible CLI — dictionary from `"+bin+" --help` (core "+COREVER+")") : rhel.desc+" (man "+bin+", RHEL 9)"]);
+  for(i=1;i<toks.length;i++){
+    var t=toks[i];
+    if(t[0]==="-"){
+      var eq=t.indexOf("="), name=eq>0?t.slice(0,eq):t, val=eq>0?t.slice(eq+1):null;
+      var desc=null;
+      if(isAnsible){
+        desc=map[name];
+        if(!desc && /^-v+$/.test(name)) desc="verbosity — more v's, more detail (-vvv shows the actual connection commands)";
+        if(!desc && name.length>2 && name[1]!=="-"){ desc=map[name.slice(0,2)]; if(desc){ val=t.slice(2); name=name.slice(0,2);} }
+      } else {
+        desc=rhel.flags[name];
+        if(!desc){ // prefix match for --opt=v style already split; try short flag bundle conservatively: report unknown
+          desc=null;
+        }
+      }
+      if(desc){
+        lines.push([name+(val?("="+val):""),desc]);
+        if(isAnsible){
+          if(name==="--become"||name==="-b") becomes=true;
+          if(name==="--limit"||name==="-l"){ limited=val||toks[i+1]; if(!val) i++; lines[lines.length-1][0]=name+" "+(limited||""); }
+          else if(name==="--check"||name==="--syntax-check"||name==="--list-hosts"||name==="--list-tasks"||name==="--list-tags"){ checkish=true; }
+          else if(["-m","--module-name"].indexOf(name)>=0){ mod=val||toks[++i]; lines[lines.length-1][0]=name+" "+mod;
+            var md=DATA.modules[mod]||DATA.modules[(mod||"").split(".").pop()];
+            lines[lines.length-1][1]="module to run: "+(md? md.short_desc+" ("+md.fqcn+")" : "'"+mod+"' — not in my dictionary; check `ansible-doc "+mod+"` on the box"); }
+          else if(["-a","--args"].indexOf(name)>=0){ modArgs=val||toks[++i]; lines[lines.length-1][0]=name+" '"+modArgs+"'"; lines[lines.length-1][1]="arguments passed to the module"; }
+          else if((name==="-e"||name==="--extra-vars") && !val){ lines[lines.length-1][0]=name+" "+toks[i+1]; i++; }
+        } else if(val===null && rhel.flags[name] && /filter|time|unit|priority|size|zone|fields|type|protocol/i.test(rhel.flags[name]) && toks[i+1] && toks[i+1][0]!=="-"){
+          lines[lines.length-1][0]=name+" "+toks[i+1]; i++;
+        }
+      } else {
+        lines.push([name+(val?("="+val):""),"UNKNOWN to my dictionary — check "+(isAnsible?("`"+bin+" --help` / ansible-doc"):("`man "+bin+"`"))+" on the box. I don't guess."]);
+      }
+    } else positionals.push(t);
+  }
+  // positionals
+  if(isAnsible){
+    if(bin==="ansible" && positionals[0]) lines.push([positionals[0],"host pattern: "+explainPattern(positionals[0])]);
+    else if(bin==="ansible-playbook") positionals.forEach(function(p){ lines.push([p,"playbook to run"]); });
+    else if(positionals.length) positionals.forEach(function(p){ lines.push([p,"argument/subcommand — see `"+bin+" --help`"]); });
+  } else {
+    positionals.forEach(function(p,pi){
+      var v=rhel.verbs&&rhel.verbs[p];
+      lines.push([p, v? v : (pi===0&&Object.keys(rhel.verbs||{}).length? "subcommand '"+p+"' — not in my dictionary; `man "+bin+"`" : "argument")]);
+    });
+  }
+  // verdict
+  var vClass,vText;
+  var readonlyVerbs={status:1,"list-units":1,"list-unit-files":1,"list-timers":1,"is-active":1,"is-enabled":1,cat:1,show:1,search:1,info:1,list:1,provides:1,repolist:1,history:1,"check-update":1,a:1,addr:1,route:1,link:1,neigh:1,device:1,general:1,tracking:1,sources:1};
+  if(isAnsible){
+    var patt=bin==="ansible"?(positionals[0]||""):"";
+    var modShort=mod?mod.split(".").pop():null;
+    var roMods=["ping","setup","debug","gather_facts","slurp","fetch"];
+    var destructive=["shell","command","raw","script","reboot"];
+    var stateChanging = (modShort && roMods.indexOf(modShort)<0) || (bin==="ansible-playbook"&&!checkish);
+    if(checkish || (modShort && roMods.indexOf(modShort)>=0)){ vClass="green"; vText="Read-only or rehearsal: this inspects or predicts, it does not change targets. (Remember --check skips command/shell tasks, and --diff alone is NOT a rehearsal — only with --check.)"; }
+    else if(stateChanging && !limited && (destructive.indexOf(modShort)>=0 || patt==="all" || patt.indexOf("*")>=0 || bin==="ansible-playbook")){ vClass="red"; vText="FLEET-WIDE STATE CHANGE: no --limit, and "+(destructive.indexOf(modShort)>=0?("'"+modShort+"' runs arbitrary commands — a group pattern like '"+(patt||"(play hosts)")+"' may be your ENTIRE fleet."):"every matched host can be modified.")+" Run --list-hosts first; test with --limit one host; have the undo ready."; }
+    else if(stateChanging){ vClass="yellow"; vText="State change with contained scope ("+(limited?("--limit "+limited):("pattern '"+patt+"'"))+")."+(limited?"":" A group name may still be your entire fleet — --list-hosts before you believe this badge.")+" Verify on the target afterward — the recap is an opinion, the host is the fact."; }
+    else { vClass="green"; vText="Looks read-only."; }
+    if(becomes) vText+=" Runs privileged (become).";
+  } else {
+    /* verb-less CLIs default to YELLOW; green requires a known read-only bin, verb, or flag */
+    var verb=positionals[0]||"";
+    var roFlag=/(^|\s)--(list|state|get|query|verify|disk-usage)[\w-]*/.test(raw) || (bin==="restorecon"&&toks.indexOf("-n")>=0) || (bin==="logrotate"&&toks.indexOf("-d")>=0);
+    var ro;
+    if(bin==="journalctl"){ ro = raw.indexOf("--vacuum")<0; }
+    else if(bin==="getenforce"||bin==="ss"||bin==="findmnt"||bin==="ausearch"){ ro=true; }
+    else if(bin==="ip"){ ro = !/(^|\s)(add|del|delete|set|flush|replace)(\s|$)/.test(positionals.join(" ")); }
+    else if(Object.keys(rhel.verbs||{}).length){ ro = verb? !!readonlyVerbs[verb] : roFlag;
+      if(!ro && /(^|\s)(show|status|monitor|tracking|sources)(\s|$)/.test(positionals.join(" "))) ro=true; }
+    else { ro=roFlag; }
+    vClass=ro?"green":"yellow";
+    vText=ro?"Read-only on this box.":"Changes state on THIS box. Know the undo before you run it (search the command here for verify/undo notes).";
+  }
+  var h="";
+  lines.forEach(function(l){ h+="<div class='dc-line'><code>"+esc(l[0])+"</code><span>"+esc(l[1]).replace(/`([^`]+)`/g,"<code>$1</code>")+"</span></div>"; });
+  h+="<div class='verdict "+vClass+"'>"+blastBadge(vClass)+" "+esc(vText)+"</div>";
+  out.innerHTML=h;
+}
+el("dc-go").addEventListener("click",decodeCmd);
+el("dc-input").addEventListener("keydown",function(e){ if(e.key==="Enter") decodeCmd(); });
+/* --- error decoder --- */
+function decodeErr(){
+  var txt=el("ed-input").value; var out=el("ed-out");
+  if(!txt.trim()){ out.innerHTML=""; return; }
+  var hits=[];
+  DATA.errors.signatures.forEach(function(s){
+    try{ if(new RegExp(s.pattern,"i").test(txt)) hits.push(s); }catch(e){}
+  });
+  DATA.scars.scars.forEach(function(s){
+    if(s.error_signature){ try{ if(new RegExp(s.error_signature,"i").test(txt)) hits.push({id:s.id,title:s.title+" (scar ledger)",meaning:s.symptom,disease:s.root_cause,first_moves:[s.fix],tree:null,source:"scar ledger "+s.id}); }catch(e){} }
+  });
+  if(!hits.length){
+    out.innerHTML="<div class='verdict yellow'>No signature matched — and I don't guess. Read the LAST line of the error first (Ansible puts the real message there), check the task's <code>msg</code> field with -vvv, and consult <code>ansible-doc &lt;module&gt;</code>. If you solve it, it deserves a scar entry.</div>";
+    return;
+  }
+  out.innerHTML=hits.map(function(s){
+    var tree=s.tree?DATA.trees.trees.filter(function(t){return t.id===s.tree;})[0]:null;
+    return "<div class='card' style='border-left:4px solid var(--accent)'><b>"+esc(s.title)+"</b>"
+      +"<p style='margin-top:6px'><b>What it means:</b> "+esc(s.meaning)+"</p>"
+      +"<p class='muted'><b>The disease:</b> "+esc(s.disease)+"</p>"
+      +"<p><b>First moves:</b></p><ol style='margin-left:20px'>"+s.first_moves.map(function(m){return "<li style='margin:3px 0'>"+esc(m)+"</li>";}).join("")+"</ol>"
+      +(tree?"<button class='small' data-nav='trees' data-treeopen='"+esc(tree.id)+"'>walk the decision tree: "+esc(tree.title)+"</button>":"")
+      +"<p class='tiny' style='margin-top:6px'>"+esc(s.source)+"</p></div>";
+  }).join("");
+}
+el("ed-go").addEventListener("click",decodeErr);
+/* --- gotcha linter --- */
+function lint(){
+  var txt=el("lint-input").value; var out=el("lint-out");
+  var lines=txt.split("\n"), hits=[];
+  var indents=[];
+  lines.forEach(function(l,i){
+    var n=i+1;
+    if(/\t/.test(l)) hits.push([n,"TAB character — YAML forbids tabs for indentation. Replace with spaces.","found character that cannot start any token"]);
+    if(/\S+:(?=\S)/.test(l) && !/^\s*#/.test(l) && !/https?:\/\//.test(l) && !/::/.test(l) && !/\d:\d/.test(l) && !/{{/.test(l.split(":")[0]))
+      hits.push([n,"Possible missing space after a colon — YAML needs 'key: value', not 'key:value'.","mapping values are not allowed in this context"]);
+    if(/^\s*[\w.]+\s*=\s*\S/.test(l) && !/^\s*#/.test(l) && /^\s+/.test(l))
+      hits.push([n,"'=' where YAML expects ':' — module args in YAML form use 'key: value'. (key=value belongs only on a single-line args string.)","not a valid attribute"]);
+    var m=l.match(/^(\s*)(- )?\S/);
+    if(m && m[1].length%2!==0) hits.push([n,"Odd indentation ("+m[1].length+" spaces) — this file's convention will be 2-space steps; odd depths usually mean drift.","structure error at unexpected level"]);
+    if(/:\s*{{/.test(l) && !/:\s*['"]{{/.test(l))
+      hits.push([n,"Value starts with unquoted {{ — YAML reads bare {} as a dict. Quote it: key: \"{{ var }}\".","dict expected / template error"]);
+    if(/\s+$/.test(l) && l.trim()) hits.push([n,"Trailing whitespace — harmless until it isn't (folded scalars, diffs). Trim it.",""]);
+    if(/^\s*-name:/.test(l)) hits.push([n,"'-name:' needs a space: '- name:'.","not a valid attribute"]);
+    if(/^\s*(become|gather_facts|ignore_errors|changed_when|failed_when)\s*:\s*(yes|no|true|false)\s*$/i.test(l)===false && /^\s*(become|gather_facts)\s*:/.test(l) && !/:\s*(yes|no|true|false|"|')/i.test(l))
+      hits.push([n,"Boolean keyword with a non-boolean value — become/gather_facts want true/false.",""]);
+  });
+  if(!txt.trim()){ out.innerHTML=""; return; }
+  if(!hits.length){ out.innerHTML="<div class='verdict green'>"+blastBadge("green")+" No classic wounds found. Now run the authority: <code>ansible-playbook &lt;file&gt; --syntax-check</code> on the box.</div>"; return; }
+  out.innerHTML=hits.map(function(h){
+    return "<div class='lint-hit'><b>line "+h[0]+":</b> "+esc(h[1])+(h[2]?"<div class='tiny'>parser error this typically causes: \""+esc(h[2])+"\"</div>":"")+"</div>";
+  }).join("")+"<p class='muted'>Fix these, then <code>--syntax-check</code> on the box for the final word.</p>";
+}
+el("lint-go").addEventListener("click",lint);
+/* --- precedence explorer --- */
+/* Source: ansible-documentation, "Understanding variable precedence" — order preserved, wording paraphrased. */
+var PREC=[
+ "command line values (e.g. -u my_user — not really variables)",
+ "role defaults (defaults/main.yml)",
+ "inventory file / script group vars",
+ "inventory group_vars/all",
+ "playbook group_vars/all",
+ "inventory group_vars/*",
+ "playbook group_vars/*",
+ "inventory file / script host vars",
+ "inventory host_vars/*",
+ "playbook host_vars/*",
+ "host facts / cached set_facts",
+ "play vars:",
+ "play vars_prompt",
+ "play vars_files",
+ "role vars (vars/main.yml)",
+ "block vars (block keyword)",
+ "task vars (task keyword)",
+ "include_vars",
+ "set_facts / registered vars",
+ "role (and include_role) params",
+ "include params",
+ "extra vars (-e on the command line — always wins)"
+];
+var precPick=[];
+function renderPrec(){
+  el("prec-list").innerHTML=PREC.map(function(p,i){
+    return "<button class='small' style='display:block;width:100%;text-align:left;margin:3px 0' data-prec='"+i+"'>"+(i+1)+". "+esc(p)+"</button>";
+  }).join("");
+  document.querySelectorAll("[data-prec]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var i=+b.getAttribute("data-prec");
+      if(precPick.indexOf(i)>=0){ precPick=precPick.filter(function(x){return x!==i;}); }
+      else { precPick.push(i); if(precPick.length>2) precPick.shift(); }
+      document.querySelectorAll("[data-prec]").forEach(function(x){ x.style.borderColor = precPick.indexOf(+x.getAttribute("data-prec"))>=0 ? "var(--accent)" : "var(--border)"; });
+      var v=el("prec-verdict");
+      if(precPick.length===2){
+        var lo=Math.min(precPick[0],precPick[1]), hi=Math.max(precPick[0],precPick[1]);
+        v.style.display="block"; v.className="verdict green";
+        v.innerHTML="<b>"+esc(PREC[hi])+"</b> wins over <b>"+esc(PREC[lo])+"</b> — higher rung, later in the merge. If your value 'isn't taking', something on a higher rung is overriding it.";
+      } else v.style.display="none";
+    });
+  });
+}
+
+/* ================= generators ================= */
+var GENS=[
+ {id:"task",label:"Task Builder"},
+ {id:"play",label:"Playbook scaffold"},
+ {id:"inv",label:"Inventory"},
+ {id:"cfg",label:"ansible.cfg"},
+ {id:"role",label:"Role skeleton"},
+ {id:"unit",label:"systemd unit+timer"},
+ {id:"sshc",label:"ssh config"},
+ {id:"j2",label:"Jinja2 cookbook"},
+ {id:"jctl",label:"journalctl"},
+ {id:"fw",label:"firewall-cmd"},
+ {id:"nm",label:"nmcli"},
+ {id:"lvm",label:"LVM grow/new"},
+ {id:"usr",label:"useradd"},
+ {id:"find",label:"find / tar"}
+];
+var CART=[];
+function outBlock(id,label){
+  return "<div class='out-wrap'><label for='"+id+"'>"+esc(label||"Generated output — copy or edit")+"</label><textarea id='"+id+"' class='code' spellcheck='false' aria-label='Generated output'></textarea><div class='row' style='margin-top:6px'><button data-copy='"+id+"'>copy</button></div></div>";
+}
+function yq(v){
+  v=String(v);
+  if(/^(true|false)$/i.test(v)) return v.toLowerCase();
+  if(/^-?\d+$/.test(v) && !/^0\d/.test(v)) return v;               // ints, but not 0644
+  if(/^[A-Za-z0-9_.\/@+-]+$/.test(v)) return v;                    // simple scalars bare
+  return "'"+v.replace(/'/g,"''")+"'";
+}
+function renderGens(){
+  el("gen-corever").textContent=COREVER;
+  el("gen-nav").innerHTML=GENS.map(function(g,i){return "<button data-gen='"+g.id+"' class='"+(i===0?"on":"")+"'>"+esc(g.label)+"</button>";}).join("");
+  var panels="";
+  /* --- task builder --- */
+  var mods=Object.keys(DATA.modules).filter(function(k){return k!=="_meta";}).sort();
+  panels+="<div class='genpanel on' id='gen-task'><div class='grid2'><div>"
+    +"<label for='tb-mod'>Module (vendor schema from ansible-doc)</label><select id='tb-mod'>"+mods.map(function(m){return "<option>"+m+"</option>";}).join("")+"</select>"
+    +"<p class='muted' id='tb-desc'></p><label for='tb-name'>Task name <b class='req'>*</b></label><input type='text' id='tb-name' placeholder='Ensure ...'>"
+    +"<div id='tb-form' class='formgrid'></div>"
+    +"<label for='tb-extra'>More options (key: value per line — see list below)</label><textarea id='tb-extra' class='code' rows='2' spellcheck='false'></textarea>"
+    +"<p class='tiny' id='tb-extralist'></p>"
+    +"<div class='row' style='margin-top:8px'><label style='margin:0' for='tb-become'><input type='checkbox' id='tb-become' style='width:14px;height:14px'> become (sudo)</label>"
+    +"<label style='margin:0' for='tb-notify'>notify handler:</label><input type='text' id='tb-notify' style='width:160px' placeholder='(optional)'>"
+    +"<label style='margin:0' for='tb-when'>when:</label><input type='text' id='tb-when' class='code' style='width:200px' placeholder='(optional condition)'></div>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='tb-add'>Add task to play</button><button id='tb-clear'>empty the cart</button></div>"
+    +"<div class='cart'><b class='tiny'>PLAY CART</b><ol id='tb-cart'></ol></div>"
+    +"<details><summary>Vendor example for this module</summary><pre id='tb-example'></pre></details>"
+    +"</div><div>"
+    +"<label for='tb-hosts'>Play targets (hosts:)</label><input type='text' id='tb-hosts' value='CHANGE_ME'>"
+    +"<div class='row' style='margin:8px 0'><label style='margin:0' for='tb-compat'><input type='checkbox' id='tb-compat' style='width:14px;height:14px'> ansible 2.9 compatibility (short module names — see About)</label></div>"
+    +outBlock("tb-out","site.yml — regenerates as you add tasks")
+    +"</div></div></div>";
+  /* --- playbook scaffold --- */
+  panels+="<div class='genpanel' id='gen-play'><div class='grid2'><div>"
+    +"<label for='pb-name'>Play name</label><input type='text' id='pb-name' value='Configure servers'>"
+    +"<label for='pb-hosts'>hosts:</label><input type='text' id='pb-hosts' value='webservers'>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='pb-become' style='width:14px;height:14px' checked> become</label>"
+    +"<label style='margin:0'><input type='checkbox' id='pb-facts' style='width:14px;height:14px' checked> gather_facts</label>"
+    +"<label style='margin:0'><input type='checkbox' id='pb-serial' style='width:14px;height:14px'> canary rollout (serial 1 → 25%)</label></div>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='pb-go'>Generate</button></div></div><div>"
+    +outBlock("pb-out")+"</div></div></div>";
+  /* --- inventory --- */
+  panels+="<div class='genpanel' id='gen-inv'><div class='grid2'><div>"
+    +"<label for='inv-fmt'>Format</label><select id='inv-fmt'><option value='ini'>INI</option><option value='yaml'>YAML</option></select>"
+    +"<label for='inv-src'>Groups and hosts — one group per block: first line [groupname], then one host per line (host or host=ip)</label>"
+    +"<textarea id='inv-src' class='code' rows='8' spellcheck='false'>[webservers]\nweb01=192.168.1.11\nweb02=192.168.1.12\n\n[dbservers]\ndb01=192.168.1.21</textarea>"
+    +"<label for='inv-user'>ansible_user for all (blank = current user)</label><input type='text' id='inv-user' class='code'>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='inv-local' style='width:14px;height:14px'> include localhost (pinned ansible_connection=local — the kit refuses to emit it any other way; see SCAR-001)</label></div>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='inv-go'>Generate</button></div><div id='inv-warn'></div></div><div>"
+    +outBlock("inv-out")+"</div></div></div>";
+  /* --- ansible.cfg --- */
+  panels+="<div class='genpanel' id='gen-cfg'><div class='grid2'><div>"
+    +"<label for='cfg-inv'>inventory path</label><input type='text' id='cfg-inv' class='code' value='./inventory.ini'>"
+    +"<label for='cfg-user'>remote_user (blank = current)</label><input type='text' id='cfg-user' class='code'>"
+    +"<label for='cfg-forks'>forks</label><input type='number' id='cfg-forks' value='5'>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='cfg-pipe' style='width:14px;height:14px' checked> pipelining (speed; requires !requiretty for the automation user)</label></div>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='cfg-retry' style='width:14px;height:14px'> disable .retry files</label></div>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='cfg-log' style='width:14px;height:14px' checked> log runs to ./ansible.log</label></div>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='cfg-cow' style='width:14px;height:14px' checked> nocows (dignity)</label></div>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='cfg-go'>Generate</button></div>"
+    +"<p class='tiny'>Deliberately NOT offered: host_key_checking=False. Pre-populate known_hosts instead — see the Forbidden List's spirit.</p></div><div>"
+    +outBlock("cfg-out")+"</div></div></div>";
+  /* --- role skeleton --- */
+  panels+="<div class='genpanel' id='gen-role'><div class='grid2'><div>"
+    +"<label for='role-name'>Role name</label><input type='text' id='role-name' class='code' value='myrole'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='role-go'>Generate script</button></div>"
+    +"<p class='muted'>Same layout <code>ansible-galaxy init</code> produces — as a copy-paste script for boxes where you'd rather see it before it happens.</p></div><div>"
+    +outBlock("role-out")+"</div></div></div>";
+  /* --- systemd unit --- */
+  panels+="<div class='genpanel' id='gen-unit'><div class='grid2'><div>"
+    +"<label for='un-name'>Unit name (no .service)</label><input type='text' id='un-name' class='code' value='myjob'>"
+    +"<label for='un-desc'>Description</label><input type='text' id='un-desc' value='My scheduled job'>"
+    +"<label for='un-exec'>ExecStart <b class='req'>*</b></label><input type='text' id='un-exec' class='code' placeholder='/usr/local/bin/myjob.sh'>"
+    +"<label for='un-user'>Run as user (blank = root)</label><input type='text' id='un-user' class='code'>"
+    +"<label for='un-cal'>Timer OnCalendar (blank = no timer, plain service)</label><input type='text' id='un-cal' class='code' placeholder='daily · Mon..Fri 02:30 · *-*-* 04:00:00'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='un-go'>Generate</button></div></div><div>"
+    +outBlock("un-out")+"</div></div></div>";
+  /* --- ssh config --- */
+  panels+="<div class='genpanel' id='gen-sshc'><div class='grid2'><div>"
+    +"<label for='sc-alias'>Host alias</label><input type='text' id='sc-alias' class='code' value='web01'>"
+    +"<label for='sc-host'>HostName (IP/FQDN)</label><input type='text' id='sc-host' class='code' placeholder='192.168.1.11'>"
+    +"<label for='sc-user'>User</label><input type='text' id='sc-user' class='code' placeholder='svc_ansible'>"
+    +"<label for='sc-port'>Port (blank = 22)</label><input type='text' id='sc-port' class='code'>"
+    +"<label for='sc-key'>IdentityFile (blank = default)</label><input type='text' id='sc-key' class='code' placeholder='~/.ssh/id_ed25519'>"
+    +"<label for='sc-jump'>ProxyJump via (blank = none)</label><input type='text' id='sc-jump' class='code' placeholder='bastion01'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='sc-go'>Generate</button></div></div><div>"
+    +outBlock("sc-out")+"</div></div></div>";
+  /* --- jinja2 --- */
+  panels+="<div class='genpanel' id='gen-j2'><div class='grid2'><div>"
+    +"<label for='j2-pat'>Pattern</label><select id='j2-pat'>"
+    +"<option value='var'>Variable with default</option><option value='loop'>Loop over a list</option><option value='cond'>Conditional block</option><option value='hosts'>Loop over a group's hosts (facts)</option></select>"
+    +"<label for='j2-a'>Your variable / list name</label><input type='text' id='j2-a' class='code' value='my_var'>"
+    +"<label for='j2-b'>Default / item field / group (as the pattern needs)</label><input type='text' id='j2-b' class='code' value='fallback'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='j2-go'>Generate</button></div>"
+    +"<p class='tiny'>String substitution only — this kit does not evaluate Jinja2 (lookalike engines are 'almost Jinja2', and almost is a trap on an air-gapped box).</p></div><div>"
+    +outBlock("j2-out")+"</div></div></div>";
+  /* --- journalctl --- */
+  panels+="<div class='genpanel' id='gen-jctl'><div class='grid2'><div>"
+    +"<label for='jc-unit'>Unit (blank = all)</label><input type='text' id='jc-unit' class='code' placeholder='sshd'>"
+    +"<label for='jc-prio'>Priority at least</label><select id='jc-prio'><option value=''>(any)</option><option>err</option><option>warning</option><option>crit</option><option>debug</option></select>"
+    +"<label for='jc-since'>Since (blank = all time)</label><input type='text' id='jc-since' class='code' placeholder=\"1 hour ago · yesterday · 2026-08-23 14:00\">"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='jc-boot' style='width:14px;height:14px' checked> this boot only</label>"
+    +"<label style='margin:0'><input type='checkbox' id='jc-follow' style='width:14px;height:14px'> follow live</label></div>"
+    +"<label for='jc-grep'>Grep message text (blank = none)</label><input type='text' id='jc-grep' class='code'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='jc-go'>Generate</button></div></div><div>"
+    +outBlock("jc-out")+"</div></div></div>";
+  /* --- firewall-cmd --- */
+  panels+="<div class='genpanel' id='gen-fw'><div class='grid2'><div>"
+    +"<label for='fw-act'>Action</label><select id='fw-act'><option value='add'>allow (add)</option><option value='remove'>disallow (remove)</option></select>"
+    +"<label for='fw-kind'>What</label><select id='fw-kind'><option value='service'>named service</option><option value='port'>port</option></select>"
+    +"<label for='fw-val'>Service name or port/proto</label><input type='text' id='fw-val' class='code' placeholder='https · 8443/tcp'>"
+    +"<label for='fw-zone'>Zone (blank = default zone)</label><input type='text' id='fw-zone' class='code'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='fw-go'>Generate</button></div>"
+    +"<p class='muted'>Always emits the <b>--permanent + --reload pair</b> plus a verify line — the runtime-vs-permanent trap is un-generatable here.</p></div><div>"
+    +outBlock("fw-out")+"</div></div></div>";
+  /* --- nmcli --- */
+  panels+="<div class='genpanel' id='gen-nm'><div class='grid2'><div>"
+    +"<label for='nm-name'>Connection name</label><input type='text' id='nm-name' class='code' value='lan0'>"
+    +"<label for='nm-if'>Interface (ifname)</label><input type='text' id='nm-if' class='code' placeholder='eth0 / enp3s0'>"
+    +"<label for='nm-method'>IPv4</label><select id='nm-method'><option value='auto'>DHCP (auto)</option><option value='manual'>Static (manual)</option></select>"
+    +"<label for='nm-addr'>Address/prefix (static only)</label><input type='text' id='nm-addr' class='code' placeholder='192.168.1.50/24'>"
+    +"<label for='nm-gw'>Gateway (static only)</label><input type='text' id='nm-gw' class='code' placeholder='192.168.1.1'>"
+    +"<label for='nm-dns'>DNS, comma-separated (static only)</label><input type='text' id='nm-dns' class='code' placeholder='192.168.1.1,9.9.9.9'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='nm-go'>Generate</button></div></div><div>"
+    +outBlock("nm-out")+"</div></div></div>";
+  /* --- lvm --- */
+  panels+="<div class='genpanel' id='gen-lvm'><div class='grid2'><div>"
+    +"<label for='lv-mode'>Mode</label><select id='lv-mode'><option value='grow'>Grow an existing LV</option><option value='new'>New disk → VG → LV → mount</option></select>"
+    +"<label for='lv-lv'>LV path (grow) or new LV name</label><input type='text' id='lv-lv' class='code' value='/dev/vg_data/lv_var'>"
+    +"<label for='lv-size'>Size (+5G to grow · 20G new · 100%FREE)</label><input type='text' id='lv-size' class='code' value='+5G'>"
+    +"<label for='lv-disk'>New disk (new mode)</label><input type='text' id='lv-disk' class='code' placeholder='/dev/sdb'>"
+    +"<label for='lv-vg'>VG name (new mode)</label><input type='text' id='lv-vg' class='code' value='vg_data'>"
+    +"<label for='lv-fs'>Filesystem (new mode)</label><select id='lv-fs'><option>xfs</option><option>ext4</option></select>"
+    +"<label for='lv-mnt'>Mountpoint (new mode)</label><input type='text' id='lv-mnt' class='code' value='/srv/data'>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='lv-go'>Generate</button></div></div><div>"
+    +outBlock("lv-out")+"</div></div></div>";
+  /* --- useradd --- */
+  panels+="<div class='genpanel' id='gen-usr'><div class='grid2'><div>"
+    +"<label for='us-name'>Username</label><input type='text' id='us-name' class='code' value='alice'>"
+    +"<label for='us-comment'>Comment / full name</label><input type='text' id='us-comment'>"
+    +"<label for='us-groups'>Supplementary groups (comma-sep; wheel = sudo)</label><input type='text' id='us-groups' class='code' placeholder='wheel'>"
+    +"<label for='us-shell'>Shell</label><input type='text' id='us-shell' class='code' value='/bin/bash'>"
+    +"<div class='row'><label style='margin:0'><input type='checkbox' id='us-system' style='width:14px;height:14px'> system account (no aging, low UID)</label></div>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='us-go'>Generate</button></div>"
+    +"<p class='muted'>Group additions always emit <code>usermod -aG</code> — the append flag is not optional in this shop.</p></div><div>"
+    +outBlock("us-out")+"</div></div></div>";
+  /* --- find/tar --- */
+  panels+="<div class='genpanel' id='gen-find'><div class='grid2'><div>"
+    +"<label for='fd-path'>Path</label><input type='text' id='fd-path' class='code' value='/var/log'>"
+    +"<label for='fd-name'>Name pattern (blank = any)</label><input type='text' id='fd-name' class='code' placeholder='*.log'>"
+    +"<label for='fd-age'>Older than N days (blank = any age)</label><input type='text' id='fd-age' class='code' placeholder='30'>"
+    +"<label for='fd-size'>Bigger than (blank = any size)</label><input type='text' id='fd-size' class='code' placeholder='100M'>"
+    +"<label for='fd-act'>Then…</label><select id='fd-act'><option value='print'>just list them (always start here)</option><option value='tar'>archive them (tar)</option><option value='delete'>delete them (emits the LOOK-FIRST pair)</option></select>"
+    +"<div class='row' style='margin-top:10px'><button class='primary' id='fd-go'>Generate</button></div></div><div>"
+    +outBlock("fd-out")+"</div></div></div>";
+  el("gen-panels").innerHTML=panels;
+  document.querySelectorAll("#gen-nav button").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll("#gen-nav button").forEach(function(x){x.classList.toggle("on",x===b);});
+      document.querySelectorAll("#gen-panels .genpanel").forEach(function(p){p.classList.remove("on");});
+      el("gen-"+b.getAttribute("data-gen")).classList.add("on");
+    });
+  });
+  wireTaskBuilder(); wireSimpleGens();
+}
+/* --- task builder wiring --- */
+function tbRenderForm(){
+  var m=DATA.modules[el("tb-mod").value];
+  el("tb-desc").textContent=m.short_desc+" — "+m.fqcn;
+  el("tb-example").textContent=m.example||"(no example shipped)";
+  el("tb-extralist").textContent = m.extra_params.length? "also available: "+m.extra_params.join(", ") : "";
+  el("tb-form").innerHTML=m.params.map(function(p,i){
+    var id="tbp-"+i, lab=esc(p.name)+(p.required?" <b class='req'>*</b>":"");
+    var hint=esc(p.desc||"");
+    if(p.choices && p.choices.length){
+      return "<div><label for='"+id+"' title='"+hint+"'>"+lab+"</label><select id='"+id+"' data-p='"+esc(p.name)+"'><option value=''>(unset)</option>"+p.choices.map(function(c){return "<option"+(String(p.default)===String(c)?" data-def='1'":"")+">"+esc(c)+"</option>";}).join("")+"</select></div>";
+    }
+    if(p.type==="bool"){
+      return "<div><label for='"+id+"' title='"+hint+"'>"+lab+"</label><select id='"+id+"' data-p='"+esc(p.name)+"'><option value=''>(unset)</option><option>true</option><option>false</option></select></div>";
+    }
+    return "<div><label for='"+id+"' title='"+hint+"'>"+lab+"</label><input type='text' id='"+id+"' class='code' data-p='"+esc(p.name)+"' placeholder='"+esc(p.default!=null?String(p.default):"")+"'></div>";
+  }).join("");
+}
+function tbCollect(){
+  var m=DATA.modules[el("tb-mod").value];
+  var args={},missing=[];
+  m.params.forEach(function(p,i){
+    var v=el("tbp-"+i).value.trim();
+    if(v) args[p.name]=v;
+    else if(p.required) missing.push(p.name);
+  });
+  el("tb-extra").value.split("\n").forEach(function(l){
+    var mm=l.match(/^\s*([\w_]+)\s*:\s*(.+)$/); if(mm) args[mm[1]]=mm[2].trim();
+  });
+  return {m:m,args:args,missing:missing};
+}
+/* ansible 2.9 compat: FQCN routing (ansible.builtin.*) landed in 2.10, and
+   systemd_service is the 2.14+ rename of systemd. On 2.9, today's posix-collection
+   modules were builtin short names, so stripping namespaces is the right transform. */
+var COMPAT=!!lsGet("gba.compat.v1",0);   /* in-memory truth; localStorage is best-effort persistence only */
+function compatName(fqcn){
+  if(!COMPAT) return fqcn;
+  var n=fqcn.replace(/^(ansible\.builtin|ansible\.posix|community\.general)\./,"");
+  if(n==="systemd_service") n="systemd";
+  return n;
+}
+function taskYAML(t){
+  var y="    - name: "+yq(t.name)+"\n      "+compatName(t.fqcn)+":\n";
+  Object.keys(t.args).forEach(function(k){ y+="        "+k+": "+yq(t.args[k])+"\n"; });
+  if(t.become) y+="      become: true\n";
+  if(t.when) y+="      when: "+t.when+"\n";
+  if(t.notify) y+="      notify: "+yq(t.notify)+"\n";
+  return y;
+}
+function tbRegen(){
+  var hosts=el("tb-hosts").value.trim()||"CHANGE_ME";
+  var y="---\n# generated by Grey Beard Ansible v__VERSION__ — run the pre-flight ritual before use\n- name: Generated play\n  hosts: "+hosts+"\n  tasks:\n";
+  if(!CART.length) y+="    []\n";
+  CART.forEach(function(t){ y+=taskYAML(t); });
+  var handlers=CART.filter(function(t){return t.notify;}).map(function(t){return t.notify;});
+  handlers=handlers.filter(function(v,i){return handlers.indexOf(v)===i;});
+  if(handlers.length){
+    y+="  handlers:\n";
+    handlers.forEach(function(h){
+      y+="    - name: "+yq(h)+"\n      "+compatName("ansible.builtin.systemd_service")+":\n        name: CHANGE_ME\n        state: restarted\n";
+    });
+  }
+  el("tb-out").value=y;
+  el("tb-cart").innerHTML=CART.map(function(t){return "<li>"+esc(t.name)+" <span class='tiny'>("+esc(t.fqcn)+")</span></li>";}).join("");
+}
+function wireTaskBuilder(){
+  el("tb-mod").addEventListener("change",tbRenderForm);
+  tbRenderForm();
+  el("tb-add").addEventListener("click",function(){
+    var name=el("tb-name").value.trim();
+    var c=tbCollect();
+    if(!name){ alert("Task name is required — future-you reads the play recap by task names."); return; }
+    if(c.missing.length){ alert("Vendor schema says these are required: "+c.missing.join(", ")); return; }
+    CART.push({name:name,fqcn:c.m.fqcn,args:c.args,become:el("tb-become").checked,when:el("tb-when").value.trim(),notify:el("tb-notify").value.trim()});
+    el("tb-name").value="";
+    tbRegen();
+  });
+  el("tb-clear").addEventListener("click",function(){ CART=[]; tbRegen(); });
+  el("tb-hosts").addEventListener("input",tbRegen);
+  el("tb-compat").checked=COMPAT;
+  el("tb-compat").addEventListener("change",function(ev){ COMPAT=!!ev.target.checked; lsSet("gba.compat.v1",COMPAT?1:0); tbRegen(); });
+  tbRegen();
+}
+/* --- simple generators --- */
+function wireSimpleGens(){
+  el("pb-go").addEventListener("click",function(){
+    var y="---\n- name: "+yq(el("pb-name").value||"Play")+"\n  hosts: "+(el("pb-hosts").value||"CHANGE_ME")+"\n";
+    if(el("pb-serial").checked) y+="  serial:\n    - 1          # canary host first\n    - '25%'      # then a quarter at a time\n  max_fail_percentage: 0   # any failure halts the rollout\n";
+    y+="  become: "+(el("pb-become").checked?"true":"false")+"\n  gather_facts: "+(el("pb-facts").checked?"true":"false")+"\n  tasks:\n    - name: Replace me\n      ansible.builtin.debug:\n        msg: hello\n";
+    el("pb-out").value=y;
+  });
+  el("inv-go").addEventListener("click",function(){
+    var fmt=el("inv-fmt").value, user=el("inv-user").value.trim(), src=el("inv-src").value;
+    var warn=el("inv-warn"); warn.innerHTML="";
+    var groups=[],cur=null;
+    src.split("\n").forEach(function(l){
+      l=l.trim(); if(!l) return;
+      var g=l.match(/^\[(.+)\]$/);
+      if(g){ cur={name:g[1],hosts:[]}; groups.push(cur); return; }
+      if(!cur){ cur={name:"ungrouped",hosts:[]}; groups.push(cur); }
+      var hp=l.split("="); cur.hosts.push({name:hp[0].trim(),ip:hp[1]?hp[1].trim():null});
+    });
+    var badLocal=groups.some(function(g){return g.hosts.some(function(h){return /^(localhost|127\.)/.test(h.name);});});
+    if(badLocal){
+      warn.innerHTML="<div class='verdict red'>"+blastBadge("red")+" Refusing: a host named localhost/127.x in a group would make delegation SSH to your own control node (SCAR-001). Use the checkbox below instead — it pins ansible_connection=local.</div>";
+      el("inv-out").value=""; return;
+    }
+    var out="";
+    if(fmt==="ini"){
+      out="# generated by Grey Beard Ansible — verify with: ansible-inventory -i thisfile --graph\n";
+      groups.forEach(function(g){
+        out+="["+g.name+"]\n";
+        g.hosts.forEach(function(h){ out+=h.name+(h.ip?(" ansible_host="+h.ip):"")+"\n"; });
+        out+="\n";
+      });
+      if(el("inv-local").checked) out+="[control]\nlocalhost ansible_connection=local   # pinned — never let delegation SSH to yourself (SCAR-001)\n\n";
+      if(user) out+="[all:vars]\nansible_user="+user+"\n";
+    } else {
+      out="---\n# generated by Grey Beard Ansible — verify with: ansible-inventory -i thisfile --graph\nall:\n";
+      if(user) out+="  vars:\n    ansible_user: "+user+"\n";
+      out+="  children:\n";
+      groups.forEach(function(g){
+        out+="    "+g.name+":\n      hosts:\n";
+        g.hosts.forEach(function(h){ out+="        "+h.name+":"+(h.ip?("\n          ansible_host: "+h.ip):" {}")+"\n"; });
+      });
+      if(el("inv-local").checked) out+="    control:\n      hosts:\n        localhost:\n          ansible_connection: local   # pinned — SCAR-001\n";
+    }
+    el("inv-out").value=out;
+  });
+  el("cfg-go").addEventListener("click",function(){
+    var o="# ansible.cfg — generated by Grey Beard Ansible v__VERSION__\n# Precedence reminder: $ANSIBLE_CONFIG > ./ansible.cfg > ~/.ansible.cfg > /etc/ansible/ansible.cfg\n# A world-writable directory makes Ansible SKIP this file (with one quiet warning).\n\n[defaults]\n";
+    o+="inventory = "+el("cfg-inv").value+"          ; where the fleet is defined\n";
+    if(el("cfg-user").value.trim()) o+="remote_user = "+el("cfg-user").value.trim()+"      ; user Ansible connects as\n";
+    o+="forks = "+(el("cfg-forks").value||5)+"                          ; parallel hosts; lower it for risky rollouts\n";
+    if(el("cfg-retry").checked) o+="retry_files_enabled = False        ; no .retry litter\n";
+    if(el("cfg-log").checked) o+="log_path = ./ansible.log           ; every run on the record\n";
+    if(el("cfg-cow").checked) o+="nocows = 1\n";
+    o+="\n[ssh_connection]\n";
+    if(el("cfg-pipe").checked) o+="pipelining = True                  ; speed: pipes modules instead of staging in remote_tmp\n                                   ; REQUIRES: automation user exempt from sudoers requiretty\n                                   ; NOTE: masks remote_tmp diseases — if this 'fixed' an error, diagnose the tmp dir anyway (SCAR-002)\n";
+    o+="ssh_args = -o ControlMaster=auto -o ControlPersist=60s   ; reuse connections\n";
+    el("cfg-out").value=o;
+  });
+  el("role-go").addEventListener("click",function(){
+    var r=el("role-name").value.trim()||"myrole";
+    el("role-out").value="# Role skeleton for '"+r+"' — same layout as: ansible-galaxy init "+r+"\nmkdir -p roles/"+r+"/{tasks,handlers,templates,files,vars,defaults,meta}\n"
+      +"printf -- '---\\n# tasks for "+r+"\\n' > roles/"+r+"/tasks/main.yml\n"
+      +"printf -- '---\\n# handlers for "+r+"\\n' > roles/"+r+"/handlers/main.yml\n"
+      +"printf -- '---\\n# vars (high precedence — prefer defaults)\\n' > roles/"+r+"/vars/main.yml\n"
+      +"printf -- '---\\n# defaults (lowest precedence — overridable)\\n' > roles/"+r+"/defaults/main.yml\n"
+      +"printf -- '---\\ngalaxy_info:\\n  author: CHANGE_ME\\n  description: "+r+"\\n' > roles/"+r+"/meta/main.yml\n"
+      +"# verify: find roles/"+r+" -type f | sort";
+  });
+  el("un-go").addEventListener("click",function(){
+    var n=el("un-name").value.trim()||"myjob", ex=el("un-exec").value.trim();
+    if(!ex){ el("un-out").value="# ExecStart is required — what should this unit run?"; return; }
+    var svc="# /etc/systemd/system/"+n+".service\n[Unit]\nDescription="+(el("un-desc").value||n)+"\nAfter=network-online.target\n\n[Service]\nType=oneshot\nExecStart="+ex+"\n";
+    if(el("un-user").value.trim()) svc+="User="+el("un-user").value.trim()+"\n";
+    var cal=el("un-cal").value.trim(), out;
+    if(cal){
+      out=svc+"\n# /etc/systemd/system/"+n+".timer\n[Unit]\nDescription=Timer for "+n+"\n\n[Timer]\nOnCalendar="+cal+"\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n\n# install:\n#   systemctl daemon-reload\n#   systemctl enable --now "+n+".timer\n# verify:\n#   systemctl list-timers "+n+".timer\n#   systemd-analyze calendar '"+cal+"'   # confirms the schedule parses";
+    } else {
+      out=svc+"\n[Install]\nWantedBy=multi-user.target\n\n# install:\n#   systemctl daemon-reload\n#   systemctl enable --now "+n+".service\n# verify:\n#   systemctl status "+n+"\n# undo:\n#   systemctl disable --now "+n+"; rm the unit file; systemctl daemon-reload";
+    }
+    el("un-out").value=out;
+  });
+  el("sc-go").addEventListener("click",function(){
+    var o="# append to ~/.ssh/config   (chmod 600 ~/.ssh/config)\nHost "+(el("sc-alias").value||"host")+"\n";
+    if(el("sc-host").value.trim()) o+="    HostName "+el("sc-host").value.trim()+"\n";
+    if(el("sc-user").value.trim()) o+="    User "+el("sc-user").value.trim()+"\n";
+    if(el("sc-port").value.trim()) o+="    Port "+el("sc-port").value.trim()+"\n";
+    if(el("sc-key").value.trim()) o+="    IdentityFile "+el("sc-key").value.trim()+"\n    IdentitiesOnly yes\n";
+    if(el("sc-jump").value.trim()) o+="    ProxyJump "+el("sc-jump").value.trim()+"\n";
+    o+="    ServerAliveInterval 30\n# verify: ssh -G "+(el("sc-alias").value||"host")+" | head   (shows the effective config)";
+    el("sc-out").value=o;
+  });
+  el("j2-go").addEventListener("click",function(){
+    var a=el("j2-a").value.trim()||"my_var", b=el("j2-b").value.trim()||"fallback", p=el("j2-pat").value, o="";
+    if(p==="var") o="{{ "+a+" | default('"+b+"') }}\n\n# renders "+a+" if defined for the host, otherwise '"+b+"'.\n# default() is how templates survive hosts that lack a variable.";
+    if(p==="loop") o="{% for item in "+a+" %}\n{{ item"+(b&&b!=="fallback"?("."+b):"")+" }}\n{% endfor %}\n\n# one line per element of "+a+".";
+    if(p==="cond") o="{% if "+a+" is defined and "+a+" %}\n# ...rendered only when "+a+" is set and truthy...\n{% endif %}";
+    if(p==="hosts") o="{% for host in groups['"+(b||"webservers")+"'] %}\n{{ hostvars[host]['ansible_default_ipv4']['address'] }}  {{ host }}\n{% endfor %}\n\n# needs facts: the play must gather_facts on those hosts first.";
+    el("j2-out").value=o;
+  });
+  el("jc-go").addEventListener("click",function(){
+    var c="journalctl";
+    if(el("jc-unit").value.trim()) c+=" -u "+el("jc-unit").value.trim();
+    if(el("jc-boot").checked) c+=" -b";
+    if(el("jc-prio").value) c+=" -p "+el("jc-prio").value;
+    if(el("jc-since").value.trim()) c+=" --since '"+el("jc-since").value.trim()+"'";
+    if(el("jc-grep").value.trim()) c+=" -g '"+el("jc-grep").value.trim()+"'";
+    if(el("jc-follow").checked) c+=" -f";
+    el("jc-out").value=c+"\n\n# read-only. -b -1 = previous boot (gold after an unexplained reboot).";
+  });
+  el("fw-go").addEventListener("click",function(){
+    var act=el("fw-act").value,kind=el("fw-kind").value,val=el("fw-val").value.trim(),zone=el("fw-zone").value.trim();
+    if(!val){ el("fw-out").value="# service name or port/proto required (e.g. https, or 8443/tcp)"; return; }
+    if(kind==="port"&&!/^\d+\/(tcp|udp)$/.test(val)){ el("fw-out").value="# port must be N/tcp or N/udp (e.g. 8443/tcp)"; return; }
+    var z=zone?(" --zone="+zone):"";
+    var flag="--"+act+"-"+kind+"="+val;
+    el("fw-out").value="firewall-cmd"+z+" "+flag+" --permanent && firewall-cmd --reload\n\n# the pair, always: --permanent writes config, --reload applies it.\n# verify:  firewall-cmd"+z+" --list-"+(kind==="port"?"ports":"services")+"\n# undo:    firewall-cmd"+z+" --"+(act==="add"?"remove":"add")+"-"+kind+"="+val+" --permanent && firewall-cmd --reload";
+  });
+  el("nm-go").addEventListener("click",function(){
+    var n=el("nm-name").value.trim()||"lan0", ifn=el("nm-if").value.trim(), me=el("nm-method").value;
+    if(!ifn){ el("nm-out").value="# interface (ifname) required — see: nmcli device status"; return; }
+    var o="nmcli connection add type ethernet con-name "+n+" ifname "+ifn+" ipv4.method "+me;
+    if(me==="manual"){
+      var ad=el("nm-addr").value.trim(),gw=el("nm-gw").value.trim(),dns=el("nm-dns").value.trim();
+      if(!ad){ el("nm-out").value="# static needs address/prefix (e.g. 192.168.1.50/24)"; return; }
+      o+=" ipv4.addresses "+ad;
+      if(gw) o+=" ipv4.gateway "+gw;
+      if(dns) o+=" ipv4.dns '"+dns.split(",").map(function(s){return s.trim();}).join(" ")+"'";
+    }
+    o+="\nnmcli connection up "+n;
+    o+="\n\n# verify: nmcli -g ip4.address device show "+ifn+"   and   ip -br a\n# undo:   nmcli connection delete "+n;
+    el("nm-out").value=o;
+  });
+  el("lv-go").addEventListener("click",function(){
+    var mode=el("lv-mode").value;
+    if(mode==="grow"){
+      var lv=el("lv-lv").value.trim(),sz=el("lv-size").value.trim()||"+5G";
+      var sflag=/%/.test(sz)?"-l +"+sz.replace(/^\+/,""):"-L "+sz;
+      el("lv-out").value="# grow "+lv+" by "+sz+" — check headroom first, filesystem grows with -r\nvgs                                  # 1. is there VFree to give?\nlvextend -r "+sflag+" "+lv+"      # 2. grow LV AND filesystem in one step\ndf -h                                # 3. verify the mount grew\n\n# undo: none for XFS (cannot shrink). That's why step 1 exists — size deliberately.";
+    } else {
+      var d=el("lv-disk").value.trim(),vg=el("lv-vg").value.trim()||"vg_data",lvn=(el("lv-lv").value.trim()||"lv_data").split("/").pop(),fs=el("lv-fs").value,mnt=el("lv-mnt").value.trim()||"/srv/data",sz2=el("lv-size").value.trim()||"100%FREE";
+      if(!d){ el("lv-out").value="# new disk required (e.g. /dev/sdb) — confirm with lsblk FIRST; wrong disk = destroyed data"; return; }
+      var szf=/%/.test(sz2)?"-l "+sz2:"-L "+sz2;
+      el("lv-out").value="# NEW DISK "+d+" -> VG "+vg+" -> LV "+lvn+" -> "+fs+" on "+mnt+"\n# DANGER: pvcreate destroys whatever is on "+d+". lsblk first. Be sure.\nlsblk "+d+"                          # 0. LOOK — right disk, no partitions you care about?\npvcreate "+d+"\nvgcreate "+vg+" "+d+"                # (or vgextend "+vg+" "+d+" to grow an existing VG)\nlvcreate -n "+lvn+" "+szf+" "+vg+"\nmkfs."+fs+" /dev/"+vg+"/"+lvn+"\nmkdir -p "+mnt+"\necho '/dev/"+vg+"/"+lvn+" "+mnt+" "+fs+" defaults 0 0' >> /etc/fstab\nfindmnt --verify                     # catches fstab typos BEFORE reboot does\nmount -a\ndf -hT "+mnt+"                       # verify\n\n# undo (before data lands): umount "+mnt+"; remove fstab line; lvremove/vgremove/pvremove";
+    }
+  });
+  el("us-go").addEventListener("click",function(){
+    var n=el("us-name").value.trim()||"alice",c=el("us-comment").value.trim(),g=el("us-groups").value.trim(),sh=el("us-shell").value.trim();
+    var o="useradd"+(el("us-system").checked?" -r":"")+(c?(" -c '"+c+"'"):"")+(sh?(" -s "+sh):"")+" "+n+"\n";
+    if(g) o+="usermod -aG "+g+" "+n+"        # -aG: APPEND to groups. Bare -G would replace them all (Forbidden List).\n";
+    o+="passwd "+n+"                    # set the initial password interactively\n\n# verify: id "+n+"\n# undo:   userdel "+n+"           (add -r to also remove the home dir — think first)";
+    el("us-out").value=o;
+  });
+  el("fd-go").addEventListener("click",function(){
+    var p=el("fd-path").value.trim()||".",n=el("fd-name").value.trim(),a=el("fd-age").value.trim(),s=el("fd-size").value.trim(),act=el("fd-act").value;
+    var base="find "+p+(n?(" -name '"+n+"'"):"")+(a?(" -mtime +"+a):"")+(s?(" -size +"+s):"")+" -type f";
+    var o="";
+    if(act==="print") o=base+"\n\n# read-only. ALWAYS run this bare form first and read the list.";
+    if(act==="tar") o=base+" -print0 | tar -czf archive-$(date +%F).tar.gz --null -T -\n\n# verify: tar -tzf archive-*.tar.gz | head\n# originals untouched — archive is a copy.";
+    if(act==="delete") o="# STEP 1 — LOOK (read every line; this list is exactly what step 2 deletes):\n"+base+"\n\n# STEP 2 — only after reading step 1's output:\n"+base+" -delete\n\n# undo: none. That's what step 1 is for.";
+    el("fd-out").value=o;
+  });
+}
+
+/* ================= dossier ================= */
+function renderDossier(){
+  var st=lsGet("gba.dossier.v1",{});
+  var h="";
+  DATA.dossier.sections.forEach(function(sec){
+    h+="<div class='card'><h3 style='margin-top:0'>"+esc(sec.title)+"</h3><p class='muted'>"+esc(sec.hint)+"</p>";
+    sec.fields.forEach(function(f){
+      var key=sec.id+"."+f.key, v=st[key]||"";
+      if(f.kind==="table"){
+        h+="<label>"+esc(f.label)+"</label><textarea class='code doss' data-k='"+esc(key)+"' rows='4' spellcheck='false' placeholder='"+esc(f.columns.join(" | "))+"\n(one row per line, pipe-separated)'>"+esc(v)+"</textarea>";
+      } else if(f.kind==="textarea"){
+        h+="<label>"+esc(f.label)+"</label><textarea class='doss' data-k='"+esc(key)+"' rows='3'>"+esc(v)+"</textarea>";
+      } else {
+        h+="<label>"+esc(f.label)+"</label><input type='text' class='doss' data-k='"+esc(key)+"' value='"+esc(v)+"'>";
+      }
+    });
+    h+="</div>";
+  });
+  h+="<p class='tiny'>Saved automatically to this browser (gba.dossier.v1). Print this page for the binder; export from About.</p>";
+  el("dossier-form").innerHTML=h;
+  document.querySelectorAll(".doss").forEach(function(inp){
+    inp.addEventListener("input",function(){
+      var s=lsGet("gba.dossier.v1",{}); var v=inp.value;
+      if(v.trim()) s[inp.getAttribute("data-k")]=v; else delete s[inp.getAttribute("data-k")];
+      lsSet("gba.dossier.v1",s);
+    });
+  });
+}
+
+/* ================= about / export / letter ================= */
+function renderAbout(){
+  el("about-corever").textContent=COREVER;
+  el("compat-corever").textContent=COREVER;
+  el("about-changelog").innerHTML="<ul style='margin-left:18px'>"+(DATA.meta.changelog||[]).map(function(c){return "<li class='muted'>"+esc(c)+"</li>";}).join("")+"</ul>";
+}
+el("btn-export").addEventListener("click",function(){
+  var payload={tool:"grey-beard-ansible",version:DATA.meta.version,exported:new Date().toISOString(),notes:NOTES,dossier:lsGet("gba.dossier.v1",{}),path:lsGet("gba.path.v1",{}),dayone:lsGet("gba.dayone.v1",{})};
+  var blob=new Blob([JSON.stringify(payload,null,1)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="gba-annotations-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+  el("export-note").textContent=" exported "+Object.keys(NOTES).length+" note(s) + dossier";
+});
+function renderLetter(){
+  el("letter-body").innerHTML=DATA.letter.split(/\n\n+/).map(function(p){
+    return "<p>"+esc(p).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/\*([^*]+)\*/g,"<em>$1</em>")+"</p>";
+  }).join("");
+}
+el("letter-close").addEventListener("click",function(){ el("letter-ov").classList.remove("on"); lsSet("gba.letter.v1",1); });
+el("btn-letter").addEventListener("click",function(){ el("letter-ov").classList.add("on"); });
+
+/* ================= keyboard ================= */
+document.addEventListener("keydown",function(e){
+  var inField=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(e.key==="Escape"){ el("letter-ov").classList.remove("on"); return; }
+  if(inField) return;
+  if(e.key==="/"){ e.preventDefault(); nav("home"); setTimeout(function(){el("searchbox").focus();},30); }
+  if(e.key==="p"){ nav("panic"); }
+});
+
+/* ================= wire + go ================= */
+var RENDERED={}, RENDER={
+  home:function(){ renderBrowse(); },
+  panic:renderPanic, trees:renderTreePicker, decoders:renderPrec,
+  generators:renderGens, snippets:renderSnippets, rituals:renderRituals,
+  dayone:renderDayone, drills:renderDrills, path:renderPath,
+  glossary:renderGlossary, scars:renderScars, forbidden:renderForbidden,
+  dossier:renderDossier, about:renderAbout
+};
+buildIndex();
+renderLetter();
+el("searchbox").addEventListener("input",function(){ renderResults(search(el("searchbox").value)); });
+markVisited();
+show(location.hash.replace("#","")||lsGet("gba.lastsec.v1","home"));
+if(!lsGet("gba.letter.v1",0)) el("letter-ov").classList.add("on");
+})();
+</script>
+</body>
+</html>
