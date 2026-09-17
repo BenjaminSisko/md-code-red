@@ -1212,85 +1212,32 @@ def gate_q6(ctx):
     return f, d
 
 
-def strip_js_comments(src):
-    """Blank out // and /* */ comments, preserving offsets and line numbers.
-
-    Conservative by design: it tracks string state so a comment marker inside a
-    string literal is left alone. Regex literals in this codebase never open with
-    '//' or '/*', so they are not mistaken for comments.
-    """
-    out = list(src)
-    i, n, quote = 0, len(src), None
-    while i < n:
-        c = src[i]
-        if quote:
-            if c == "\\":
-                i += 2
-                continue
-            if c == quote:
-                quote = None
-            i += 1
-            continue
-        if c in "\"'`":
-            quote = c
-            i += 1
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "*":
-            j = src.find("*/", i + 2)
-            j = n if j < 0 else j + 2
-            for k in range(i, j):
-                if out[k] != "\n":
-                    out[k] = " "
-            i = j
-            continue
-        if c == "/" and i + 1 < n and src[i + 1] == "/":
-            j = src.find("\n", i)
-            j = n if j < 0 else j
-            for k in range(i, j):
-                out[k] = " "
-            i = j
-            continue
-        if c == "/":
-            # A regex literal, if a regex can legally start here. Skipping it whole
-            # keeps a quote character inside a character class (/[&<>"']/g) from
-            # throwing the string tracker out of phase for the rest of the file.
-            prev = ""
-            k = i - 1
-            while k >= 0 and src[k] in " \t\r\n":
-                k -= 1
-            if k >= 0:
-                prev = src[k]
-            if prev == "" or prev in "(,=:[!&|?{};+-*%~^":
-                j, in_class = i + 1, False
-                while j < n:
-                    ch = src[j]
-                    if ch == "\\":
-                        j += 2
-                        continue
-                    if ch == "[":
-                        in_class = True
-                    elif ch == "]":
-                        in_class = False
-                    elif ch == "/" and not in_class:
-                        break
-                    elif ch == "\n":
-                        break
-                    j += 1
-                i = j + 1
-                continue
-        i += 1
-    return "".join(out)
+STORAGE_RE = re.compile(r"\b(?:localStorage|sessionStorage)\b")
 
 
 def try_block_spans(src):
-    """Brace-matched [start, end) spans of every try{...} block in the script."""
+    """Brace-matched [start, end) spans of every try{...} block in the script.
+
+    AL-GATE3-003. This used to count raw `{` and `}` characters. One unbalanced
+    brace inside a string literal inside a `try` body shifted the depth, the span
+    ran past its own `catch`, and it absorbed the sibling code after it — so a
+    genuinely unguarded storage call was reported as guarded. Silently, which is
+    the worst way for a gate to be wrong.
+
+    The masking is done HERE, not by the caller. Deciding what is a brace and
+    what is a character inside a literal is this function's own job; a caller
+    that has to remember to launder its input first is a caller that will one day
+    forget. Masking is idempotent, so a caller that masks anyway costs nothing.
+    Spans index into the string that was passed in: the mask preserves offsets.
+    """
+    masked = mask_js_literals(src)
     spans = []
-    for m in re.finditer(r"\btry\s*\{", src):
+    for m in re.finditer(r"\btry\s*\{", masked):
         depth, i = 0, m.end() - 1
-        while i < len(src):
-            if src[i] == "{":
+        while i < len(masked):
+            if masked[i] == "{":
                 depth += 1
-            elif src[i] == "}":
+            elif masked[i] == "}":
                 depth -= 1
                 if depth == 0:
                     spans.append((m.start(), i + 1))
@@ -1299,22 +1246,43 @@ def try_block_spans(src):
     return spans
 
 
-def gate_q7(ctx):
+def storage_guard_failures(script):
+    """Q7's judgement over a piece of JS. Returns (failures, details).
+
+    Factored out of gate_q7 so tests/test_storage_guard.py can drive the gate
+    with the desync constructs from AL-GATE3-003 rather than only its span
+    finder. A gate whose decision cannot be called from a test is a gate nobody
+    can watch fail.
+    """
     f, d = [], []
-    script = strip_js_comments(ctx["app_script"])
-    spans = try_block_spans(script)
-    hits = list(re.finditer(r"\b(?:localStorage|sessionStorage)\b", script))
+    masked = mask_js_literals(script)
+    spans = try_block_spans(masked)
+    hits = list(STORAGE_RE.finditer(masked))
     if not hits:
-        f.append("no storage access found at all — the storage guard should exist")
+        f.append("no storage access found at all in the app script — Q7 proves the storage guard "
+                 "holds, and a gate with nothing to check reports PASS by having found nothing. "
+                 "STORE is not optional: if it were genuinely removed, this line is the one that "
+                 "has to be edited on purpose")
     for m in hits:
         if not any(s <= m.start() < e for s, e in spans):
-            line = script[:m.start()].count("\n") + 1
-            f.append("storage identifier '%s' at app-script line %d is not inside a try{...}catch block"
-                     % (m.group(0), line))
+            line = masked[:m.start()].count("\n") + 1
+            f.append("storage identifier '%s' at app-script line %d is not inside a try{...}catch "
+                     "block" % (m.group(0), line))
     if not f:
-        d.append("all %d localStorage/sessionStorage references sit inside one of %d try/catch blocks"
-                 % (len(hits), len(spans)))
-    if "var SCHEMA=1;" not in script:
+        d.append("all %d localStorage/sessionStorage references sit inside one of %d try/catch "
+                 "blocks — braces counted over a lexically masked copy, so a brace inside a "
+                 "string, template or regex literal cannot stretch a span past its own catch "
+                 "and swallow an unguarded sibling (AL-GATE3-003)" % (len(hits), len(spans)))
+    return f, d
+
+
+def gate_q7(ctx):
+    f, d = [], []
+    script = ctx["app_script"]
+    sf, sd = storage_guard_failures(script)
+    f.extend(sf)
+    d.extend(sd)
+    if "var SCHEMA=1;" not in mask_js_literals(script):
         f.append("storage records are not schema-versioned")
     else:
         d.append("storage records are schema-versioned and namespaced (mdcr.v1.)")
