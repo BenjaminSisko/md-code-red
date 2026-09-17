@@ -2289,6 +2289,15 @@ CAPTURE_REQUIRED_FIELDS = (
 VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
 
 
+# J3 (VER-003): closed grammars for the two receipt fields that had none.
+# `host` gets an RFC-1123-ish hostname shape — the app already has this exact
+# rule for the `hostname` field type, reused here rather than restated. The
+# capture path is closed to the shape import_captures.py / build.py actually
+# write: tests/captures/<release>/<slug>.json, no traversal, no case tricks.
+RECEIPT_HOST_RE = re.compile(r"^[a-z0-9][a-z0-9.-]{1,62}$")
+RECEIPT_CAPTURE_PATH_RE = re.compile(r"^tests/captures/(7|8|9|10)/[a-z0-9-]+\.json$")
+
+
 def load_golden_commands():
     """Load tests/fixtures/golden-commands.json, the hand-authored validity
     oracle (MCR-SEC-015/021). gate_q16() binds generator receipts to it (J1,
@@ -2394,6 +2403,11 @@ def gate_q16(ctx):
        resolved them). Content edited since capture drifts this check red.
        Finally, the receipt's `by` must not equal the capture's `captured_by`
        — SME captures, QA verifies; the same name cannot do both.
+
+    3. Closed grammars (J3, VER-003) for `host` (RFC-1123-ish hostname,
+       cross-checked against the capture's own `host`) and `capture` (must
+       be a literal tests/captures/<release>/<slug>.json path — no
+       traversal, no other shape).
     """
     f, d = [], []
     data = ctx["data"]
@@ -2431,7 +2445,20 @@ def gate_q16(ctx):
             for field in VERIFIED_RECEIPT_FIELDS:
                 if not receipt.get(field):
                     f.append("entry %s verified['%s']: receipt has no '%s'" % (eid, v, field))
+
+            # J3 (VER-003) — closed grammar on the receipt's own fields,
+            # independent of whether the capture they name can even be
+            # loaded. `by`'s grammar is the roster itself, enforced below.
+            host = receipt.get("host")
+            if host is not None and not RECEIPT_HOST_RE.match(host or ""):
+                f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
+                         "closed hostname grammar %s"
+                         % (eid, v, host, RECEIPT_HOST_RE.pattern))
             cap_path = receipt.get("capture")
+            if cap_path is not None and not RECEIPT_CAPTURE_PATH_RE.match(cap_path or ""):
+                f.append("entry %s verified['%s']: receipt's capture path ('%s') does not match "
+                         "the closed grammar %s"
+                         % (eid, v, cap_path, RECEIPT_CAPTURE_PATH_RE.pattern))
             cap, err = load_capture_file(cap_path)
             if err:
                 f.append("entry %s verified['%s']: %s" % (eid, v, err))
@@ -2455,6 +2482,11 @@ def gate_q16(ctx):
                     f.append("entry %s verified['%s']: capture '%s' command_hash_at_capture does "
                              "not match sha256(command_as_run) — tampered or hand-edited capture "
                              "record" % (eid, v, cap_path))
+            if host and cap.get("host") and host != cap.get("host"):
+                f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
+                         "capture's own host ('%s') — a receipt's host claims where it was "
+                         "verified, and that must be the machine the capture says it ran on"
+                         % (eid, v, host, cap.get("host")))
             if "template" not in e:
                 current = ((e.get("rhel_versions") or {}).get(v) or {}).get("command")
                 run_as = cap.get("command_as_run")
@@ -2521,7 +2553,8 @@ def gate_q16(ctx):
                  "(content validation protocol runs are CR-T-34)" % (n_exp, len(captures)))
         d.append("%d per-version verified receipt(s), each backed by its own capture file for that "
                  "exact entry/version pair, hash-matched against the currently assembled command "
-                 "(golden-table-bound for generators, J1), and roster-checked by role (J2)" % n_receipts)
+                 "(golden-table-bound for generators, J1), roster-checked by role (J2), and "
+                 "grammar-closed on host/capture (J3)" % n_receipts)
         d.append("two-person rule residual (J2, VER-002): normalisation (casefold + collapsed "
                  "whitespace incl. NBSP + one stripped trailing parenthetical) closes only the "
                  "ACCIDENTAL bypass. A deliberate alias (e.g. 'C. Stone') is NOT closable by any "
