@@ -780,6 +780,50 @@ function assembleEntry(entry,version,patterns){
 var FLAG_TOKEN_RE=/^-{1,2}[A-Za-z0-9][A-Za-z0-9-]*$/;
 var LIT_TOKEN_RE=/^[A-Za-z0-9_.\/=:,+-]+$/;
 
+/* MCR-SEC-015 (condition E1). How a flag is joined to its value is a property of
+   the FLAG'S SHAPE, not a per-token decision a content author gets to make and
+   get wrong twenty times:
+
+     --long   joins with '='  — getopt_long() accepts --name=value; this is the
+                                form the man pages show and the product emits
+     -X       joins with ' '  — getopt() takes '-X value'. It does NOT accept
+                                '-X=value': the '=' is handed straight through as
+                                the first character of optarg, so `chage -M=60`
+                                sets max-days to the string "=60" and
+                                `auditctl -w=/etc/motd` watches nothing while
+                                looking, to the operator, like it worked.
+
+   The assembler joined EVERY flag with '=' unless the token said eq:false, and
+   eq:false was used nowhere in the 24 shipped generator specs — so 20 short-
+   option tokens across 11 of them emitted a command that is wrong for its tool.
+   No gate could see it, because every one of those commands is perfectly quoted
+   (MCR-SEC-021: containment is not validity).
+
+   Deriving the rule fixes all 20 at once and makes the defect unwritable rather
+   than merely absent: the join is computed from the flag, so a new generator
+   inherits it. The two escape hatches stay, narrowly:
+
+     eq:false     on a --long flag, for a long option that wants ' '
+     join:"glued" on a -X flag, for a tool that requires '-Xvalue'
+
+   and each is legal ONLY on the shape it belongs to. A token that declares the
+   join for a shape that derives it is a disagreement between the content and
+   the rule, and the only honest answer to a disagreement is null — never "guess
+   which one the author meant". extract/schema.py refuses the same token at
+   build time; this is the run-time backstop. */
+function flagJoin(tok){
+  var flag=String(tok.flag);
+  if(flag.charAt(1)==="-"){                                  /* --long */
+    if(tok.join!==undefined && tok.join!==null) return null;  /* `join` is a short-option word */
+    if(tok.eq!==undefined && tok.eq!==null && tok.eq!==false && tok.eq!==true) return null;
+    return tok.eq===false?" ":"=";
+  }
+  if(tok.eq!==undefined && tok.eq!==null) return null;        /* -X derives its join; it cannot be declared */
+  if(tok.join===undefined || tok.join===null) return " ";
+  if(tok.join==="glued") return "";                           /* -Xvalue, where a tool requires it */
+  return null;
+}
+
 /* assembleCommand(specOrEntry, version, values) -> {command, flags[], blast} | null
    NULL is the only answer for an incomplete or invalid input. There is no
    second return shape carrying a half-built string, because a half-formed root
@@ -826,8 +870,14 @@ function assembleCommand(spec,version,values,opts){
     if(tok.richRule){
       var composed=composeRichRule(v.resolved,tok.richRule,types);
       if(composed===null) return null;
-      words.push(tok.flag?String(tok.flag)+"="+shQuote(composed):shQuote(composed));
-      if(tok.flag) flags.push({flag:String(tok.flag),explain:tok.explain||null});
+      if(tok.flag){
+        var rjoin=flagJoin(tok);                  /* MCR-SEC-015: one join rule, not two */
+        if(rjoin===null) return null;
+        words.push(String(tok.flag)+rjoin+shQuote(composed));
+        flags.push({flag:String(tok.flag),explain:tok.explain||null});
+      }else{
+        words.push(shQuote(composed));
+      }
       continue;
     }
     var field=fieldFor(spec,tok.field);
@@ -855,7 +905,9 @@ function assembleCommand(spec,version,values,opts){
     }
     var q=shQuote(v.resolved[tok.field]);
     if(tok.flag){
-      words.push(String(tok.flag)+(tok.eq===false?" ":"=")+q);
+      var join=flagJoin(tok);                     /* MCR-SEC-015: derived from the flag's shape */
+      if(join===null) return null;                /* the token declares a join its shape derives */
+      words.push(String(tok.flag)+join+q);
       flags.push({flag:String(tok.flag),explain:field.explain||null});
     }else{
       words.push(q);

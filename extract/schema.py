@@ -299,6 +299,44 @@ def shift_unsafe_after(template, positional, i):
     return [j for j in positional if j > i and token_gate(template[j]) != gate]
 
 
+def flag_join_errors(at, tok, flag):
+    """MCR-SEC-015 (condition E1) — the build-time half of the derived join rule.
+
+    template.html's flagJoin() derives how a flag is joined to its value from the
+    flag's own shape: `--long` takes '=', `-X` takes ' '. Deriving it is what
+    fixed twenty wrong tokens at once and what keeps the twenty-first from being
+    written. These errors close the other half: a token that DECLARES a join for
+    a shape that derives it is a disagreement between the content and the rule,
+    and the assembler returns null rather than pick a winner. The build says so
+    by name instead of leaving the author with a blank Copy button.
+
+    Two escape hatches survive, each legal only on the shape it belongs to:
+      eq:false      on --long, for a long option that wants a space
+      join:"glued"  on -X, for a tool that requires -Xvalue
+    """
+    errs = []
+    long_opt = flag.startswith("--")
+    if long_opt:
+        if "join" in tok:
+            errs.append("%s is a LONG option (%s) carrying `join`: a long option joins with '=', "
+                        "and `join` is the short-option escape hatch (join:\"glued\" for -Xvalue). "
+                        "Use eq:false if this option really wants a space (MCR-SEC-015)"
+                        % (at, flag))
+        if "eq" in tok and not isinstance(tok["eq"], bool):
+            errs.append("%s has eq %r, which is not true or false" % (at, tok["eq"]))
+    else:
+        if "eq" in tok:
+            errs.append("%s is a SHORT option (%s) carrying `eq`: a single-dash option NEVER joins "
+                        "its value with '=' — getopt(3) passes the '=' through as the first "
+                        "character of the argument, so `chage -M=60` sets max-days to \"=60\" and "
+                        "`auditctl -w=/etc/motd` watches nothing. The join is DERIVED from the "
+                        "flag's shape; delete the key (MCR-SEC-015)" % (at, flag))
+        if "join" in tok and tok["join"] != "glued":
+            errs.append("%s has join %r; the only declared join is \"glued\", which emits "
+                        "-Xvalue for a tool that requires it (MCR-SEC-015)" % (at, tok["join"]))
+    return errs
+
+
 def spec_template_errors(where, template, fields_by_name):
     errs = []
     positional = positional_indexes(template)
@@ -314,12 +352,18 @@ def spec_template_errors(where, template, fields_by_name):
             errs.append("%s must be exactly one of {lit}, {field} or {richRule}, not %s"
                         % (at, shapes or "none of them"))
             continue
+        if tok.get("flag") is None and ("eq" in tok or "join" in tok):
+            errs.append("%s declares a flag join (%s) but has no `flag` to join — a key that "
+                        "applies to nothing is a key the next author will trust (MCR-SEC-015)"
+                        % (at, " and ".join(k for k in ("eq", "join") if k in tok)))
         if tok.get("flag") is not None:
             flag = tok["flag"]
             if not isinstance(flag, str) or not FLAG_TOKEN_RE.match(flag):
                 errs.append("%s flag %r is not an option token — it reaches the command line "
                             "unquoted, so it must match %s (no whitespace, no quote, no shell "
                             "metacharacter)" % (at, flag, FLAG_TOKEN_RE.pattern))
+            else:
+                errs += flag_join_errors(at, tok, flag)
         if "lit" in shapes:
             lit = tok["lit"]
             if not isinstance(lit, str) or not LIT_TOKEN_RE.match(lit):

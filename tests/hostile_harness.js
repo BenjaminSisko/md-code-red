@@ -1176,6 +1176,49 @@ function main() {
                         "which is legal");
   }
 
+  /* ---- the DERIVED join rule, token by token (MCR-SEC-015 / E1) ----------
+     The golden table proves the 24 shipped generators. This proves the RULE,
+     on token shapes no generator writes today, so the twenty-first generator
+     inherits it: the join is computed from the flag's shape, the two escape
+     hatches are legal only on the shape they belong to, and a token that
+     declares a join its shape derives is a disagreement — null, never a guess.
+     extract/schema.py refuses each of these at build time; this is the run-time
+     backstop, and the two halves have to agree. */
+  var joinChecks = 0;
+  function joinSpec(tok) {
+    return { id: "harness-join", tool: "harness", blast: "green",
+             fields: [{ name: "v", type: "integer", required: true, versions: VERSIONS }],
+             template: [{ lit: "probe" }, tok] };
+  }
+  var joinCases = [
+    [{ flag: "-M", field: "v" }, "probe -M '42'", "a short option derives a SPACE join"],
+    [{ flag: "-M", field: "v", join: "glued" }, "probe -M'42'", "join:\"glued\" emits -Xvalue"],
+    [{ flag: "--value", field: "v" }, "probe --value='42'", "a long option derives an '=' join"],
+    [{ flag: "--value", field: "v", eq: false }, "probe --value '42'", "eq:false spaces a long option"],
+    [{ flag: "-M", field: "v", eq: false }, null,
+     "a SHORT option may not declare eq — the join is derived, and eq:false here is an author " +
+     "asserting a rule the shape already states"],
+    [{ flag: "-M", field: "v", eq: true }, null,
+     "a SHORT option may not declare eq:true — that is the MCR-SEC-015 defect, spelled out"],
+    [{ flag: "--value", field: "v", join: "glued" }, null,
+     "a LONG option may not declare join"],
+    [{ flag: "-M", field: "v", join: "spaced" }, null, "\"glued\" is the only declared join"]
+  ];
+  for (var jc = 0; jc < joinCases.length; jc++) {
+    for (var jv = 0; jv < VERSIONS.length; jv++) {
+      joinChecks++;
+      var jres = A.assembleCommand(joinSpec(joinCases[jc][0]), VERSIONS[jv], { v: "42" },
+                                   { patterns: [] });
+      var jgot = jres === null ? null : jres.command;
+      if (jgot !== joinCases[jc][1]) {
+        stats.failures.push("join rule / RHEL " + VERSIONS[jv] + " / " +
+                            JSON.stringify(joinCases[jc][0]) + ": expected " +
+                            JSON.stringify(joinCases[jc][1]) + ", got " + JSON.stringify(jgot) +
+                            " — " + joinCases[jc][2]);
+      }
+    }
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -1322,6 +1365,7 @@ function main() {
     content_spec_entries: specEntries.length,
     golden_command_checks: goldenChecks,
     option_syntax_checks: syntaxChecks,
+    flag_join_checks: joinChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -1360,6 +1404,8 @@ function main() {
                 "every generator must emit, per release, hand-authored from the man pages in " +
                 "tests/fixtures/golden-commands.json) and " + syntaxChecks + " getopt(3) option-syntax " +
                 "checks (no short option joined with '='; every long option keeps its '=')");
+    console.log("  " + joinChecks + " derived-join checks: the join is computed from the flag's " +
+                "shape, and a token declaring a join its shape derives is null on every release");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();
