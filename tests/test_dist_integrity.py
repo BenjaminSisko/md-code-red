@@ -14,7 +14,7 @@ does, because Q1 only checks that the file it was HANDED is internally
 consistent. It never asks whether that file is the one build.py just wrote.
 That is the fail-open AL-GATE3-001 named, and CI has never watched it fail.
 
-This file proves two things the old glob-and-sort-last code could not:
+This file proves three things the old glob-and-sort-last code could not:
 
 1. find_artifact() returns the exact file build.py's own APP_VERSION names
    -- never whatever a directory listing happens to sort last -- so a stale
@@ -24,6 +24,12 @@ This file proves two things the old glob-and-sort-last code could not:
    the correctly-named artifact is older than something it should have been
    built from -- named, with a message telling the operator to clean it,
    not a silent pass.
+3. dist_integrity_failures() tells a MISSING tracked release file (deleted
+   by an `rm -rf dist` instead of `git clean -fdx dist` -- dist/ has carried
+   committed release artifacts since v1.0.0-alpha.1 was tagged) apart from a
+   STRAY untracked one: the fix is `git checkout -- dist`, not
+   `git clean -fdx dist`, and dist_integrity_failures() says so rather than
+   recommending the cleanup command for the opposite problem.
 
 qa.REPO / qa.DIST / qa.CONTENT are patched at a scratch directory per case
 (same idiom as tests/test_q16_receipts.py's qa.REPO patch), so these run in
@@ -36,6 +42,7 @@ Run with either:
 
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -183,6 +190,63 @@ class DistIntegrityTests(unittest.TestCase):
         # And the artifact is still the one selection hands back -- staleness
         # is a build_ctx()-level refusal to proceed, not a different pick.
         self.assertEqual(qa.find_artifact(), artifact_path)
+
+    # -- a MISSING tracked release file is a different problem than a stray
+
+    def _git(self, *args):
+        subprocess.run(["git", *args], cwd=self.scratch, check=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def test_missing_tracked_artifact_points_at_git_checkout_not_clean(self):
+        """dist/ has carried tracked release files since v1.0.0-alpha.1 was
+        tagged (the shipped .html, its .sha256, its .provenance.json). If
+        one is deleted -- an `rm -rf dist` instead of `git clean -fdx dist`
+        is exactly how -- that is the OPPOSITE of a stray: the fix is to
+        RESTORE a committed file (`git checkout -- dist`), never to clean
+        untracked ones. dist_integrity_failures() must say so, distinctly
+        from the stray-file message, or an operator following its advice on
+        a missing file would run the wrong command."""
+        self._git("init", "-q")
+        self._git("config", "user.email", "test@example.com")
+        self._git("config", "user.name", "Test")
+        self._write("md-code-red_%s.html" % APP_VERSION, "FRESH")
+        provenance_name = "md-code-red_%s.provenance.json" % APP_VERSION
+        provenance_path = self._write(provenance_name, "{}")
+        self._git("add", "dist")
+        self._git("commit", "-q", "-m", "fixture: committed release files")
+
+        os.remove(provenance_path)
+
+        failures = qa.dist_integrity_failures()
+
+        missing_msgs = [msg for msg in failures if provenance_name in msg]
+        self.assertTrue(
+            missing_msgs, "no failure named the missing tracked artifact %r: %r"
+            % (provenance_name, failures),
+        )
+        self.assertTrue(
+            all("git checkout" in msg for msg in missing_msgs),
+            "the missing-artifact failure did not point at `git checkout`: %r" % (missing_msgs,),
+        )
+        self.assertFalse(
+            any(msg.startswith("dist/ contains") for msg in missing_msgs),
+            "a missing tracked file was reported with the STRAY-file message (whose fix is "
+            "`git clean -fdx dist`, the command for the OPPOSITE problem): %r" % (missing_msgs,),
+        )
+
+    def test_a_committed_dist_with_nothing_missing_is_clean(self):
+        """The git-aware check must not invent a failure out of a normal,
+        fully-populated, fully-committed dist/ -- only an ACTUAL gap between
+        what git tracks and what is on disk is a failure."""
+        self._git("init", "-q")
+        self._git("config", "user.email", "test@example.com")
+        self._git("config", "user.name", "Test")
+        self._write("md-code-red_%s.html" % APP_VERSION, "FRESH")
+        self._write("md-code-red_%s.provenance.json" % APP_VERSION, "{}")
+        self._git("add", "dist")
+        self._git("commit", "-q", "-m", "fixture: committed release files")
+
+        self.assertEqual(qa.dist_integrity_failures(), [])
 
 
 if __name__ == "__main__":
