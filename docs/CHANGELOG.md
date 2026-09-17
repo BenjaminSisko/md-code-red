@@ -4,6 +4,112 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added — CR-T-26/28/29/30, STIG panel, evidence exporter, typed search, favorites/recent/print/about (2026-09-17, branch `salm/milo/panels`)
+
+Four renderer/index modules, all consuming the existing rendered-state object (`RESULT` /
+`currentResult()`, MCR-SEC-012) — the `MCR-ASSEMBLER` block and the field validators are untouched.
+
+#### CR-T-26 — STIG panel
+
+`renderStigPanel()` writes the Inspector's `#stig-panel` (and, for print, `#print-stig-panel`, an
+identical mirror in the editor) directly — its own sink, in its own statement, following the same
+Q17-audited idiom every other renderer in this file uses. For the current entry's `stig[]` rows on the
+selected RHEL version:
+
+- Badge: STIG ID and Category, rendered **only when `stig[]` is non-empty** (CR-P0-03).
+- Every cited CCI, plus the CCI → NIST SP 800-53 crosswalk (`nistForCci()`, against
+  `content/cci_nist.json`; falls back to the rule's own `n[]` when a STIG row carries no `nist[]` of
+  its own).
+- Check text and Fix text as `<details>`/`<summary>` disclosures — verbatim DISA text through `esc()`,
+  no manual line-break handling (`white-space:pre-wrap` on a `<pre>`, matching the existing
+  `.copypreview` idiom).
+- Expected compliant output when `build.py`'s `assemble()` has joined a capture record onto the row
+  (`content/expected_output.json`), or the honest "No capture yet" line when it has not — `Q9`/`Q16`'s
+  capture data has 0 records in this build, so every rule in this build renders the honest state today.
+- The RHEL 7 sunset banner from `rules_rhel7._meta.sunset`/`.version`, and the entry's
+  `rhel_versions[version].changed_in_note` above the panel.
+
+A STIG rule reached via search with no command in this build's catalog opens standalone
+(`selectStigRule()`): if the rule's build-time reverse link (`rules[].cmds`, from `build.py`'s
+`assemble()`) names a real command entry, that entry opens instead — same panel, a real command; when
+it does not, the panel still renders in full and the editor says plainly that no command is catalogued
+for it yet, rather than showing a blank "no command selected" state.
+
+#### CR-T-28 — Evidence exporter
+
+`exportEvidence()` (`Ctrl+E`, or the **Export as Evidence** toolbar button) opens a modal previewing a
+deterministic plain-text SCTM-ready block, formatted by `formatEvidenceText()` — a **pure** function
+(MCR-EVIDENCE block, lifted and timed the same way `tests/hostile_harness.js` lifts the assembler)
+that never reads DATASETS/STATE/the DOM/the clock: tool version, build date, the content fingerprint,
+STIG ID, STIG version and benchmark date, rule title, CAT, CCI list, NIST controls, check text, fix
+text, expected output (or "not captured"), the assembled command and its flags exactly as
+`currentResult()` produced them, source citation, capture metadata (host/release/kernel/date) when
+present, and the operator's own date line. The `<pre>` preview is the same string `Copy evidence text`
+puts on the clipboard — nothing is recomputed between the two (threat-model-v1 §9, the MCR-SEC-003
+rule applied to the exporter). Two exports of the same entry, only the operator date line differing,
+are byte-identical (`tests/test_evidence_export.js`, run under `python3 -m unittest` via
+`tests/test_evidence_export.py`).
+
+**Content fingerprint**, shared by CR-T-28 and CR-T-30: `build.py` computes `sha256()` of the escaped
+JSON payload — the exact bytes that ship inside `<script id="mcr-data">…</script>` — **before** that
+payload is substituted into the template, and embeds the digest as the `CONTENT_FINGERPRINT` shell
+constant (never inside the island itself, which would hash a string containing itself). `qa.py`'s Q1
+gate independently re-hashes the shipped island and fails the build if the embedded constant and the
+fresh hash disagree.
+
+#### CR-T-29 — Lazy typed search index
+
+The palette's build-time index seed is replaced by a real index: `buildIndex(datasets)` (pure —
+MCR-INDEX block) is built **once**, on the first palette keystroke, over tools, command intents,
+curated per-entry flags, the per-release flag dictionaries (`content/flags_rhel*.json`), every
+embedded STIG rule (ID and title), every CCI, and every mapped NIST control — roughly 3,900 records on
+this build's full dataset. `queryIndex(index, q)` requires every search term to match (whole-word
+matches score higher than substrings) and groups hits by kind (Tool, Command, STIG, Flag, CCI, NIST,
+in that order, each capped at 8 so one large family cannot crowd the palette). A CCI or NIST hit
+resolves to the first embedded rule that cites it (current RHEL version first). A query with no
+possible match renders an explicit "No matches for …" state. Both build and query measure well under
+the 100 ms budget on the real embedded dataset — 1.5 ms to build, under 1 ms per query in this build's
+measurement (`tests/test_search_index.js`, run under `python3 -m unittest` via
+`tests/test_search_index.py`, which prints the timing).
+
+#### CR-T-30 — Favorites, recent, print view, About panel
+
+- **Favorites/recent:** a **Favorite**/**Favorited** toggle on every command's toolbar; a **Recent**
+  list pushed on every `selectEntry()`. Both are ID lists only, under the existing schema-versioned
+  storage guard (`mdcr.v1.favorites` / `mdcr.v1.recent`), sanitized through `sanitizeIdList()` (pure —
+  MCR-FAVORITES block) against the live content island before use — never storing or rendering raw
+  text (threat-model-v1 §7). `tests/test_favorites_store.js` (run via `tests/test_favorites_store.py`)
+  drives it with hostile shapes: raw command text, objects, numbers, oversized lists, duplicates — only
+  known-good ID strings ever survive. The **Favorites** rail (`Ctrl+Alt+4`) lists both, reusing the
+  existing `data-entry`/`data-tool` click-router hooks.
+- **Print view:** the print stylesheet's `.print-only` rule shows `#print-stig-panel` — the STIG panel
+  mirror inside `#editor`, written by the same `renderStigPanel()` call as the screen version — so
+  `Ctrl+P` prints the current entry and its full STIG panel with the rail, sidebar, inspector, status
+  bar and any open overlay dropped, and no external resources (the artifact has none to begin with).
+- **About panel:** the **About** rail (`Ctrl+Alt+5`) shows tool version and build date, the content
+  fingerprint, every embedded STIG release's version/benchmark date/rule count (with a sunset marker
+  for RHEL 7), the embedded source families and their license classes (read from each dataset's own
+  `_meta.license_class`, never restated), and the SALM Content Licensing Ruling v1 attribution block,
+  reproduced verbatim from `05_Compliance_Legal/MD_CODE_RED/content-licensing-ruling-v1.md` — with
+  plain hyphens standing in for the source document's em dashes, so no hand-typed non-ASCII glyph
+  enters a tracked file (Q21 scans every tracked file for exactly that class of character).
+
+#### Gates and tests
+
+Q5 markers added for every new function (`renderStigPanel`, `exportEvidence`, `buildIndex`,
+`queryIndex`, `nistForCci`, `formatEvidenceText`, `sanitizeIdList`, `toggleFavorite`, `pushRecent`,
+`renderFavoritesSidebar`, `renderAbout`, the `CONTENT_FINGERPRINT`/`ATTRIBUTION_BLOCK` constants, and
+the print-only mirror element); the three previously-PENDING CR-T-26/28/29 markers now report PASS.
+`rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests && node
+tests/hostile_harness.js` is green: **21 QA gates + `JS` PASS** (was 20 + `JS`, one pending marker
+resolved to 3), **167 unit tests PASS** (was 159, +8), hostile harness **0 failures over 81,577
+checks** (unchanged — the assembler was not touched). Reproducible build re-verified: two consecutive
+builds from the same sources are byte-identical. Three journeys walked in a real browser over a local
+HTTP server: Command Builder → STIG panel → Favorite; search by NIST control → standalone STIG rule
+(RHEL 7, sunset banner) → Export as Evidence (`Ctrl+E`, Copy evidence text); About panel and the print
+stylesheet's `.print-only` rule (verified via computed style and the live `CSSOM`, screen and print
+mirror byte-identical).
+
 ### Fixed — D4 review MCR-SEC-015..023, conditions E1–E7 (2026-09-17, branch `salm/milo/generators`)
 
 Marcus Reed's D4 review of the generator tranche at `69fb1c2`/`996b504` returned **DENY** — one HIGH

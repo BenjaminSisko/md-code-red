@@ -5,6 +5,7 @@
   Version:            __VERSION__
   Last modified:      __BUILT_DATE__
   Classification:     __CLASSIFICATION__
+  Content fingerprint (SHA-256 of the data island): __CONTENT_FINGERPRINT__
   Air-gap certified:  YES — zero network calls, zero external assets, one file.
   ----------------------------------------------------------------------------
   Built by build.py from template.html + content/. Never patched by hand:
@@ -175,12 +176,47 @@ code,pre{font-family:var(--font-mono);}
 .field input[disabled],.field select[disabled]{color:var(--text-muted); cursor:not-allowed;
   border-style:dashed;}
 .field .why{margin:0; font-size:11px; color:var(--text-muted);}
+/* ---- CR-T-26 STIG panel ---- */
+#stig-panel:empty{display:none;}
+.stigcard{border:1px solid var(--border-primary); border-radius:8px; margin:0 0 12px; padding:10px 12px;}
+.stigcard h3{margin:0 0 6px; font-size:13px;}
+.stigtext{white-space:pre-wrap; word-break:break-word; background:var(--bg-editor);
+  border:1px solid var(--border-primary); border-radius:5px; padding:6px 8px;
+  margin:4px 0 0; font-size:12px; max-height:260px; overflow:auto;}
+.stigcard summary{cursor:pointer; font-size:12px; color:var(--accent); margin:6px 0 0;}
+.sunsetbanner{border:1px solid var(--warning); border-radius:6px; padding:6px 8px;
+  margin:0 0 8px; font-size:12px; color:var(--warning);}
+.changednote{border-left:3px solid var(--badge-info); padding:2px 0 2px 8px;
+  margin:6px 0 0; font-size:12px; color:var(--text-secondary);}
+.nocaptureyet{font-size:12px; font-style:italic; color:var(--text-muted); margin:6px 0 0;}
+/* ---- CR-T-29 palette result groups ---- */
+.palettegroup{font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-muted); margin:8px 0 2px; padding:0 2px;}
+.palettegroup:first-child{margin-top:0;}
+.palettetiming{font-size:11px; color:var(--text-muted); margin:6px 0 0;}
+/* ---- CR-T-28 evidence exporter ---- */
+#evidence-modal[hidden]{display:none;}
+#evidence-modal{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex;
+  align-items:flex-start; justify-content:center; padding-top:6vh; z-index:60;}
+#evidence-modal>.panel{background:var(--bg-surface); border:1px solid var(--border-primary);
+  border-radius:8px; width:min(760px,94vw); max-height:86vh; overflow:auto; padding:14px;}
+.evidencepre{white-space:pre-wrap; word-break:break-word; background:var(--bg-editor);
+  border:1px solid var(--border-primary); border-radius:6px; padding:10px 12px;
+  font-size:12px; margin:8px 0;}
+/* ---- CR-T-30 favorites, recent, about ---- */
+.favbtn{border:1px solid var(--border-primary); border-radius:5px; background:transparent;
+  color:var(--text-secondary); font:inherit; font-size:12px; padding:1px 8px; cursor:pointer;}
+.favbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);}
+.aboutblock{border-left:3px solid var(--border-primary); padding:2px 0 2px 10px;
+  margin:0 0 12px; font-size:12px; white-space:pre-wrap;}
 @media print{
   body{display:block;}
-  #rail,#sidebar,#inspector,#statusbar,#palette{display:none;}
+  #rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
   #editor{background:none; color:#000;}
   .codeline .ln{background:none;}
+  .print-only{display:block !important;}
 }
+.print-only{display:none;}
 </style>
 </head>
 <body data-sidebar="on" data-inspector="on">
@@ -208,12 +244,20 @@ code,pre{font-family:var(--font-mono);}
     <h2>Loading</h2>
     <p class="muted" id="editor-empty">Reading the embedded content island.</p>
   </div>
+  <!-- print view (CR-T-30, UI spec §4): the screen's STIG panel lives in
+       #inspector, which @media print hides along with the rest of the chrome.
+       renderStigPanel() writes the SAME content here, in a separate statement,
+       as its own audited sink (Q17), so what prints is the current entry plus
+       its STIG panel and nothing else — no external resources, no chrome. -->
+  <div id="print-stig-panel" class="print-only"></div>
 </main>
 
 <!-- INSPECTOR — flag explanations, badges, provenance -->
 <aside id="inspector" role="complementary" aria-label="Inspector">
   <p class="region-label">Inspector</p>
-  <div id="inspector-body"><p class="muted">Flag-by-flag explanations and STIG badges render here.</p></div>
+  <!-- CR-T-26: renderStigPanel() owns this sink exclusively. -->
+  <div id="stig-panel"></div>
+  <div id="inspector-body"><p class="muted">Flag-by-flag explanations render here.</p></div>
 </aside>
 
 <!-- STATUSBAR — version state, pinned STIG releases, tool version -->
@@ -231,6 +275,14 @@ code,pre{font-family:var(--font-mono);}
   </div>
 </div>
 
+<!-- EVIDENCE MODAL — CR-T-28. exportEvidence() owns this sink exclusively; the
+     <pre> here is the SAME string doCopy()'s clipboard rule requires: what is
+     previewed is exactly and only what a Copy button on this panel copies
+     (threat-model-v1 §9, MCR-SEC-003's rule applied to the exporter). -->
+<div id="evidence-modal" role="dialog" aria-modal="true" aria-label="Export as evidence" hidden>
+  <div class="panel" id="evidence-modal-body"></div>
+</div>
+
 <script id="mcr-data" type="application/json">/*__DATA__*/</script>
 <script>
 "use strict";
@@ -245,7 +297,34 @@ var APP_NAME="__APP_NAME__";
 var APP_VERSION="__VERSION__";
 var APP_BUILD_DATE="__BUILT_DATE__";
 var APP_CLASSIFICATION="__CLASSIFICATION__";
+/* CR-T-28/CR-T-30. sha256 of the data island, computed by build.py BEFORE the
+   island is substituted into this file (never a hash of a string containing
+   itself) and embedded here as a plain constant, exactly like the four above
+   it. qa.py Q1 re-hashes the shipped island and checks it against this
+   constant independently. */
+var CONTENT_FINGERPRINT="__CONTENT_FINGERPRINT__";
 var RHEL_VERSIONS=["7","8","9","10"];
+/* CR-T-30. The About panel's attribution block, verbatim from
+   05_Compliance_Legal/MD_CODE_RED/content-licensing-ruling-v1.md, "Attribution
+   Block (Required in MD CODE RED About Panel)". Content and source list are
+   unchanged from that ruling; the source em dashes are written here as a
+   plain hyphen so this file never carries a hand-typed non-ASCII glyph
+   (Q21 scans every tracked file for exactly that class of character). */
+var ATTRIBUTION_BLOCK=[
+  "Content Sources & Licensing:",
+  "",
+  "This toolkit embeds content derived from the following sources under their respective terms:",
+  "",
+  "- DISA STIG & CCI Lists (Public Domain, US Government work) - https://www.cyber.mil/stigs/",
+  "- NIST SP 800-53 Rev 5 / OSCAL (CC0 1.0, Public Domain) - https://github.com/usnistgov/oscal-content",
+  "- ComplianceAsCode Project (BSD-3-Clause License) - https://github.com/ComplianceAsCode/content",
+  "- Red Hat Enterprise Linux Documentation (CC-BY-SA 3.0) - https://docs.redhat.com/",
+  "- Linux man-pages & GNU Utilities (GPL-2.0-or-later) - https://www.kernel.org/doc/man-pages/",
+  "- Ansible Project (GPLv3) - https://github.com/ansible/ansible",
+  "",
+  "Paraphrased content, remediation code, and identifiers are integrated to provide a unified "+
+  "toolkit for RHEL 9 compliance. Full compliance details: [link to detailed licensing document]."
+].join("\n");
 /* The no-guess law: a flag with no curated explanation says so, it never invents one. */
 var UNVERIFIED_FLAG_COPY="unverified — see man page";
 
@@ -984,6 +1063,248 @@ function assembleCommand(spec,version,values,opts){
 }
 /* ===== MCR-ASSEMBLER-END ================================================== */
 
+/* ===== MCR-INDEX-BEGIN =====================================================
+   CR-T-29. buildIndex() and queryIndex() are the lazy typed search index.
+   Deliberately pure — a function of the `datasets` object it is handed, never
+   of the global DATASETS/STATE — for the same reason the assembler above is
+   pure: tests/test_search_index.js lifts this block out of the SHIPPED
+   artifact by these markers (mirroring tests/hostile_harness.js) and times it
+   against the real embedded dataset, so "<100ms on the full dataset" is a
+   number this file's own tests print, not a claim.
+
+   "Lazy": nothing here runs at boot. The app calls buildIndex(DATASETS) once,
+   on the first palette keystroke, and keeps the result in a module-level
+   cache (outside this block, beside SEARCH_INDEX) for the life of the page.
+   "Typed": every record in the index carries a `kind` — Tool, Command, Flag,
+   STIG, CCI, NIST — so the palette can group results instead of presenting
+   one flat, undifferentiated list (CR-P0-06, UI spec §4).
+   ========================================================================== */
+function buildIndex(datasets){
+  datasets=datasets||{};
+  var idx=[],i,j,k;
+  var tools=(datasets.TOOLS&&datasets.TOOLS.tools)||[];
+  for(i=0;i<tools.length;i++){
+    var t=tools[i];
+    if(!t||!t.id) continue;
+    idx.push({kind:"Tool",id:t.id,tool:t.id,version:null,cat:null,
+              label:t.label||t.id,
+              hay:String((t.label||t.id)+" "+t.id).toLowerCase()});
+  }
+  var entries=(datasets.COMMANDS&&datasets.COMMANDS.entries)||[];
+  for(i=0;i<entries.length;i++){
+    var e=entries[i];
+    if(!e||!e.id) continue;
+    idx.push({kind:"Command",id:e.id,tool:e.tool||null,version:null,cat:null,
+              label:e.intent||e.id,
+              hay:String((e.intent||"")+" "+e.id+" "+(e.tool||"")).toLowerCase()});
+    var eflags=e.flags||[];
+    for(j=0;j<eflags.length;j++){
+      var ef=eflags[j];
+      if(!ef||!ef.flag) continue;
+      idx.push({kind:"Flag",id:e.id,tool:e.tool||null,version:null,cat:null,
+                label:ef.flag,
+                hay:String(ef.flag+" "+(ef.explain||"")+" "+(e.tool||"")).toLowerCase()});
+    }
+  }
+  var versions=["7","8","9","10"];
+  for(k=0;k<versions.length;k++){
+    var ver=versions[k];
+    var dict=(datasets.FLAGS||{})[ver];
+    var clis=(dict&&dict.clis)||{};
+    var cliIds=[],ck;
+    for(ck in clis){ if(Object.prototype.hasOwnProperty.call(clis,ck)) cliIds.push(ck); }
+    for(i=0;i<cliIds.length;i++){
+      var cid=cliIds[i];
+      var cli=clis[cid];
+      var cflags=(cli&&cli.flags)||[];
+      for(j=0;j<cflags.length;j++){
+        var cf=cflags[j];
+        var names=(cf&&cf.names)||[];
+        if(!names.length) continue;
+        idx.push({kind:"Flag",id:cid,tool:cid,version:ver,cat:null,
+                  label:names[0],
+                  hay:String(names.join(" ")+" "+(cf.explain||"")+" "+cid).toLowerCase()});
+      }
+    }
+    var ruleset=((datasets.RULES||{})[ver]&&datasets.RULES[ver].rules)||[];
+    for(i=0;i<ruleset.length;i++){
+      var r=ruleset[i];
+      if(!r||!r.i) continue;
+      idx.push({kind:"STIG",id:r.i,tool:null,version:ver,cat:r.c||null,
+                label:r.t||r.i,
+                hay:String((r.i||"")+" "+(r.t||"")+" "+(r.cci||[]).join(" ")+" "+
+                          (r.n||[]).join(" ")).toLowerCase()});
+    }
+  }
+  var cciMap=(datasets.CCI_NIST&&datasets.CCI_NIST.cci)||{};
+  var cciIds=[],cck;
+  for(cck in cciMap){ if(Object.prototype.hasOwnProperty.call(cciMap,cck)) cciIds.push(cck); }
+  for(i=0;i<cciIds.length;i++){
+    var cid2=cciIds[i];
+    var nist=(cciMap[cid2]&&cciMap[cid2].nist)||[];
+    idx.push({kind:"CCI",id:cid2,tool:null,version:null,cat:null,
+              label:cid2+(nist.length?(" -> "+nist.join(", ")):""),
+              hay:String(cid2+" "+nist.join(" ")).toLowerCase()});
+    for(j=0;j<nist.length;j++){
+      idx.push({kind:"NIST",id:nist[j],tool:null,version:null,cat:null,
+                label:"NIST "+nist[j]+" ("+cid2+")",
+                hay:String(nist[j]+" "+cid2).toLowerCase()});
+    }
+  }
+  return idx;
+}
+/* queryIndex(index, q) -> {groups:[{kind,hits:[...]}], total, terms}
+   Every term must match (AND, not OR) somewhere in a record's haystack — a
+   whole-word match outranks a substring match, exactly like the shell's own
+   paletteMatches() this replaces. Grouped by kind, kept in a stable kind
+   order, each group capped so one huge family (Flag, STIG) cannot crowd every
+   other kind off the palette. */
+var INDEX_KIND_ORDER=["Tool","Command","STIG","Flag","CCI","NIST"];
+var INDEX_GROUP_CAP=8;
+function queryIndex(index,q){
+  var out={groups:[],total:0,terms:0};
+  var raw=String(q||"").toLowerCase().split(/\s+/),terms=[],ti;
+  for(ti=0;ti<raw.length;ti++){ if(raw[ti]) terms.push(raw[ti]); }
+  out.terms=terms.length;
+  if(!terms.length||!index||!index.length) return out;
+  var scored=[],i,t;
+  for(i=0;i<index.length;i++){
+    var rec=index[i],score=0,hit=true;
+    for(t=0;t<terms.length;t++){
+      var needle=terms[t];
+      var at=rec.hay.indexOf(needle);
+      if(at<0){ hit=false; break; }
+      var wordStart=(at===0)||/[^a-z0-9]/.test(rec.hay.charAt(at-1));
+      score+=wordStart?3:1;
+    }
+    if(hit) scored.push({rec:rec,score:score});
+  }
+  scored.sort(function(a,b){ return b.score-a.score; });
+  out.total=scored.length;
+  var byKind={},k2;
+  for(i=0;i<scored.length;i++){
+    var kind=scored[i].rec.kind;
+    if(!byKind[kind]) byKind[kind]=[];
+    if(byKind[kind].length<INDEX_GROUP_CAP) byKind[kind].push(scored[i].rec);
+  }
+  for(k2=0;k2<INDEX_KIND_ORDER.length;k2++){
+    var kn=INDEX_KIND_ORDER[k2];
+    if(byKind[kn]&&byKind[kn].length) out.groups.push({kind:kn,hits:byKind[kn]});
+  }
+  return out;
+}
+/* ===== MCR-INDEX-END ======================================================= */
+
+/* ===== MCR-EVIDENCE-BEGIN ===================================================
+   CR-T-28. formatEvidenceText() is the deterministic plain-text formatter
+   behind Export as Evidence. Pure, like the block above: every value it prints
+   is passed in explicitly, nothing is read from DATASETS/STATE/the DOM/the
+   clock inside it, so tests/test_evidence_export.js can call it twice with the
+   same fixture and assert the output is byte-identical except the operator's
+   own date line (threat-model-v1 §8: the export "carries a content fingerprint
+   and STIG version" and is "read from the same rendered-state object as the
+   screen, never recomputed" — `res` here IS that object, the one
+   currentResult() already produced; this function only formats it).
+
+   `res` is the RESULT value from computeResult()/currentResult() (MCR-SEC-012)
+   — command, flags, blast — never reassembled here. Everything else
+   (STIG row, rule text, source citation, capture metadata, fingerprint,
+   versions) is content-island data or app identity, handed in by the caller. */
+function formatEvidenceText(opts){
+  opts=opts||{};
+  var lines=[],res=opts.res,entry=opts.entry,stigRow=opts.stigRow,rule=opts.rule;
+  function push(s){ lines.push(String(s==null?"":s)); }
+  function kv(label,val){ push(label+": "+(val===null||val===undefined||val===""?"not captured":val)); }
+  push("MD CODE RED — Evidence Export");
+  push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
+  push("Content fingerprint (sha256 of the embedded data island): "+(opts.contentFingerprint||""));
+  push("");
+  if(stigRow){
+    push("STIG ID: "+(stigRow.stig_id||""));
+    push("STIG version: "+(opts.stigVersion||"")+"  benchmark date: "+(opts.benchmarkDate||""));
+    push("Rule title: "+(rule&&rule.t?rule.t:""));
+    push("CAT: "+((rule&&rule.c)?rule.c:"?"));
+    var cci=(stigRow.cci&&stigRow.cci.length)?stigRow.cci:((rule&&rule.cci)||[]);
+    push("CCI: "+(cci&&cci.length?cci.join(", "):"none cited"));
+    var nist=(stigRow.nist&&stigRow.nist.length)?stigRow.nist:((rule&&rule.n)||[]);
+    push("NIST SP 800-53 controls: "+(nist&&nist.length?nist.join(", "):"none mapped"));
+    push("");
+    push("Check command / check text:");
+    push(rule&&rule.chk?rule.chk:"(no check text embedded for this rule)");
+    push("");
+    push("Fix command / fix text:");
+    push(rule&&rule.fix?rule.fix:"(no fix text embedded for this rule)");
+    push("");
+    var cap=stigRow.expected_output;
+    if(cap&&(cap.stdout!==undefined||cap.text!==undefined)){
+      push("Expected output (captured): "+(cap.stdout!==undefined?cap.stdout:cap.text));
+      push("Compliant: "+(cap.compliant===true?"yes":(cap.compliant===false?"no":"not recorded")));
+      push("Capture host: "+(cap.host||"not captured"));
+      push("Capture release: "+(cap.os_release||cap.patch_level||"not captured"));
+      push("Capture kernel: "+(cap.kernel||"not captured"));
+      push("Captured on: "+(cap.captured_on||"not captured"));
+    }else{
+      push("Expected output: not captured yet — no capture record exists for this STIG ID/RHEL "+
+           "version pair (content/expected_output.json).");
+    }
+    push("");
+  }
+  if(res){
+    push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
+    push(res.command||"");
+    push("");
+    var flags=res.flags||[],fi;
+    if(flags.length){
+      push("Flags:");
+      for(fi=0;fi<flags.length;fi++){
+        push("  "+flags[fi].flag+" — "+(flags[fi].explain||"unverified — see man page"));
+      }
+      push("");
+    }
+  }else{
+    push("Assembled command: not available — no command is assembled for the current selection.");
+    push("");
+  }
+  var src=opts.source||(entry&&entry.source)||null;
+  if(src){
+    push("Source citation: "+(src.title||"")+" — "+(src.url_or_man||src.version||"")+
+        " (version "+(src.version||"?")+", retrieved "+(src.retrieved_on||"?")+")");
+  }else{
+    push("Source citation: not recorded on this entry.");
+  }
+  push("");
+  push("Operator date: "+(opts.operatorDate||""));
+  return lines.join("\n");
+}
+/* ===== MCR-EVIDENCE-END ===================================================== */
+
+/* ===== MCR-FAVORITES-BEGIN ==================================================
+   CR-T-30. sanitizeIdList() is the one place a value coming back out of
+   localStorage is allowed to become a list of favorite/recent IDs. Pure, so
+   tests/test_favorites_store.js can hand it hostile JSON shapes (numbers,
+   objects, oversized arrays, raw command text somebody pasted in by hand) and
+   prove only known-good ID STRINGS ever survive — threat-model-v1 §7:
+   "favorites store content IDs only, never raw text". `isValidId` is supplied
+   by the caller (a lookup against the real content island) rather than
+   guessed at here, so this function never has an opinion about what a valid
+   entry ID looks like beyond "a short, plain string". */
+var FAVORITES_MAX=200;
+function sanitizeIdList(raw,isValidId){
+  var out=[],seen={},i;
+  if(!raw||!raw.length||typeof isValidId!=="function") return out;
+  for(i=0;i<raw.length&&out.length<FAVORITES_MAX;i++){
+    var v=raw[i];
+    if(typeof v!=="string") continue;          /* never an object, a number, raw text */
+    if(v.length===0||v.length>128) continue;
+    if(Object.prototype.hasOwnProperty.call(seen,v)) continue;
+    if(!isValidId(v)) continue;                 /* must resolve against real content */
+    seen[v]=true;
+    out.push(v);
+  }
+  return out;
+}
+/* ===== MCR-FAVORITES-END ===================================================== */
+
 /* ============ data island loader ============ */
 var DATA,DATASETS;
 try{
@@ -1026,13 +1347,53 @@ function isGeneratorEntry(entry){ return !!(entry&&entry.template); }
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:"9",rail:"builder",toolId:null,entryId:null,line:0,acked:false,
-           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],formValues:{}};
+           toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],paletteGroups:[],
+           formValues:{},
+           /* CR-T-26: a STIG rule opened from search with no associated command. */
+           stigRuleId:null,stigRuleVersion:null,
+           /* CR-T-28 */ evidenceOpen:false,
+           /* CR-T-30 — resolved to real entry/tool IDs at boot, IDs only, never raw text. */
+           favorites:[],recent:[]};
 (function(){
   var saved=STORE.getSession("version",null);
   if(saved && RHEL_VERSIONS.indexOf(saved)>=0) STATE.version=saved;
   var lastTool=STORE.get("lasttool",null);       /* stored by ID only, never free text */
   if(lastTool && toolById(lastTool)) STATE.toolId=lastTool;
 })();
+
+/* ============ favorites & recent — CR-T-30, threat-model-v1 §7 ============
+   IDs only, ever. sanitizeIdList() (MCR-FAVORITES block above) is the one
+   choke point a stored value passes through before it is trusted as a list of
+   IDs; `isKnownId` below is the ONLY notion of "valid" this file hands it, and
+   it is a lookup against the real, currently loaded content island — never a
+   shape check alone, so an ID that once existed in an older build cannot wedge
+   itself into this build's favorites list and render as a blank row. */
+function isKnownId(id){ return !!(toolById(id)||entryById(id)); }
+function loadIdList(key){
+  return sanitizeIdList(STORE.get(key,[])||[],isKnownId);
+}
+function saveIdList(key,list){ STORE.set(key,list); }
+(function(){
+  STATE.favorites=loadIdList("favorites");
+  STATE.recent=loadIdList("recent");
+})();
+function isFavorite(id){ return STATE.favorites.indexOf(id)>=0; }
+function toggleFavorite(id){
+  if(!id||!isKnownId(id)) return;
+  var at=STATE.favorites.indexOf(id);
+  if(at>=0){ STATE.favorites.splice(at,1); }
+  else{ STATE.favorites.unshift(id); if(STATE.favorites.length>FAVORITES_MAX) STATE.favorites.length=FAVORITES_MAX; }
+  saveIdList("favorites",STATE.favorites);
+}
+var RECENT_MAX=20;
+function pushRecent(id){
+  if(!id||!isKnownId(id)) return;
+  var at=STATE.recent.indexOf(id);
+  if(at>=0) STATE.recent.splice(at,1);
+  STATE.recent.unshift(id);
+  if(STATE.recent.length>RECENT_MAX) STATE.recent.length=RECENT_MAX;
+  saveIdList("recent",STATE.recent);
+}
 function setVersion(v){
   if(RHEL_VERSIONS.indexOf(v)<0) return;
   STATE.version=v;
@@ -1243,6 +1604,82 @@ function doCopy(withComment){
   toast(ok?("Copied to clipboard — RHEL "+res.version):"Copy failed — select the text in the editor and use your browser's copy.");
 }
 
+/* ============ CR-T-28: Export as Evidence ============
+   exportEvidence() gathers exactly the data formatEvidenceText() (the pure
+   MCR-EVIDENCE block above) needs and hands it over — `res` is currentResult(),
+   the SAME rendered-state object the screen and the clipboard already read
+   (MCR-SEC-012), never recomputed here. renderEvidenceModal() then previews the
+   formatted text in an escaped <pre>, and stashes the exact string in
+   STATE._evidenceText so the Copy button on the modal copies precisely what
+   is shown — the same rule doCopy() already applies to the clipboard preview
+   (threat-model-v1 §9, MCR-SEC-003). */
+function evidenceContext(){
+  var res=currentResult();
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  var version=STATE.version,stigRow=null,rule=null;
+  if(entry){
+    var rows=stigRowsFor(entry);
+    if(rows.length) stigRow=rows[0];
+  }else if(STATE.stigRuleId){
+    version=STATE.stigRuleVersion||STATE.version;
+    stigRow={stig_id:STATE.stigRuleId,rhel_version:version,cci:null,nist:null};
+  }
+  if(stigRow) rule=ruleFor(stigRow.stig_id,version);
+  return {res:res,entry:entry,stigRow:stigRow,rule:rule,version:version};
+}
+function exportEvidence(){
+  var ctx=evidenceContext();
+  if(!ctx.res && !ctx.stigRow){
+    toast("Nothing to export — select a command or a STIG rule first.");
+    return;
+  }
+  STATE.evidenceOpen=true;
+  renderEvidenceModal();
+}
+function renderEvidenceModal(){
+  if(!STATE.evidenceOpen){
+    el("evidence-modal").hidden=true;
+    return;
+  }
+  var ctx=evidenceContext();
+  var stigMeta=((DATASETS.RULES||{})[ctx.version]||{})._meta||{};
+  var src=(ctx.entry&&ctx.entry.source)?ctx.entry.source:((ctx.rule&&ctx.rule.source)?ctx.rule.source:null);
+  var today=new Date();
+  var mm=String(today.getMonth()+1);
+  var dd=String(today.getDate());
+  if(mm.length<2) mm="0"+mm;
+  if(dd.length<2) dd="0"+dd;
+  var operatorDate=today.getFullYear()+"-"+mm+"-"+dd;
+  var text=formatEvidenceText({
+    res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,
+    appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
+    stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
+    source:src,operatorDate:operatorDate
+  });
+  STATE._evidenceText=text;
+  var html="<p class=\"region-label\">Export as Evidence — SCTM-ready, plain text</p>";
+  html+="<pre class=\"evidencepre\" aria-label=\"Evidence export preview — exactly what Copy copies\">"+
+        esc(text)+"</pre>";
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-copy\">Copy evidence text</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-close\">Close</button>";
+  html+="</div>";
+  el("evidence-modal-body").innerHTML=html;
+  el("evidence-modal").hidden=false;
+}
+function closeEvidenceModal(){
+  STATE.evidenceOpen=false;
+  STATE._evidenceText=null;
+  el("evidence-modal").hidden=true;
+  el("evidence-modal-body").innerHTML="";
+}
+function doCopyEvidence(){
+  if(!STATE._evidenceText){ toast("Nothing to copy."); return; }
+  var ok=copyText(STATE._evidenceText);
+  toast(ok?"Evidence copied to clipboard.":
+           "Copy failed — select the text in the preview and use your browser's copy.");
+}
+
 /* ============ STIG helpers ============ */
 function stigRowsFor(entry){
   var rows=(entry&&entry.stig)||[],out=[];
@@ -1253,6 +1690,106 @@ function catFor(row){
   var rules=((DATASETS.RULES||{})[STATE.version]||{}).rules||[];
   for(var i=0;i<rules.length;i++){ if(rules[i].i===row.stig_id) return rules[i].c||"?"; }
   return "?";
+}
+/* rule lookup by STIG ID on a GIVEN version (not always STATE.version — a
+   standalone rule opened from search carries its own version). Returns a data
+   object, never markup, so it is safe to read from inside a render
+   accumulator: only fields of what it returns that are passed through esc()
+   ever reach a sink. */
+function ruleFor(stigId,version){
+  var rules=((DATASETS.RULES||{})[version]||{}).rules||[],i;
+  for(i=0;i<rules.length;i++){ if(rules[i].i===stigId) return rules[i]; }
+  return null;
+}
+/* CCI -> NIST SP 800-53 crosswalk (CR-T-26: "CCIs -> NIST controls via
+   cci_nist"). Data only, deduplicated, order-preserving. */
+function nistForCci(cciList){
+  var map=(DATASETS.CCI_NIST&&DATASETS.CCI_NIST.cci)||{},out=[],i,j;
+  cciList=cciList||[];
+  for(i=0;i<cciList.length;i++){
+    var rec=map[cciList[i]];
+    var nist=(rec&&rec.nist)||[];
+    for(j=0;j<nist.length;j++){ if(out.indexOf(nist[j])<0) out.push(nist[j]); }
+  }
+  return out;
+}
+
+/* ============ CR-T-26: the STIG panel ============
+   Writes #stig-panel (inspector, screen) and #print-stig-panel (editor,
+   print-only) from the SAME accumulator, in two separate statements — the
+   idiom every other multi-sink renderer in this file already uses (see
+   renderBlastBanner()'s comment). Nothing here is a bare call spliced into the
+   accumulator: ruleFor()/nistForCci() return DATA, and every field they
+   return crosses the sink through esc() at the call site, exactly like every
+   other renderer (Q17, MCR-SEC-004/014).
+
+   Badge appears ONLY when the current selection carries at least one STIG row
+   for the selected release (CR-P0-03) — an entry with no stig[], or a version
+   with no row for it, renders an empty panel, not an empty card. */
+function renderStigPanel(){
+  var html="";
+  var rows=[],version=STATE.version,standalone=false;
+  if(STATE.entryId){
+    var entry=entryById(STATE.entryId);
+    rows=entry?stigRowsFor(entry):[];
+    if(entry){
+      var slot=(entry.rhel_versions||{})[STATE.version]||{};
+      if(slot.changed_in_note){
+        html+="<p class=\"changednote\">Changed in RHEL "+esc(STATE.version)+": "+
+              esc(slot.changed_in_note)+"</p>";
+      }
+    }
+  }else if(STATE.stigRuleId&&STATE.stigRuleVersion){
+    version=STATE.stigRuleVersion;
+    rows=[{stig_id:STATE.stigRuleId,rhel_version:STATE.stigRuleVersion,cci:null,nist:null}];
+    standalone=true;
+  }
+  if(!rows.length){
+    el("stig-panel").innerHTML=html;
+    el("print-stig-panel").innerHTML=html;
+    return;
+  }
+  var sunsetMeta=((DATASETS.RULES||{})[version]||{})._meta;
+  if(sunsetMeta&&sunsetMeta.sunset){
+    html+="<div class=\"sunsetbanner\" role=\"note\">RHEL "+esc(version)+
+          " STIG "+esc(sunsetMeta.version||"?")+" is SUNSET at DISA — a terminal release, no "+
+          "further updates expected.</div>";
+  }
+  var i;
+  for(i=0;i<rows.length;i++){
+    var row=rows[i];
+    var rule=ruleFor(row.stig_id,version);
+    var cat=(rule&&rule.c)||"?";
+    var cls=(cat==="I"?"badge cat1":(cat==="II"?"badge cat2":(cat==="III"?"badge cat3":"badge")));
+    var cci=(row.cci&&row.cci.length)?row.cci:((rule&&rule.cci)||[]);
+    var nist=(row.nist&&row.nist.length)?row.nist:nistForCci(cci);
+    html+="<div class=\"stigcard\">";
+    html+="<span class=\""+escapeAttr(cls)+"\">STIG "+esc(row.stig_id)+", Category "+esc(cat)+"</span>";
+    var ci;
+    for(ci=0;ci<cci.length;ci++){ html+="<span class=\"badge\">"+esc(cci[ci])+"</span>"; }
+    if(nist.length){ html+="<span class=\"badge\">NIST "+esc(nist.join(", "))+"</span>"; }
+    html+="<h3>"+esc(rule&&rule.t?rule.t:"(no rule text embedded for this build)")+"</h3>";
+    if(rule&&rule.chk){
+      html+="<details><summary>Check text</summary><pre class=\"stigtext\">"+esc(rule.chk)+"</pre></details>";
+    }
+    if(rule&&rule.fix){
+      html+="<details><summary>Fix text</summary><pre class=\"stigtext\">"+esc(rule.fix)+"</pre></details>";
+    }
+    var cap=row.expected_output;
+    if(cap&&(cap.stdout!==undefined||cap.text!==undefined)){
+      html+="<details open><summary>Expected compliant output (captured)</summary>"+
+            "<pre class=\"stigtext\">"+esc(cap.stdout!==undefined?cap.stdout:cap.text)+"</pre></details>";
+    }else{
+      html+="<p class=\"nocaptureyet\">No capture yet — expected output has not been recorded for "+
+            esc(row.stig_id)+" on RHEL "+esc(version)+".</p>";
+    }
+    if(standalone&&rule&&(!rule.cmds||!rule.cmds.length)){
+      html+="<p class=\"muted\">No command in this build's catalog is linked to this rule yet.</p>";
+    }
+    html+="</div>";
+  }
+  el("stig-panel").innerHTML=html;
+  el("print-stig-panel").innerHTML=html;
 }
 
 /* ============ renderers — every value crosses innerHTML through esc()/escapeAttr() ============ */
@@ -1291,12 +1828,72 @@ function entryGateInfo(e){
   return {gated:gated2, reason:gated2?((slot.unavailable&&slot.unavailable.reason)||""):""};
 }
 
+/* CR-T-30: the favorites/recent sidebar. Rows reuse the existing data-tool
+   and data-entry click-router hooks — selecting one lands back in the
+   Command Builder rail (selectEntry()/selectTool() do that already) — so
+   nothing new has to be wired into the router for this list to work.
+   Favorites and recent both render from STATE.favorites/STATE.recent, which
+   are id lists ONLY (sanitizeIdList()); the label shown for each id is
+   resolved fresh from the live content island every render, never from
+   anything that was stored (threat-model-v1 §7 — stored text is never
+   trusted, let alone rendered). An id that no longer resolves — an older
+   build's favorite — is silently skipped rather than shown blank. */
+function renderFavoritesSidebar(){
+  var html="<p class=\"region-label\">Favorites</p>";
+  var i,id,entry,tool;
+  if(!STATE.favorites.length){
+    html+="<p class=\"muted\">No favorites yet. Open a command and use the Favorite button in its toolbar.</p>";
+  }else{
+    html+="<ul class=\"list\" data-listnav=\"favorites\">";
+    for(i=0;i<STATE.favorites.length;i++){
+      id=STATE.favorites[i];
+      entry=entryById(id);
+      if(entry){
+        html+="<li><button type=\"button\" class=\"row\" data-entry=\""+escapeAttr(id)+"\">"+
+              esc(entry.intent||id)+"<span class=\"why\">"+esc(entry.tool||"")+"</span></button></li>";
+        continue;
+      }
+      tool=toolById(id);
+      if(tool){
+        html+="<li><button type=\"button\" class=\"row\" data-tool=\""+escapeAttr(id)+"\">"+
+              esc(tool.label||id)+"<span class=\"why\">tool</span></button></li>";
+      }
+    }
+    html+="</ul>";
+  }
+  html+="<p class=\"region-label\">Recent</p>";
+  if(!STATE.recent.length){
+    html+="<p class=\"muted\">Nothing opened yet this session.</p>";
+  }else{
+    html+="<ul class=\"list\" data-listnav=\"recent\">";
+    for(i=0;i<STATE.recent.length;i++){
+      id=STATE.recent[i];
+      entry=entryById(id);
+      if(!entry) continue;
+      html+="<li><button type=\"button\" class=\"row\" data-entry=\""+escapeAttr(id)+"\">"+
+            esc(entry.intent||id)+"<span class=\"why\">"+esc(entry.tool||"")+"</span></button></li>";
+    }
+    html+="</ul>";
+  }
+  el("sidebar-body").innerHTML=html;
+}
 function renderToolList(){
   var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
+  if(STATE.rail==="favorites"){ renderFavoritesSidebar(); return; }
+  if(STATE.rail==="about"){
+    html+="<p class=\"region-label\">About</p>";
+    html+="<p class=\"muted\">Tool identity, content fingerprint, STIG versions and the required "+
+          "attribution block are in the main panel.</p>";
+    el("sidebar-body").innerHTML=html;
+    return;
+  }
   if(STATE.rail!=="builder"){
     html+="<p class=\"region-label\">"+esc(STATE.rail)+"</p>";
-    html+="<p class=\"muted\">This rail lands with its own task: STIG search and the control crosswalk (CR-T-26), the Ansible generator (CR-T-25), favourites and recent (CR-T-27), and the About panel with the content fingerprint (CR-T-30). The Command Builder rail is live now.</p>";
+    html+="<p class=\"muted\">This rail lands with its own task: STIG search over the whole catalog "+
+          "(CR-T-26 put the STIG panel and search-by-STIG-ID in the Inspector and the command "+
+          "palette instead; a dedicated browse view here is still open) and the Ansible generator "+
+          "(CR-T-25). The Command Builder, Favorites and About rails are live now.</p>";
     el("sidebar-body").innerHTML=html;
     return;
   }
@@ -1365,10 +1962,59 @@ function renderBlastBanner(res){
   el("blast-banner").innerHTML=html;
 }
 
+/* ============ CR-T-30: the About panel ============
+   Tool identity, the content fingerprint, STIG versions/dates per release,
+   the licensing ruling's attribution block verbatim, and the embedded source
+   families with their license classes — everything read straight off
+   DATASETS._meta and the APP_* identity constants, nothing typed twice. */
+function renderAbout(){
+  var html="<h2>About "+esc(APP_NAME)+"</h2>";
+  html+="<p class=\"muted\">Version "+esc(APP_VERSION)+" · built "+esc(APP_BUILD_DATE)+
+        " · "+esc(APP_CLASSIFICATION)+"</p>";
+  html+="<p class=\"region-label\">Content fingerprint</p>";
+  html+="<p class=\"muted\">sha256 of the embedded data island, computed by build.py: "+
+        esc(CONTENT_FINGERPRINT)+"</p>";
+  html+="<p class=\"region-label\">STIG releases embedded in this build</p>";
+  html+="<ul class=\"list\">";
+  var vi;
+  for(vi=0;vi<RHEL_VERSIONS.length;vi++){
+    var ver=RHEL_VERSIONS[vi];
+    var meta=((DATASETS.RULES||{})[ver]||{})._meta||{};
+    html+="<li>RHEL "+esc(ver)+" — STIG "+esc(meta.version||"?")+", benchmark "+
+          esc(meta.benchmark_date||"?")+(meta.sunset?" — SUNSET at DISA":"")+
+          " ("+esc(String(meta.rule_count||0))+" rules)</li>";
+  }
+  html+="</ul>";
+  html+="<p class=\"region-label\">Embedded source families and license classes</p>";
+  html+="<ul class=\"list\">";
+  html+="<li>DISA STIG rule/fix text — verbatim-ok (public domain, U.S. Government work)</li>";
+  html+="<li>DISA CCI List and its NIST SP 800-53 index — verbatim-ok (public domain, U.S. Government work)</li>";
+  var fmeta=((DATASETS.FLAGS||{})["8"]||{})._meta||{};
+  html+="<li>Flag dictionaries (man pages / --help on the read hosts) — "+
+        esc(fmeta.license_class||"paraphrase-only")+"</li>";
+  html+="<li>Command intent, notes and \"changed in RHEL X\" text — paraphrase-only, from Red Hat "+
+        "product documentation and the man pages/--help output of the installed binaries</li>";
+  html+="</ul>";
+  html+="<p class=\"region-label\">Attribution (SALM Content Licensing Ruling v1, verbatim)</p>";
+  html+="<pre class=\"aboutblock\">"+esc(ATTRIBUTION_BLOCK)+"</pre>";
+  el("editor-card").innerHTML=html;
+}
 function renderEditor(){
   var html="";
+  if(STATE.rail==="about"){
+    renderAbout();
+    return;
+  }
   renderBlastBanner(currentResult());
   if(!STATE.entryId){
+    if(STATE.stigRuleId){
+      html+="<div class=\"card\"><h2>"+esc(STATE.stigRuleId)+"</h2>"+
+            "<p class=\"muted\">Opened from search. The check text, fix text and control mapping "+
+            "are in the Inspector panel on the right — this rule has no command in this build's "+
+            "catalog to assemble.</p></div>";
+      el("editor-card").innerHTML=html;
+      return;
+    }
     html+="<div class=\"card\"><h2>No command selected</h2><p class=\"muted\">Pick a tool from the sidebar, or press <code>/</code> to search. Copy is not rendered at all until a command is assembled — there is no dead control to tab through.</p></div>";
     el("editor-card").innerHTML=html;
     return;
@@ -1411,6 +2057,10 @@ function renderEditor(){
   html+="<div class=\"toolbar\">";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export as Evidence</button>";
+  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
   html+="</div>";
   /* threat-model-v1 §9: what is in the preview is exactly and only what gets
      copied. The comment header used to be built at click time and never shown;
@@ -1541,6 +2191,10 @@ function renderGeneratorResult(){
   html+="<div class=\"toolbar\">";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export as Evidence</button>";
+  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
   html+="</div>";
   if(res.copy_comment){
     html+="<p class=\"region-label\">Copy with comment — exactly what reaches the clipboard</p>";
@@ -1567,24 +2221,23 @@ function renderGeneratorEditor(entry){
 }
 
 function renderInspector(){
+  /* renderStigPanel() owns #stig-panel/#print-stig-panel exclusively, as its
+     own statement — same composition rule renderEditor() already applies to
+     renderBlastBanner() (Q17: no bare call's return is spliced into this
+     function's own accumulator). It renders for BOTH an entry's stig[] and a
+     standalone rule reached via search (CR-T-26), so it runs whether or not a
+     command result exists below. */
+  renderStigPanel();
   var html="";
   var res=currentResult();
   if(!res){
-    html+="<p class=\"muted\">Flag-by-flag explanations and STIG badges render here once a command is assembled.</p>";
+    html+=(STATE.stigRuleId?
+      "<p class=\"muted\">This STIG rule has no command in this build's catalog. The check, fix and control mapping are in the panel above.</p>":
+      "<p class=\"muted\">Flag-by-flag explanations render here once a command is assembled.</p>");
     el("inspector-body").innerHTML=html;
     return;
   }
   var entry=entryById(res.id);
-  var rows=entry?stigRowsFor(entry):[];
-  for(var i=0;i<rows.length;i++){
-    var cat=catFor(rows[i]);
-    var cls=(cat==="I"?"badge cat1":(cat==="II"?"badge cat2":(cat==="III"?"badge cat3":"badge")));
-    html+="<span class=\""+escapeAttr(cls)+"\">STIG "+esc(rows[i].stig_id)+", Category "+esc(cat)+"</span>";
-    var nist=(rows[i].nist||[]).join(", ");
-    if(nist) html+="<span class=\"badge\">NIST "+esc(nist)+"</span>";
-    var cci=(rows[i].cci||[]).join(", ");
-    if(cci) html+="<span class=\"badge\">"+esc(cci)+"</span>";
-  }
   html+="<p class=\"region-label\">Flag by flag</p>";
   var flags=decodeCmd(res.tool,res.version,res.flags||[]);
   if(!flags.length) html+="<p class=\"muted\">This command takes no flags.</p>";
@@ -1632,45 +2285,32 @@ function renderStatusBar(){
   el("statusbar").innerHTML=parts.join("");
 }
 
-/* ============ palette — shell-level search over the build-time index seed ============ */
-/* The lazy typed index over flags, STIG IDs and control numbers is CR-T-29. This
-   is the shell's own search over the seed build.py already emits, so the
-   keyboard controller has a real palette to drive rather than a placeholder. */
+/* ============ CR-T-29: palette over the lazy typed search index ============
+   SEARCH_INDEX is built ONCE, on the first keystroke that reaches the
+   palette — "lazy" — by buildIndex() (the MCR-INDEX block above, lifted
+   verbatim by tests/test_search_index.js and timed against this exact
+   dataset). Every later keystroke only calls queryIndex(), which is cheap:
+   the index is already built. */
+var SEARCH_INDEX=null;
+function ensureSearchIndex(){
+  if(!SEARCH_INDEX) SEARCH_INDEX=buildIndex(DATASETS);
+  return SEARCH_INDEX;
+}
 function paletteMatches(q){
-  var seed=DATASETS.INDEX_SEED||{};
-  var terms=String(q).toLowerCase().split(/\s+/),hits=[],i,t;
-  var clean=[];
-  for(i=0;i<terms.length;i++){ if(terms[i]) clean.push(escapeRegex(terms[i])); }
-  if(!clean.length) return hits;
-  function scoreOf(label){
-    var hay=String(label||"").toLowerCase(),score=0;
-    for(var k=0;k<clean.length;k++){
-      if(!new RegExp("\\b"+clean[k]).test(hay)){
-        if(hay.indexOf(clean[k].replace(/\\/g,""))<0) return 0;
-        score+=1;
-      }else{ score+=3; }
-    }
-    return score;
+  var result=queryIndex(ensureSearchIndex(),q);
+  var flat=[],gi,hi;
+  for(gi=0;gi<result.groups.length;gi++){
+    for(hi=0;hi<result.groups[gi].hits.length;hi++) flat.push(result.groups[gi].hits[hi]);
   }
-  var tools=seed.tools||[];
-  for(i=0;i<tools.length;i++){
-    t=scoreOf((tools[i].label||"")+" "+(tools[i].id||""));
-    if(t) hits.push({kind:"Tool",id:tools[i].id,label:tools[i].label||tools[i].id,score:t});
-  }
-  var cmds=seed.commands||[];
-  for(i=0;i<cmds.length;i++){
-    t=scoreOf((cmds[i].label||"")+" "+(cmds[i].id||"")+" "+(cmds[i].tool||""));
-    if(t) hits.push({kind:"Command",id:cmds[i].id,tool:cmds[i].tool,label:cmds[i].label||cmds[i].id,score:t});
-  }
-  hits.sort(function(a,b){return b.score-a.score;});
-  return hits.slice(0,20);
+  STATE.paletteGroups=result.groups;
+  return flat;
 }
 function renderPalette(){
   var html="";
   var q=el("palette-input").value;
   STATE.paletteHits=paletteMatches(q);
   if(!q){
-    html+="<p class=\"muted\">Type a tool name or a command intent. STIG IDs, control numbers and flag search arrive with the typed index (CR-T-29).</p>";
+    html+="<p class=\"muted\">Type a tool name, a command intent, a flag, a STIG ID, a CCI, or a NIST control number (e.g. AC-6).</p>";
     el("palette-results").innerHTML=html;
     return;
   }
@@ -1682,14 +2322,24 @@ function renderPalette(){
   }
   if(STATE.paletteSel>=STATE.paletteHits.length) STATE.paletteSel=0;
   html+="<ul class=\"list\" data-listnav=\"palette\" id=\"palette-list\" role=\"listbox\">";
-  for(var i=0;i<STATE.paletteHits.length;i++){
-    var h=STATE.paletteHits[i];
-    html+="<li><button type=\"button\" class=\"row\" role=\"option\" aria-selected=\""+
-          (i===STATE.paletteSel?"true":"false")+"\" aria-current=\""+(i===STATE.paletteSel?"true":"false")+
-          "\" data-hit=\""+escapeAttr(String(i))+"\">"+esc(h.label)+
-          "<span class=\"why\">"+esc(h.kind)+(h.tool?esc(" · "+h.tool):"")+"</span></button></li>";
+  var flatIndex=0,gi,hi;
+  for(gi=0;gi<STATE.paletteGroups.length;gi++){
+    var group=STATE.paletteGroups[gi];
+    html+="<li class=\"palettegroup\" role=\"presentation\">"+esc(group.kind)+"</li>";
+    for(hi=0;hi<group.hits.length;hi++){
+      var h=group.hits[hi];
+      var atIndex=flatIndex;
+      html+="<li><button type=\"button\" class=\"row\" role=\"option\" aria-selected=\""+
+            (atIndex===STATE.paletteSel?"true":"false")+"\" aria-current=\""+
+            (atIndex===STATE.paletteSel?"true":"false")+
+            "\" data-hit=\""+escapeAttr(String(atIndex))+"\">"+esc(h.label)+
+            "<span class=\"why\">"+esc(h.kind)+(h.version?esc(" · RHEL "+h.version):"")+
+            (h.tool?esc(" · "+h.tool):"")+"</span></button></li>";
+      flatIndex++;
+    }
   }
   html+="</ul>";
+  html+="<p class=\"palettetiming\">"+esc(String(STATE.paletteHits.length))+" match(es)</p>";
   el("palette-results").innerHTML=html;
 }
 function nearestToolNames(q){
@@ -1721,10 +2371,34 @@ function closePalette(){
   var back=el("editor-card").querySelector("button");
   if(back) back.focus();
 }
+/* A search-index hit for a CCI or a NIST control has no command of its own —
+   it resolves to the first embedded STIG rule that cites it, current release
+   first, so activating one behaves like activating the rule directly. */
+function activateCrosswalkHit(id,field){
+  var order=[STATE.version],i;
+  for(i=0;i<RHEL_VERSIONS.length;i++){ if(RHEL_VERSIONS[i]!==STATE.version) order.push(RHEL_VERSIONS[i]); }
+  for(i=0;i<order.length;i++){
+    var ruleset=((DATASETS.RULES||{})[order[i]]&&DATASETS.RULES[order[i]].rules)||[],j;
+    for(j=0;j<ruleset.length;j++){
+      var r=ruleset[j];
+      var hay=field==="cci"?(r.cci||[]):(r.n||[]);
+      if(hay.indexOf(id)>=0){ selectStigRule(r.i,order[i]); return; }
+    }
+  }
+  toast("No embedded STIG rule cites "+id+" in this build.");
+}
 function activateHit(i){
   var h=STATE.paletteHits[i];
   if(!h) return;
   if(h.kind==="Tool"){ selectTool(h.id); }
+  else if(h.kind==="STIG"){ selectStigRule(h.id,h.version||STATE.version); }
+  else if(h.kind==="CCI"){ activateCrosswalkHit(h.id,"cci"); }
+  else if(h.kind==="NIST"){ activateCrosswalkHit(h.id,"nist"); }
+  else if(h.kind==="Flag" && h.version && !entryById(h.id)){
+    /* a dictionary flag, not a curated entry's own flags[] — the closest real
+       thing to open is the tool it belongs to. */
+    if(h.tool) selectTool(h.tool);
+  }
   else{ if(h.tool) STATE.toolId=h.tool; selectEntry(h.id); }
   closePalette();
 }
@@ -1745,10 +2419,33 @@ function selectEntry(id){
   if(!entry) return;
   if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
   STATE.entryId=id;
+  STATE.stigRuleId=null;                            /* an entry selection replaces a standalone rule */
   STATE.line=0;
   STATE.acked=false;
   STATE.formValues={};                              /* a new entry starts with a blank form */
+  STATE.rail="builder";
+  pushRecent(id);
   renderAll();
+}
+/* CR-T-26: open a STIG rule reached via search with no command attached to
+   it. If the rule has linked commands (build.py's reverse link, rules[].cmds),
+   the first is opened as a real entry instead — same panel, more useful — and
+   this path is only for a rule with no command in this build's catalog yet. */
+function selectStigRule(ruleId,version){
+  if(!ruleId||!version) return;
+  var ruleset=((DATASETS.RULES||{})[version]&&DATASETS.RULES[version].rules)||[],rule=null,i;
+  for(i=0;i<ruleset.length;i++){ if(ruleset[i].i===ruleId){ rule=ruleset[i]; break; } }
+  if(!rule) return;
+  if(rule.cmds&&rule.cmds.length&&entryById(rule.cmds[0])){
+    setVersion(version);
+    selectEntry(rule.cmds[0]);
+    return;
+  }
+  STATE.entryId=null;
+  STATE.stigRuleId=ruleId;
+  STATE.stigRuleVersion=version;
+  STATE.rail="builder";
+  setVersion(version);
 }
 function setRail(name){
   STATE.rail=name;
@@ -1776,6 +2473,7 @@ function renderAll(){
   renderEditor();
   renderInspector();
   renderStatusBar();
+  renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
 }
 
 /* ============ one delegated click router — zero inline handlers ============ */
@@ -1799,6 +2497,7 @@ document.addEventListener("click",function(ev){
     return;
   }
   if(t===el("palette")){ closePalette(); return; }
+  if(t===el("evidence-modal")){ closeEvidenceModal(); return; }
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
@@ -1806,6 +2505,15 @@ document.addEventListener("click",function(ev){
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="copy"){ doCopy(false); return; }
   if(action==="copy-comment"){ doCopy(true); return; }
+  if(action==="export-evidence"){ exportEvidence(); return; }
+  if(action==="evidence-copy"){ doCopyEvidence(); return; }
+  if(action==="evidence-close"){ closeEvidenceModal(); return; }
+  if(action==="fav-toggle"){
+    toggleFavorite(a.getAttribute("data-favid"));
+    reRenderEditorAndInspector();
+    if(STATE.rail==="favorites") renderToolList();
+    return;
+  }
 });
 
 /* A line click or the red-blast ack checkbox only needs the RESULT re-drawn,
@@ -1876,7 +2584,8 @@ var KEYMAP=[
   {id:"palette-k",keys:["k","K"],mods:"ctrlOrMeta",whenTyping:true,
    doc:"Open the command palette from anywhere",run:function(){ openPalette(); }},
   {id:"escape",keys:["Escape","Esc"],mods:"any",whenTyping:true,
-   doc:"Close the palette",run:function(){ closePalette(); }},
+   doc:"Close the palette or the evidence export panel",
+   run:function(){ if(STATE.evidenceOpen){ closeEvidenceModal(); } else { closePalette(); } }},
   {id:"sidebar",keys:["b","B"],mods:"ctrl",whenTyping:true,
    doc:"Toggle the sidebar",run:function(){ togglePanel("sidebar"); }},
   {id:"inspector",keys:["i","I"],mods:"ctrl",whenTyping:true,
@@ -1885,6 +2594,8 @@ var KEYMAP=[
    doc:"Toggle dark and light theme",run:function(){ THEME.toggle(); }},
   {id:"copy-comment",keys:["c","C"],mods:"ctrlShift",whenTyping:false,
    doc:"Copy the command with its comment header",run:function(){ doCopy(true); }},
+  {id:"export-evidence",keys:["e","E"],mods:"ctrl",whenTyping:false,
+   doc:"Export as Evidence",run:function(){ exportEvidence(); }},
   {id:"rail-jump",keys:["1","2","3","4","5"],mods:"ctrlAlt",whenTyping:true,
    doc:"Jump to rail 1-5",run:function(ev){ railAt(parseInt(ev.key,10)); }}
 ];

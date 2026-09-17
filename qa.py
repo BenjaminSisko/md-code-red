@@ -143,9 +143,22 @@ MARKERS = [
     # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
-    ("STIG panel", "function renderStigPanel(", "CR-T-26"),
-    ("evidence exporter", "function exportEvidence(", "CR-T-28"),
-    ("lazy typed search index", "function buildIndex(", "CR-T-29"),
+    ("STIG panel", "function renderStigPanel(", None),
+    ("evidence exporter", "function exportEvidence(", None),
+    ("lazy typed search index", "function buildIndex(", None),
+    # CR-T-26/28/29 support code, landed on the same branch
+    ("content fingerprint constant", "var CONTENT_FINGERPRINT=", None),
+    ("CCI to NIST crosswalk lookup", "function nistForCci(", None),
+    ("typed search-index query", "function queryIndex(", None),
+    ("evidence-export formatter (pure)", "function formatEvidenceText(", None),
+    # CR-T-30
+    ("favorites/recent id sanitizer (pure)", "function sanitizeIdList(", None),
+    ("favorites toggle", "function toggleFavorite(", None),
+    ("recent-list push", "function pushRecent(", None),
+    ("favorites/recent sidebar", "function renderFavoritesSidebar(", None),
+    ("print-only STIG mirror", 'id="print-stig-panel"', None),
+    ("About panel", "function renderAbout(", None),
+    ("attribution block (licensing ruling v1)", "var ATTRIBUTION_BLOCK=", None),
 ]
 
 # ---------------------------------------------------------------------------
@@ -1319,6 +1332,32 @@ def gate_q1(ctx):
             f.append("sha256 sidecar %s does not match the artifact %s" % (want[:16], got[:16]))
         else:
             d.append("sha256 sidecar matches: %s" % got[:32])
+
+    # CR-T-28/CR-T-30. The content fingerprint is defined as the sha256 of
+    # exactly the bytes inside <script id="mcr-data">...</script> — the same
+    # bytes this file already extracted as ctx["island"] — computed by
+    # build.py BEFORE that payload was substituted into the template and
+    # embedded as the CONTENT_FINGERPRINT constant, never inside the JSON
+    # island itself (a hash inside the thing it hashes is circular). This is
+    # the independent re-check: re-hash the shipped island and compare it to
+    # the constant the shell actually carries, so the evidence exporter and
+    # the About panel cannot print a fingerprint that does not match what
+    # shipped.
+    fp_m = re.search(r'var CONTENT_FINGERPRINT="([^"]*)"', html)
+    if not fp_m or not fp_m.group(1) or fp_m.group(1) == "__CONTENT_FINGERPRINT__":
+        f.append("CONTENT_FINGERPRINT constant is missing or unsubstituted in the shipped shell")
+    elif not ctx["island"]:
+        f.append("content fingerprint cannot be checked — the data island did not extract")
+    else:
+        want_fp = fp_m.group(1)
+        got_fp = hashlib.sha256(ctx["island"].encode("utf-8")).hexdigest()
+        if want_fp != got_fp:
+            f.append("content fingerprint %s does not match a fresh sha256 of the shipped data "
+                     "island %s — the embedded constant and the island have drifted"
+                     % (want_fp[:16], got_fp[:16]))
+        else:
+            d.append("content fingerprint matches a fresh sha256 of the shipped data island: %s"
+                     % got_fp[:32])
     return f, d
 
 
