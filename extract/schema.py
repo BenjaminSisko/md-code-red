@@ -18,9 +18,61 @@ The rules implemented here are ADR-001 §5.1 (entry schema and field notes), §5
 this module is the authority for the *sources* in content/.
 """
 
+import re
+
 VERSIONS = ("7", "8", "9", "10")
 BLASTS = ("green", "yellow", "red")
 LICENSE_CLASSES = ("verbatim-ok", "paraphrase-only")
+
+# ---------------------------------------------------------------------------
+# Header-bound strings must be single-line (MCR-SEC-003).
+#
+# `intent`, `verify`, `undo` and the stig[] rows are copied into the clipboard's
+# comment header, where the screen never shows them: the UI renders `intent` as
+# one <h2> and HTML collapses a newline, so a two-line intent reads as one title
+# on screen and pastes as two lines into a root shell. The renderer's own
+# defence is that every clipboard line is '# '-prefixed; this is the second,
+# independent layer, and it fails the BUILD rather than the clipboard.
+#
+# The rule is "no control character at all", not "no newline": a lone \r, a NUL,
+# a vertical tab and U+2028/U+2029 all end a line somewhere in the stack, and a
+# tab in a header line is never intentional in curated prose.
+#
+# CR-T-33 will populate these fields from multi-line DISA prose. That extractor
+# has to flatten the text; it does not get to move the failure to the clipboard.
+# ---------------------------------------------------------------------------
+CONTROL_RE = re.compile(r"[\u0000-\u001F\u007F-\u009F\u2028\u2029]")  # written as escapes, never as the characters themselves
+HEADER_BOUND_FIELDS = ("intent", "verify", "undo")
+# Captured console output is multi-line by nature and is never header-bound; it
+# is the one stig[] value the single-line rule does not apply to.
+NOT_HEADER_BOUND = ("expected_output",)
+
+
+def control_char_name(s):
+    m = CONTROL_RE.search(s)
+    if not m:
+        return None
+    return "U+%04X" % ord(m.group(0))
+
+
+def single_line_errors(where, value):
+    """Every string reachable from a header-bound value must be one clean line."""
+    errs = []
+    if isinstance(value, str):
+        cp = control_char_name(value)
+        if cp:
+            errs.append("%s contains the control character %s — this string is copied into the "
+                        "clipboard comment header, which the operator never sees rendered, so it "
+                        "must be a single line of printable text" % (where, cp))
+    elif isinstance(value, dict):
+        for k, v in sorted(value.items()):
+            if k in NOT_HEADER_BOUND:
+                continue
+            errs += single_line_errors("%s.%s" % (where, k), v)
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            errs += single_line_errors("%s[%d]" % (where, i), v)
+    return errs
 
 # ADR-001 §5.1 "source" field note. A source that cannot say which version of the
 # document it came from cannot be re-checked, so `version` is mandatory alongside
@@ -151,6 +203,13 @@ def entry_errors(e, ctx):
         errs.append("commands entry %s: category '%s' not in commands.json categories" % (eid, e["category"]))
     if e.get("tool") and e["tool"] not in ctx["tool_ids"]:
         errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e["tool"]))
+    # MCR-SEC-003: everything that reaches the clipboard comment header is
+    # checked here, at build time, as well as being '# '-prefixed at render time.
+    for field in HEADER_BOUND_FIELDS:
+        if isinstance(e.get(field), str):
+            errs += single_line_errors("commands entry %s: %s" % (eid, field), e[field])
+    for i, s in enumerate(e.get("stig") or []):
+        errs += single_line_errors("commands entry %s: stig[%d]" % (eid, i), s)
     errs += provenance_errors("commands entry %s" % eid, e.get("source"))
     errs += rhel_versions_errors(eid, e.get("rhel_versions"))
     errs += flags_errors(eid, e.get("flags"), dict(ctx, entry_verified=bool(e.get("verified"))))

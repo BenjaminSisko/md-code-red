@@ -67,7 +67,8 @@ function extractAssembler(file) {
     "return {shQuote:shQuote,yamlQuote:yamlQuote,validateField:validateField," +
     "validateSpec:validateSpec,assembleCommand:assembleCommand," +
     "composeRichRule:composeRichRule,blastFor:blastFor,FIELD_TYPES:FIELD_TYPES," +
-    "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap};");
+    "RICHRULE_SLOT_TYPES:RICHRULE_SLOT_TYPES,fieldTypeMap:fieldTypeMap," +
+    "headerSafe:headerSafe,commentPayload:commentPayload};");
   return { api: factory(), bytes: block.length };
 }
 
@@ -699,6 +700,78 @@ function main() {
     }
   }
 
+  /* ---- MCR-SEC-003: the clipboard payload --------------------------------
+     No line of a clipboard payload may be unprefixed except the command itself.
+     The header is never rendered in the gutter, so an unprefixed line is text
+     that reaches a root shell having never been shown as part of the command.
+     Every vector in the fixture is pushed through a header line, plus the
+     newline vectors the review reproduced by hand. */
+  var clipboardChecks = 0;
+  var hostileHeaders = [
+    "Prove the host firewall is running\nrm -rf /var/log/audit  # <- never rendered, always copied",
+    "line one\r\nrm -rf /etc",
+    "line one\rwipefs -a /dev/sda",
+    "line one\u2028mkfs.xfs /dev/sdb",
+    "line one\u2029lvremove -f /dev/vg0/lv0",
+    "nul\u0000and more",
+    "vertical\u000Btab",
+    "form\u000Cfeed"
+  ];
+  for (var hv2 = 0; hv2 < vectors.length; hv2++) hostileHeaders.push(vectors[hv2].value);
+
+  for (var ch = 0; ch < hostileHeaders.length; ch++) {
+    clipboardChecks++;
+    var payload = A.commentPayload(["MD CODE RED — RHEL 9", "intent: " + hostileHeaders[ch],
+                                    "blast: green"], "systemctl is-active firewalld");
+    if (payload === null) {
+      stats.failures.push("clipboard payload " + ch + ": refused to compose for a header value; " +
+                          "the header is sanitised, not rejected — only a hostile COMMAND may refuse");
+      continue;
+    }
+    var plines = payload.split("\n");
+    if (plines[plines.length - 1] !== "systemctl is-active firewalld") {
+      stats.failures.push("clipboard payload " + ch + ": the command is not the last line — " +
+                          JSON.stringify(payload));
+      continue;
+    }
+    var bad = null;
+    for (var pl = 0; pl < plines.length - 1; pl++) {
+      if (plines[pl].indexOf("# ") !== 0) { bad = plines[pl]; break; }
+    }
+    if (bad !== null) {
+      stats.failures.push("clipboard payload " + ch + ": an unprefixed line reached the clipboard — " +
+                          JSON.stringify(bad) + " in " + JSON.stringify(payload));
+      continue;
+    }
+    if (/[\u0000-\u0009\u000B-\u001F\u007F-\u009F\u2028\u2029]/.test(payload)) {
+      stats.failures.push("clipboard payload " + ch + ": a control character survived into the " +
+                          "clipboard text — " + JSON.stringify(payload));
+    }
+  }
+
+  /* Marcus's reproduction, end to end: the header carried `rm -rf` and blastFor()
+     never saw it because it only ever looked at the command. It must see it now. */
+  clipboardChecks++;
+  var reproPayload = A.commentPayload(
+    ["MD CODE RED v1.0.0-dev — RHEL 9",
+     "intent: Prove the host firewall is running\nrm -rf /var/log/audit  # <- never rendered, always copied",
+     "blast: green"], "systemctl is-active firewalld");
+  var reproBlast = A.blastFor(reproPayload, "green",
+                              [{ id: "dp-rm-rf", match: "rm -rf", label: "l", why: "w", blast_floor: "red" }]);
+  if (reproBlast.blast !== "red") {
+    stats.failures.push("invariant: MCR-SEC-003 regression: a destructive pattern carried in the comment header did not " +
+             "raise blast — blastFor() is not seeing the full clipboard payload");
+  }
+  /* a command that is not single-line printable text may not compose a payload */
+  clipboardChecks++;
+  if (A.commentPayload(["x"], "systemctl is-active firewalld\nrm -rf /") !== null) {
+    stats.failures.push("invariant: MCR-SEC-003: commentPayload() accepted a multi-line command, which would put an " +
+             "unprefixed second line on the clipboard");
+  }
+  if (A.headerSafe("a\nb\r\nc\u2028d") !== "a b c d") {
+    stats.failures.push("invariant: MCR-SEC-003: headerSafe() does not flatten every line terminator to a space");
+  }
+
   /* ---- positive control -------------------------------------------------
      A validator that rejects everything would pass every assertion above while
      making the product useless, so each field type's benign value must
@@ -840,6 +913,7 @@ function main() {
     quoted_safe: stats.quoted,
     rich_rule_oracles: stats.oracles,
     half_formed_checks: halfFormed,
+    clipboard_checks: clipboardChecks,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
     positive_controls: controls,
@@ -865,6 +939,8 @@ function main() {
                 "operator's intent");
     console.log("  " + halfFormed + " never-half-formed checks (absent optional field across every " +
                 "template shape, all four releases)");
+    console.log("  " + clipboardChecks + " clipboard-payload checks: every line '# '-prefixed except " +
+                "the command, no control character survives, blast sees the whole payload");
     console.log("  " + controls + " positive controls (benign value per type/release/shape) and " +
                 report.invariants + " invariants");
     var classes = Object.keys(stats.byClass).sort();

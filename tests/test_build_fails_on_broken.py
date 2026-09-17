@@ -30,6 +30,9 @@ CASES = [
     ("commands_verified_without_receipt.json", "verified is set but has no capture record field 'on'"),
     ("commands_unavailable_empty_reason.json", "unavailable has an empty reason"),
     ("commands_same_as_cycle.json", "same_as cycle"),
+    # MCR-SEC-003: a header-bound string that is not single-line fails the BUILD,
+    # so it can never reach the clipboard comment header in the first place.
+    ("commands_multiline_intent.json", "intent contains the control character U+000D"),
 ]
 
 

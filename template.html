@@ -137,6 +137,11 @@ code,pre{font-family:var(--font-mono);}
   user-select:none; -webkit-user-select:none;}
 .codeline .lc{padding:2px 10px; white-space:pre; color:var(--text-primary);}
 .codeline[aria-current="true"] .lc{color:var(--accent);}
+/* read-only preview of the clipboard payload — threat-model-v1 §9: what is in
+   the preview is exactly and only what gets copied (MCR-SEC-003) */
+.copypreview{border:1px solid var(--border-primary); border-radius:6px; background:var(--bg-editor);
+  color:var(--text-muted); font-family:var(--font-mono); font-size:12px; line-height:1.5;
+  padding:8px 10px; margin:0 0 12px; overflow-x:auto; white-space:pre;}
 .toolbar{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;}
 .btn{border:1px solid var(--border-primary); border-radius:5px; background:var(--bg-surface);
   color:var(--text-primary); font:inherit; font-size:13px; padding:4px 11px; cursor:pointer;}
@@ -595,6 +600,47 @@ function composeRichRule(map,plan,types){
   return out+" "+action;
 }
 
+/* ---- the clipboard payload (MCR-SEC-003) ---------------------------------
+   "Copy with comment" used to build its header as "# label: " + raw content
+   text. None of that header is rendered anywhere — the operator sees only the
+   assembled command in the gutter — so a newline in `intent` put a SECOND,
+   unrendered line on the clipboard, which on the shipped reproduction was
+   `rm -rf /var/log/audit`. The destructive-pattern table never saw it either,
+   because blastFor() only ever looked at res.command.
+
+   Three rules, here in the pure assembler block so the harness can prove them:
+     1. headerSafe() renders every interpolated value to single-line printable
+        text. Control characters, NUL and U+2028/U+2029 become spaces; nothing
+        is silently deleted and nothing can end a line.
+     2. commentPayload() splits every line it is handed on CR/LF/CRLF anyway —
+        belt to rule 1's braces — and prefixes EVERY resulting line with "# ".
+        There is no "# label: " + value concatenation anywhere.
+     3. The command is the only line in the payload that is not "# "-prefixed,
+        and a command that is not single-line printable text refuses to compose
+        a payload at all (null), rather than contributing an unprefixed line.
+   The caller then runs blastFor() over the whole payload, header included. */
+var HEADER_UNSAFE_G=/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/g;
+var HEADER_UNSAFE_RE=/[\u0000-\u001F\u007F-\u009F\u2028\u2029]/;
+function headerSafe(s){
+  return String(s).replace(HEADER_UNSAFE_G," ").replace(/ {2,}/g," ").replace(/^ +| +$/g,"");
+}
+function commentPayload(lines,command){
+  var cmd=String(command);
+  if(cmd===""||HEADER_UNSAFE_RE.test(cmd)) return null;
+  var out=[],i,j;
+  lines=lines||[];
+  for(i=0;i<lines.length;i++){
+    var parts=String(lines[i]).split(/\r\n|\r|\n/);
+    for(j=0;j<parts.length;j++){
+      var text=headerSafe(parts[j]);
+      if(text==="") continue;
+      out.push("# "+text);
+    }
+  }
+  out.push(cmd);
+  return out.join("\n");
+}
+
 var BLAST_RANK={green:0,yellow:1,red:2};
 /* The destructive-pattern table is matched against the FULLY ASSEMBLED,
    post-quoting command, and a content entry's own blast:"red" trips the banner
@@ -790,7 +836,41 @@ function currentResult(){
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
-  return assembleCommand(entry,STATE.version,{},{patterns:PATTERNS});
+  var res=assembleCommand(entry,STATE.version,{},{patterns:PATTERNS});
+  if(!res) return null;
+  return withCopyPayloads(res,entry);
+}
+
+/* The lines of the comment header, as plain label+value text. They are NOT
+   "# "-prefixed here: commentPayload() owns the prefix so that exactly one
+   place in this file decides what a clipboard line looks like (MCR-SEC-003). */
+function commentHeaderLines(res,entry,blast){
+  var lines=[APP_NAME+" "+APP_VERSION+" — RHEL "+res.version];
+  if(entry&&entry.intent) lines.push("intent: "+entry.intent);
+  var stig=entry?stigRowsFor(entry):[];
+  for(var i=0;i<stig.length;i++){
+    lines.push("STIG: "+stig[i].stig_id+" (CAT "+catFor(stig[i])+")  NIST: "+((stig[i].nist||[]).join(", ")||"n/a"));
+  }
+  lines.push("blast: "+blast);
+  return lines;
+}
+
+/* Attach both clipboard payloads to the result, and re-evaluate blast over the
+   LONGER of the two. The destructive-pattern table has to see everything the
+   clipboard can receive, not just the command line (MCR-SEC-003); the banner
+   then fires before the operator clicks Copy, not after.
+
+   Two passes, because the header carries the blast value itself: compose with
+   the command-level blast, scan the whole payload, then recompose with the
+   final blast so the header never states a blast the banner contradicts. */
+function withCopyPayloads(res,entry){
+  var probe=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
+  var b=blastFor(probe===null?res.command:probe,res.blast,PATTERNS);
+  res.blast=b.blast;
+  res.blast_reasons=b.reasons;
+  res.copy_plain=res.command;
+  res.copy_comment=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
+  return res;
 }
 
 /* ============ theme — prefers-color-scheme default, explicit choice persists ============ */
@@ -839,22 +919,19 @@ function toast(msg){
   STATE.toast=msg;
   renderStatusBar();
 }
-function commentHeader(res){
-  var entry=entryById(res.id);
-  var lines=["# "+APP_NAME+" "+APP_VERSION+" — RHEL "+res.version];
-  if(entry&&entry.intent) lines.push("# intent: "+entry.intent);
-  var stig=entry?stigRowsFor(entry):[];
-  for(var i=0;i<stig.length;i++){
-    lines.push("# STIG: "+stig[i].stig_id+" (CAT "+catFor(stig[i])+")  NIST: "+((stig[i].nist||[]).join(", ")||"n/a"));
-  }
-  lines.push("# blast: "+res.blast);
-  return lines.join("\n")+"\n"+res.command;
-}
 function doCopy(withComment){
   var res=currentResult();
   if(!res){ toast("Nothing to copy — no complete command is assembled."); return; }
+  var payload=withComment?res.copy_comment:res.copy_plain;
+  if(payload===null||payload===undefined){
+    toast("Copy refused — the comment header could not be rendered as single-line text.");
+    return;
+  }
+  /* res.blast was already computed over this payload (withCopyPayloads), so the
+     acknowledgement the operator gave is an acknowledgement of the whole
+     clipboard contents, header included — not of the command line alone. */
   if(res.blast==="red" && !STATE.acked){ toast("Destructive command — tick the review box first."); return; }
-  var ok=copyText(withComment?commentHeader(res):res.command);
+  var ok=copyText(payload);
   toast(ok?("Copied to clipboard — RHEL "+res.version):"Copy failed — select the text in the editor and use your browser's copy.");
 }
 
@@ -1005,6 +1082,15 @@ function renderEditor(){
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="</div>";
+  /* threat-model-v1 §9: what is in the preview is exactly and only what gets
+     copied. The comment header used to be built at click time and never shown;
+     it is rendered here, escaped, from the same res.copy_comment string that
+     doCopy() puts on the clipboard (MCR-SEC-003). */
+  if(res.copy_comment){
+    html+="<p class=\"region-label\">Copy with comment — exactly what reaches the clipboard</p>";
+    html+="<pre class=\"copypreview\" aria-label=\"Clipboard preview for Copy with comment\">"+
+          esc(res.copy_comment)+"</pre>";
+  }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
   html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
   html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";

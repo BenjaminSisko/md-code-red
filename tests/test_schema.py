@@ -124,7 +124,8 @@ class InvalidFixtures(unittest.TestCase):
         """A rule with no fixture has never been seen to fire."""
         covered = " ".join(os.path.basename(p) for p in fixture_files("invalid"))
         for family in ("rhel_key", "same_as", "unavailable", "provenance", "blast", "stig",
-                       "verified", "flag", "duplicate", "rule_count", "cci", "tool", "promise"):
+                       "verified", "flag", "duplicate", "rule_count", "cci", "tool", "promise",
+                       "single_line"):
             self.assertIn(family, covered, "no invalid fixture covers the '%s' rule family" % family)
 
 
