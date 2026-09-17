@@ -16,6 +16,49 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — G4, branch `salm/milo/panels-conditions` (Milo Vance), continuing on the
+  same branch after G1-G3. Rulings from Eli Cross closing CR-T-34's WADE_BLOCKED (Caleb Stone's
+  content validation run, `tests/captures/README.md`, cherry-picked from `salm/caleb/captures-green`
+  `1db0b97`/`924f589` to keep his authorship). **(a)** Canonical capture path is
+  `tests/captures/<rhel_version>/<entry_id>.json` in this repo — `extract/make_pending_skeletons.py`'s
+  own docstring (which named `content-src/captures/`) and the `07_QA_Test/MD_CODE_RED/`
+  content validation protocol document (which proposed a separate `07_QA_Test/MD_CODE_RED/captures/`
+  tree) are both fixed; the protocol document is now a company-record pointer to the repo path,
+  not a second storage location. **(b)** `qa.py`'s Q16 checked capture records against field
+  names no real capture has ever carried — the protocol's own §7 schema
+  (`entry_id`, `rhel_version`, `host`, `redhat_release`, `kernel`, `pkg_versions`,
+  `command_as_run`, `exit_code`, `stdout`, `stderr`, `captured_on`, `captured_by`,
+  `blast_confirmed`, `undo_executed`, plus `command_hash_at_capture` and `verify_result`) is now
+  the authority `CAPTURE_REQUIRED_FIELDS` in both `qa.py` and the new extractor check against;
+  `template.html`'s evidence exporter and STIG panel are fixed to read the same real field names
+  (`redhat_release`, `stig_compliance.compliant`) instead of a shape no capture ever had. **(c)**
+  New `extract/import_captures.py`: walks `tests/captures/`, validates every record against that
+  field set, verifies `command_hash_at_capture` against a fresh `sha256(command_as_run)` and,
+  for entries with a fixed `rhel_versions[version].command` (never a generator's — MCR-SEC-006),
+  against the entry's CURRENT command, so an edited command silently reverts the entry to "not
+  captured yet" rather than going on narrating a command that no longer exists; regenerates
+  `content/expected_output.json` (now solely this extractor's file — `extract/make_pending_skeletons.py`
+  drops it). Tested with Caleb's 18 real files: 5 fold into the STIG-keyed index (the five real
+  STIG rows his run documents), 13 validated but unindexed (no STIG mapping). `qa.py` Q16 now
+  passes WITH real captures; the STIG panel and evidence exporter show Caleb's real compliant
+  output, host, release and kernel for `firewalld-service-active` and `ctrl-alt-del-target-masked`
+  on RHEL 8/10 and `journald-service-active` on RHEL 10. **(d)** `gen-dnf-package`,
+  `gen-yum-package` (both `blast: "green"` covered install AND remove; install has no dynamic
+  escalation in `content/dangerous.json` at all) and `gen-chronyd-one-shot-check`
+  (`chronyd -Q` steps the system clock, a real state change its own notes only argued the
+  negative about) are raised to `blast: "yellow"`, content and `tests/fixtures/golden-commands.json`
+  both. New `tests/test_blast_state_change_labels.py`: a static sweep asserting every generator
+  whose golden command matches a state-changing pattern table
+  (`install|remove|erase|-Q|--permanent|enable|start|stop|add|del`) declares at least yellow —
+  committed failing on exactly these three, now green; Marcus Reed's enum-branch sweep
+  (`tests/hostile_harness.js`, MCR-SEC-021) still passes unchanged. **(e)** `gen-sshd-test-config`
+  (`sshd -T` — `Permission denied` on both `defiant` and `saratoga` in Caleb's real run, since
+  `sshd_config` is not world-readable on a STIG'd host) gets a new `privilege: "root"` field
+  (`extract/schema.py`'s new `PRIVILEGES` enum); the UI shows a "requires root" badge next to
+  blast on both the static and generator entry cards, and the evidence exporter adds a
+  `Requires: root` line. 22/22 `qa.py` gates PASS, 171 unit tests PASS (168 + 3 new), hostile
+  harness 81,577 / 0 FAILED.
+
 - **2026-09-17** — Panels review conditions G1/G2/G3, branch `salm/milo/panels-conditions`
   (Milo Vance), closing Marcus Reed's APPROVE WITH CONDITIONS on `636fd7f`. **G1 (MED,
   PANEL-001):** `firewalld-service-active` and `journald-service-active` declared

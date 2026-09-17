@@ -4,6 +4,124 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added/Fixed — G4: capture import, blast labels, privilege field (2026-09-17, branch `salm/milo/panels-conditions`)
+
+Continuing on the same branch after G1-G3, from Caleb Stone's first content validation run
+(`tests/captures/README.md`, branch `salm/caleb/captures-green`, cherry-picked `1db0b97`/`924f589`
+to keep his authorship — his branch itself was not touched). Four rulings from Eli Cross.
+
+#### (a) Canonical capture path
+
+Three documents disagreed on where a capture record lives: `extract/make_pending_skeletons.py`'s
+own docstring said `content-src/captures/` (written before any real extractor existed for this
+file family); the content validation protocol document
+(`07_QA_Test/MD_CODE_RED/test-plan-skeleton-v1.md` Part B §7/Appendix) proposed a separate
+`07_QA_Test/MD_CODE_RED/captures/` tree; Caleb's actual run task instructions put the files at
+`tests/captures/<rhel_version>/<entry_id>.json`, which is where they actually are.
+
+**Ruling: `tests/captures/<rhel_version>/<entry_id>.json`, in the `md-code-red` repo, is
+canonical.** `extract/make_pending_skeletons.py`'s docstring is fixed. The protocol document's
+"Record format" paragraph and Appendix file-layout diagram are fixed to state the repo path
+explicitly and describe themselves as a company-record pointer to it, not a second storage
+location — capture records live next to the extractor and the gate that read them, reviewable
+in the same PR as the content entry they validate.
+
+#### (b) Capture record field names
+
+`qa.py`'s `gate_q16` checked capture records for fields
+(`host`, `os_release`, `kernel`, `patch_level`, `command_run`, `exit_code`, `stdout`,
+`captured_on`, `captured_by`) that no real capture record — Caleb's or the protocol's own worked
+example — has ever carried.
+
+**Ruling: the content validation protocol's own §7 schema is the field-name authority; `qa.py`
+adapts to it, not the reverse.** New `CAPTURE_REQUIRED_FIELDS` in `qa.py` (also
+`extract/import_captures.py`'s `REQUIRED_FIELDS`, kept textually identical across the two files):
+`entry_id`, `rhel_version`, `host`, `redhat_release`, `kernel`, `pkg_versions`, `command_as_run`,
+`exit_code`, `stdout`, `stderr`, `captured_on`, `captured_by`, `blast_confirmed`,
+`undo_executed`, plus `command_hash_at_capture` and `verify_result` — present on every real
+capture file though not in the written protocol text, folded into the authoritative set by the
+same ruling. `template.html`'s `formatEvidenceText()` (MCR-EVIDENCE) and the STIG panel are
+fixed to read these real names (`cap.redhat_release`, `cap.stig_compliance.compliant`) instead
+of a shape no capture record ever had — without this fix, Caleb's real captures would have
+rendered "not captured"/"not recorded" for release and compliance even with Q16 green.
+
+#### (c) `extract/import_captures.py`
+
+The extractor `content/expected_output.json`'s own `_meta.generator` had always named — and
+that Caleb's run reported as `WADE_BLOCKED` because it did not exist — is now written.
+
+Walks `tests/captures/`, validates every record against the §7/`command_hash_at_capture` field
+set. **Integrity rule** ("so an edited command resets to uncaptured"): `command_hash_at_capture`
+must equal a fresh `sha256(command_as_run)`, and for an entry whose command is a FIXED
+`content/commands.json` `rhel_versions[version].command` (never a generator's — MCR-SEC-006, a
+generator composes its command from validated form input, so there is no single "current"
+command to diff a capture against), that command must equal `command_as_run` byte-for-byte,
+resolved the same way `build.py`'s `assemble()` resolves a `same_as` pointer. A capture that
+fails either check is refused outright. Regenerates `content/expected_output.json`, keyed
+`entry_id|stig_id|rhel_version` (unchanged shape, `build.py`'s `assemble()` still joins onto
+`stig[]` rows this way) — a capture for an entry/version with no STIG mapping (most generator
+entries) is validated but not indexed, since there is no `stig[]` row to join it onto.
+`extract/make_pending_skeletons.py` drops `expected_output_skeleton()`: this file is now solely
+`extract/import_captures.py`'s, registered in `qa.py`'s `GENERATORS` and Q15.
+
+Tested with Caleb's 18 real files: 5 fold into the keyed index (the five real STIG rows his run
+documents — `firewalld-service-active`/`ctrl-alt-del-target-masked` on RHEL 8 and 10,
+`journald-service-active` on RHEL 10 only, no RHEL 8 STIG mapping exists for it), 13 validated
+but unindexed (six generator entries × two releases, no STIG mapping). `qa.py` Q16 now passes
+WITH real captures (5 expected_output blocks, 5 capture records — always empty before this
+branch). Verified by hand: the evidence exporter for `firewalld-service-active` RHEL 8 now
+renders `Compliant: yes`, `Capture host: defiant-rhel8`, `Capture release: Red Hat Enterprise
+Linux release 8.10 (Ootpa)`, `Capture kernel: 4.18.0-553.163.1.el8_10.x86_64` — Caleb's real
+capture, not a placeholder.
+
+#### (d) Three mislabeled blast ratings
+
+`gen-dnf-package` and `gen-yum-package` declared `blast: "green"` covering BOTH enum branches
+of their `action` field (`install`/`remove`) — installing a package changes host state exactly
+as much as removing one does, and unlike remove (which `content/dangerous.json`'s
+`dp-dnf-remove`/`dp-yum-remove` already escalate to yellow dynamically), install had nothing to
+raise it. `gen-chronyd-one-shot-check` also declared green: `chronyd -Q` retrieves the offset
+from an NTP source and STEPS THE SYSTEM CLOCK before exiting (`chronyd(8)`) — a state change
+even though it touches no file, which the entry's own notes cited without ever calling it one.
+
+New `tests/test_blast_state_change_labels.py`: a static sweep over
+`tests/fixtures/golden-commands.json`'s own commands against a state-changing pattern table
+(`install|remove|erase|-Q|--permanent|enable|start|stop|add|del`, Eli Cross's ruling verbatim,
+matched as a plain substring) on every RHEL release the golden table gives a command for; every
+generator entry whose golden command matches must declare `blast >= "yellow"`. Deliberately
+coarser than and independent from `tests/hostile_harness.js`'s enum-branch sweep (which computes
+the REAL blast via `assembleCommand()`/`blastFor()` and only ever raises the bar above the
+DECLARED label) — this test asks whether the declared label even admits the command is
+state-changing in the first place. Committed failing on exactly the three named entries (six
+other matched generators already declared yellow and passed); content and the golden fixture's
+own `blast` field both raised to `"yellow"`, now green. `tests/hostile_harness.js`'s enum-branch
+sweep (Marcus Reed, MCR-SEC-021) still passes unchanged — its own `_not_listed` comment is
+updated to note that no shipped generator with a destructive enum branch is declared green any
+more, so its "a green-declared generator must still have one green branch" assertion has nothing
+to check against today (kept for the next one).
+
+#### (e) `privilege` field for `gen-sshd-test-config`
+
+Caleb's real capture run hit this directly: `sshd -T -f '/etc/ssh/sshd_config'` returned
+"Permission denied" on both `defiant` and `saratoga` — `sshd_config` is not world-readable on a
+STIG'd host — and the run correctly deferred it (no `sudo` used, no capture written). The content
+had no way to say that in advance.
+
+New `extract/schema.py` `PRIVILEGES = ("root",)` — a small closed set, matching how `BLASTS`
+already works, not a free string. `content/commands.json`'s `gen-sshd-test-config` gets
+`privilege: "root"`, and its `intent` now states why in plain language. `template.html`'s
+`renderEditor()` and `renderGeneratorResult()` both show a "requires root" badge next to blast;
+`formatEvidenceText()` adds a `Requires: root` line. Built as three parallel ternaries (open tag
+/ `esc()`'d value / close tag) rather than one ternary whose branch mixes literal markup and an
+escaped value — Q17's static innerHTML auditor accepts one literal, one `esc()` call or an
+accumulator per ternary branch, not a concatenation of the three inside one branch.
+
+Gates: `rm -rf dist && python3 build.py && python3 qa.py && python3 -m unittest discover -s tests
+&& node tests/hostile_harness.js` — 22/22 gates PASS (unchanged gate count from G1-G3; Q22 from
+G1 already covers the new fields' referential integrity), 171 unit tests PASS (168 + 3 new: the
+blast-label sweep), hostile harness 81,577 checks / 0 FAILED, including the 140 enum-branch
+control checks and 96 golden-command checks green against the new declared labels.
+
 ### Fixed — Panels review conditions G1/G2/G3 (2026-09-17, branch `salm/milo/panels-conditions`)
 
 Closes Marcus Reed's APPROVE WITH CONDITIONS on `636fd7f` (Panels review, CR-T-26/28/29/30).
