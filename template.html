@@ -170,6 +170,27 @@ code,pre{font-family:var(--font-mono);}
 .vbadge.v-verified{border-color:var(--success); color:var(--success);}
 .vbadge.v-captured{border-color:var(--warning); color:var(--warning);}
 .vbadge.v-unverified{color:var(--text-muted);}
+.stagelist{margin:0 0 12px;}
+.stagerow{border:1px solid var(--border-primary); border-radius:6px; padding:8px 10px;
+  margin:0 0 8px; background:var(--bg-surface);}
+.stagerow.bad{border-color:var(--danger);}
+.stagerow .stagehead{display:flex; flex-wrap:wrap; gap:8px; align-items:baseline;
+  justify-content:space-between;}
+.stagerow .stageno{font-size:11px; color:var(--text-muted); text-transform:uppercase;
+  letter-spacing:.06em;}
+.stagerow .stagecmd{font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);
+  overflow-x:auto; white-space:pre; display:block; margin:4px 0 0;}
+.stagerow .stagewhy{margin:4px 0 0; font-size:12px; color:var(--danger);}
+.stagerow .stageops{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; align-items:center;}
+.stagerow select,.stagerow input{font:inherit; font-size:12px; padding:3px 6px;
+  border:1px solid var(--border-primary); border-radius:5px; background:var(--bg-editor);
+  color:var(--text-primary);}
+.sbadge{display:inline-block; border:1px solid var(--border-primary); border-radius:999px;
+  padding:0 8px; font-size:11px; color:var(--text-muted);}
+.sbadge.b-green{border-color:var(--success); color:var(--success);}
+.sbadge.b-yellow{border-color:var(--warning); color:var(--warning);}
+.sbadge.b-red{border-color:var(--danger); color:var(--danger);}
+.sbadge.b-unrated{border-color:var(--text-muted); color:var(--text-muted);}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
@@ -255,6 +276,11 @@ code,pre{font-family:var(--font-mono);}
     <h2>Loading</h2>
     <p class="muted" id="editor-empty">Reading the embedded content island.</p>
   </div>
+  <!-- CR-T-31: renderPipelinePanel() owns this sink exclusively, as its own
+       statement, the same composition rule every other multi-sink renderer in
+       this file follows (Q17: a bare call's return is never spliced into
+       another function's accumulator). -->
+  <div id="pipeline-panel"></div>
   <!-- print view (CR-T-30, UI spec §4): the screen's STIG panel lives in
        #inspector, which @media print hides along with the rest of the chrome.
        renderStigPanel() writes the SAME content here, in a separate statement,
@@ -2167,6 +2193,13 @@ var STATE={version:"9",rail:"builder",toolId:null,entryId:null,line:0,acked:fals
            /* CR-T-26: a STIG rule opened from search with no associated command. */
            stigRuleId:null,stigRuleVersion:null,
            /* CR-T-28 */ evidenceOpen:false,
+           /* CR-T-31 — the pipeline: an ordered list of stages, each an entry ID
+              and its own form values. An operator is stored as a KEY into the
+              assembler's closed table, never as operator text, so no part of
+              this array can ever contribute a metacharacter to a command.
+              pipelineEditing is the index whose values STATE.formValues IS (by
+              reference), so a keystroke edits the stage in place. */
+           pipeline:[],pipelineEditing:null,pipelineRev:0,
            /* CR-T-30 — resolved to real entry/tool IDs at boot, IDs only, never raw text. */
            favorites:[],recent:[]};
 (function(){
