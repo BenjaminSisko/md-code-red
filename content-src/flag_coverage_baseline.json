@@ -443,6 +443,87 @@
      "--autoremove"
     ]
    }
+  },
+  "7": {
+   "chage": {
+    "raw_long_options": 9,
+    "dictionary_long_options": 2,
+    "accepted_missing": 7,
+    "sample_missing": [
+     "--expiredate",
+     "--inactive",
+     "--lastday",
+     "--maxdays",
+     "--mindays",
+     "--root"
+    ]
+   },
+   "journalctl": {
+    "raw_long_options": 47,
+    "dictionary_long_options": 0,
+    "accepted_missing": 47,
+    "sample_missing": [
+     "--after-cursor",
+     "--all",
+     "--boot",
+     "--catalog",
+     "--cursor",
+     "--directory"
+    ]
+   },
+   "systemctl": {
+    "raw_long_options": 33,
+    "dictionary_long_options": 0,
+    "accepted_missing": 33,
+    "sample_missing": [
+     "--all",
+     "--force",
+     "--full",
+     "--global",
+     "--help",
+     "--host"
+    ]
+   },
+   "useradd": {
+    "raw_long_options": 24,
+    "dictionary_long_options": 9,
+    "accepted_missing": 15,
+    "sample_missing": [
+     "--base-dir",
+     "--comment",
+     "--expiredate",
+     "--gid",
+     "--groups",
+     "--home-dir"
+    ]
+   },
+   "usermod": {
+    "raw_long_options": 23,
+    "dictionary_long_options": 6,
+    "accepted_missing": 17,
+    "sample_missing": [
+     "--add-subgids",
+     "--add-subuids",
+     "--comment",
+     "--del-subgids",
+     "--del-subuids",
+     "--expiredate"
+    ]
+   },
+   "yum": {
+    "raw_long_options": 39,
+    "dictionary_long_options": 21,
+    "accepted_missing": 18,
+    "sample_missing": [
+     "--advisories",
+     "--advisory",
+     "--bzs",
+     "--color",
+     "--config",
+     "--cves"
+    ]
+   }
   }
- }
+ },
+ "_rhel7_note": "CR-T-12 (2026-09-17, Milo Vance): flags_rhel7.json is now populated from a rootless UBI7 container on saratoga (no RHEL 7 host in the lab; see its _meta.host/container_image_digest). Q20's RAW_DIR_FOR in qa.py is hardcoded to {'8': 'rhel8', '10': 'rhel10'} and was NOT extended to '7' here (out of this task's touch-restriction on qa.py) -- so Q20 does not gate RHEL 7 coverage yet; this coverage['7'] block is recorded for the same reason RHEL 8/10 were recorded and for whoever extends RAW_DIR_FOR next. firewall-cmd is not in this block at all: firewalld is not installable from UBI7's public repos (no matching package), so flags_rhel7.json carries no firewall-cmd flags to measure -- the synopsis-line regex gap that costs RHEL 8/10 their --add-rich-rule coverage (see 'firewall-cmd' rows above and README.md's Content authoring note) is therefore NOT OBSERVABLE on RHEL 7 with this source; it would very likely reproduce byte-for-byte if a real firewalld package/man page were ever read on RHEL 7, since the regex bug is in extract_flags.py's parser, not in anything host-specific. Recorded under the same ratchet owner and date as the rest of this file: Caleb Stone, retires 2026-09-25 -- no separate date was invented for RHEL 7."
 }

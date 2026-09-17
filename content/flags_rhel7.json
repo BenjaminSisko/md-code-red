@@ -1,19 +1,1040 @@
 {
  "_meta": {
   "rhel_version": "7",
-  "host": null,
-  "patch_level": null,
-  "captured_on": null,
-  "generator": "extract/extract_rhel_flags.py",
-  "status": "pending — no RHEL 7 host read yet (CR-T-09/10/11/12)",
+  "host": "ubi7 container on saratoga",
+  "redhat_release": "Red Hat Enterprise Linux Server release 7.9 (Maipo)",
+  "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+  "patch_level": "Red Hat Enterprise Linux Server release 7.9 (Maipo), kernel 6.12.0-211.53.1.el10_2.x86_64",
+  "captured_on": "2026-09-17",
+  "extracted_on": "2026-09-17",
+  "generator": "extract/extract_flags.py",
+  "extractor_version": "1.0.0",
   "license_class": "paraphrase-only",
+  "status": "extracted from ubi7 container on saratoga (RHEL 7) — 22 tools",
   "source": {
-   "title": "man pages and --help output of the installed binaries on a RHEL 7 host",
+   "title": "man pages and --help output of the installed binaries in a UBI7 container on saratoga, standing in for a RHEL 7 host (CR-T-12, no RHEL 7 host in the lab)",
    "url_or_man": "man -P cat <section> <tool>; <tool> --help",
-   "version": "not captured",
-   "retrieved_on": null,
+   "version": "Red Hat Enterprise Linux Server release 7.9 (Maipo), kernel 6.12.0-211.53.1.el10_2.x86_64",
+   "retrieved_on": "2026-09-17",
    "license_class": "paraphrase-only"
-  }
+  },
+  "underlying_ssh_host": "saratoga",
+  "container_name": "mcr-ubi7-flags",
+  "container_image": "registry.access.redhat.com/ubi7/ubi:latest",
+  "container_image_digest": "sha256:046e525722f14702c360dc6092324af7c21656e76b0c254b067871f1d4d3df68",
+  "kernel_caveat": "kernel field above is the container's shared host kernel (6.12.0-211.53.1.el10_2.x86_64 on saratoga), not a genuine RHEL 7 kernel — containers don't have their own; kernel- and systemd-manager-dependent behaviour (actual unit activation, live journald/systemd-logind state, etc.) was NOT observed or exercised, only each tool's own --help/man text as shipped in the package"
  },
- "clis": {}
+ "clis": {
+  "auditctl": {
+   "available": false,
+   "reason": "rpm not installed / 'auditctl' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "ausearch": {
+   "available": false,
+   "reason": "rpm not installed / 'ausearch' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "chage": {
+   "available": true,
+   "package": "shadow-utils-4.6-5.el7.x86_64",
+   "pages": [
+    {
+     "name": "chage",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt"
+    }
+   ],
+   "flags": [
+    {
+     "names": [
+      "-h",
+      "--help"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "chage",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt"
+    },
+    {
+     "names": [
+      "-l",
+      "--list"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "chage",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt"
+    }
+   ],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-d, --lastday LAST_DAY        set date of last password change to LAST_DAY"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-E, --expiredate EXPIRE_DATE  set account expiration date to EXPIRE_DATE"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-I, --inactive INACTIVE       set password inactive after expiration"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-m, --mindays MIN_DAYS        set minimum number of days before password"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-M, --maxdays MAX_DAYS        set maximum number of days before password"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-R, --root CHROOT_DIR         directory to chroot into"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/chage.help.txt",
+     "page": "chage",
+     "text": "-W, --warndays WARN_DAYS      set expiration warning days to WARN_DAYS"
+    }
+   ]
+  },
+  "chronyd": {
+   "available": false,
+   "reason": "rpm not installed / 'chronyd' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "dnf": {
+   "available": false,
+   "reason": "rpm not installed / 'dnf' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "firewall-cmd": {
+   "available": false,
+   "reason": "rpm not installed / 'firewall-cmd' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "git": {
+   "available": false,
+   "reason": "rpm not installed / 'git' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "journalctl": {
+   "available": true,
+   "package": "systemd-219-78.el7_9.9.x86_64",
+   "pages": [
+    {
+     "name": "journalctl",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt"
+    }
+   ],
+   "flags": [],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-M --machine=CONTAINER   Operate on local container"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-S --since=DATE          Show entries not older than the specified date"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-U --until=DATE          Show entries not newer than the specified date"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-c --cursor=CURSOR       Show entries starting at the specified cursor"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-b --boot[=ID]           Show current boot or the specified boot"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-k --dmesg               Show kernel message log from the current boot"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-u --unit=UNIT           Show logs from the specified unit"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-t --identifier=STRING   Show entries with the specified syslog identifier"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-p --priority=RANGE      Show entries with the specified priority"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-e --pager-end           Immediately jump to the end in the pager"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-f --follow              Follow the journal"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-n --lines[=INTEGER]     Number of journal entries to show"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-r --reverse             Show the newest entries first"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-o --output=STRING       Change journal output mode (short, short-iso,"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-x --catalog             Add message explanations where available"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-a --all                 Show all fields, including long and unprintable"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-q --quiet               Do not show privilege warning"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-m --merge               Show entries from all available journals"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-D --directory=PATH      Show journal files from directory"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-h --help                Show this help text"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/journalctl.help.txt",
+     "page": "journalctl",
+     "text": "-F --field=FIELD         List all values that a specified field takes"
+    }
+   ]
+  },
+  "lvcreate": {
+   "available": false,
+   "reason": "rpm not installed / 'lvcreate' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "lvextend": {
+   "available": false,
+   "reason": "rpm not installed / 'lvextend' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "nmcli": {
+   "available": false,
+   "reason": "rpm not installed / 'nmcli' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "podman": {
+   "available": false,
+   "reason": "rpm not installed / 'podman' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "pvcreate": {
+   "available": false,
+   "reason": "rpm not installed / 'pvcreate' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "rsyslogd": {
+   "available": false,
+   "reason": "rpm not installed / 'rsyslogd' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "semanage": {
+   "available": false,
+   "reason": "rpm not installed / 'semanage' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "setsebool": {
+   "available": false,
+   "reason": "rpm not installed / 'setsebool' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "sshd": {
+   "available": false,
+   "reason": "rpm not installed / 'sshd' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "systemctl": {
+   "available": true,
+   "package": "systemd-219-78.el7_9.9.x86_64",
+   "pages": [
+    {
+     "name": "systemctl",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt"
+    }
+   ],
+   "flags": [],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-h --help           Show this help"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-H --host=[USER@]HOST"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-M --machine=CONTAINER"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-t --type=TYPE      List units of a particular type"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-p --property=NAME  Show only properties by this name"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-a --all            Show all loaded units/properties, including dead/empty"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-l --full           Don't ellipsize unit names on output"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-r --recursive      Show unit list of host and local containers"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-i --ignore-inhibitors"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-s --signal=SIGNAL  Which signal to send"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-q --quiet          Suppress output"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-f --force          When enabling unit files, override existing symlinks"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-n --lines=INTEGER  Number of journal entries to show"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/systemctl.help.txt",
+     "page": "systemctl",
+     "text": "-o --output=STRING  Change journal output mode (short, short-iso,"
+    }
+   ]
+  },
+  "useradd": {
+   "available": true,
+   "package": "shadow-utils-4.6-5.el7.x86_64",
+   "pages": [
+    {
+     "name": "useradd",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    }
+   ],
+   "flags": [
+    {
+     "names": [
+      "-D",
+      "--defaults"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-h",
+      "--help"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-l",
+      "--no-log-init"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-m",
+      "--create-home"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-M",
+      "--no-create-home"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-N",
+      "--no-user-group"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-o",
+      "--non-unique"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-r",
+      "--system"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    },
+    {
+     "names": [
+      "-U",
+      "--user-group"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "useradd",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt"
+    }
+   ],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-b, --base-dir BASE_DIR       base directory for the home directory of the"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-c, --comment COMMENT         GECOS field of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-d, --home-dir HOME_DIR       home directory of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-e, --expiredate EXPIRE_DATE  expiration date of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-f, --inactive INACTIVE       password inactivity period of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-g, --gid GROUP               name or ID of the primary group of the new"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-G, --groups GROUPS           list of supplementary groups of the new"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-k, --skel SKEL_DIR           use this alternative skeleton directory"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-K, --key KEY=VALUE           override /etc/login.defs defaults"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-p, --password PASSWORD       encrypted password of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-R, --root CHROOT_DIR         directory to chroot into"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-P, --prefix PREFIX_DIR       prefix directory where are located the /etc/* files"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-s, --shell SHELL             login shell of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-u, --uid UID                 user ID of the new account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/useradd.help.txt",
+     "page": "useradd",
+     "text": "-Z, --selinux-user SEUSER     use a specific SEUSER for the SELinux user mapping"
+    }
+   ]
+  },
+  "usermod": {
+   "available": true,
+   "package": "shadow-utils-4.6-5.el7.x86_64",
+   "pages": [
+    {
+     "name": "usermod",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    }
+   ],
+   "flags": [
+    {
+     "names": [
+      "-a",
+      "--append"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    },
+    {
+     "names": [
+      "-h",
+      "--help"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    },
+    {
+     "names": [
+      "-L",
+      "--lock"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    },
+    {
+     "names": [
+      "-m",
+      "--move-home"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    },
+    {
+     "names": [
+      "-o",
+      "--non-unique"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    },
+    {
+     "names": [
+      "-U",
+      "--unlock"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "usermod",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt"
+    }
+   ],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-c, --comment COMMENT         new value of the GECOS field"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-d, --home HOME_DIR           new home directory for the user account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-e, --expiredate EXPIRE_DATE  set account expiration date to EXPIRE_DATE"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-f, --inactive INACTIVE       set password inactive after expiration"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-g, --gid GROUP               force use GROUP as new primary group"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-G, --groups GROUPS           new list of supplementary GROUPS"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-l, --login NEW_LOGIN         new value of the login name"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-p, --password PASSWORD       use encrypted password for the new password"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-R, --root CHROOT_DIR         directory to chroot into"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-P, --prefix PREFIX_DIR       prefix directory where are located the /etc/* files"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-s, --shell SHELL             new login shell for the user account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-u, --uid UID                 new UID for the user account"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-v, --add-subuids FIRST-LAST  add range of subordinate uids"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-V, --del-subuids FIRST-LAST  remove range of subordinate uids"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-w, --add-subgids FIRST-LAST  add range of subordinate gids"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-W, --del-subgids FIRST-LAST  remove range of subordinate gids"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/usermod.help.txt",
+     "page": "usermod",
+     "text": "-Z, --selinux-user SEUSER     new SELinux user mapping for the user account"
+    }
+   ]
+  },
+  "vgcreate": {
+   "available": false,
+   "reason": "rpm not installed / 'vgcreate' not found via command -v on container mcr-ubi7-flags on saratoga"
+  },
+  "yum": {
+   "available": true,
+   "package": "yum-3.4.3-168.el7.noarch",
+   "pages": [
+    {
+     "name": "yum",
+     "section": null,
+     "source": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    }
+   ],
+   "flags": [
+    {
+     "names": [
+      "-h",
+      "--help"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "-t",
+      "--tolerant"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "-C",
+      "--cacheonly"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--showduplicates"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "-q",
+      "--quiet"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "-v",
+      "--verbose"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "-y",
+      "--assumeyes"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--assumeno"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--version"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--disableexcludes"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--disableincludes"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--obsoletes"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--noplugins"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--nogpgcheck"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--disableplugin"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--enableplugin"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--skip-broken"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--releasever"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--downloadonly"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--bugfix"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    },
+    {
+     "names": [
+      "--security"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "yum",
+     "section": "--help",
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt"
+    }
+   ],
+   "unparsed": [
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "-c [config file], --config=[config file]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "-R [minutes], --randomwait=[minutes]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "-d [debug level], --debuglevel=[debug level]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "-e [error level], --errorlevel=[error level]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--rpmverbosity=[debug level name]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--installroot=[path]  set install root"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--enablerepo=[repo]   enable one or more repositories (wildcards allowed)"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--disablerepo=[repo]  disable one or more repositories (wildcards allowed)"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "-x [package], --exclude=[package]"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--color=COLOR         control whether color is used"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--downloaddir=DLDIR   specifies an alternate directory to store packages"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--setopt=SETOPTS      set arbitrary config and repo options"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--advisory=ADVS, --advisories=ADVS"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--bzs=BZS             Include packages needed to fix the given BZ, in"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--cves=CVES           Include packages needed to fix the given CVE, in"
+    },
+    {
+     "raw_ref": "content-src/raw/rhel7/yum.help.txt",
+     "page": "yum",
+     "text": "--sec-severity=SEVS, --secseverity=SEVS"
+    }
+   ]
+  }
+ }
 }

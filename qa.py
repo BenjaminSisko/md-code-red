@@ -2190,22 +2190,25 @@ def gate_q15(ctx):
     is a family nobody can prove was generated rather than typed, so the list is
     checked against the generators the datasets themselves declare, below.
 
-    FLAGS special case (CR-T-09/10). extract/make_pending_skeletons.py still emits
-    the placeholder EMPTY flags_rhel<N>.json for every version — that was fine
-    while CR-T-09/10 hadn't run, but flags_rhel8.json and flags_rhel10.json are now
-    real data from extract/extract_flags.py (Defiant/Saratoga), so a diff against
-    the placeholder script's empty output would always "drift". Re-running the
-    live extractor here would mean this gate re-opens an SSH session to both hosts
-    on every CI run — slow, and a hard dependency on lab hosts being reachable from
-    the runner. Instead: (a) the two flags_rhel8/10.json lines are filtered out of
-    make_pending_skeletons.py's drift report below — that script is still the
-    right authority for flags_rhel7/9, which remain genuinely empty pending
-    CR-T-11/12 — and (b) extract_flags.py's own --check mode re-parses the raw
-    man/--help dumps already committed under content-src/raw/ (no SSH, no live
-    host) and diffs that against content/flags_rhel{8,10}.json instead.
+    FLAGS special case (CR-T-09/10, extended by CR-T-12). extract/make_pending_
+    skeletons.py still emits the placeholder EMPTY flags_rhel<N>.json for every
+    version — that was fine before any of CR-T-09/10/12 had run, but
+    flags_rhel7.json, flags_rhel8.json and flags_rhel10.json are now real data
+    from extract/extract_flags.py (a UBI7 container on saratoga standing in for
+    the RHEL 7 host the lab doesn't have, and Defiant/Saratoga directly for RHEL
+    8/10), so a diff against the placeholder script's empty output would always
+    "drift". Re-running the live extractor here would mean this gate re-opens an
+    SSH session to lab hosts (and a container) on every CI run — slow, and a
+    hard dependency on lab hosts being reachable from the runner. Instead: (a)
+    the three flags_rhel{7,8,10}.json lines are filtered out of make_pending_
+    skeletons.py's drift report below — that script is still the right
+    authority for flags_rhel9, which remains genuinely empty pending CR-T-11 —
+    and (b) extract_flags.py's own --check mode re-parses the raw man/--help
+    dumps already committed under content-src/raw/ (no SSH, no live host, no
+    container) and diffs that against content/flags_rhel{7,8,10}.json instead.
     """
     f, d = [], []
-    flags_reextracted = {"flags_rhel8.json", "flags_rhel10.json"}
+    flags_reextracted = {"flags_rhel7.json", "flags_rhel8.json", "flags_rhel10.json"}
     for script in GENERATORS:
         path = os.path.join(REPO, script)
         if not os.path.exists(path):
@@ -2236,9 +2239,9 @@ def gate_q15(ctx):
 
     flags_script = os.path.join(REPO, "extract", "extract_flags.py")
     if not os.path.exists(flags_script):
-        f.append("extract/extract_flags.py missing — flags_rhel8/10.json cannot be re-derived")
+        f.append("extract/extract_flags.py missing — flags_rhel7/8/10.json cannot be re-derived")
     else:
-        for v in ("8", "10"):
+        for v in ("7", "8", "10"):
             proc = subprocess.run([sys.executable, flags_script, "--check", "--rhel", v], cwd=REPO,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             out = proc.stdout.decode("utf-8", "replace").strip()
