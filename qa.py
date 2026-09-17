@@ -2675,11 +2675,15 @@ def gate_q20(ctx):
 # and C1 minus \t \n \r, soft hyphen, the zero-width run, the bidi isolates, and
 # U+2065 (MCR-SEC-009).
 #
-# stig-src/ and content-src/raw/ are excluded: pinned vendor captures, checked
-# by their own SHA256SUMS, and not ours to normalise. U_CCI_List.xml's leading
-# BOM lives there and is legitimate.
+# NOTHING is excluded. The first cut of this gate skipped stig-src/ and
+# content-src/raw/ as pinned vendor captures; Marcus Reed asked for the narrower
+# rule (MCR-SEC-025, condition F1) and the measurement backs him: across both
+# trees, 62 files, the only hit of any kind is ONE leading byte-order mark, in
+# stig-src/U_CCI_List.xml. So the exclusion bought nothing and cost the two
+# largest directories in the repository. A U+FEFF at OFFSET 0 is file framing
+# and is allowed; a U+FEFF anywhere else is exactly the trojan this gate is for.
 # ---------------------------------------------------------------------------
-TROJAN_SCAN_EXCLUDE = ("stig-src/", "content-src/raw/")
+TROJAN_SCAN_EXCLUDE = ()
 
 
 def raw_trojan_failures(paths, root=None):
@@ -2704,6 +2708,8 @@ def raw_trojan_failures(paths, root=None):
             continue                                  # binary or non-UTF-8: nothing to say
         for m in TROJAN_RE.finditer(text):
             ch = m.group()
+            if m.start() == 0 and ch == "\ufeff":
+                continue                              # a leading BOM is framing, not content
             byte = len(text[:m.start()].encode("utf-8"))
             around = text[max(0, m.start() - 12):m.start() + 12].replace("\n", "\\n")
             failures.append("%s: raw U+%04X at byte %d, near %r. This character must be written as "
@@ -2724,6 +2730,8 @@ def tracked_text_files():
     if proc.returncode != 0:
         return None
     names = [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+    if not TROJAN_SCAN_EXCLUDE:
+        return names
     return [n for n in names if not n.startswith(TROJAN_SCAN_EXCLUDE)]
 
 
@@ -2741,9 +2749,10 @@ def gate_q21(ctx):
                  "would pass on an empty repository" % len(paths))
         return f, d, p
     f.extend(raw_trojan_failures(paths))
-    d.append("%d tracked text files scanned for raw control, bidi and zero-width characters "
-             "(stig-src/ and content-src/raw/ excluded: pinned vendor captures with their own "
-             "checksums)" % len(paths))
+    d.append("%d tracked files scanned for raw control, bidi and zero-width characters — every "
+             "file git tracks, nothing excluded. The one allowance is a U+FEFF byte-order mark at "
+             "offset 0, which only stig-src/U_CCI_List.xml uses (MCR-SEC-025, condition F1)"
+             % len(paths))
     return f, d, p
 
 
