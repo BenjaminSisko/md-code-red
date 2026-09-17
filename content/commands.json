@@ -9,7 +9,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 13
+  "entry_count": 15
  },
  "categories": [
   "firewall-cmd",
@@ -887,6 +887,100 @@
     "version": "RHEL 8 — content-src/raw/rhel8/usermod.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-systemctl-query",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Read a systemd unit's current state without changing it",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "status",
+      "is-active",
+      "is-enabled",
+      "is-failed"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "unit",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "systemctl"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "unit"
+    }
+   ],
+   "verify": "The command's own output IS the verification: is-active/is-enabled/is-failed print one word, status prints the full unit block.",
+   "undo": "Nothing to undo — every action in this generator only reads unit state.",
+   "blast": "green",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": false
+  },
+  {
+   "id": "gen-systemctl-manage",
+   "tool": "systemctl",
+   "category": "systemctl",
+   "intent": "Start, stop, restart, enable or disable a systemd unit",
+   "fields": [
+    {
+     "name": "action",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "start",
+      "stop",
+      "restart",
+      "reload",
+      "enable",
+      "disable"
+     ]
+    },
+    {
+     "name": "unit",
+     "type": "unit",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "systemctl"
+    },
+    {
+     "field": "action"
+    },
+    {
+     "field": "unit"
+    }
+   ],
+   "verify": "systemctl is-active <unit> (and is-enabled <unit> for enable/disable) reports the new state.",
+   "undo": "Run this generator again with the reverse action (start<->stop, enable<->disable).",
+   "blast": "yellow",
+   "source": {
+    "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
+    "url_or_man": "stig-src/SOURCES.md",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
    },
    "verified": false
   }
