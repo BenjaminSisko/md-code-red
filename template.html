@@ -2239,7 +2239,13 @@ function renderInspector(){
   }
   var entry=entryById(res.id);
   html+="<p class=\"region-label\">Flag by flag</p>";
-  var flags=decodeCmd(res.tool,res.version,res.flags||[]);
+  /* PANEL-001/G1: entry.tool is the subject the sidebar rail groups this entry
+     under (firewalld-service-active stays findable under "firewall-cmd"), but
+     when the assembled command actually invokes a different binary, the flag
+     dictionary that binary owns is the one that can answer this panel.
+     explain_tool names that binary; entry.tool never changes. */
+  var explainTool=(entry&&entry.explain_tool)||res.tool;
+  var flags=decodeCmd(explainTool,res.version,res.flags||[]);
   if(!flags.length) html+="<p class=\"muted\">This command takes no flags.</p>";
   for(var j=0;j<flags.length;j++){
     var explain=flags[j].explain;

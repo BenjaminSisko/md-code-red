@@ -1,6 +1,7 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "schema": "entry: id, tool, explain_tool?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
   "curated": true,
   "status": "CR-T-02 skeleton (3 curated entries) + CR-T-17..25 generator specs (24 entries): guided forms for firewall-cmd, nmcli, journalctl, lvm, sshd, useradd/usermod, systemctl, dnf/yum, semanage/setsebool, chage, auditctl/ausearch, rsyslog, chronyd, podman. Full catalog authoring is still CR-T-33.",
   "rhel_version_value_shapes": [
@@ -31,6 +32,7 @@
   {
    "id": "firewalld-service-active",
    "tool": "firewall-cmd",
+   "explain_tool": "systemctl",
    "category": "firewall-cmd",
    "intent": "Prove the host firewall is running before claiming the boundary control is in place",
    "rhel_versions": {
@@ -251,6 +253,7 @@
   {
    "id": "journald-service-active",
    "tool": "journalctl",
+   "explain_tool": "systemctl",
    "category": "journalctl",
    "intent": "Prove the systemd journal is running before trusting anything journalctl prints",
    "rhel_versions": {
