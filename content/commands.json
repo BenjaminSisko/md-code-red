@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 48
+  "entry_count": 57
  },
  "categories": [
   "firewall-cmd",
@@ -28,7 +28,8 @@
   "rsyslog",
   "chronyd",
   "podman",
-  "coreutils"
+  "coreutils",
+  "text-processing"
  ],
  "entries": [
   {
@@ -3019,6 +3020,621 @@
     "title": "man page for bash, as installed on the reference host",
     "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
     "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "grep-search-text",
+   "tool": "grep",
+   "category": "text-processing",
+   "intent": "Find which lines, or which files, contain a pattern instead of reading everything by eye",
+   "rhel_versions": {
+    "7": {
+     "command": "grep -rn -i \"pattern\" /etc",
+     "notes": "Prints every matching line by default. -r walks a directory tree, -i folds case, -n prefixes the line number, and -E switches the pattern language to extended regular expressions (so +, ?, | and () need no backslash). Reads only; never modifies the files it searches."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-r",
+     "explain": "Recurse into a directory tree instead of requiring a single file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Case-insensitive match.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Prefix each match with its line number.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-E",
+     "explain": "Use extended regular expressions (grep -E, same engine as egrep).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Invert the match: print lines that do NOT match.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "Print only the names of matching files, not the matching lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Print a count of matching lines per file instead of the lines themselves.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-A",
+     "explain": "Print N lines of context AFTER each match.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-B",
+     "explain": "Print N lines of context BEFORE each match.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-C",
+     "explain": "Print N lines of context on both sides of each match.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed matches (or file list, or count) match what a manual read of the target would show.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-grep",
+    "title": "man page for grep, as installed on the reference host",
+    "url_or_man": "man grep(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "sed-substitute",
+   "tool": "sed",
+   "category": "text-processing",
+   "intent": "Rewrite text in a stream or a file by pattern, without opening an editor",
+   "rhel_versions": {
+    "7": {
+     "command": "sed -i.bak 's/old/new/g' /etc/hosts",
+     "notes": "The s/pattern/replacement/ command substitutes on each line; the trailing g makes it replace every match on the line, not just the first. -i edits the file in place; the optional suffix right after -i ('.bak' here, no space) keeps the original under that suffix -- with no suffix -i overwrites the file with no backup at all, which is the one shape of this command that is not read-only."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-i",
+     "explain": "Edit the named file in place; an optional attached suffix (e.g. -i.bak) keeps a backup copy before the write. -i with no suffix overwrites the file with no backup.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Suppress automatic printing; used with the p command to print only selected lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-e",
+     "explain": "Add another script/expression to run, for chaining multiple edits in one invocation.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Use extended regular expressions in the script, matching sed -E's syntax on some builds.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The file's changed lines match the intended substitution (diff against the .bak backup if one was kept, or against a copy made before running).",
+   "undo": "If run with a backup suffix (sed -i.bak ...), restore it with `mv file.bak file`. If run bare (-i with no suffix), sed itself keeps no backup -- undo means restoring from a separate copy or version control made before the run.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-sed",
+    "title": "man page for sed, as installed on the reference host",
+    "url_or_man": "man sed(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "awk-fields",
+   "tool": "awk",
+   "category": "text-processing",
+   "intent": "Pull specific columns out of structured text, or filter lines by a field's value",
+   "rhel_versions": {
+    "7": {
+     "command": "awk -F: '$3 >= 1000 {print $1, $3}' /etc/passwd",
+     "notes": "Reads input line by line, splits each line into fields on the field separator (-F, whitespace by default), and runs the given pattern/action pairs. Reads only; never modifies the input file unless output is explicitly redirected back onto it."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-F",
+     "explain": "Set the input field separator (e.g. -F: for colon-delimited files like /etc/passwd).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Assign a variable before the program runs (awk -v n=5 '...').",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Read the awk program from a file instead of the command line.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed fields/filtered lines match what a manual read of the columns would show.",
+   "undo": "Nothing to undo -- read-only, unless the operator redirected output back onto the input file, in which case undo means restoring that file from a backup.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-gawk",
+    "title": "man page for gawk, as installed on the reference host",
+    "url_or_man": "man gawk(1)",
+    "version": "gawk 4.2-5.1",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "sort-lines",
+   "tool": "sort",
+   "category": "text-processing",
+   "intent": "Put lines of text into order -- alphabetic, numeric, by a specific field, or reversed",
+   "rhel_versions": {
+    "7": {
+     "command": "sort -k2,2 -n /var/log/sizes.txt",
+     "notes": "Sorts standard input or the named file(s) and writes the sorted result to stdout, leaving the original file untouched unless -o writes back to the same name. -n sorts numerically instead of lexically (so 9 sorts before 10); -k restricts the sort key to a field range."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Numeric sort instead of the default lexical byte-order sort.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Reverse the sort order.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-k",
+     "explain": "Sort on a specific field (column) range instead of the whole line.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Output only the first line of each set of equal lines (unique).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "Set the field separator sort uses to split fields for -k.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The output lines appear in the intended order; spot-check a few boundary values.",
+   "undo": "Nothing to undo -- sort writes to stdout by default and never touches the input unless -o names the same file, in which case restore from a pre-sort copy.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-sort",
+    "title": "man page for sort, as installed on the reference host",
+    "url_or_man": "man sort(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "uniq-dedupe-adjacent",
+   "tool": "uniq",
+   "category": "text-processing",
+   "intent": "Collapse consecutive duplicate lines, or count how many times each run repeats",
+   "rhel_versions": {
+    "7": {
+     "command": "uniq -c sorted-access.log",
+     "notes": "Only removes duplicates that are ADJACENT, so the input almost always needs to be sorted first (the classic 'sort access.log | uniq -c | sort -rn' top-N idiom sorts, counts runs, then re-sorts by count -- shown here against an already-sorted file so this entry's own command still leads with uniq). Reads only; writes the deduplicated stream to stdout."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Prefix each output line with a count of how many times it occurred consecutively.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-d",
+     "explain": "Print only lines that were duplicated.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Print only lines that were NOT duplicated.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Ignore case when comparing lines.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The output has no consecutive repeats, and any -c counts match a manual tally of a sample.",
+   "undo": "Nothing to undo -- read-only, writes to stdout.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-uniq",
+    "title": "man page for uniq, as installed on the reference host",
+    "url_or_man": "man uniq(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "wc-count",
+   "tool": "wc",
+   "category": "text-processing",
+   "intent": "Count lines, words, or bytes in a file or stream, fast, without opening it",
+   "rhel_versions": {
+    "7": {
+     "command": "wc -l /var/log/messages",
+     "notes": "With no flags prints lines, words, and bytes. -l alone is the everyday form -- a quick 'how big is this file' before deciding whether cat, less, or grep is the right next tool."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-l",
+     "explain": "Count lines only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-w",
+     "explain": "Count words only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Count bytes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "Count characters (differs from -c on multi-byte encodings).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed count matches an independent check (e.g. the line count a pager reports).",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-wc",
+    "title": "man page for wc, as installed on the reference host",
+    "url_or_man": "man wc(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "cut-extract-columns",
+   "tool": "cut",
+   "category": "text-processing",
+   "intent": "Pull out specific character or field ranges from each line, faster to reach for than awk for a single fixed column",
+   "rhel_versions": {
+    "7": {
+     "command": "cut -d: -f1,3 /etc/passwd",
+     "notes": "-d sets the field delimiter and -f names which fields to keep (comma list or range). -c does the same by fixed character position instead of a delimiter. Reads only."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-d",
+     "explain": "Set the field delimiter (default is a tab).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Select fields by number or range, e.g. -f1,3 or -f2-4.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Select by character position instead of delimited field.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--complement",
+     "explain": "Invert the selection: print every field EXCEPT the ones named.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The printed columns match the intended fields of a manually inspected sample line.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-cut",
+    "title": "man page for cut, as installed on the reference host",
+    "url_or_man": "man cut(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "tr-translate-characters",
+   "tool": "tr",
+   "category": "text-processing",
+   "intent": "Translate, squeeze, or delete individual characters in a stream -- case-folding, stripping CR, collapsing whitespace",
+   "rhel_versions": {
+    "7": {
+     "command": "tr -d '\\r' < dos.txt > unix.txt",
+     "notes": "Operates on standard input only (no filename argument) and writes to standard output, so the usual shape redirects both ends as shown. -d deletes every character in the given set; with two sets and no -d, tr replaces each character in the first set with the character in the same position of the second (e.g. tr 'a-z' 'A-Z' upper-cases)."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-d",
+     "explain": "Delete every character in the given set instead of translating it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Squeeze runs of a repeated character down to one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-c",
+     "explain": "Complement the given set: act on every character NOT listed.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The output stream no longer contains the deleted/translated characters (e.g. `file` reports the CR-stripped file as ASCII text, not CRLF).",
+   "undo": "Nothing to undo directly -- tr never edits a file in place; keep the original input file until the redirected output is confirmed correct.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-tr",
+    "title": "man page for tr, as installed on the reference host",
+    "url_or_man": "man tr(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "diff-compare-files",
+   "tool": "diff",
+   "category": "text-processing",
+   "intent": "See exactly what changed between two files (or two directory trees) before deciding to apply, revert, or ship a change",
+   "rhel_versions": {
+    "7": {
+     "command": "diff -u old.conf new.conf",
+     "notes": "-u produces unified-diff format (the format git and patch expect); with no flags diff prints its own older ed-style format. -r makes it recurse and compare two directory trees entry by entry. Reads only; produces output describing differences, changes neither file."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-u",
+     "explain": "Unified diff format with a few lines of context -- the format most tools (git, patch) expect.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Recurse into directories, comparing two whole trees.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-q",
+     "explain": "Report only whether files differ, not the differences themselves.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-N",
+     "explain": "Treat an absent file as empty, so a file that exists on only one side still shows a full diff instead of an error.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported differences match what the operator expects between the two versions.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-diff",
+    "title": "man page for diff, as installed on the reference host",
+    "url_or_man": "man diff(1)",
+    "version": "diffutils 3.6-3.10",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },

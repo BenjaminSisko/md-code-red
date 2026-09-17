@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 41
+  "tool_count": 50
  },
  "tools": [
   {
@@ -1204,6 +1204,258 @@
     "title": "man page for bash, as installed on the reference host",
     "url_or_man": "man bash(1) SHELL BUILTIN COMMANDS",
     "version": "bash 4.4/5.1/5.1/5.2",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "grep",
+   "binary": "grep",
+   "label": "grep",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-grep",
+    "title": "man page for grep, as installed on the reference host",
+    "url_or_man": "man grep(1)",
+    "version": "grep 3.1-3.11",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "sed",
+   "binary": "sed",
+   "label": "sed",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-sed",
+    "title": "man page for sed, as installed on the reference host",
+    "url_or_man": "man sed(1)",
+    "version": "sed 4.5-4.9",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "awk",
+   "binary": "awk",
+   "label": "awk (gawk)",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-gawk",
+    "title": "man page for gawk, as installed on the reference host",
+    "url_or_man": "man gawk(1)",
+    "version": "gawk 4.2-5.1",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "sort",
+   "binary": "sort",
+   "label": "sort",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-sort",
+    "title": "man page for sort, as installed on the reference host",
+    "url_or_man": "man sort(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "uniq",
+   "binary": "uniq",
+   "label": "uniq",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-uniq",
+    "title": "man page for uniq, as installed on the reference host",
+    "url_or_man": "man uniq(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "wc",
+   "binary": "wc",
+   "label": "wc",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-wc",
+    "title": "man page for wc, as installed on the reference host",
+    "url_or_man": "man wc(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "cut",
+   "binary": "cut",
+   "label": "cut",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-cut",
+    "title": "man page for cut, as installed on the reference host",
+    "url_or_man": "man cut(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "tr",
+   "binary": "tr",
+   "label": "tr",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-tr",
+    "title": "man page for tr, as installed on the reference host",
+    "url_or_man": "man tr(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "diff",
+   "binary": "diff",
+   "label": "diff",
+   "category": "text-processing",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-diff",
+    "title": "man page for diff, as installed on the reference host",
+    "url_or_man": "man diff(1)",
+    "version": "diffutils 3.6-3.10",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    }
