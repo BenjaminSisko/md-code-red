@@ -1,6 +1,6 @@
 MD CODE RED — Evidence Export
 Tool version: v1.0.0-dev  built 2026-09-17
-Content fingerprint (sha256 of the embedded data island): 8398108de97a5e9981a64a28903bf6a30f13173f2e86583e9a2ab03452a3ebd9
+Content fingerprint (sha256 of the embedded data island): 41d94afac2a1b0de531bfd777e4a8e780e1aac7abf437471c9af3b1fd0b53f42
 
 STIG ID: RHEL-09-251015
 STIG version: V2R9  benchmark date: 01 Jul 2026
@@ -29,8 +29,8 @@ Assembled command (RHEL 9, blast green):
 systemctl is-active firewalld
 
 Flags:
-  status — unverified — see man page
-  is-active — unverified — see man page
+  status — Shows the unit's loaded state, whether it is enabled, its current run state, its main process id, and a short tail of its journal entries.
+  is-active — Reports one word describing the unit's run state (for example active or inactive) and sets the exit code to match, with nothing else printed.
 
 Source citation: DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md) — stig-src/SOURCES.md (version RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2, retrieved 2026-09-17)
 

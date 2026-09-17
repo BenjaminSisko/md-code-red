@@ -160,6 +160,16 @@ code,pre{font-family:var(--font-mono);}
 .badge.cat2{border-color:var(--danger); color:var(--danger);}
 .badge.cat3{border-color:var(--warning); color:var(--warning);}
 .badge.privilege{border-color:var(--warning); color:var(--warning); margin-left:6px;}
+/* Per-version verification status (CEO ruling: verified is per-version, not
+   per-entry — capture-review-run1-2026-09-18.md RILEY-F1). Three states only,
+   never a free color: a real {by,on,host,capture} receipt (verified), a
+   capture with no receipt yet (captured, awaiting QA), or neither
+   (not host-verified). See verificationStatusForVersion(). */
+.vbadge{display:inline-block; border-radius:999px; padding:0 8px; font-size:11px;
+  margin-left:6px; border:1px solid var(--border-primary); color:var(--text-secondary);}
+.vbadge.v-verified{border-color:var(--success); color:var(--success);}
+.vbadge.v-captured{border-color:var(--warning); color:var(--warning);}
+.vbadge.v-unverified{color:var(--text-muted);}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
@@ -1281,6 +1291,17 @@ function formatEvidenceText(opts){
   push("MD CODE RED — Evidence Export");
   push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
   push("Content fingerprint (sha256 of the embedded data island): "+(opts.contentFingerprint||""));
+  /* Per-version verification status (task item 4): the receipt line for THE
+     EXPORTED VERSION ONLY, never every version the entry carries — an export
+     is evidence for one command on one release, and printing other versions'
+     states here would blur which release this export is actually about.
+     opts.vstatus is pre-computed by the caller (verificationStatusForVersion()
+     over opts.entry/opts.version) rather than derived in here, so this
+     function stays pure over exactly the values it is handed, same as res/
+     stigRow/rule above. */
+  if(opts.vstatus){
+    push("Verified (RHEL "+(opts.version||"")+"): "+opts.vstatus.text);
+  }
   push("");
   if(stigRow){
     push("STIG ID: "+(stigRow.stig_id||""));
@@ -1721,11 +1742,15 @@ function renderEvidenceModal(){
   if(mm.length<2) mm="0"+mm;
   if(dd.length<2) dd="0"+dd;
   var operatorDate=today.getFullYear()+"-"+mm+"-"+dd;
+  /* verification status for THE EXPORTED VERSION ONLY (task item 4) —
+     computed here, at the render call site, exactly like stigMeta/src above,
+     so formatEvidenceText() stays pure over values it is handed. */
+  var vstatus=ctx.entry?verificationStatusForVersion(ctx.entry,ctx.version):null;
   var text=formatEvidenceText({
-    res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,
+    res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,version:ctx.version,
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
     stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
-    source:src,operatorDate:operatorDate
+    source:src,operatorDate:operatorDate,vstatus:vstatus
   });
   STATE._evidenceText=text;
   var html="<p class=\"region-label\">Export as Evidence — SCTM-ready, plain text</p>";
@@ -1783,6 +1808,52 @@ function nistForCci(cciList){
     for(j=0;j<nist.length;j++){ if(out.indexOf(nist[j])<0) out.push(nist[j]); }
   }
   return out;
+}
+
+/* ============ per-version verification status ============
+   CEO ruling closing Riley Park's first capture review (capture-review-run1-
+   2026-09-18.md RILEY-F1): `verified` is an object keyed by RHEL version, each
+   value false or a {by, on, host, capture} receipt — never a single
+   whole-entry claim. This is the ONE place that turns entry.verified[version]
+   (plus, where one exists, a joined STIG capture) into the three states the
+   UI ever shows for a version:
+
+     "verified"   — a real receipt sits on THIS version. Never propagated from
+                    a same_as TARGET's receipt (extract/schema.py's
+                    verified_errors() refuses a receipt on a same_as/unavailable
+                    row in the first place, so if this version's own row IS one
+                    of those, it can never reach the "verified" branch below).
+     "captured"   — no receipt yet, but a capture exists for this exact
+                    (entry, version) — visible here only when the entry carries
+                    a stig[] row for this version with expected_output joined
+                    (build.py's assemble()); a captured-but-unindexed
+                    non-STIG capture (extract/import_captures.py's own
+                    INDEXING note) has no channel into the shipped data island,
+                    so it falls through to "unverified" honestly rather than
+                    guessing.
+     "unverified" — neither. Includes same_as/unavailable rows: those were
+                    never independently run on this version, so "not
+                    host-verified" is the true statement even though the
+                    command TEXT may be identical to a version that was.
+
+   Pure: reads only its own arguments plus the content island, returns data,
+   never markup (Q17's audit rule — every field a caller reads off this
+   crosses esc()/escapeAttr() at the call site, same as ruleFor()/
+   nistForCci() above). */
+function verificationStatusForVersion(entry, version){
+  var ver=(entry&&entry.verified)||{};
+  var receipt=ver[version];
+  if(receipt&&typeof receipt==="object"){
+    return {state:"verified", label:"Verified",
+            text:"verified by "+receipt.by+" on "+receipt.on+" ("+receipt.host+")"};
+  }
+  var rows=(entry&&entry.stig)||[],i;
+  for(i=0;i<rows.length;i++){
+    if(rows[i].rhel_version===version&&rows[i].expected_output){
+      return {state:"captured", label:"Captured", text:"captured, awaiting QA"};
+    }
+  }
+  return {state:"unverified", label:"Not host-verified", text:"not host-verified"};
 }
 
 /* ============ CR-T-26: the STIG panel ============
@@ -2311,6 +2382,10 @@ function renderInspector(){
     return;
   }
   var entry=entryById(res.id);
+  var vstatus=verificationStatusForVersion(entry,res.version);
+  html+="<p class=\"region-label\">Verification</p>";
+  html+="<p class=\"vline\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+"\">"+
+        esc(vstatus.label)+"</span> <span class=\"muted\">"+esc(vstatus.text)+"</span></p>";
   html+="<p class=\"region-label\">Flag by flag</p>";
   /* PANEL-001/G1: entry.tool is the subject the sidebar rail groups this entry
      under (firewalld-service-active stays findable under "firewall-cmd"), but
@@ -2355,6 +2430,23 @@ function renderStatusBar(){
   var parts=[];
   if(STATE.toast) parts.push("<span class=\"statusitem toast\">"+esc(STATE.toast)+"</span>");
   parts.push("<span class=\"statusitem\">RHEL "+esc(STATE.version)+"</span>");
+  /* Version-selector badge (task item 4): the currently selected entry's
+     verification state for the currently selected RHEL version, read through
+     the same verificationStatusForVersion() the Inspector and the evidence
+     exporter use — one function, three call sites, never three opinions. No
+     entry selected (a bare STIG-search rule, or nothing yet) pushes nothing —
+     the plain "RHEL N" item above, same as before this field existed. Its own
+     `if`-gated parts.push() (not a value spliced into another statusitem) so
+     every segment reaching the sink is a literal or an esc()/escapeAttr()
+     call, same audited shape as every other line in this function (Q17). */
+  if(STATE.entryId){
+    var statusEntry=entryById(STATE.entryId);
+    if(statusEntry){
+      var vstatus=verificationStatusForVersion(statusEntry,STATE.version);
+      parts.push("<span class=\"statusitem\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+
+                 "\" title=\""+escapeAttr(vstatus.text)+"\">"+esc(vstatus.label)+"</span></span>");
+    }
+  }
   parts.push("<span class=\"statusitem\">"+esc(stigReleaseLabel())+"</span>");
   parts.push("<span class=\"statusitem\">"+esc(APP_NAME)+" "+esc(APP_VERSION)+"</span>");
   parts.push("<span class=\"statusitem\">built "+esc(APP_BUILD_DATE)+"</span>");
