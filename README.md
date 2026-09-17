@@ -10,12 +10,24 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-dev (Build stage — runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules + STIG panel, evidence exporter, typed search, favorites/recent, print view, About panel (CR-T-26/28/29/30))  
+**Current version:** v1.0.0-alpha.1 (first internal alpha, lab-only, unsigned -- runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules + STIG panel, evidence exporter, typed search, favorites/recent, print view, About panel (CR-T-26/28/29/30))  
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-17
+**Last built:** 2026-09-18
 
 ## Recent changes
 
+- **2026-09-18** -- **v1.0.0-alpha.1**, branch `salm/taylor/v1.0.0-alpha.1`
+  (Taylor Webb, Release Engineer). Version bump off `-dev` (`build.py`
+  `APP_VERSION`/`APP_BUILD_DATE`, the single source Q1 checks against the
+  built HTML and the dist filename), `docs/CHANGELOG.md` retitled from
+  `Unreleased`, provenance manifest (`extract/make_provenance.py` ->
+  `dist/md-code-red_v1.0.0-alpha.1.provenance.json`), `CODEOWNERS` gained
+  explicit `/content-src/` and `/dist/` lines (SAR condition A5), and
+  `docs/DEPLOY_RECEIPT_TEMPLATE.md` added for the pilot jump box. Readiness:
+  `REL-2026-09-18-001`. This is a lab-only, unsigned alpha -- see the
+  CHANGELOG entry above for the full verification status and known
+  limitations, and the Pilot Standard Operating Procedure for the operator
+  rules.
 - **2026-09-18** -- Gate 3 tag blockers 1, 2, 4 + Q20 RHEL 7 reach, branch
   `salm/milo/gate3-blockers` (Milo Vance). Closes AL-GATE3-009 (`flags_rhel9.json`
   named a generator, `extract/extract_rhel_flags.py`, that never existed; Q8/Q15

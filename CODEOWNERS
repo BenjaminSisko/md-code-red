@@ -4,3 +4,13 @@
 /stig-src/              @benny
 /content/               @benny
 /extract/               @benny
+# SAR-v1.0.0-alpha-candidate-01abbc3-2026-09-18 condition A5: content-src/
+# holds roster.json, the closed roster qa.py's gate_q16() resolves every
+# verification receipt's "by"/"captured_by" name against -- it is the trust
+# root for every verification claim the shipped tool makes, and needs an
+# explicit line rather than riding on the top "*" catch-all.
+/content-src/           @benny
+# The release commit is the one place dist/ enters git history (working
+# branches keep it out per .gitignore's own note) -- explicit line so a
+# committed release artifact is never an accidental, unowned addition.
+/dist/                  @benny
