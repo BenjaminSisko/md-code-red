@@ -2289,6 +2289,26 @@ CAPTURE_REQUIRED_FIELDS = (
 VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
 
 
+def load_golden_commands():
+    """Load tests/fixtures/golden-commands.json, the hand-authored validity
+    oracle (MCR-SEC-015/021). gate_q16() binds generator receipts to it (J1,
+    VER-001): a generator entry has no rhel_versions[v].command to diff a
+    capture against, so without this table a template edit can never
+    invalidate the receipts that describe its old behaviour. Returns
+    (dict_or_None, error_string_or_None); reads REPO fresh on every call
+    (never cached at import time) so a test that patches qa.REPO — see
+    tests/test_q16_receipts.py — sees its own fixture copy, not the real one.
+    """
+    path = os.path.join(REPO, "tests", "fixtures", "golden-commands.json")
+    if not os.path.isfile(path):
+        return None, "tests/fixtures/golden-commands.json is missing"
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh), None
+    except (ValueError, OSError) as exc:
+        return None, "tests/fixtures/golden-commands.json could not be read: %s" % exc
+
+
 def load_capture_file(rel_path):
     """Read+parse a capture record by its REPO-relative path (a receipt's own
     `capture` field). Returns (cap_dict_or_None, error_string_or_None)."""
@@ -2393,6 +2413,30 @@ def gate_q16(ctx):
                              "matches the RHEL %s command this build assembles today ('%s') — "
                              "content changed since capture; re-capture before re-verifying"
                              % (eid, v, run_as, v, current))
+            else:
+                # J1 (VER-001): a generator has no rhel_versions[v].command to
+                # diff against, so bind the receipt to the hand-authored
+                # validity oracle instead — the golden table already states
+                # the exact command this generator must emit per release.
+                golden, golden_err = load_golden_commands()
+                if golden_err:
+                    f.append("entry %s verified['%s']: %s — a generator receipt cannot be bound "
+                             "to a command with nothing to diff it against" % (eid, v, golden_err))
+                else:
+                    grow = (golden.get("generators") or {}).get(eid)
+                    if grow is None:
+                        f.append("entry %s verified['%s']: no golden-table row for generator "
+                                 "'%s' in tests/fixtures/golden-commands.json — a template edit "
+                                 "to this generator cannot be detected without one" % (eid, v, eid))
+                    else:
+                        golden_cmd = (grow.get("commands") or {}).get(v)
+                        run_as = cap.get("command_as_run")
+                        if golden_cmd and run_as is not None and run_as != golden_cmd:
+                            f.append("entry %s verified['%s']: capture's command_as_run ('%s') no "
+                                     "longer matches the golden-table command generator '%s' "
+                                     "emits on RHEL %s ('%s') — the template changed since "
+                                     "capture; re-capture before re-verifying"
+                                     % (eid, v, run_as, eid, v, golden_cmd))
             by = receipt.get("by")
             captured_by = cap.get("captured_by")
             if by and captured_by and by == captured_by:
