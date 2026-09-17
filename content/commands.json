@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 74
+  "entry_count": 82
  },
  "categories": [
   "firewall-cmd",
@@ -30,7 +30,8 @@
   "podman",
   "coreutils",
   "text-processing",
-  "filesystem"
+  "filesystem",
+  "process"
  ],
  "entries": [
   {
@@ -4711,6 +4712,520 @@
     "title": "man page for lsblk, as installed on the reference host",
     "url_or_man": "man lsblk(8)",
     "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ps-list-processes",
+   "tool": "ps",
+   "category": "process",
+   "intent": "See what is running on the host right now, and which process is which, before deciding what to signal",
+   "rhel_versions": {
+    "7": {
+     "command": "ps auxww",
+     "notes": "aux shows every process for every user in the classic BSD-style columns (owner, pid, %cpu, %mem, command); the trailing ww prevents long command lines from being truncated. Reads only from /proc; changes nothing."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "a",
+     "explain": "Show processes for all users, not just the caller's.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "u",
+     "explain": "User-oriented output format: owner, %cpu, %mem, start time, etc.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "x",
+     "explain": "Include processes with no controlling terminal (daemons).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-ef",
+     "explain": "The System V style equivalent of aux, full-format listing.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--forest",
+     "explain": "Draw the parent/child process tree with ASCII art indentation.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed process and its pid match what the operator expects to find running.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ps",
+    "title": "man page for ps, as installed on the reference host",
+    "url_or_man": "man ps(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "top-live-process-viewer",
+   "tool": "top",
+   "category": "process",
+   "intent": "Watch CPU and memory usage update live, per process, to find what is loading the host right now",
+   "rhel_versions": {
+    "7": {
+     "command": "top",
+     "notes": "An interactive, continuously refreshing view (default every 3 seconds); press q to quit, k to send a signal to a process from inside top itself (which is a state change, not the read-only view), and 1 to toggle per-CPU-core detail. Without an interactive terminal, `top -b -n 1` takes one batch snapshot instead, which is the shape to use from a script."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-b",
+     "explain": "Batch mode: print snapshots instead of an interactive live display, for scripts or redirection.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-n",
+     "explain": "Number of iterations before exiting (pairs with -b for a fixed number of snapshots).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-o",
+     "explain": "Sort by a specific column (e.g. -o %MEM).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Restrict the display to one user's processes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The displayed CPU/memory figures and top consumers match what the operator expects; q exits without changing anything.",
+   "undo": "Nothing to undo for the view itself -- if a signal was sent from inside top with k, that follows kill's own undo (none).",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-top",
+    "title": "man page for top, as installed on the reference host",
+    "url_or_man": "man top(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "kill-send-signal",
+   "tool": "kill",
+   "category": "process",
+   "intent": "Ask a process, by PID, to stop -- gracefully by default, or unconditionally with -9",
+   "rhel_versions": {
+    "7": {
+     "command": "kill -TERM 12345",
+     "notes": "With no signal, kill sends SIGTERM, which asks the process to exit and gives it the chance to catch the signal, flush buffers, and clean up. kill -9 (SIGKILL) cannot be caught, blocked, or ignored -- the kernel tears the process down immediately with no chance for it to release locks or finish writing. content/dangerous.json's dp-kill-9 pattern forces the red confirmation banner on any kill -9."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-TERM",
+     "explain": "The default, catchable request to terminate (signal 15).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-9",
+     "explain": "SIGKILL: unconditional, uncatchable termination -- no cleanup, no chance to ignore it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-HUP",
+     "explain": "Signal 1, traditionally used to ask a daemon to reload its configuration without restarting.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "List the signal names kill understands, with their numbers.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ps -p <pid>` no longer shows the process (or, for a reload signal like -HUP, the service's logs show it re-read its configuration).",
+   "undo": "None -- a terminated process is gone; if it was a managed service, undo means starting it again (systemctl start), not un-killing the old process instance.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-kill",
+    "title": "man page for kill, as installed on the reference host",
+    "url_or_man": "man kill(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "pkill-signal-by-name",
+   "tool": "pkill",
+   "category": "process",
+   "intent": "Send a signal to every process matching a name or other attribute, without looking up each PID first",
+   "rhel_versions": {
+    "7": {
+     "command": "pkill -f \"backup-job.sh\"",
+     "notes": "Matches against the process name by default, or the full command line with -f -- a loose pattern with -f can match more processes than intended, so a dry run with pgrep (which shares pkill's matching but only lists, never signals) is the safer first step. pkill -9 carries the same unconditional-kill risk as kill -9 and is caught by the same dp-kill-9 pattern (pkill contains the substring 'kill')."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-f",
+     "explain": "Match against the full command line, not just the process name -- widens the match, so check it with pgrep -f first.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-9",
+     "explain": "SIGKILL: unconditional, uncatchable termination for every matched process.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Restrict matching to processes owned by a given user.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-x",
+     "explain": "Require an exact match of the whole name/command line, not a substring.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "A follow-up `pgrep` (with the same match criteria) returns nothing -- the matched processes are gone.",
+   "undo": "None -- terminated processes are gone; if they were managed services, undo means starting them again, not un-killing the old instances.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-pkill",
+    "title": "man page for pkill, as installed on the reference host",
+    "url_or_man": "man pkill(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "free-memory-usage",
+   "tool": "free",
+   "category": "process",
+   "intent": "Check how much RAM and swap are in use, and how much the kernel is holding as reclaimable cache",
+   "rhel_versions": {
+    "7": {
+     "command": "free -h",
+     "notes": "-h prints human-readable units. The 'available' column (not 'free') is the number that matters for 'can this host take more load' -- it already accounts for memory the kernel could reclaim from cache/buffers under pressure, which the raw 'free' column does not."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-h",
+     "explain": "Human-readable sizes (K, M, G) instead of raw kilobytes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Repeat the report every N seconds, like a lightweight top for memory only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "Force output in mebibytes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "Add a total line summing physical and swap memory.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported used/available/swap figures match what the operator expects for current load.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-free",
+    "title": "man page for free, as installed on the reference host",
+    "url_or_man": "man free(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "uptime-load-average",
+   "tool": "uptime",
+   "category": "process",
+   "intent": "Get a one-line read on how long the host has been up and how loaded it has been over the last 1/5/15 minutes",
+   "rhel_versions": {
+    "7": {
+     "command": "uptime",
+     "notes": "The three load-average numbers are 1-, 5-, and 15-minute exponentially weighted averages of the run-queue length; on their own they say nothing about WHICH process is responsible -- that's what top/ps are for. Reads only from the kernel."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-p",
+     "explain": "Print only how long the system has been up, in a compact form ('up 3 days').",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-s",
+     "explain": "Print the time the system was booted, instead of the elapsed uptime.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported uptime and load figures match what the operator expects.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-uptime",
+    "title": "man page for uptime, as installed on the reference host",
+    "url_or_man": "man uptime(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "crontab-scheduled-jobs",
+   "tool": "crontab",
+   "category": "process",
+   "intent": "Review or edit a user's own scheduled jobs without hand-editing a spool file",
+   "rhel_versions": {
+    "7": {
+     "command": "crontab -l",
+     "notes": "-l lists the calling user's crontab; -e opens it in $EDITOR and, on save, atomically replaces the whole crontab for that user -- there is no per-line diff or confirmation, so a typo in an untouched line survives silently unless the operator reviews the whole file before saving. -r removes a user's entire crontab outright with no prompt."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-l",
+     "explain": "List the current user's crontab.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-e",
+     "explain": "Edit the current user's crontab in $EDITOR; saving replaces the whole file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Remove the current user's crontab entirely, with no prompt.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-u",
+     "explain": "Operate on another user's crontab (requires privilege).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`crontab -l` shows the intended jobs, with the intended schedule and command, and nothing unexpected removed.",
+   "undo": "Restore the previous crontab from a copy taken with `crontab -l > backup.cron` before editing -- crontab -e keeps no automatic history of prior versions, and crontab -r has no undo at all.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-crontab",
+    "title": "man page for crontab, as installed on the reference host",
+    "url_or_man": "man crontab(1)",
+    "version": "cronie 1.5-1.7",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "systemd-analyze-boot-timing",
+   "tool": "systemd-analyze",
+   "category": "process",
+   "intent": "See how long boot took, which unit was the critical-path bottleneck, and verify a unit file parses cleanly before enabling it",
+   "rhel_versions": {
+    "7": {
+     "command": "systemd-analyze blame",
+     "notes": "blame lists every unit by how long it took to initialize, worst first, for finding what is slowing down boot. `systemd-analyze verify <unit>` checks a unit file for syntax and dependency problems before it is ever started -- both subcommands only read systemd's own state and files, changing nothing on the host."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "blame",
+     "explain": "List units by initialization time, slowest first.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "critical-chain",
+     "explain": "Show the chain of units that determined total boot time.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "verify",
+     "explain": "Parse a unit file and report syntax/dependency problems without loading or starting it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "time",
+     "explain": "Print the overall boot time breakdown (firmware/loader/kernel/userspace).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported timings/verification results match what the operator expects, or verify reports the unit file as clean.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-systemd-analyze",
+    "title": "man page for systemd-analyze, as installed on the reference host",
+    "url_or_man": "man systemd-analyze(1)",
+    "version": "systemd 219-257",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },

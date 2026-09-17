@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 67
+  "tool_count": 75
  },
  "tools": [
   {
@@ -1932,6 +1932,230 @@
     "title": "man page for lsblk, as installed on the reference host",
     "url_or_man": "man lsblk(8)",
     "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ps",
+   "binary": "ps",
+   "label": "ps",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-ps",
+    "title": "man page for ps, as installed on the reference host",
+    "url_or_man": "man ps(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "top",
+   "binary": "top",
+   "label": "top",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-top",
+    "title": "man page for top, as installed on the reference host",
+    "url_or_man": "man top(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "kill",
+   "binary": "kill",
+   "label": "kill",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-kill",
+    "title": "man page for kill, as installed on the reference host",
+    "url_or_man": "man kill(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "pkill",
+   "binary": "pkill",
+   "label": "pkill",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-pkill",
+    "title": "man page for pkill, as installed on the reference host",
+    "url_or_man": "man pkill(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "free",
+   "binary": "free",
+   "label": "free",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-free",
+    "title": "man page for free, as installed on the reference host",
+    "url_or_man": "man free(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "uptime",
+   "binary": "uptime",
+   "label": "uptime",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-uptime",
+    "title": "man page for uptime, as installed on the reference host",
+    "url_or_man": "man uptime(1)",
+    "version": "procps-ng 3.3-4.0",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "crontab",
+   "binary": "crontab",
+   "label": "crontab",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-crontab",
+    "title": "man page for crontab, as installed on the reference host",
+    "url_or_man": "man crontab(1)",
+    "version": "cronie 1.5-1.7",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "systemd-analyze",
+   "binary": "systemd-analyze",
+   "label": "systemd-analyze",
+   "category": "process",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-systemd-analyze",
+    "title": "man page for systemd-analyze, as installed on the reference host",
+    "url_or_man": "man systemd-analyze(1)",
+    "version": "systemd 219-257",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    }
