@@ -1210,10 +1210,61 @@ function queryIndex(index,q){
    — command, flags, blast — never reassembled here. Everything else
    (STIG row, rule text, source citation, capture metadata, fingerprint,
    versions) is content-island data or app identity, handed in by the caller. */
+/* Line-safety for the evidence export (Marcus Reed's Panels review,
+   PANEL-002 / condition G2). esc() only neutralises HTML metacharacters for
+   the <pre> preview, correctly -- it is not a sanitiser (MCR-SEC-009) -- but
+   a bidi override or a raw NUL in a rule title or check/fix text would still
+   reach this PLAIN-TEXT export unchanged, and this text crosses trust
+   boundary 5 into an SCTM/ATO package.
+
+   evidenceHeaderSafe()/evidenceLineSafe() give every interpolated value the
+   same single-line, printable, collapsed-whitespace treatment MCR-ASSEMBLER's
+   headerSafe() already gives the clipboard header (MCR-SEC-003) -- REIMPLEMENTED
+   here rather than called, because this block has to stay independently
+   liftable and pure on its own (the purity check below forbids reaching
+   outside itself) and MCR-ASSEMBLER is out of scope for this change -- PLUS
+   the bidi-override/isolate and zero-width ranges headerSafe() was never
+   asked to cover. Every range is a numeric code-point range, not a written
+   escape or the character itself, for the same reason Q21 insists on
+   \u-escapes in fixtures: a file that carries the trojan character it is
+   guarding against proves the opposite of what it claims.
+
+   Runs per PHYSICAL LINE (split on CR/LF first), so multi-paragraph check/fix
+   text keeps its line breaks -- only what is hostile WITHIN a line is
+   touched. '<', '"' and the apostrophe are ordinary printable characters and
+   are left alone: this is plain text, not markup, so nothing HTML-shaped
+   gets special treatment. */
+var EVIDENCE_CONTROL_RANGES=[[0x0000,0x001F],[0x007F,0x009F],[0x2028,0x2029]];
+var EVIDENCE_INVISIBLE_RANGES=[[0x200B,0x200F],[0x202A,0x202E],[0x2060,0x2069],[0xFEFF,0xFEFF]];
+function evidenceCodeInRanges(code,ranges){
+  for(var i=0;i<ranges.length;i++){ if(code>=ranges[i][0]&&code<=ranges[i][1]) return true; }
+  return false;
+}
+function evidenceHeaderSafe(s){
+  /* Unlike MCR-ASSEMBLER's headerSafe() (a single COMMENT LINE bound for a
+     clipboard header, where collapsing run-on whitespace is harmless), this
+     export's own content relies on deliberate multi-space alignment (e.g.
+     "STIG version: X  benchmark date: Y") -- so ordinary spaces are left
+     exactly as authored. Only characters that are actually hostile (control
+     bytes, NUL, bidi overrides/isolates, zero-width) are touched. */
+  var str=String(s),out="",i,code;
+  for(i=0;i<str.length;i++){
+    code=str.charCodeAt(i);
+    if(evidenceCodeInRanges(code,EVIDENCE_INVISIBLE_RANGES)) continue;  /* removed: zero visual width, or reorders the line */
+    if(evidenceCodeInRanges(code,EVIDENCE_CONTROL_RANGES)){ out+=" "; continue; }
+    out+=str.charAt(i);
+  }
+  return out;
+}
+function evidenceLineSafe(v){
+  var s=String(v==null?"":v),parts=s.split(/\r\n|\r|\n/),i;
+  for(i=0;i<parts.length;i++) parts[i]=evidenceHeaderSafe(parts[i]);
+  return parts.join("\n");
+}
 function formatEvidenceText(opts){
   opts=opts||{};
   var lines=[],res=opts.res,entry=opts.entry,stigRow=opts.stigRow,rule=opts.rule;
-  function push(s){ lines.push(String(s==null?"":s)); }
+  function push(s){ lines.push(evidenceLineSafe(s)); }
   function kv(label,val){ push(label+": "+(val===null||val===undefined||val===""?"not captured":val)); }
   push("MD CODE RED — Evidence Export");
   push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
