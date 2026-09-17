@@ -4,7 +4,7 @@
   "curated": true,
   "status": "CR-T-17..25 — the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 50
+  "tool_count": 67
  },
  "tools": [
   {
@@ -1456,6 +1456,482 @@
     "title": "man page for diff, as installed on the reference host",
     "url_or_man": "man diff(1)",
     "version": "diffutils 3.6-3.10",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "find",
+   "binary": "find",
+   "label": "find",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-find",
+    "title": "man page for find, as installed on the reference host",
+    "url_or_man": "man find(1)",
+    "version": "findutils 4.6-4.9",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "tar",
+   "binary": "tar",
+   "label": "tar",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-tar",
+    "title": "man page for tar, as installed on the reference host",
+    "url_or_man": "man tar(1)",
+    "version": "tar 1.30-1.35",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "gzip",
+   "binary": "gzip",
+   "label": "gzip",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-gzip",
+    "title": "man page for gzip, as installed on the reference host",
+    "url_or_man": "man gzip(1)",
+    "version": "gzip 1.9-1.12",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "gunzip",
+   "binary": "gunzip",
+   "label": "gunzip",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-gzip",
+    "title": "man page for gzip, as installed on the reference host",
+    "url_or_man": "man gzip(1)",
+    "version": "gzip 1.9-1.12",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "cp",
+   "binary": "cp",
+   "label": "cp",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-cp",
+    "title": "man page for cp, as installed on the reference host",
+    "url_or_man": "man cp(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "mv",
+   "binary": "mv",
+   "label": "mv",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-mv",
+    "title": "man page for mv, as installed on the reference host",
+    "url_or_man": "man mv(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "rm",
+   "binary": "rm",
+   "label": "rm",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-rm",
+    "title": "man page for rm, as installed on the reference host",
+    "url_or_man": "man rm(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "mkdir",
+   "binary": "mkdir",
+   "label": "mkdir",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-mkdir",
+    "title": "man page for mkdir, as installed on the reference host",
+    "url_or_man": "man mkdir(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "ln",
+   "binary": "ln",
+   "label": "ln",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-ln",
+    "title": "man page for ln, as installed on the reference host",
+    "url_or_man": "man ln(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "chmod",
+   "binary": "chmod",
+   "label": "chmod",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-chmod",
+    "title": "man page for chmod, as installed on the reference host",
+    "url_or_man": "man chmod(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "chown",
+   "binary": "chown",
+   "label": "chown",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-chown",
+    "title": "man page for chown, as installed on the reference host",
+    "url_or_man": "man chown(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "stat",
+   "binary": "stat",
+   "label": "stat",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-stat",
+    "title": "man page for stat, as installed on the reference host",
+    "url_or_man": "man stat(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "du",
+   "binary": "du",
+   "label": "du",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-du",
+    "title": "man page for du, as installed on the reference host",
+    "url_or_man": "man du(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "df",
+   "binary": "df",
+   "label": "df",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-df",
+    "title": "man page for df, as installed on the reference host",
+    "url_or_man": "man df(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "mount",
+   "binary": "mount",
+   "label": "mount",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-mount",
+    "title": "man page for mount, as installed on the reference host",
+    "url_or_man": "man mount(8)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "umount",
+   "binary": "umount",
+   "label": "umount",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-umount",
+    "title": "man page for umount, as installed on the reference host",
+    "url_or_man": "man umount(8)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "lsblk",
+   "binary": "lsblk",
+   "label": "lsblk",
+   "category": "filesystem",
+   "availability": {
+    "7": {
+     "available": true
+    },
+    "8": {
+     "available": true
+    },
+    "9": {
+     "available": true
+    },
+    "10": {
+     "available": true
+    }
+   },
+   "source": {
+    "id": "src-man-lsblk",
+    "title": "man page for lsblk, as installed on the reference host",
+    "url_or_man": "man lsblk(8)",
+    "version": "util-linux 2.32-2.40",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    }

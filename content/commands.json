@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 57
+  "entry_count": 74
  },
  "categories": [
   "firewall-cmd",
@@ -29,7 +29,8 @@
   "chronyd",
   "podman",
   "coreutils",
-  "text-processing"
+  "text-processing",
+  "filesystem"
  ],
  "entries": [
   {
@@ -3635,6 +3636,1081 @@
     "title": "man page for diff, as installed on the reference host",
     "url_or_man": "man diff(1)",
     "version": "diffutils 3.6-3.10",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "find-search-filesystem",
+   "tool": "find",
+   "category": "filesystem",
+   "intent": "Locate files by name, type, age, or size across a directory tree instead of guessing a path",
+   "rhel_versions": {
+    "7": {
+     "command": "find /var/log -name \"*.log\" -type f -mtime +30 -size +10M",
+     "notes": "Walks the named starting path and tests every entry against the given predicates, ANDed together by default. -mtime +30 means modified more than 30 days ago; -size +10M means larger than 10 megabytes. Read-only by itself; -exec (below) is what turns it into an action."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-name",
+     "explain": "Match the filename against a shell glob pattern (quote it so the shell doesn't expand it first).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-type",
+     "explain": "Restrict to a type: f (regular file), d (directory), l (symlink), etc.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-mtime",
+     "explain": "Match by modification time in days: -mtime +30 is 'more than 30 days ago', -mtime -1 is 'in the last day'.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-size",
+     "explain": "Match by size: -size +10M is 'larger than 10 MB', -size -1k is 'smaller than 1 KB'.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-exec",
+     "explain": "Run a command on each match, e.g. -exec rm {} \\; or the batching form -exec rm {} +. This is where find stops being read-only -- whatever -exec runs carries that command's own blast rating.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-maxdepth",
+     "explain": "Limit how many directory levels find descends.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed matches are exactly the files the predicates describe; spot-check a few against `ls -la` or `stat`.",
+   "undo": "Nothing to undo for a plain find -- it only searches. A find ... -exec is undone the way its exec'd command would be (e.g. -exec rm needs the same recovery a bare rm does: none, unless backed up first).",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-find",
+    "title": "man page for find, as installed on the reference host",
+    "url_or_man": "man find(1)",
+    "version": "findutils 4.6-4.9",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "tar-archive",
+   "tool": "tar",
+   "category": "filesystem",
+   "intent": "Bundle a directory tree into one file for transfer or backup, and unpack or inspect one later",
+   "rhel_versions": {
+    "7": {
+     "command": "tar -czvf backup.tar.gz /etc/httpd",
+     "notes": "-c creates, -x extracts, -t lists without extracting; -f names the archive file (must come last in a bundled flag group since it takes an argument). -z compresses/decompresses with gzip; -J does the same with xz, which compresses tighter at more CPU cost -- both compression flags pair with any of c/x/t. -v lists each file as it is processed. Extracting into an existing directory can overwrite files there with no per-file prompt, which is the one case that is not read-only."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Create a new archive.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-x",
+     "explain": "Extract an existing archive.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "List an archive's contents without extracting.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-z",
+     "explain": "Filter the archive through gzip (.tar.gz / .tgz).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-J",
+     "explain": "Filter the archive through xz (.tar.xz) -- slower, smaller than gzip.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Name the archive file; must be the last flag in a bundled group since it takes the filename as its argument.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "List each file as it is added or extracted.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-C",
+     "explain": "Change to the given directory before adding or extracting, instead of the current one.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "For create: `tar -tzvf archive.tar.gz` lists the expected files. For extract: the expected files/directories appear under the target path with their original permissions and mtimes.",
+   "undo": "A created archive is undone by deleting the archive file (the source tree is untouched). An extract has no built-in undo -- it can silently overwrite existing files with the same names, so extracting into a fresh empty directory (or after a backup of anything that could collide) is the safer default.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-tar",
+    "title": "man page for tar, as installed on the reference host",
+    "url_or_man": "man tar(1)",
+    "version": "tar 1.30-1.35",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gzip-compress",
+   "tool": "gzip",
+   "category": "filesystem",
+   "intent": "Compress a single file to save space or prepare it for transfer",
+   "rhel_versions": {
+    "7": {
+     "command": "gzip -k access.log",
+     "notes": "Compresses the named file to <name>.gz. By default gzip REPLACES the original with the compressed copy and deletes the source; -k keeps the original alongside the .gz output instead."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-k",
+     "explain": "Keep the original file instead of deleting it after compressing.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-d",
+     "explain": "Decompress instead of compress (equivalent to running gunzip).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-9",
+     "explain": "Maximum compression, more CPU time.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-1",
+     "explain": "Fastest compression, larger output.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The .gz file exists and `gzip -t file.gz` reports it as valid; with -k the original file is still present too.",
+   "undo": "Without -k, gzip deletes the original on success -- recovery means decompressing the .gz back (`gunzip file.gz`), which is lossless for gzip, so the original bytes are recovered even though the plain-file undo is 'decompress it back', not 'restore a backup'.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-gzip",
+    "title": "man page for gzip, as installed on the reference host",
+    "url_or_man": "man gzip(1)",
+    "version": "gzip 1.9-1.12",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gunzip-decompress",
+   "tool": "gunzip",
+   "category": "filesystem",
+   "intent": "Restore a .gz file to its original, uncompressed form",
+   "rhel_versions": {
+    "7": {
+     "command": "gunzip -k access.log.gz",
+     "notes": "The inverse of gzip; equivalent to `gzip -d`. By default it replaces the .gz file with the decompressed original; -k keeps the .gz alongside the decompressed output."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-k",
+     "explain": "Keep the .gz file instead of deleting it after decompressing.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-t",
+     "explain": "Test the archive's integrity without decompressing it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "List the compressed and uncompressed size of the archive without extracting it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The decompressed file exists and matches the expected content (e.g. its size or a checksum matches what was recorded before compression).",
+   "undo": "Without -k, gunzip deletes the .gz on success -- recovery means re-compressing the plain file back (`gzip file`), which reproduces an equivalent .gz, though not necessarily byte-identical to the original archive.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-gzip",
+    "title": "man page for gzip, as installed on the reference host",
+    "url_or_man": "man gzip(1)",
+    "version": "gzip 1.9-1.12",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "cp-copy",
+   "tool": "cp",
+   "category": "filesystem",
+   "intent": "Duplicate a file or directory tree to a new location, leaving the original in place",
+   "rhel_versions": {
+    "7": {
+     "command": "cp -a /etc/httpd /root/httpd.bak",
+     "notes": "-a (archive) preserves permissions, ownership, timestamps, and symlinks, and recurses into directories -- the shape to reach for before editing a config file, so there is always a known-good copy to diff or restore from. Copying onto an existing destination overwrites it with no prompt unless -i is added, which is the one non-read-only edge of an otherwise additive command."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-a",
+     "explain": "Archive mode: recursive, and preserve permissions/ownership/timestamps/symlinks.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Recurse into directories (needed for a directory source; -a implies it).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Prompt before overwriting an existing destination file.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "Preserve mode, ownership, and timestamps without the recursion -a implies.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The destination exists and matches the source (`diff -r source dest` reports no differences).",
+   "undo": "Delete the copy at the destination -- the source is untouched by cp itself. If the destination overwrote something that already existed there, that prior content is gone unless it was itself backed up first.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-cp",
+    "title": "man page for cp, as installed on the reference host",
+    "url_or_man": "man cp(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "mv-move-rename",
+   "tool": "mv",
+   "category": "filesystem",
+   "intent": "Move a file or directory to a new location, or rename it in place, without copying its data",
+   "rhel_versions": {
+    "7": {
+     "command": "mv -n old-name.conf new-name.conf",
+     "notes": "A rename within the same filesystem is instant (no data copy); across filesystems mv copies then deletes the source. By default mv OVERWRITES an existing destination with no prompt and no trace of what was there -- -n refuses to overwrite anything that already exists, and -i prompts first."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-n",
+     "explain": "Never overwrite an existing destination; skip instead.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Prompt before overwriting an existing destination.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-b",
+     "explain": "Back up any existing destination file (append ~) before overwriting it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Print each file as it is moved.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The file/directory exists at the new path and is gone from the old one; if a destination could have collided, confirm nothing unexpected was overwritten.",
+   "undo": "Move it back to the original path with a second mv. If it silently overwrote an existing file at the destination with no backup flag, that prior file's content cannot be recovered by mv itself.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-mv",
+    "title": "man page for mv, as installed on the reference host",
+    "url_or_man": "man mv(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "rm-remove",
+   "tool": "rm",
+   "category": "filesystem",
+   "intent": "Delete a file or directory tree -- the highest-consequence everyday command in this list",
+   "rhel_versions": {
+    "7": {
+     "command": "rm -i /tmp/scratch.txt",
+     "notes": "A plain `rm file` deletes one file with no trash, no undo, and no prompt unless -i is given. `rm -r` recurses into directories; `rm -rf` additionally forces past any confirmation and ignores missing files, and against an absolute path (rm -rf /some/tree) it is the single most destructive everyday command a shell can run -- it is caught by content/dangerous.json's dp-rm-rf and dp-rm-rf-root patterns, which force the red confirmation banner regardless of how the path was typed or quoted."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-i",
+     "explain": "Prompt before every removal -- the one flag that turns rm interactive.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Recurse into directories, removing their contents first.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Force: never prompt, and ignore nonexistent files/arguments instead of erroring.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Print each file as it is removed.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The file/directory no longer appears in a listing of its former location.",
+   "undo": "None. rm does not use a trash or recycle bin on a standard RHEL filesystem -- recovery, if any, comes only from a filesystem-level backup or snapshot taken before the run, never from rm itself.",
+   "blast": "red",
+   "stig": [],
+   "source": {
+    "id": "src-man-rm",
+    "title": "man page for rm, as installed on the reference host",
+    "url_or_man": "man rm(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "mkdir-create-directory",
+   "tool": "mkdir",
+   "category": "filesystem",
+   "intent": "Create a new directory, optionally creating any missing parent directories in the same step",
+   "rhel_versions": {
+    "7": {
+     "command": "mkdir -p /opt/tool/etc/conf.d",
+     "notes": "-p creates any missing parent directories along the path and does not error if the target already exists -- the safe default for scripted or repeatable setup steps."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-p",
+     "explain": "Create missing parent directories as needed; do not error if the target already exists.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-m",
+     "explain": "Set the new directory's permission mode at creation time instead of relying on the current umask.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ls -ld <path>` shows the new directory with the expected permissions.",
+   "undo": "Remove it with `rmdir <path>` if empty, or `rm -r <path>` if it now has contents -- rmdir is the safer choice since it refuses to remove a non-empty directory.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-mkdir",
+    "title": "man page for mkdir, as installed on the reference host",
+    "url_or_man": "man mkdir(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "ln-links",
+   "tool": "ln",
+   "category": "filesystem",
+   "intent": "Create a hard link or a symbolic link so one file can be reached from two paths",
+   "rhel_versions": {
+    "7": {
+     "command": "ln -s /opt/tool/current /opt/tool/latest",
+     "notes": "With no flag, ln creates a HARD link (a second directory entry for the same inode, same filesystem only, no concept of 'pointing at nothing'). -s creates a SYMBOLIC link instead: a small file that just names a target path, can cross filesystems, and can go dangling if the target moves or is removed."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-s",
+     "explain": "Create a symbolic link instead of a hard link.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Remove an existing destination path first instead of erroring if it already exists.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Print each link as it is created.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ls -l` on the link shows it pointing at the intended target (symlink), or `stat` shows the same inode number as the original (hard link).",
+   "undo": "Remove the link itself with `rm <link-path>` -- this never touches the target file's data either way.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-ln",
+    "title": "man page for ln, as installed on the reference host",
+    "url_or_man": "man ln(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "chmod-permissions",
+   "tool": "chmod",
+   "category": "filesystem",
+   "intent": "Change who can read, write, or execute a file or directory",
+   "rhel_versions": {
+    "7": {
+     "command": "chmod 0640 /etc/app/secrets.conf",
+     "notes": "Accepts an octal mode (0640 = owner rw, group r, other none) or a symbolic form (u+x, go-w). -R applies recursively, which on a directory tree with mixed file/directory permission needs (files usually should not be +x, directories usually need +x to be enterable) can silently break things applied bluntly."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-R",
+     "explain": "Apply recursively to every file and directory under the given path.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Print each file as its mode is changed.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--reference",
+     "explain": "Copy the mode from a reference file instead of specifying one directly.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ls -l` or `stat -c %a <path>` shows the intended mode.",
+   "undo": "Set the mode back to its previous value with another chmod -- there is no automatic 'previous mode' recall, so note the mode (`stat -c %a`) before changing it if the change might need reversing.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-chmod",
+    "title": "man page for chmod, as installed on the reference host",
+    "url_or_man": "man chmod(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "chown-ownership",
+   "tool": "chown",
+   "category": "filesystem",
+   "intent": "Change which user and group own a file or directory",
+   "rhel_versions": {
+    "7": {
+     "command": "chown app:app /var/lib/app/data",
+     "notes": "Accepts user, user:group, or :group forms. -R applies recursively -- across a large or shared tree this is caught by content/dangerous.json's dp-chown-R pattern and forces the red confirmation banner, since a wrong recursive chown can strand every file in a directory under the wrong owner with no record of what it was before."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-R",
+     "explain": "Apply recursively to every file and directory under the given path.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-v",
+     "explain": "Print each file as its ownership is changed.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--reference",
+     "explain": "Copy owner and group from a reference file instead of naming them directly.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`ls -l` or `stat -c %U:%G <path>` shows the intended owner and group.",
+   "undo": "Set ownership back to its previous value with another chown -- there is no automatic recall, so note the prior owner:group (`stat -c %U:%G`) before a change that might need reversing, especially before -R on a shared tree.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-chown",
+    "title": "man page for chown, as installed on the reference host",
+    "url_or_man": "man chown(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "stat-file-metadata",
+   "tool": "stat",
+   "category": "filesystem",
+   "intent": "See a file's exact size, permissions, owner, inode, and timestamps in one shot",
+   "rhel_versions": {
+    "7": {
+     "command": "stat -c '%A %U:%G %s %Y %n' /etc/shadow",
+     "notes": "Prints far more than ls -l does in one place: inode number, link count, exact byte size, block allocation, and all three timestamps (access, modify, change). -c with a format string picks specific fields for scripting; with no -c it prints the full human-readable block."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-c",
+     "explain": "Print specific fields using a format string instead of the full block.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-L",
+     "explain": "Follow symlinks and report on the target instead of the link itself.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-f",
+     "explain": "Report on the filesystem the file lives on, not the file itself.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported metadata (size, owner, mode, timestamps) matches what the operator expects for that file.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-stat",
+    "title": "man page for stat, as installed on the reference host",
+    "url_or_man": "man stat(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "du-disk-usage",
+   "tool": "du",
+   "category": "filesystem",
+   "intent": "See how much disk space a directory tree is actually using, and which subdirectories are the biggest",
+   "rhel_versions": {
+    "7": {
+     "command": "du -sh /var/log/*",
+     "notes": "-s summarizes each named argument to one total instead of listing every file underneath; -h prints human-readable units. Reports space actually allocated on disk, which can differ from a file's logical size for sparse files."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-s",
+     "explain": "Summarize: print one total per argument instead of every file underneath.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-h",
+     "explain": "Human-readable sizes (K, M, G) instead of raw block counts.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "--max-depth",
+     "explain": "Limit how many directory levels deep the breakdown goes.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported sizes are consistent with what `df` shows being used on that filesystem, and identify the expected large consumer.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-du",
+    "title": "man page for du, as installed on the reference host",
+    "url_or_man": "man du(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "df-filesystem-space",
+   "tool": "df",
+   "category": "filesystem",
+   "intent": "Check how much free space is left on each mounted filesystem before an install, backup, or log rotation runs out of room",
+   "rhel_versions": {
+    "7": {
+     "command": "df -h",
+     "notes": "Reports space per MOUNTED FILESYSTEM, not per directory -- use du to find what inside a full filesystem is consuming the space. -h prints human-readable units; -i reports inode usage instead of block usage, which matters when 'no space left' happens with blocks still free (inode exhaustion)."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-h",
+     "explain": "Human-readable sizes (K, M, G) instead of 1K blocks.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-i",
+     "explain": "Report inode usage/availability instead of block usage.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-T",
+     "explain": "Include each filesystem's type (xfs, ext4, tmpfs, etc.) in the output.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The reported free space and use percentage match what the operator expects for that mount point.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-df",
+    "title": "man page for df, as installed on the reference host",
+    "url_or_man": "man df(1)",
+    "version": "coreutils 8.32-git",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "mount-attach-filesystem",
+   "tool": "mount",
+   "category": "filesystem",
+   "intent": "Attach a filesystem (a disk partition, an NFS export, an ISO image) to a directory so its contents become reachable",
+   "rhel_versions": {
+    "7": {
+     "command": "mount /dev/sdb1 /mnt/data",
+     "notes": "With device and mount point both given, mounts that filesystem there; with neither, mount alone lists everything currently mounted. A mount made this way is NOT persistent across reboot unless it is also added to /etc/fstab -- that is a separate, deliberate step, not a side effect of running mount."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-t",
+     "explain": "Specify the filesystem type explicitly instead of letting mount detect it.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-o",
+     "explain": "Pass mount options (ro, noexec, nosuid, remount, etc.).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-r",
+     "explain": "Mount read-only.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "Mount everything listed in /etc/fstab that is not already mounted.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`mount | grep <mountpoint>` or `findmnt <mountpoint>` shows the filesystem attached with the expected options.",
+   "undo": "Unmount it with `umount <mountpoint>` -- this detaches the filesystem but does not touch data on it, and (unless also added to /etc/fstab) the mount would not have survived a reboot anyway.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-mount",
+    "title": "man page for mount, as installed on the reference host",
+    "url_or_man": "man mount(8)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "umount-detach-filesystem",
+   "tool": "umount",
+   "category": "filesystem",
+   "intent": "Detach a mounted filesystem cleanly before removing the media or resizing/repairing it",
+   "rhel_versions": {
+    "7": {
+     "command": "umount /mnt/data",
+     "notes": "Refuses to unmount a filesystem that is busy (an open file, a process with its working directory there) unless -f (force) or -l (lazy) is given, both of which can leave a process's open handle to now-vanished data -- neither is the safe default; the safe default is finding and stopping whatever is using the mount point first (fuser -m or lsof)."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-f",
+     "explain": "Force the unmount even if the filesystem is reported busy -- can orphan a process's open file handle.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-l",
+     "explain": "Lazy unmount: detach the mount point now, actually free the filesystem once nothing is using it anymore.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-a",
+     "explain": "Unmount every filesystem listed in /proc/mounts that can be unmounted.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "`mount | grep <mountpoint>` (or `findmnt <mountpoint>`) shows nothing -- the mount point is gone.",
+   "undo": "Mount the filesystem again with the original mount command/options -- this does not touch data on it, and does not itself change /etc/fstab if that also needs editing.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-umount",
+    "title": "man page for umount, as installed on the reference host",
+    "url_or_man": "man umount(8)",
+    "version": "util-linux 2.32-2.40",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "lsblk-list-block-devices",
+   "tool": "lsblk",
+   "category": "filesystem",
+   "intent": "See every disk and partition the kernel currently knows about, and where each is mounted, before touching any of them",
+   "rhel_versions": {
+    "7": {
+     "command": "lsblk -f",
+     "notes": "Reads the kernel's block-device tree (not /etc/fstab) and prints it as a hierarchy: disks, their partitions, and any mounted filesystem on each. -f adds filesystem type, label, and UUID -- exactly what's needed to identify a device correctly before running mount, mkfs, or a partitioning tool against it, none of which lsblk itself does."
+    },
+    "8": {
+     "same_as": "7"
+    },
+    "9": {
+     "same_as": "7"
+    },
+    "10": {
+     "same_as": "7"
+    }
+   },
+   "flags": [
+    {
+     "flag": "-f",
+     "explain": "Include filesystem type, label, and UUID for each device.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-o",
+     "explain": "Choose which columns to print.",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    },
+    {
+     "flag": "-p",
+     "explain": "Print full device paths (/dev/sdb1) instead of bare names (sdb1).",
+     "source_ref": null,
+     "license_class": "paraphrase-only"
+    }
+   ],
+   "verify": "The listed disks/partitions and mount points match the operator's expectation of the host's storage layout.",
+   "undo": "Nothing to undo -- read-only.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-lsblk",
+    "title": "man page for lsblk, as installed on the reference host",
+    "url_or_man": "man lsblk(8)",
+    "version": "util-linux 2.32-2.40",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
