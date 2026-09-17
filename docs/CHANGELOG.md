@@ -27,6 +27,34 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   `dist/md-code-red_v1.0.0-alpha.1.*` (sha256 `0234322c...4001`) is unaffected
   and unchanged.
 
+- **`rm -rf dist` silently broke the standing clean-rebuild recipe.**
+  `dist/` has carried tracked release artifacts (the shipped `.html`, its
+  `.sha256`, its `.provenance.json`) since v1.0.0-alpha.1 was tagged, but
+  `build.py` does not regenerate all of them -- so `rm -rf dist`, the exact
+  command `docs/QA_GATES.md`, `docs/WORKFLOW.md`, `docs/CODE_STANDARDS.md`
+  and `docs/ARCHITECTURE_BIBLE.md` all documented as the standing clean-build
+  step, deletes a committed file that stays gone until someone notices and
+  runs `git checkout -- dist`. Left alone, `python3 -m unittest discover -s
+  tests` then fails with an unhandled `FileNotFoundError` in
+  `tests/test_no_raw_trojan_chars.py` rather than a clear message. Every
+  documented instance of `rm -rf dist && python3 build.py` is now
+  `git clean -fdx dist && python3 build.py` (`docs/QA_GATES.md` gained a
+  "Clean rebuild" section explaining why: `git clean -fdx dist` removes only
+  untracked files, so it can never delete a release artifact). Historical,
+  dated entries in this file and in `README.md`'s "Recent changes" describing
+  what was actually run at the time are left as written -- they predate the
+  v1.0.0-alpha.1 tag that made `rm -rf dist` unsafe, and rewriting a dated
+  record to say something different from what was literally run would
+  misrepresent it. `qa.py`'s `dist_integrity_failures()` gained a third
+  check: a git-tracked `dist/` file missing from disk is now refused by name
+  with `git checkout -- dist`, distinct from the stray-file message (whose
+  fix, `git clean -fdx dist`, is the wrong command for a missing file).
+  `tests/test_no_raw_trojan_chars.py` no longer crashes on a git-tracked
+  file absent from the working tree; it reports the gap as a clear,
+  named `FAIL` instead. Proven fail-first against the real tree (a real
+  `rm -rf dist/*.provenance.json` reproduced the crash before the fix and a
+  clear FAIL after it). Released artifact unaffected and unchanged.
+
 ## v1.0.0-alpha.1 — 2026-09-18 (lab-only alpha)
 
 First internal alpha, released to SALM-controlled lab pilot hosts only.

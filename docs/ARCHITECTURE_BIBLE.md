@@ -1,8 +1,11 @@
 # Architecture Bible -- MD CODE RED
 
 Written from the code that ships (`build.py`, `extract/schema.py`, `template.html`,
-`qa.py`, `docs/QA_GATES.md`) against the artifact `rm -rf dist && python3 build.py`
-actually produces, not from the PRD or from ADR-001. Where this document and
+`qa.py`, `docs/QA_GATES.md`) against the artifact `git clean -fdx dist && python3
+build.py` actually produces (never `rm -rf dist` -- `dist/` has carried tracked
+release artifacts since v1.0.0-alpha.1 was tagged, and `build.py` does not
+regenerate all of them; `docs/QA_GATES.md`'s "Clean rebuild" section says why),
+not from the PRD or from ADR-001. Where this document and
 ADR-001 disagree, this document is describing what exists today; ADR-001 is the
 design record of how the team got there and is not restated here. A skilled
 engineer with this file, `docs/QA_GATES.md`, and the source should be able to
@@ -778,16 +781,19 @@ reference for that view rather than a description of dead weight.
 ## Appendix: Rebuild Verification Checklist
 
 Run in order from a clean checkout; every step should be green before trusting a
-change:
+change. Use `git clean -fdx dist`, never `rm -rf dist`: `dist/` has carried
+tracked release artifacts since v1.0.0-alpha.1 was tagged, `build.py` does not
+regenerate all of them, and `git clean -fdx dist` removes only what git does
+not track (`docs/QA_GATES.md`'s "Clean rebuild" section says why):
 
-1. `rm -rf dist && python3 build.py` -- clean build, no schema errors, prints a
-   sha256 and a content fingerprint.
+1. `git clean -fdx dist && python3 build.py` -- clean build, no schema errors,
+   prints a sha256 and a content fingerprint.
 2. `python3 qa.py` -- all 22 gates plus `JS` PASS (Node required for Q18/Q19;
    `JS` correctly downgrades to PENDING without it).
 3. `python3 -m unittest discover -s tests` -- 204 tests OK on this build.
 4. `node tests/hostile_harness.js` -- 81,577 checks, 0 FAILED.
-5. Build twice from the same sources (`rm -rf dist && python3 build.py` a second
-   time on the same day) and diff the two artifacts -- they should be
+5. Build twice from the same sources (`git clean -fdx dist && python3 build.py`
+   a second time on the same day) and diff the two artifacts -- they should be
    byte-identical (`build.py` has no wall-clock dependency beyond the build date,
    which is stable within a day).
 6. Open the built file in a real browser and drive it by hand for the three

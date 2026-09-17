@@ -23,6 +23,23 @@ usually missing from documents like this:
 tracked with IDs (`MCR-SEC-*` from Marcus Reed's security reviews, `AL-GATE3-*`
 from Al's Gate 3 diff review) and referenced in the rows they belong to.
 
+## Clean rebuild: `git clean -fdx dist`, never `rm -rf dist`
+
+`dist/` has carried tracked release artifacts since v1.0.0-alpha.1 was tagged:
+`md-code-red_v1.0.0-alpha.1.html`, its `.sha256` sidecar, and its
+`.provenance.json` manifest are all committed to this repo, not merely
+build output. `rm -rf dist` deletes tracked content that `build.py` does not
+regenerate (only `extract/make_provenance.py` writes the provenance manifest,
+and it is not part of a normal `build.py` run) -- so the "clean, then rebuild"
+step the integrator checklist and `docs/WORKFLOW.md`/`docs/CODE_STANDARDS.md`
+document as standing practice quietly breaks the working tree every time it is
+followed literally, leaving a committed file gone until someone notices and
+restores it. `git clean -fdx dist` removes only what git does NOT track --
+exactly the stale artifacts and stray sidecars this file's Q1 section and
+`dist_integrity_failures()` exist to refuse -- and leaves the release
+artifacts alone. Use `git clean -fdx dist && python3 build.py` everywhere the
+old `rm -rf dist && python3 build.py` recipe is written down.
+
 ---
 
 ## The table

@@ -367,16 +367,47 @@ def newest_source_mtime():
     return max(stats)
 
 
+def tracked_dist_files():
+    """git-tracked paths under dist/ (repo-relative), or None if git is
+    unavailable or dist/ is untracked (a non-git checkout, or a scratch
+    directory in a test).
+
+    dist_integrity_failures() uses this to tell a MISSING tracked release
+    artifact apart from a STRAY untracked one -- the two are opposite
+    problems and call for opposite commands. `dist/` has carried committed
+    release files (the shipped `.html`, its `.sha256`, its
+    `.provenance.json`) since v1.0.0-alpha.1 was tagged; `rm -rf dist`
+    deletes them and `python3 build.py` alone does not bring all of them
+    back, which is exactly the trap `git clean -fdx dist` (untracked-only)
+    does not spring.
+    """
+    git = shutil.which("git")
+    if not git:
+        return None
+    proc = subprocess.run([git, "ls-files", "-z", "--", "dist"], cwd=REPO,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        return None
+    return [n for n in proc.stdout.decode("utf-8", "replace").split("\0") if n]
+
+
 def dist_integrity_failures():
-    """Refuse a dirty dist/ by name, and a stale-but-correctly-named
-    artifact by mtime -- the two halves of AL-GATE3-001 that find_artifact()
-    alone cannot close (it only ever returns ONE path; it says nothing about
-    what else is sitting next to it, or whether that one path is fresh).
+    """Refuse a dirty dist/ by name, a MISSING tracked release file by name,
+    and a stale-but-correctly-named artifact by mtime -- the three things
+    find_artifact() alone cannot close (it only ever returns ONE path; it
+    says nothing about what else should or should not be sitting next to
+    it, or whether that one path is fresh).
 
     DECISION_LOG 2026-09-17/18: three incidents from one root cause, two
     false FAILs and one push-before-read. A dirty dist/ is now a hard
     refusal, named, with the cleanup command spelled out -- not a silent
-    pass and not a guess at which file to gate.
+    pass and not a guess at which file to gate. Cleanup is ALWAYS
+    `git clean -fdx dist`, never `rm -rf dist`: dist/ has carried tracked
+    release artifacts since v1.0.0-alpha.1 was tagged, and `build.py` alone
+    does not regenerate all of them (see docs/QA_GATES.md's "Clean rebuild"
+    section) -- `git clean -fdx dist` removes only what git does not track,
+    so it can never be the cause of the missing-file case this function also
+    checks for.
 
     Returns a list of failure strings; empty means dist/ is clean enough to
     proceed. Callers exit non-zero on any entry (build_ctx() does; a build
@@ -405,8 +436,20 @@ def dist_integrity_failures():
             "artifact or sidecar sitting next to the real one is exactly what let a "
             "QA gate validate a file build.py did not just produce (AL-GATE3-001; "
             "DECISION_LOG 2026-09-17/18, three incidents this cycle). Clean dist/ "
-            "before gating it: `git clean -fdx dist` or `rm -rf dist && python3 build.py`."
+            "before gating it: `git clean -fdx dist && python3 build.py` -- never "
+            "`rm -rf dist`, which deletes dist/'s own tracked release files too."
             % (len(strays), expected_name, ", ".join(strays)))
+    tracked = tracked_dist_files()
+    if tracked:
+        missing = sorted(os.path.basename(rel) for rel in tracked
+                         if not os.path.exists(os.path.join(REPO, rel)))
+        if missing:
+            out.append(
+                "dist/ is missing %d file(s) git tracks as part of the released artifact: "
+                "%s. A committed release file was deleted -- most likely `rm -rf dist` "
+                "instead of `git clean -fdx dist` -- and never restored. Restore it: "
+                "`git checkout -- dist`."
+                % (len(missing), ", ".join(missing)))
     expected_path = os.path.join(DIST, expected_name)
     if os.path.exists(expected_path):
         newest_mtime, newest_path = newest_source_mtime()
@@ -414,7 +457,7 @@ def dist_integrity_failures():
             out.append(
                 "dist/%s is older than %s -- the artifact predates its own build input, "
                 "so it cannot be what building the current tree would produce. Rebuild: "
-                "`rm -rf dist && python3 build.py`."
+                "`git clean -fdx dist && python3 build.py`."
                 % (expected_name, os.path.relpath(newest_path, REPO)))
     return out
 

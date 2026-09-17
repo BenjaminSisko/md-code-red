@@ -218,11 +218,16 @@ earlier draft.
 **Mandatory.** The full local sequence before any commit is considered done:
 
 ```
-rm -rf dist && python3 build.py
+git clean -fdx dist && python3 build.py
 python3 qa.py
 python3 -m unittest discover -s tests
 node tests/hostile_harness.js
 ```
+
+`git clean -fdx dist`, never `rm -rf dist`: `dist/` has carried tracked release
+artifacts since v1.0.0-alpha.1 was tagged, and `build.py` does not regenerate
+all of them, so `rm -rf dist` deletes committed files a rebuild will not
+restore. `git clean -fdx dist` removes only what git does not track.
 
 `docs/QA_GATES.md` is the authority on what each of the 22 gates proves, how it
 has been watched fail, and what it explicitly does not cover -- read it, not a
