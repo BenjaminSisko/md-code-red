@@ -153,21 +153,24 @@ def entry_errors(e, ctx):
         errs.append("commands entry %s: tool '%s' does not exist in tools.json" % (eid, e["tool"]))
     errs += provenance_errors("commands entry %s" % eid, e.get("source"))
     errs += rhel_versions_errors(eid, e.get("rhel_versions"))
-    errs += flags_errors(eid, e.get("flags"), ctx)
+    errs += flags_errors(eid, e.get("flags"), dict(ctx, entry_verified=bool(e.get("verified"))))
     errs += stig_errors(eid, e.get("stig"), ctx)
     errs += verified_errors(eid, e.get("verified"))
     return errs
 
 
 def flags_errors(eid, flags, ctx):
-    """Every flag names itself and carries an explain key — null only while empty.
+    """Every flag names itself and carries an explain key — null until the entry is verified.
 
     ADR-001 §5.1: `explain` is *curated*, never generated at render time, and a
     flag with no curated explain is emitted as null so the UI can say "unverified —
-    see man page". Null is honest only while the FLAGS dictionaries are still empty
-    (no RHEL host has been read — CR-T-09..12). Once a dictionary for the entry's
-    versions exists, a null explain means someone skipped the curation step, and
-    that is a schema error.
+    see man page". Reading a RHEL host (CR-T-09..12) yields flag *names* and
+    package versions, not explanations; those are authored later with a citation
+    (man pages are paraphrase-only). So null stays honest until the entry is marked
+    `verified: true`; a verified entry with a null explain skipped the curation step,
+    and that is a schema error. Integrator ruling, Eli Cross, 2026-09-17 (replaces the
+    CR-T-06 "null only while dictionaries are empty" rule, which conflated extraction
+    with curation and turned red the moment CR-T-10 landed real flags).
     """
     errs = []
     if flags is None:
@@ -185,9 +188,9 @@ def flags_errors(eid, flags, ctx):
         if "explain" not in fl:
             errs.append("commands entry %s: flag '%s' has no explain key — a flag with no curated "
                         "explanation is emitted as explain:null, never omitted" % (eid, name))
-        elif fl.get("explain") is None and not ctx["flags_datasets_empty"]:
-            errs.append("commands entry %s: flag '%s' has explain:null but the FLAGS dictionaries are "
-                        "populated — null is only honest while no RHEL host has been read (CR-T-09..12)"
+        elif fl.get("explain") is None and ctx.get("entry_verified"):
+            errs.append("commands entry %s: flag '%s' has explain:null but the entry is verified:true — "
+                        "a verified entry must carry a curated, cited explanation for every flag"
                         % (eid, name))
         lc = fl.get("license_class")
         if lc and lc not in LICENSE_CLASSES:

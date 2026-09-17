@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .DS_Store
-content-src/raw/
 tests/captures/**/*.tmp
 
 # Built artifacts. ADR-001 §9 wants a release artifact committed to dist/ and CI

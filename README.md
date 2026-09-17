@@ -16,6 +16,25 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** — CR-T-09/10, branch `salm/milo/flags-extract` (Milo Vance). **The FLAGS dictionaries
+  are now real, not empty skeletons — for two of the four RHEL releases.** `extract/extract_flags.py`
+  SSHes (read-only, no sudo) to Defiant (RHEL 8.10) and Saratoga (RHEL 10.2), pulls `man -P cat` /
+  `--help` / `rpm -qf` for the 22 P0 tools, saves the raw text under `content-src/raw/rhel<N>/`
+  (git-ignored — the paraphrase-only source of record), and parses each tool's OPTIONS-style
+  definition list into `content/flags_rhel<N>.json`: flag names, whether each takes an argument, and
+  `explain: null` — man-page text is GPL-2.0-or-later, paraphrase-only, and this extractor never writes
+  prose; curation is a separate, later, human step (Caleb, RHEL SME) that a re-run never clobbers.
+  Anything option-shaped the parser can't confidently resolve is left as raw text under `unparsed[]`
+  rather than guessed. **Defiant: 22/22 tools, 952 flags parsed, 1 unparsed. Saratoga: 22/22 tools,
+  1,019 flags parsed, 3 unparsed.** `--check` mode re-parses the committed raw dumps offline (no SSH)
+  so `qa.py` Q15 can prove reproducibility without depending on the lab hosts being reachable in CI.
+  RHEL 9 (CR-T-11) stays blocked on VM provisioning; RHEL 7 (CR-T-12) stays gated on the UBI7 path.
+  **Known conflict, not worked around:** the concurrent CR-T-06 schema module makes a command entry's
+  `flags[].explain: null` an error once any FLAGS dictionary is non-empty, and `content/commands.json`
+  currently has 4 such flags — so `build.py`/`qa.py`/the unit tests do not go green end to end on this
+  branch until that's resolved (content curation, a schema scoping fix, or a sequencing call — none of
+  them this branch's file, see `docs/CHANGELOG.md`).
+
 - **2026-09-17** — CR-T-06/07, branch `salm/milo/xccdf-pipeline` (Milo Vance). **The RULES datasets are now
   the whole benchmark, not a sample.** `extract/parse_xccdf.py` replaces the CR-T-02 stand-in and parses all
   four pinned DISA XCCDFs after verifying `stig-src/SHA256SUMS`: **1,492 rules — RHEL 7 244, RHEL 8 369,

@@ -1,0 +1,132 @@
+{
+ "auditctl": {
+  "page": "auditctl",
+  "section": "8",
+  "source": "man"
+ },
+ "ausearch": {
+  "page": "ausearch",
+  "section": "8",
+  "source": "man"
+ },
+ "chage": {
+  "page": "chage",
+  "section": "1",
+  "source": "man"
+ },
+ "chronyd": {
+  "page": "chronyd",
+  "section": "8",
+  "source": "man"
+ },
+ "chronyd.chrony.conf": {
+  "page": "chrony.conf",
+  "section": "5",
+  "source": "man"
+ },
+ "chronyd.chronyc": {
+  "page": "chronyc",
+  "section": "1",
+  "source": "man"
+ },
+ "dnf": {
+  "page": "dnf",
+  "section": "8",
+  "source": "man"
+ },
+ "firewall-cmd": {
+  "page": "firewall-cmd",
+  "section": "1",
+  "source": "man"
+ },
+ "git": {
+  "page": "git",
+  "section": "1",
+  "source": "man"
+ },
+ "journalctl": {
+  "page": "journalctl",
+  "section": "1",
+  "source": "man"
+ },
+ "lvcreate": {
+  "page": "lvcreate",
+  "section": "8",
+  "source": "man"
+ },
+ "lvextend": {
+  "page": "lvextend",
+  "section": "8",
+  "source": "man"
+ },
+ "nmcli": {
+  "page": "nmcli",
+  "section": "1",
+  "source": "man"
+ },
+ "podman": {
+  "page": "podman",
+  "section": "1",
+  "source": "man"
+ },
+ "pvcreate": {
+  "page": "pvcreate",
+  "section": "8",
+  "source": "man"
+ },
+ "rsyslogd": {
+  "page": "rsyslogd",
+  "section": "8",
+  "source": "man"
+ },
+ "rsyslogd.rsyslog.conf": {
+  "page": "rsyslog.conf",
+  "section": "5",
+  "source": "man"
+ },
+ "semanage": {
+  "page": "semanage",
+  "section": "8",
+  "source": "man"
+ },
+ "setsebool": {
+  "page": "setsebool",
+  "section": "8",
+  "source": "man"
+ },
+ "sshd": {
+  "page": "sshd",
+  "section": "8",
+  "source": "man"
+ },
+ "sshd.sshd_config": {
+  "page": "sshd_config",
+  "section": "5",
+  "source": "man"
+ },
+ "systemctl": {
+  "page": "systemctl",
+  "section": "1",
+  "source": "man"
+ },
+ "useradd": {
+  "page": "useradd",
+  "section": "8",
+  "source": "man"
+ },
+ "usermod": {
+  "page": "usermod",
+  "section": "8",
+  "source": "man"
+ },
+ "vgcreate": {
+  "page": "vgcreate",
+  "section": "8",
+  "source": "man"
+ },
+ "yum": {
+  "page": "yum",
+  "section": "8",
+  "source": "man"
+ }
+}
