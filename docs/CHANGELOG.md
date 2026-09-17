@@ -54,6 +54,193 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   named `FAIL` instead. Proven fail-first against the real tree (a real
   `rm -rf dist/*.provenance.json` reproduced the crash before the fix and a
   clear FAIL after it). Released artifact unaffected and unchanged.
+### Added — Grey Beard content port, part 3: the Ansible generators, and MCR-SEC-010 closed
+
+`yamlQuote()` was deleted in the alpha on purpose. It was correct, it had no
+call site, and Q18's quoting-domain gate was therefore passing on a domain
+that did not exist — which read as "Ansible YAML output is proven safe" and
+was not true. It was removed with one standing condition attached (Marcus
+Reed's D3): **the sink, the quoter and a YAML-parsing oracle ship in the same
+commit, or not at all.** This is that commit.
+
+**The sink.** `composeDoc()` in the assembler block. A generator may now
+declare a `doc` alongside its `template`, and emits two things: the command
+the operator runs, and the FILE that command runs against. Three generators
+use it, ported from Grey Beard's own `wireSimpleGens()`:
+
+| generator | file | command |
+|---|---|---|
+| `gen-ansible-playbook` | `site.yml` | `ansible-playbook site.yml --limit='…' --check --diff` |
+| `gen-ansible-inventory` | `inventory.yml` | `ansible-inventory -i inventory.yml --graph` |
+| `gen-ansible-cfg` | `ansible.cfg` | `ansible-config dump --only-changed` |
+
+Grey Beard's own playbook generator quoted only the play name, and its YAML
+inventory generator interpolated group and host names into the document with
+no quoting at all. Both go through the quoter here — including the mapping
+KEYS, which is the half that was bare, because a key is a scalar too.
+
+**The quoter.** `yamlQuote()`, its own escaping domain, sharing no code and no
+idiom with `shQuote()`. A YAML single-quoted scalar has exactly one escape and
+it is `''`; there is no backslash escape, so `shQuote()`'s `'\''` is not
+merely cosmetically wrong in this grammar, it produces a different value that
+does not parse. Uniform, with no bare-value branch: the only unquoted scalars
+a file can contain come from a `bool` line, whose value is a JSON boolean in
+the curated spec. **There is no path from a form field to a bare YAML scalar.**
+
+**The oracle.** `parseYamlSubset()` and `parseIniSubset()` in
+`tests/hostile_harness.js`, built the way `parseRichRule()` was built and for
+the same reason: shell tokenisation proves a value sits inside one shell word
+and says nothing about the grammar of whatever consumes that word. Every
+emitted file is parsed and compared line for line against the operator's
+intent — every value back out exactly as it went in, **every operator value
+quoted** (a value that parses while sitting bare is not contained, it is
+lucky), every curated boolean bare, and the line count unchanged so an
+injected or absorbed line fails on the count.
+
+**`ansible.cfg` gets no quoter, on purpose.** An INI entry has no escape
+sequence for a value carrying a newline, a `;`, a `#` or an `=`. Inventing a
+fourth escaper that cannot be written correctly is the mistake MCR-SEC-001
+refused for rich rules, so this grammar gets the same two rules rich rules
+got instead: a closed field-type allow-list (`comment` and `enum` deliberately
+absent) and a closed character re-check at composition time. "There is no
+quoter here" is itself a claim, so the harness drives **every** field type
+into an INI value slot: 13 refused structurally, 12 allow-listed and parsed
+back.
+
+**What the gates do now.**
+
+- Q18's SHELL-ONLY line is gone. It states two quoting domains and one grammar
+  with none, checks no pair of `shQuote`/`yamlQuote`/`esc`/`escapeAttr` nests
+  in either direction, requires sink + quoter + both oracles to be present,
+  and **fails on a zero oracle count** — because a quoter whose oracle quietly
+  stopped running is the same finding with the call site filled in.
+- Q5's `yamlQuote(` marker is live rather than PENDING, joined by
+  `composeDoc(` and `doCopyDoc(`. 65/65 markers, 0 pending.
+- `docs/QA_GATES.md`: the Q18 row rewritten, the Q5 row says why that marker
+  was pending, and MCR-SEC-010's finding row records how it closed.
+- `extract/schema.py` gains `doc_errors()`: the build refuses what the runtime
+  would refuse to compose. `tests/test_doc_spec_schema.py` (new, 20 tests)
+  holds the two copies to each other — the INI allow-list, the key/lit
+  patterns and the indent bound are compared against `template.html` directly,
+  the way `test_schema.py` already compares `FIELD_TYPES`.
+
+**Fail-first evidence**, run before this was committed:
+
+| break | result |
+|---|---|
+| `shQuote()` substituted for `yamlQuote()` in the sink | harness: **40 failures** ("text after the closing quote") |
+| quoter removed, value emitted bare | harness: **312 failures** ("unquoted value that is not a boolean") |
+| `parseYamlSubset()` renamed away, quoter kept | harness refuses to run; **Q18 FAIL** |
+| a `comment`-typed field wired into an `ansible.cfg` value | **build FATAL** at schema time |
+
+Harness totals: 84,205 checks, 0 failures — 316 YAML-file and 60 INI-file
+oracle checks, 36 generated-file structure checks (every doc generator, every
+release, every combination of its optional fields, every enum branch), 100 INI
+type checks, 88 invariants.
+
+### Added — Grey Beard content port, part 2: the 23 Ansible entries, and the Ansible rail goes live
+
+The Ansible rail in v1.0.0-alpha.1 rendered a paragraph beginning "This rail
+lands with its own task". That paragraph is what "I don't see any git or
+ansible content" was: a rail wired to a placeholder over a catalog with no
+Ansible in it.
+
+- 23 Ansible entries carried across from Grey Beard, in six categories:
+  **Check before you run** (5: `--syntax-check`, `--check --diff`,
+  `--list-hosts`, `--list-tasks`, `ansible-config dump --only-changed`),
+  **Target fewer hosts** (5: `--limit`, host patterns, `--start-at-task`,
+  `--step`, `--tags`), **Debug a failure** (5: `-m ping`, `-vvv`,
+  `ansible-inventory --host`, `ansible-doc`, `fetch`), **Facts & inventory**
+  (2: `--graph`, `-m setup -a filter=`), **Run & operate** (3: ad-hoc
+  `--become -K`, `--forks`, offline `ansible-galaxy collection install`),
+  **Vault & secrets** (3: `create`, `encrypt_string --stdin-name`, `rekey`).
+- 7 new `content/tools.json` records: `ansible`, `ansible-playbook`,
+  `ansible-inventory`, `ansible-doc`, `ansible-config`, `ansible-vault`,
+  `ansible-galaxy`. All seven are available on all four RHEL releases and
+  each says why: a control-node command is governed by the ansible-core
+  version on the machine you run it from, not by the release of the hosts it
+  reaches.
+- **`renderToolList()` slices tools.json by category.** The Ansible rail
+  renders the seven `ansible-*` tools; the Command Builder rail renders the
+  other 41. One renderer, one escaping idiom, one keyboard contract -- a
+  second hand-written list would be a second place to get Q17's audit rule
+  wrong. The placeholder paragraph no longer names the Ansible generator as
+  pending.
+- **Flag explanations come from Grey Beard's generated ansible-doc
+  dictionary** (`content/flags.json`, `extract/extract_ansible_doc.py`,
+  ansible-core 2.21.1). Records whose text is a `--help` usage-line fragment
+  rather than a description are not carried; the flag is dropped instead.
+  Three subcommand options that no top-level `--help` dictionary can hold
+  (`--graph`'s empty record, `--stdin-name`, `--only-changed`) carry an
+  explanation taken from that entry's own Grey Beard notes, which name the
+  flag and say what it does.
+- `tests/test_ansible_rail.py` (new, 6 tests): the rail's slice is a silent
+  failure mode -- a drifted category string renders an empty list that reads
+  as "this build has no content" rather than as a bug. These assert both
+  slices are non-empty, that every Ansible tool has at least one entry, that
+  every `a-*` entry is reachable from the rail, that no Ansible tool is gated
+  off a RHEL release, and that the placeholder prose the Founder read is gone.
+
+### Added — Grey Beard content port, part 1: the 41 RHEL entries (CR-T-33 tranche)
+
+The Founder's verdict on v1.0.0-alpha.1 was that the daily ground is not
+there. It was not: the alpha forked the Grey Beard Ansible field kit's ENGINE
+and left its CONTENT behind. This is the first half of bringing it across --
+41 RHEL entries from `orbit/grey-beard-ansible` `content/commands.json`, the
+same owner's own curated, Founder-used catalog.
+
+- Ten categories the catalog had nothing in: **Disks & LVM** (7), **systemd &
+  services** (5), **Networking** (4, plus chrony), **SELinux** (5),
+  **firewalld** (2), **Users & sudo** (4), **Logs & journald** (3),
+  **Packages** (4), **Processes & performance** (2), **Files & permissions**
+  (4).
+- 22 new `content/tools.json` records for the binaries those entries invoke
+  (`lsblk`, `df`, `du`, `pvs`, `findmnt`, `mount`, `ip`, `ss`, `chronyc`,
+  `getenforce`, `restorecon`, `id`, `last`, `visudo`, `logrotate`, `rpm`,
+  `createrepo_c`, `ps`, `kill`, `find`, `tar`, `stat`). Every one declares
+  availability on all four releases and says, in its note, that it was NOT
+  part of the CR-T-09/10 host extraction -- so no flag dictionary covers it
+  and none is implied.
+- **Versions, honestly.** Grey Beard is single-version and was authored and
+  used on RHEL 9, so RHEL 9 holds the concrete row and the other three point
+  at it with `same_as` -- which, by `extract/schema.py`'s own rule, can never
+  carry a verified receipt. `verified` is `false` on all four keys of all 41
+  entries; nothing here has been run on a host by this project yet. Three
+  releases are marked `unavailable` with a stated reason rather than guessed:
+  `dnf` on RHEL 7 (it is yum's release), and `findmnt --verify` and
+  `createrepo_c` on RHEL 7, where no staged RHEL 7 source and no RHEL 7 host
+  establishes the invocation.
+- **Flags are carried, never invented.** A flag token gets a curated
+  `explain` only when Grey Beard's own `content/rhel_flags.json` carried one;
+  otherwise it is `explain: null` and resolves through the shipped
+  `flags_rhel8`/`flags_rhel10` dictionaries, or it is a non-option subcommand
+  marked with a `license_class`. An option-shaped token with neither was
+  DROPPED from the panel rather than given prose this port made up -- Q22's
+  three honest shapes, and no fourth.
+- **Licence class follows the citation.** Where this repository already
+  stages the manual page, the entry cites `content-src/raw/rhel8/<bin>.man.txt`
+  as `paraphrase-only` and Q14's 8-gram check runs against the real bytes.
+  Where it does not, the entry cites the Grey Beard entry itself as
+  `verbatim-ok` -- the same owner's own prose in his own repository, which is
+  what it actually is, rather than a `paraphrase-only` claim pointed at a
+  corpus this repository does not hold (`qa.py attestation_failures()` would
+  then want a human receipt, and a receipt signed on someone else's behalf is
+  worth less than an honest licence class).
+- Five Grey Beard entries shipped as multi-line shell blocks
+  (`r-nfs-mount`, `r-journal-cap`, `r-localrepo`, `r-tar-restore`,
+  `r-kill`). Each is now one command, with the rest of the sequence written
+  out in its notes: a multi-line command cannot compose a clipboard payload
+  (`commentPayload()` returns null on a control character), and a
+  `<placeholder>` in shipped text is a placeholder someone runs. `r-tar` lost
+  its `$(date +%F)` for the same reason -- the command on screen is the
+  command on the clipboard.
+- `tests/fixtures/evidence/firewalld-service-active.rhel9.txt` regenerated:
+  its content-fingerprint line moves because the data island did.
+
+`dist/` is deliberately NOT re-cut on this branch. The committed artifact is
+the released v1.0.0-alpha.1; re-cutting it belongs to a release commit, and
+the gate order (`rm -rf dist && python3 build.py` first) builds it fresh
+anyway.
 
 ## v1.0.0-alpha.1 — 2026-09-18 (lab-only alpha)
 

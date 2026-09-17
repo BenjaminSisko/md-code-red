@@ -131,10 +131,17 @@ MARKERS = [
     ("field validator", "function validateField(", None),
     ("spec validator (which field is wrong)", "function validateSpec(", None),
     ("POSIX shell quoting", "function shQuote(", None),
-    # MCR-SEC-010: the YAML quoter was dead code with no call site, so Q18's
-    # quoting-domain gate passed on a domain that did not exist. It is removed
-    # and reported PENDING until the Ansible generator gives it a real sink.
-    ("YAML quoting (separate escaping domain)", "function yamlQuote(", "CR-T-17..25"),
+    # MCR-SEC-010, closed. The YAML quoter was once dead code with no call site,
+    # so Q18's quoting-domain gate passed on a domain that did not exist; it was
+    # removed and reported PENDING until a real sink existed. CR-T-25's Ansible
+    # generators are that sink -- composeDoc() emits the playbook, the inventory
+    # and the ansible.cfg -- and the quoter, the sink and a YAML-parsing oracle
+    # in tests/hostile_harness.js landed in one commit, which is the condition
+    # the PENDING was holding the row open for. It is a live marker now, and a
+    # build that loses either half fails Q18 rather than this row.
+    ("YAML quoting (separate escaping domain)", "function yamlQuote(", None),
+    ("generated-file composer (YAML and INI sinks)", "function composeDoc(", None),
+    ("generated-file clipboard payload", "function doCopyDoc(", None),
     ("rich-rule composition from validated sub-fields", "function composeRichRule(", None),
     ("blast evaluation against the destructive table", "function blastFor(", None),
     ("red-blast confirmation banner", "function renderBlastBanner(", None),
@@ -1445,7 +1452,8 @@ def gate_q1(ctx):
         f.append("unbalanced <script> open/close counts")
     if "/*__DATA__*/" in html:
         f.append("template placeholder /*__DATA__*/ was not replaced")
-    for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__"):
+    for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__",
+                  "__DEFAULT_VERSION__"):
         if token in html:
             f.append("template token %s was not substituted" % token)
     data = ctx["data"]
@@ -1519,6 +1527,46 @@ def gate_q1(ctx):
         else:
             d.append("content fingerprint matches a fresh sha256 of the shipped data island: %s"
                      % got_fp[:32])
+
+    # Milo Vance, daily-commands tranche (2026-09-17), problem 3: the version
+    # selector used to open on a hard-coded "9" -- the one RHEL release with no
+    # host captures, so the first screen was a wall of "Documented, not
+    # host-verified" notes under every tool. build.py's compute_default_version()
+    # derives the default from the SAME per-version verified receipts the
+    # inspector already reads and writes it into the shell as a plain constant,
+    # exactly like CONTENT_FINGERPRINT above. This is the independent re-check:
+    # recompute the expected version from ctx["data"] with the identical rule
+    # (most {by,on,host,capture} receipts wins, ties toward the lower RHEL
+    # version number) and compare it to what the shell actually carries, so a
+    # future content change can never silently leave the selector opening on a
+    # release nothing verifies.
+    dv_m = re.search(r'var DEFAULT_VERSION="([^"]*)"', html)
+    if not dv_m or not dv_m.group(1) or dv_m.group(1) == "__DEFAULT_VERSION__":
+        f.append("DEFAULT_VERSION constant is missing or unsubstituted in the shipped shell")
+    elif ctx["data"] is None:
+        f.append("default version cannot be checked — the data island did not parse")
+    else:
+        counts = {v: 0 for v in VERSIONS}
+        for e in ctx["data"].get("commands", {}).get("entries", []):
+            verified = e.get("verified")
+            if not isinstance(verified, dict):
+                continue
+            for v in VERSIONS:
+                if isinstance(verified.get(v), dict):
+                    counts[v] += 1
+        want_dv = sorted(VERSIONS, key=lambda v: (-counts[v], int(v)))[0]
+        got_dv = dv_m.group(1)
+        if got_dv not in VERSIONS:
+            f.append("DEFAULT_VERSION '%s' is not one of %s" % (got_dv, ", ".join(VERSIONS)))
+        elif got_dv != want_dv:
+            f.append("DEFAULT_VERSION is RHEL %s but the shipped verified-receipt counts (%s) say "
+                     "RHEL %s has the most host-verified content — the selector default and the "
+                     "content it is supposed to follow have drifted"
+                     % (got_dv, ", ".join("%s=%d" % (v, counts[v]) for v in VERSIONS), want_dv))
+        else:
+            d.append("default version selector (RHEL %s) matches the release with the most "
+                     "verified receipts (%s)"
+                     % (got_dv, ", ".join("%s=%d" % (v, counts[v]) for v in VERSIONS)))
     return f, d
 
 
@@ -2982,7 +3030,13 @@ HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected
                        # gate rather than in the code.
                        "pipeline_checks", "pipeline_oracles", "pipeline_negative_controls",
                        "pipeline_operator_seam_checks", "pipeline_interpreter_class_checks",
-                       "pipeline_stage_naming_checks", "one_stage_invariants")
+                       "pipeline_stage_naming_checks", "one_stage_invariants",
+                       # MCR-SEC-010. The two file-oracle counts are read the same
+                       # way every other count here is: proved present and integral
+                       # before they are believed, so a harness that stopped running
+                       # the YAML oracle is a FAIL line and not a quietly missing
+                       # sentence in the PASS text.
+                       "yaml_oracle_checks", "ini_oracle_checks")
 
 
 def harness_report_failures(rep, returncode, stderr=""):
@@ -3042,6 +3096,18 @@ def harness_report_failures(rep, returncode, stderr=""):
         f.append("the harness reported ZERO one-stage invariants. A pipeline of one stage must "
                  "equal assembleCommand() byte for byte; unasserted, the composer is free to "
                  "become a second, weaker assembler")
+    # MCR-SEC-010, the same empty-set rule applied to the file oracles. A YAML
+    # quoter whose oracle ran zero times is a dead escaper again — it just takes
+    # one more step to notice, because this time the function has a call site and
+    # only the PROOF is missing. Both counts are read, not one: the INI kind has
+    # no quoter at all, so its parser is the whole of its defence.
+    if not missing and not wrong:
+        for key, what in (("yaml_oracle_checks", "YAML"), ("ini_oracle_checks", "INI")):
+            if not rep[key]:
+                f.append("the harness reported ZERO %s-file oracle checks. The quoter and the sink "
+                         "are in the build and nothing parsed what they produced, which is "
+                         "MCR-SEC-010 with the call site filled in and the proof still missing "
+                         "(AL-GATE3-004 shape)" % what)
 
     if returncode != 0 and not failures:
         f.append("the harness exited %d without naming a failure: %s" % (returncode, (stderr or "")[:300]))
@@ -3078,6 +3144,11 @@ def harness_report_failures(rep, returncode, stderr=""):
                  "rules it asserts are policy over a target path and a child binary — a path "
                  "class nobody has written down still rates `unrated`, which is the honest answer "
                  "and not a safe one")
+        d.append("%d YAML-file and %d INI-file oracle checks: every generated playbook, inventory "
+                 "and ansible.cfg was PARSED and compared line for line to the operator's intent — "
+                 "every value back out exactly as it went in, every operator value quoted, every "
+                 "curated boolean bare, the line count unchanged (MCR-SEC-010)"
+                 % (rep["yaml_oracle_checks"], rep["ini_oracle_checks"]))
         d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
                  % rep["assembler_bytes"])
         d.append("the report was checked for shape before it was believed: every count this line "
@@ -3107,27 +3178,82 @@ def gate_q18(ctx):
         f.append("the hostile-input harness or its fixture is missing — CI merge-gate #4 cannot run")
         return f, d
 
-    # gate #9, quoting-domain confusion: the three escaping domains must never nest.
+    # gate #9, quoting-domain confusion: the escaping domains must never nest.
+    #
+    # MCR-SEC-010, and what changed. This half of Q18 was narrowed to SHELL-ONLY
+    # after a YAML quoter was found sitting in the assembler with no call site:
+    # the gate was passing on a domain that did not exist, which read as "Ansible
+    # YAML output is proven safe" and was not true. The narrowing carried one
+    # standing condition (Marcus Reed's D3): the sink, the quoter and a
+    # YAML-PARSING ORACLE in tests/hostile_harness.js ship in the same commit or
+    # not at all.
+    #
+    # CR-T-25 met it. This gate is therefore no longer shell-only, and the honest
+    # statement of what it checks now is:
+    #
+    #   TWO QUOTING DOMAINS, never nested in either direction and never
+    #   substituted for one another -- shQuote() for a POSIX shell word,
+    #   yamlQuote() for a YAML single-quoted scalar -- plus the DOM escapers
+    #   (esc/escapeAttr), which are a third job again.
+    #
+    #   ONE GRAMMAR WITH NO ESCAPER AT ALL: composeDoc()'s INI kind. An INI entry
+    #   has no escape sequence for a value carrying its own delimiters, so it
+    #   gets a closed type allow-list and a closed character set instead of a
+    #   quoter nobody can write correctly (MCR-SEC-001's ruling, applied to a
+    #   second grammar). "There is no quoter here" is itself a claim, so the
+    #   harness drives every field type into an INI value slot and reports how
+    #   many were refused structurally.
+    #
+    # The gate does NOT merely assert the quoter exists. Presence of all three
+    # pieces is checked HERE, and that the oracles actually RAN is checked by
+    # harness_report_failures() reading yaml_oracle_checks / ini_oracle_checks --
+    # because a quoter whose oracle silently stopped running is the same finding
+    # wearing a green tick.
     shell = ctx["shell"]
-    # MCR-SEC-010: SHELL-ONLY until the Ansible generator lands (CR-T-17+). The
-    # YAML half of this gate used to pass on a quoter with no call site, which
-    # read as "Ansible YAML output is proven safe" and was not true. If a YAML
-    # quoter comes back, it must come back with a YAML-parsing oracle in the
-    # harness in the same commit — the harness enforces that and fails here.
-    for outer, inner in (("shQuote", "esc"), ("shQuote", "escapeAttr"),
-                         ("esc", "shQuote"), ("escapeAttr", "shQuote")):
+    quoters = ("shQuote", "yamlQuote")
+    dom = ("esc", "escapeAttr")
+    pairs = []
+    for q in quoters:
+        for e in dom:
+            pairs.append((q, e))
+            pairs.append((e, q))
+    pairs.append(("shQuote", "yamlQuote"))
+    pairs.append(("yamlQuote", "shQuote"))
+    for outer, inner in pairs:
         if re.search(r"\b%s\s*\(\s*%s\s*\(" % (outer, inner), shell):
-            f.append("quoting-domain confusion: %s(%s(...)) — a shell quoter and a DOM escaper are "
-                     "two different jobs (threat-model-v1 §3.2)" % (outer, inner))
-    if "yamlQuote" in shell:
-        f.append("a YAML quoter is present in the shipped shell. MCR-SEC-010 removed the dead one; "
-                 "the sink that brings it back ships a YAML-parsing oracle in "
-                 "tests/hostile_harness.js in the SAME commit, and this gate's YAML half is "
-                 "re-enabled then — not before")
+            f.append("quoting-domain confusion: %s(%s(...)) — these are different jobs in "
+                     "different grammars, and a value that takes both paths is quoted for neither "
+                     "(threat-model-v1 §3.2)" % (outer, inner))
+    has_yaml_sink = "function composeDoc(" in shell
+    has_yaml_quoter = "function yamlQuote(" in shell
+    if has_yaml_sink and not has_yaml_quoter:
+        f.append("composeDoc() ships a YAML sink with no yamlQuote() beside it — MCR-SEC-010 "
+                 "with the consequence shipped rather than avoided")
+    if has_yaml_quoter and not has_yaml_sink:
+        f.append("yamlQuote() ships with no call site: composeDoc() is not in the shipped shell. "
+                 "That is exactly the dead escaper MCR-SEC-010 removed — it makes this gate "
+                 "pass on a domain that does not exist. Delete it, or land the sink it belongs to")
+    harness_src = ""
+    if os.path.exists(harness):
+        with open(harness, encoding="utf-8") as fh:
+            harness_src = fh.read()
+    if has_yaml_quoter and "function parseYamlSubset(" not in harness_src:
+        f.append("a YAML quoter ships and tests/hostile_harness.js defines no parseYamlSubset() "
+                 "— MCR-SEC-010's condition is a PARSING oracle, not a substring search for "
+                 "the value between quotation marks")
+    if has_yaml_sink and "function parseIniSubset(" not in harness_src:
+        f.append("composeDoc() ships and tests/hostile_harness.js defines no parseIniSubset() "
+                 "— the INI kind has no quoter by design, so its parser is the only thing "
+                 "standing between a form field and an ansible.cfg entry")
     if not f:
-        d.append("no shQuote/esc/escapeAttr call is nested inside another — the escaping domains "
-                 "stay separate (threat-model-v1 §11 gate 9). SHELL-ONLY: there is no YAML sink in "
-                 "this build and no dead YAML quoter pretending otherwise (MCR-SEC-010)")
+        d.append("no call to shQuote, yamlQuote, esc or escapeAttr is nested inside another, in "
+                 "either direction — TWO quoting domains (POSIX shell words, YAML "
+                 "single-quoted scalars) and the DOM escapers stay three separate jobs "
+                 "(threat-model-v1 §11 gate 9)")
+        d.append("the YAML sink, its quoter and its parsing oracles are all present: composeDoc() "
+                 "and yamlQuote() in the shipped shell, parseYamlSubset() and parseIniSubset() in "
+                 "tests/hostile_harness.js. MCR-SEC-010 asked for all three in one commit, and "
+                 "this gate is where that is still true tomorrow")
 
     node = shutil.which("node")
     if not node:
@@ -3592,7 +3718,15 @@ def gate_q22(ctx):
             if not cmd:
                 continue                  # unavailable on this release — nothing to check
             words = cmd.split()
-            if words and words[0] == "sudo":
+            # A leading "sudo" is ordinarily privilege-elevation noise in front of
+            # the real subject binary and is stripped before comparison -- EXCEPT
+            # when the entry's own declared binary IS sudo (the daily-commands
+            # tranche's su/sudo entry, Milo Vance, 2026-09-17): there the command
+            # legitimately starts and ends with "sudo" as the subject itself
+            # (e.g. "sudo -l"), and stripping it would compare sudo's OWN flag
+            # against the binary name and always fail. No existing entry has
+            # binary "sudo" today, so this changes nothing else.
+            if words and words[0] == "sudo" and binary != "sudo":
                 words = words[1:]
             first = words[0] if words else ""
             if first != binary:

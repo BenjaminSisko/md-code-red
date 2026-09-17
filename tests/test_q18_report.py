@@ -51,6 +51,11 @@ GOOD = {
     "pipeline_checks": 17092, "pipeline_oracles": 577, "pipeline_negative_controls": 11,
     "pipeline_operator_seam_checks": 332, "pipeline_interpreter_class_checks": 100,
     "pipeline_stage_naming_checks": 36, "one_stage_invariants": 96,
+    # MCR-SEC-010 (CR-T-25). The generated-file oracles are part of the report
+    # contract now: Q18 reads both counts and fails on a zero, because a YAML
+    # quoter whose oracle silently stopped running is the dead-escaper finding
+    # with the call site filled in and the proof still missing.
+    "yaml_oracle_checks": 316, "ini_oracle_checks": 60,
 }
 
 
@@ -119,6 +124,28 @@ class AMalformedReportIsACleanFail(unittest.TestCase):
         """The AL-GATE3-004 shape again: a harness that ran nothing proves nothing."""
         failures, _ = qa.harness_report_failures(dict(GOOD, checks=0), 0)
         self.assertTrue(failures, "a harness that reported zero checks was rated a PASS")
+
+    def test_zero_file_oracle_checks(self):
+        """MCR-SEC-010's own empty-set shape, and the reason this gate reads the
+        counts at all.
+
+        The original finding was a YAML quoter with no call site: the function
+        was right, nothing called it, and Q18 passed on a domain that did not
+        exist. CR-T-25 gave it a call site, so the same failure now looks
+        different -- the quoter and the sink are both in the build and the ORACLE
+        is what stopped running. A report saying zero files were parsed must fail
+        here, or MCR-SEC-010 comes back one step further along and green.
+
+        Both counts, separately: the INI kind has no quoter at all by design, so
+        its parser is the entire defence and a zero there is worth more alarm,
+        not less.
+        """
+        for key in ("yaml_oracle_checks", "ini_oracle_checks"):
+            with self.subTest(key=key):
+                failures, _ = qa.harness_report_failures(dict(GOOD, **{key: 0}), 0)
+                self.assertTrue(failures,
+                                "a harness that parsed ZERO generated files still passed Q18 "
+                                "(%s=0)" % key)
 
     def test_a_nonzero_exit_with_no_named_failure(self):
         failures, _ = qa.harness_report_failures(dict(GOOD), 3, "Segmentation fault")
