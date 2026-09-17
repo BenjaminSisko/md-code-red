@@ -223,10 +223,41 @@ def escape_island(payload):
     return payload.replace("<", "\\u003c").replace(">", "\\u003e")
 
 
+def compute_default_version(data):
+    """Which RHEL version the version selector should open on, derived from the
+    content instead of a hard-coded literal (Founder alpha feedback, 2026-09-17:
+    the selector defaulted to RHEL 9, the one release with no host captures, so
+    the first screen was a wall of "Documented, not host-verified" notes).
+
+    The metric: count, per RHEL version, how many command entries carry a REAL
+    verified receipt for that version (extract/schema.py's entry_has_any_receipt
+    shape — a dict of {by, on, host, capture}, never the bare `false` every
+    unreceipted version also holds). The version with the most receipts is the
+    one host-verified content actually backs. Ties break toward the lower RHEL
+    version number, for a result that is deterministic and easy to state out
+    loud rather than an arbitrary dict-ordering accident.
+
+    Returns (version, counts) — counts is returned too so build()'s own
+    printed report shows the numbers this decision came from, not just the
+    conclusion.
+    """
+    counts = {v: 0 for v in VERSIONS}
+    for e in data["commands"]["entries"]:
+        verified = e.get("verified")
+        if not isinstance(verified, dict):
+            continue
+        for v in VERSIONS:
+            if isinstance(verified.get(v), dict):
+                counts[v] += 1
+    default_version = sorted(VERSIONS, key=lambda v: (-counts[v], int(v)))[0]
+    return default_version, counts
+
+
 def build():
     data = load_content()
     validate(data)
     data = assemble(data)
+    default_version, version_verified_counts = compute_default_version(data)
 
     tpl_path = os.path.join(REPO, "template.html")
     with open(tpl_path, encoding="utf-8") as f:
@@ -254,7 +285,8 @@ def build():
               .replace("__VERSION__", APP_VERSION)
               .replace("__BUILT_DATE__", APP_BUILD_DATE)
               .replace("__CLASSIFICATION__", CLASSIFICATION)
-              .replace("__CONTENT_FINGERPRINT__", content_fingerprint))
+              .replace("__CONTENT_FINGERPRINT__", content_fingerprint)
+              .replace("__DEFAULT_VERSION__", default_version))
 
     dist = os.path.join(REPO, "dist")
     if not os.path.isdir(dist):
@@ -274,6 +306,9 @@ def build():
           % (size / 1024.0 / 1024.0, size))
     print("  sha256: %s" % digest)
     print("  content fingerprint (data island sha256): %s" % content_fingerprint)
+    print("  default version selector: RHEL %s (verified-receipt counts by version: %s)"
+          % (default_version,
+             ", ".join("RHEL %s=%d" % (v, version_verified_counts[v]) for v in VERSIONS)))
     ref = data["reference_commands"]
     ref_meta = ref.get("_meta") or {}
     print("  %d REFERENCE commands (tier: reference, not curated, not host-verified) "
