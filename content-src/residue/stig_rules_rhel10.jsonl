@@ -1,4 +1,4 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"stig_rules","generator":"extract/mine_commands.py","line_count":3352,"reasons":{"config-fragment":476,"interactive-tui":1,"output-fragment":257,"prose":2273,"unparseable":345},"rhel_version":"10","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"stig_rules","generator":"extract/mine_commands.py","line_count":3352,"reasons":{"config-fragment":478,"interactive-tui":1,"output-fragment":255,"prose":2273,"unparseable":345},"rhel_version":"10","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"f":"chk","l":1,"s":"RHEL-10-000510"},"r":"config-fragment","x":"Note: If there is a documented and approved reason for not having data-at-rest encryption at the operating system level, such as encryption provided by a hypervisor or a disk storage array in a virtualized environment, this requirement is not applicable."}
 {"a":{"f":"chk","l":1,"s":"RHEL-10-200030"},"r":"config-fragment","x":"Note: If Network File System (NFS) mounts are authorized and in use on the system, this control is not applicable."}
 {"a":{"f":"chk","l":1,"s":"RHEL-10-200050"},"r":"config-fragment","x":"Note: If TFTP is not required, it must not be installed. If TFTP is not installed, this rule is not applicable."}
@@ -191,6 +191,8 @@
 {"a":{"f":"chk","l":4,"s":"RHEL-10-600430"},"r":"config-fragment","x":"dir = /var/log/faillock"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-600485"},"r":"config-fragment","x":"retry = 3"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-600750"},"r":"config-fragment","x":"crypt_style = sha512"}
+{"a":{"f":"chk","l":4,"s":"RHEL-10-701250"},"r":"config-fragment","x":"# ExecStart=-/usr/lib/systemd/systemd-sulogin-shell emergency"}
+{"a":{"f":"chk","l":4,"s":"RHEL-10-701260"},"r":"config-fragment","x":"# ExecStart=-/usr/lib/systemd/systemd-sulogin-shell rescue"}
 {"a":{"f":"chk","l":40,"s":"RHEL-10-000510"},"r":"config-fragment","x":"size:    48201728 sectors"}
 {"a":{"f":"chk","l":40,"s":"RHEL-10-001020"},"r":"config-fragment","x":"UserID: Red Hat, Inc. (auxiliary key 3)"}
 {"a":{"f":"chk","l":41,"s":"RHEL-10-000510"},"r":"config-fragment","x":"mode:    read/write"}
@@ -567,8 +569,6 @@
 {"a":{"f":"chk","l":4,"s":"RHEL-10-701100"},"r":"output-fragment","x":"/etc/modprobe.d/can.conf:install can /bin/false"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-701110"},"r":"output-fragment","x":"/etc/modprobe.d/sctp-blacklist.conf:install sctp /bin/false"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-701120"},"r":"output-fragment","x":"/etc/modprobe.d/tipc-blacklist.conf:install tipc /bin/false"}
-{"a":{"f":"chk","l":4,"s":"RHEL-10-701250"},"r":"output-fragment","x":"# ExecStart=-/usr/lib/systemd/systemd-sulogin-shell emergency"}
-{"a":{"f":"chk","l":4,"s":"RHEL-10-701260"},"r":"output-fragment","x":"# ExecStart=-/usr/lib/systemd/systemd-sulogin-shell rescue"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-800300"},"r":"output-fragment","x":"[main]"}
 {"a":{"f":"chk","l":4,"s":"RHEL-10-900100"},"r":"output-fragment","x":"-e 2"}
 {"a":{"f":"chk","l":45,"s":"RHEL-10-001020"},"r":"output-fragment","x":"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release: OpenPGP Certificate."}

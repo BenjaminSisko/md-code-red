@@ -1,9 +1,20 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":2387,"reasons":{"config-fragment":150,"output-fragment":164,"prose":1893,"unparseable":180},"rhel_version":"7","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":2410,"reasons":{"config-fragment":193,"output-fragment":158,"prose":1879,"unparseable":180},"rhel_version":"7","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"g":"desktop_migration_and_administration_guide","l":2074},"r":"config-fragment","x":"fc-list : file"}
+{"a":{"g":"desktop_migration_and_administration_guide","l":4086},"r":"config-fragment","x":"DCONF_PROFILE=gdm gsettings list-recursively org.gnome.login-screen"}
 {"a":{"g":"developer_guide","l":4528},"r":"config-fragment","x":"Samples: 1083783860000"}
 {"a":{"g":"developer_guide","l":4567},"r":"config-fragment","x":"Samples: 472520675377"}
 {"a":{"g":"dm_multipath","l":941},"r":"config-fragment","x":"NOTE: This file is automatically maintained by multipath and multipathd."}
+{"a":{"g":"image_builder_guide","l":1269},"r":"config-fragment","x":"BUCKET=bucketname"}
+{"a":{"g":"installation_guide","l":2556},"r":"config-fragment","x":"kr=$(uname -r)"}
+{"a":{"g":"kernel_administration_guide","l":5545},"r":"config-fragment","x":"evm_kr_id=$(keyctl newring _evm @u)"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":14438},"r":"config-fragment","x":"pkinit_indicator = indicator"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":15226},"r":"config-fragment","x":"CERT=`cat idm_user_cert.pem | tail -n +2 | head -n -1 | tr -d '\\r\\n'\\`"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":15677},"r":"config-fragment","x":"CERT=`cat ad_user_cert.pem | tail -n +2 | head -n -1 | tr -d '\\r\\n'\\`"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":26817},"r":"config-fragment","x":"KRB5_TRACE=/dev/stdout ipa cert-find"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":26877},"r":"config-fragment","x":"KRB5_TRACE=/dev/stdout kinit admin"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":4240},"r":"config-fragment","x":"DOMAIN=example.com"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":4241},"r":"config-fragment","x":"NAMESERVER=replica"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":6604},"r":"config-fragment","x":"TMPDIR=/path/to/backup ipa-backup"}
 {"a":{"g":"logical_volume_manager_administration","l":10015},"r":"config-fragment","x":"Modifier: use alternative local-dependent representation if"}
 {"a":{"g":"logical_volume_manager_administration","l":10056},"r":"config-fragment","x":"Modifier: use alternative numeric symbols."}
 {"a":{"g":"logical_volume_manager_administration","l":10125},"r":"config-fragment","x":"time_format = \"%Y-%m-%d %T %z\""}
@@ -117,7 +128,25 @@
 {"a":{"g":"logical_volume_manager_administration","l":9970},"r":"config-fragment","x":"binary_values_as_numeric = 0"}
 {"a":{"g":"networking_guide","l":10675},"r":"config-fragment","x":"mtu ="}
 {"a":{"g":"networking_guide","l":10682},"r":"config-fragment","x":"rate ="}
+{"a":{"g":"security_guide","l":5497},"r":"config-fragment","x":"leftsubnet=10.10.0.0/16"}
+{"a":{"g":"security_guide","l":5556},"r":"config-fragment","x":"rightsubnet=10.10.0.0/16"}
+{"a":{"g":"security_guide","l":5665},"r":"config-fragment","x":"xauthfail=soft"}
+{"a":{"g":"security_guide","l":5666},"r":"config-fragment","x":"leftupdown=/custom/_updown"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1671},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1676},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1786},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1791},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1821},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1826},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1885},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":1890},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":3418},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":3423},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":3476},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"selinux_users_and_administrators_guide","l":3481},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":7673},"r":"config-fragment","x":"bind = 127.0.0.1"}
+{"a":{"g":"storage_administration_guide","l":19767},"r":"config-fragment","x":"z=[see previous step]"}
+{"a":{"g":"storage_administration_guide","l":19833},"r":"config-fragment","x":"z=[see previous step]"}
 {"a":{"g":"storage_administration_guide","l":4254},"r":"config-fragment","x":"filter: (&(objectclass=automountMap)(automountMapName=auto.master))"}
 {"a":{"g":"storage_administration_guide","l":4255},"r":"config-fragment","x":"requesting: ALL"}
 {"a":{"g":"storage_administration_guide","l":4274},"r":"config-fragment","x":"filter: (objectclass=automount)"}
@@ -126,6 +155,7 @@
 {"a":{"g":"storage_administration_guide","l":4291},"r":"config-fragment","x":"requesting: ALL"}
 {"a":{"g":"storage_administration_guide","l":4303},"r":"config-fragment","x":"filter: (objectclass=automount)"}
 {"a":{"g":"storage_administration_guide","l":4304},"r":"config-fragment","x":"requesting: ALL"}
+{"a":{"g":"system_administrators_guide","l":2287},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"system_administrators_guide","l":4529},"r":"config-fragment","x":"file: home/john/picture.png"}
 {"a":{"g":"system_administrators_guide","l":4530},"r":"config-fragment","x":"owner: john"}
 {"a":{"g":"system_administrators_guide","l":4531},"r":"config-fragment","x":"group: john"}
@@ -147,6 +177,19 @@
 {"a":{"g":"system_administrators_guide","l":9678},"r":"config-fragment","x":"Description: Postfix is a Mail Transport Agent, which is the program that"}
 {"a":{"g":"systemtap_beginners_guide","l":1956},"r":"config-fragment","x":"Author: Neil Horman <nhorman@redhat.com>"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28169},"r":"config-fragment","x":"example: URIS='default xen:/// vbox+tcp://host/system lxc:///'"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":28200},"r":"config-fragment","x":"ON_SHUTDOWN=shutdown, you must also set SHUTDOWN_TIMEOUT to a"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":28819},"r":"config-fragment","x":"LIBVIRTD_ARGS=\"--listen\""}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":5468},"r":"config-fragment","x":"MYSECRET=`printf %s \"password123\" | base64`"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1951},"r":"config-fragment","x":"KSM_MONITOR_INTERVAL=60"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1955},"r":"config-fragment","x":"KSM_SLEEP_MSEC=10"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1958},"r":"config-fragment","x":"KSM_NPAGES_BOOST=300"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1969},"r":"config-fragment","x":"KSM_NPAGES_DECAY=-50"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1972},"r":"config-fragment","x":"KSM_NPAGES_MIN=64"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1975},"r":"config-fragment","x":"KSM_NPAGES_MAX=1250"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1978},"r":"config-fragment","x":"KSM_THRES_COEF=20"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1982},"r":"config-fragment","x":"KSM_THRES_CONST=2048"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1985},"r":"config-fragment","x":"LOGFILE=/var/log/ksmtuned"}
+{"a":{"g":"virtualization_tuning_and_optimization_guide","l":1986},"r":"config-fragment","x":"DEBUG=1"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":427},"r":"config-fragment","x":"Events: 7K cycles"}
 {"a":{"g":"windows_integration_guide","l":5057},"r":"config-fragment","x":"NOTE: IPA certificate uses the SHA-256 hash function. SHA-256 was"}
 {"a":{"g":"7.9_release_notes","l":2580},"r":"output-fragment","x":"grubby-args=\"crashkernel=256M\" --update-kernel"}
@@ -174,8 +217,6 @@
 {"a":{"g":"global_file_system_2","l":3203},"r":"output-fragment","x":"./Install"}
 {"a":{"g":"global_file_system_2","l":3218},"r":"output-fragment","x":"./Install"}
 {"a":{"g":"image_builder_guide","l":1308},"r":"output-fragment","x":"$ AMI=8db1b463-91ee-4fd9-8065-938924398428-disk.ami"}
-{"a":{"g":"installation_guide","l":2556},"r":"output-fragment","x":"kr=$(uname -r)"}
-{"a":{"g":"kernel_administration_guide","l":5545},"r":"output-fragment","x":"evm_kr_id=$(keyctl newring _evm @u)"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":13220},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the NIS master server"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":13273},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the NIS master server"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":13310},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the NIS master server"}
@@ -185,7 +226,6 @@
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":15150},"r":"output-fragment","x":"[root@server ~]# cat idm_user_certificate.pem"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":15845},"r":"output-fragment","x":"./client_smart_card_script.sh CA_cert.pem"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":16081},"r":"output-fragment","x":"./client_smart_card_script.sh CA_cert.pem"}
-{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":6604},"r":"output-fragment","x":"TMPDIR=/path/to/backup ipa-backup"}
 {"a":{"g":"logical_volume_manager_administration","l":10001},"r":"output-fragment","x":"%C"}
 {"a":{"g":"logical_volume_manager_administration","l":10003},"r":"output-fragment","x":"%d"}
 {"a":{"g":"logical_volume_manager_administration","l":10005},"r":"output-fragment","x":"(alt O)"}
@@ -280,8 +320,6 @@
 {"a":{"g":"storage_administration_guide","l":10136},"r":"output-fragment","x":"# mount /dev/sdc1 /mnt/flashdisk"}
 {"a":{"g":"storage_administration_guide","l":11085},"r":"output-fragment","x":"MegaCli64 -LDGetProp -DskCache -LAll -aALL"}
 {"a":{"g":"storage_administration_guide","l":11094},"r":"output-fragment","x":"MegaCli64 -LDSetProp -DisDskCache -Lall -aALL"}
-{"a":{"g":"storage_administration_guide","l":19767},"r":"output-fragment","x":"z=[see previous step]"}
-{"a":{"g":"storage_administration_guide","l":19833},"r":"output-fragment","x":"z=[see previous step]"}
 {"a":{"g":"storage_administration_guide","l":4252},"r":"output-fragment","x":"LDAPv3"}
 {"a":{"g":"storage_administration_guide","l":4258},"r":"output-fragment","x":"auto.master, example.com"}
 {"a":{"g":"storage_administration_guide","l":4272},"r":"output-fragment","x":"LDAPv3"}
@@ -304,7 +342,6 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5271},"r":"output-fragment","x":"portals/ create"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5278},"r":"output-fragment","x":"portals/ create 143.22.16.33"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5287},"r":"output-fragment","x":"iscsi>iqn.iqn.2010-05.com.example.server1:iscsirhel7guest"}
-{"a":{"g":"virtualization_deployment_and_administration_guide","l":5468},"r":"output-fragment","x":"MYSECRET=`printf %s \"password123\" | base64`"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1957},"r":"output-fragment","x":"KSM_NPAGES_BOOST - is added to the `npages` value, when `free memory` is less than `thres`."}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1967},"r":"output-fragment","x":"KSM_NPAGES_DECAY - is the value given is subtracted to the `npages` value, when `free"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1971},"r":"output-fragment","x":"KSM_NPAGES_MIN - is the lower limit for the `npages` value."}
@@ -1941,45 +1978,33 @@
 {"a":{"g":"security_guide","l":5565},"r":"prose","x":"Initiate connection"}
 {"a":{"g":"security_guide","l":5664},"r":"prose","x":"for walled-garden on xauth failure"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1670},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1671},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1672},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1674},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1676},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1677},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1678},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1785},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1786},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1787},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1789},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1791},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1792},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1793},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1820},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1821},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1822},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1824},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1826},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1827},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1828},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1884},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1885},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1886},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1888},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":1890},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1891},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1892},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3417},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":3418},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3419},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3421},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":3423},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3424},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3425},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3475},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":3476},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3477},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3479},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"selinux_users_and_administrators_guide","l":3481},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3482},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":3483},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":5924},"r":"prose","x":"Change this to Listen on specific IP addresses as shown below to"}
@@ -2041,7 +2066,6 @@
 {"a":{"g":"system_administrators_guide","l":21414},"r":"prose","x":"Hosts on local network are less restricted."}
 {"a":{"g":"system_administrators_guide","l":22612},"r":"prose","x":"Configuration file for timemaster"}
 {"a":{"g":"system_administrators_guide","l":2286},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"system_administrators_guide","l":2287},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"system_administrators_guide","l":2288},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"system_administrators_guide","l":2298},"r":"prose","x":"disabled - No SELinux policy is loaded."}
 {"a":{"g":"system_administrators_guide","l":2430},"r":"prose","x":"Min/max values for automatic uid selection in useradd"}
@@ -2150,7 +2174,6 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28197},"r":"prose","x":"this settings since there is no way to distinguish between a"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28198},"r":"prose","x":"guest which is stuck or ignores shutdown requests and a guest"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28199},"r":"prose","x":"which just needs a long time to shutdown. When setting"}
-{"a":{"g":"virtualization_deployment_and_administration_guide","l":28200},"r":"prose","x":"ON_SHUTDOWN=shutdown, you must also set SHUTDOWN_TIMEOUT to a"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28203},"r":"prose","x":"value suitable for your guests."}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28206},"r":"prose","x":"If set to non-zero, shutdown will suspend guests concurrently. Number of"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28209},"r":"prose","x":"guests on shutdown at any time will not exceed number set in this variable."}

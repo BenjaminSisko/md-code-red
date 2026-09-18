@@ -206,10 +206,31 @@ RESIDUE_REASONS = (
     "unparseable",           # command-shaped but this parser refuses to read it
     "binary-not-on-release", # a real command whose binary this product records as absent
 )
-# M4: a line headed by a shell-wrapper whose command is a quoted string argument
-# is REFUSED, not parsed. Counted separately so the signal is not lost inside
-# "unparseable".
+# M4 (threat model v2). `su -c`, `sh -c` and `env VAR=value` prefixes go to
+# RESIDUE, not to parsing. The rule is one sentence, and the reason it is a rule
+# rather than a preference is that the thing on the other side of the prefix is
+# not a command line this parser can read -- it is a QUOTED STRING, or a line
+# whose head only exists after an assignment list has been skipped -- and a
+# parser in the trust path is what this project has found bugs in five separate
+# times.
+#
+# schema.command_head() deliberately skips a leading assignment list, because
+# that is the right answer for a CURATED entry whose text a human wrote and
+# signed for (`DCONF_PROFILE=gdm gsettings ...` really does invoke gsettings).
+# It is the wrong answer for MINING, where nobody signed for anything: the same
+# skip turned `BINFMTFS_MAGIC=0x42494e4d` -- a C constant lifted out of a kernel
+# document -- into a record filed under the tool `shell`, and
+# `CERT=`cat ad_user_cert.pem | ...`` into a record filed under the TOOL
+# `ad_user_cert.pem`. Both counted as `classified` and as `recorded`, so the
+# residue ledger balanced while neither line was a command at all: TM2-F1 in its
+# purest form. M4 closes it by refusing the SHAPE at the door rather than asking
+# a parser to be careful.
 REFUSED_WRAPPER_REASON = "unparseable"
+# The reason code carried by a line M4 refuses. `config-fragment` and not
+# `unparseable`: `VAR=value` is file/assignment content by shape, which is what
+# that code means, and it keeps M4's refusals out of the `unparseable` bucket
+# whose cap Q23 ratchets.
+REFUSED_ENV_PREFIX_REASON = "config-fragment"
 
 
 def escape(text):
@@ -278,6 +299,13 @@ def collect_strong_heads(candidates):
             continue
         stages = schema.split_stages(text)
         if not stages:
+            continue
+        # M4 again, and for the same reason it is checked in classify(): a line
+        # this miner will never parse must not be allowed to VOUCH for a head
+        # either, or the refusal is cosmetic -- the evidence pass would still
+        # promote `gsettings` to a strong head off `DCONF_PROFILE=gdm gsettings`
+        # and the head would then carry other lines through on its own.
+        if ENV_ASSIGN_RE.match(first_token(text)):
             continue
         head_tok = schema.command_head(stages[0])
         if not head_tok or not CMD_TOKEN_RE.match(head_tok):
@@ -384,10 +412,14 @@ def classify(text, prompt, policy, vocab, unavailable, strong=()):
     stages = schema.split_stages(text)
     if not stages:
         return None, "output-fragment"
+    # M4, checked BEFORE command_head() rather than after: command_head() skips a
+    # leading assignment list on its way to the program name, so by the time it
+    # has answered, the `VAR=value` prefix is already gone and there is nothing
+    # left to refuse. The test is on the raw first token of the whole line.
+    if ENV_ASSIGN_RE.match(first_token(text)):
+        return None, REFUSED_ENV_PREFIX_REASON
     head_tok = schema.command_head(stages[0])
     if head_tok is None:
-        if ENV_ASSIGN_RE.match(first_token(text)):
-            return "shell", None            # `machine_id=$(cat /etc/machine-id)`
         return None, "output-fragment"
     head = head_tok.rsplit("/", 1)[-1]
     if head in schema.REFUSED_HEADS:

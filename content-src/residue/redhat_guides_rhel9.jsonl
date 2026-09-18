@@ -1,19 +1,48 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":1290,"reasons":{"config-fragment":46,"output-fragment":136,"prose":894,"unparseable":214},"rhel_version":"9","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":1340,"reasons":{"config-fragment":131,"output-fragment":108,"prose":887,"unparseable":214},"rhel_version":"9","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"a":{"g":"9.0_release_notes","l":3730},"r":"config-fragment","x":"GLIBC_TUNABLES=glibc.pthread.rseq=1"}
+{"a":{"g":"9.0_release_notes","l":7805},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.0_release_notes","l":8672},"r":"config-fragment","x":"plugin_name.option_name = value"}
 {"a":{"g":"9.1_release_notes","l":8882},"r":"config-fragment","x":"plugin_name.option_name = value"}
 {"a":{"g":"9.2_release_notes","l":10441},"r":"config-fragment","x":"plugin_name.option_name = value"}
+{"a":{"g":"9.2_release_notes","l":8909},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
+{"a":{"g":"9.3_release_notes","l":10725},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.3_release_notes","l":12457},"r":"config-fragment","x":"plugin_name.option_name = value"}
 {"a":{"g":"9.4_release_notes","l":11817},"r":"config-fragment","x":"plugin_name.option_name = value"}
+{"a":{"g":"9.4_release_notes","l":9977},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
+{"a":{"g":"9.5_release_notes","l":12309},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.5_release_notes","l":14177},"r":"config-fragment","x":"plugin_name.option_name = value"}
+{"a":{"g":"9.6_release_notes","l":10120},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.6_release_notes","l":12326},"r":"config-fragment","x":"plugin_name.option_name = value"}
+{"a":{"g":"9.7_release_notes","l":10843},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.7_release_notes","l":12955},"r":"config-fragment","x":"plugin_name.option_name = value"}
+{"a":{"g":"9.8_release_notes","l":12542},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"9.8_release_notes","l":13258},"r":"config-fragment","x":"plugin_name.option_name = value"}
 {"a":{"g":"accessing_identity_management_services","l":2300},"r":"config-fragment","x":"requesting: nsslapd-allow-anonymous-access"}
 {"a":{"g":"accessing_identity_management_services","l":2537},"r":"config-fragment","x":"modifiersName: ipaanchoruuid=:sid:s-1-5-21-19610888-1443184010-1631745340-"}
+{"a":{"g":"automatically_installing_rhel","l":4683},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":4684},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automatically_installing_rhel","l":4840},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":4841},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automatically_installing_rhel","l":5043},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":5044},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automatically_installing_rhel","l":5134},"r":"config-fragment","x":"k=$(echo /boot/vmlinuz*64k)"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":1803},"r":"config-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
+{"a":{"g":"building_running_and_managing_containers","l":10544},"r":"config-fragment","x":"scratchmnt=$(buildah mount working-container)"}
+{"a":{"g":"building_running_and_managing_containers","l":10809},"r":"config-fragment","x":"mycontainer=$(buildah from localhost/myecho)"}
+{"a":{"g":"building_running_and_managing_containers","l":10817},"r":"config-fragment","x":"mymount=$(buildah mount $mycontainer)"}
+{"a":{"g":"building_running_and_managing_containers","l":11796},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"building_running_and_managing_containers","l":11924},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"building_running_and_managing_containers","l":2554},"r":"config-fragment","x":"syntax=container/containerfile:1.4"}
+{"a":{"g":"building_running_and_managing_containers","l":4026},"r":"config-fragment","x":"microcontainer=$(buildah from registry.access.redhat.com/ubi9/ubi-micro)"}
+{"a":{"g":"building_running_and_managing_containers","l":4031},"r":"config-fragment","x":"micromount=$(buildah mount $microcontainer)"}
 {"a":{"g":"composing_a_customized_rhel_system_image","l":3779},"r":"config-fragment","x":"datastream = \"/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml\""}
 {"a":{"g":"composing_a_customized_rhel_system_image","l":3826},"r":"config-fragment","x":"datastream = \"/usr/share/xml/scap/ssg/content/ssg-xxxxx-ds.xml\""}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":4761},"r":"config-fragment","x":"BUCKET=bucketname"}
 {"a":{"g":"configuring_and_managing_logical_volumes","l":6796},"r":"config-fragment","x":"raid_region_size = 2048"}
 {"a":{"g":"configuring_and_managing_logical_volumes","l":6837},"r":"config-fragment","x":"raid_region_size = 4096"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4867},"r":"config-fragment","x":"vers4=y"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4994},"r":"config-fragment","x":"vers3=y"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4995},"r":"config-fragment","x":"vers4=y"}
 {"a":{"g":"configuring_basic_system_settings","l":3855},"r":"config-fragment","x":"file: group-project"}
 {"a":{"g":"configuring_basic_system_settings","l":3856},"r":"config-fragment","x":"owner: root"}
 {"a":{"g":"configuring_basic_system_settings","l":3857},"r":"config-fragment","x":"group: root"}
@@ -21,21 +50,70 @@
 {"a":{"g":"customizing_anaconda","l":1039},"r":"config-fragment","x":"FIXME: Use other identification then names of the spokes."}
 {"a":{"g":"customizing_anaconda","l":760},"r":"config-fragment","x":"addons_enabled = True"}
 {"a":{"g":"customizing_anaconda","l":764},"r":"config-fragment","x":"kickstart_modules ="}
+{"a":{"g":"deploying_rhel_9_on_amazon_web_services","l":515},"r":"config-fragment","x":"BUCKET=bucketname"}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":1149},"r":"config-fragment","x":"proxies = { http = \"http://example-host:8002\", https = \"https://example-host:8002\" }"}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":1223},"r":"config-fragment","x":"type = \"sqlite\""}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":1224},"r":"config-fragment","x":"connection_string = \"/var/lib/command-line-assistant/history.db\""}
+{"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":348},"r":"config-fragment","x":"NO_COLOR=1 c “How to install python?\""}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":861},"r":"config-fragment","x":"Listen: Allows you to bind Apache to specific IP addresses and/or"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7386},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7387},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7543},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7544},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7747},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7748},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
 {"a":{"g":"managing_and_monitoring_security_updates","l":385},"r":"config-fragment","x":"default                = all available upgrades"}
 {"a":{"g":"managing_and_monitoring_security_updates","l":386},"r":"config-fragment","x":"security               = only the security upgrades"}
+{"a":{"g":"managing_certificates_in_idm","l":4479},"r":"config-fragment","x":"CERT=$(openssl x509 -in /path/to/certificate -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":4724},"r":"config-fragment","x":"CERT=$(openssl x509 -in idm_user_cert.pem -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":5315},"r":"config-fragment","x":"CERT=$(openssl x509 -in /path/to/certificate -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":7116},"r":"config-fragment","x":"RA_CERT_BLOB=$(sed -rn '/^-----BEGIN CERTIFICATE-----$/{:1;n;/^-----END"}
+{"a":{"g":"managing_certificates_in_idm","l":7121},"r":"config-fragment","x":"RA_CERT_SERIAL=$(openssl x509 -in /tmp/ra-agent.pem -noout -serial | cut -d'='"}
+{"a":{"g":"managing_certificates_in_idm","l":7159},"r":"config-fragment","x":"PWDFILE=/etc/pki/pki-tomcat/alias/pwdfile.txt"}
+{"a":{"g":"managing_certificates_in_idm","l":7174},"r":"config-fragment","x":"SUBSYS_CERT_BLOB=$(cat /tmp/subsystem.pem | sed -rn '/^-----BEGIN"}
+{"a":{"g":"managing_certificates_in_idm","l":7177},"r":"config-fragment","x":"SUBSYS_CERT_SERIAL=$(openssl x509 -in /tmp/subsystem.pem -noout -serial | cut"}
+{"a":{"g":"managing_certificates_in_idm","l":7199},"r":"config-fragment","x":"DS_INSTANCE=$(grep ldap_uri /etc/ipa/default.conf | sed -n 's|.%2Frun%2F (slapd-\\)\\.socket.|\\1|p')*"}
+{"a":{"g":"managing_certificates_in_idm","l":7202},"r":"config-fragment","x":"LDAP_CERT_NICKNAME=$(grep nsSSLPersonalitySSL"}
+{"a":{"g":"managing_certificates_in_idm","l":7211},"r":"config-fragment","x":"HOSTNAME=$(hostname -f)"}
+{"a":{"g":"managing_certificates_in_idm","l":7213},"r":"config-fragment","x":"PWDFILE=\"/etc/dirsrv/${DS_INSTANCE}/pwdfile.txt\""}
+{"a":{"g":"managing_certificates_in_idm","l":7284},"r":"config-fragment","x":"HOSTNAME=$(hostname -f)"}
+{"a":{"g":"managing_certificates_in_idm","l":7286},"r":"config-fragment","x":"PWDFILE=\"/etc/pki/pki-tomcat/alias/pwdfile.txt\""}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3129},"r":"config-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5232},"r":"config-fragment","x":"KDUMP_COMMANDLINE_REMOVE=\"hugepages hugepagesz slub_debug quiet log_buf_len"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8159},"r":"config-fragment","x":"file: usr/sbin/ip"}
+{"a":{"g":"managing_storage_devices","l":4222},"r":"config-fragment","x":"hostkey=$(nvme gen-dhchap-key -n ${HOSTNQN})"}
+{"a":{"g":"managing_storage_devices","l":4227},"r":"config-fragment","x":"ctrlkey= $(nvme gen-dhchap-key -n ${SUBSYSTEM})"}
+{"a":{"g":"managing_storage_devices","l":4303},"r":"config-fragment","x":"HOSTNQN=$(nvme show-hostnqn)"}
+{"a":{"g":"managing_storage_devices","l":4308},"r":"config-fragment","x":"PSK=$(nvme gen-tls-key)"}
+{"a":{"g":"managing_systems_using_the_rhel_9_web_console","l":1794},"r":"config-fragment","x":"CERT_FILE=/etc/cockpit/ws-certs.d/50-certmonger.crt"}
+{"a":{"g":"managing_systems_using_the_rhel_9_web_console","l":1799},"r":"config-fragment","x":"KEY_FILE=/etc/cockpit/ws-certs.d/50-certmonger.key"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":14268},"r":"config-fragment","x":"isolated_cores=${f:calc_isolated_cores:1}"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":1488},"r":"config-fragment","x":"isolated_cores=${f:calc_isolated_cores:1}"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":4819},"r":"config-fragment","x":"home=echo ~"}
 {"a":{"g":"planning_identity_management","l":3754},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
 {"a":{"g":"planning_identity_management","l":3767},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"planning_identity_management","l":4491},"r":"config-fragment","x":"CERT_FILE=/etc/cockpit/ws-certs.d/50-certmonger.crt"}
+{"a":{"g":"planning_identity_management","l":4496},"r":"config-fragment","x":"KEY_FILE=/etc/cockpit/ws-certs.d/50-certmonger.key"}
 {"a":{"g":"preparing_for_disaster_recovery_with_identity_management","l":1077},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
 {"a":{"g":"preparing_for_disaster_recovery_with_identity_management","l":1090},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"security_hardening","l":13469},"r":"config-fragment","x":"SYSLOGADDR=192.0.2.1"}
+{"a":{"g":"security_hardening","l":3118},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
+{"a":{"g":"security_hardening","l":3210},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
 {"a":{"g":"security_hardening","l":6219},"r":"config-fragment","x":"PROC_SUPER_MAGIC = 0x9fa0"}
 {"a":{"g":"security_hardening","l":6221},"r":"config-fragment","x":"SYSFS_MAGIC = 0x62656572"}
 {"a":{"g":"security_hardening","l":6223},"r":"config-fragment","x":"DEBUGFS_MAGIC = 0x64626720"}
 {"a":{"g":"security_hardening","l":6225},"r":"config-fragment","x":"TMPFS_MAGIC = 0x01021994"}
+{"a":{"g":"security_hardening","l":6229},"r":"config-fragment","x":"DEVPTS_SUPER_MAGIC=0x1cd1"}
+{"a":{"g":"security_hardening","l":6231},"r":"config-fragment","x":"BINFMTFS_MAGIC=0x42494e4d"}
+{"a":{"g":"security_hardening","l":6239},"r":"config-fragment","x":"SECURITYFS_MAGIC=0x73636673"}
+{"a":{"g":"security_hardening","l":6241},"r":"config-fragment","x":"SELINUX_MAGIC=0xf97cff8c"}
+{"a":{"g":"security_hardening","l":6243},"r":"config-fragment","x":"SMACK_MAGIC=0x43415d53"}
+{"a":{"g":"security_hardening","l":6245},"r":"config-fragment","x":"NSFS_MAGIC=0x6e736673"}
+{"a":{"g":"security_hardening","l":6249},"r":"config-fragment","x":"CGROUP_SUPER_MAGIC=0x27e0eb"}
+{"a":{"g":"security_hardening","l":6251},"r":"config-fragment","x":"CGROUP2_SUPER_MAGIC=0x63677270"}
+{"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":1505},"r":"config-fragment","x":"LEAPP_UNSUPPORTED=1 leapp upgrade --enable-experimental-feature livemode"}
+{"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2285},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2290},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2728},"r":"config-fragment","x":"Title:           None"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2729},"r":"config-fragment","x":"Reason:            Confirmation"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2732},"r":"config-fragment","x":"Label:            Are all VDO devices, if any, successfully converted to LVM management?"}
@@ -44,24 +122,19 @@
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2749},"r":"config-fragment","x":"Type:             bool"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2750},"r":"config-fragment","x":"Default:          None"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2753},"r":"config-fragment","x":"confirm ="}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4571},"r":"config-fragment","x":"LIBMOUNT_FORCE_MOUNT2=always is required for mount command compatibility"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4572},"r":"config-fragment","x":"See: https://github.com/util-linux/util-linux/issues/3171"}
-{"a":{"g":"automatically_installing_rhel","l":4683},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"automatically_installing_rhel","l":4684},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
-{"a":{"g":"automatically_installing_rhel","l":4840},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"automatically_installing_rhel","l":4841},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
-{"a":{"g":"automatically_installing_rhel","l":5043},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"automatically_installing_rhel","l":5044},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
-{"a":{"g":"automatically_installing_rhel","l":5134},"r":"output-fragment","x":"k=$(echo /boot/vmlinuz*64k)"}
-{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":1803},"r":"output-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
-{"a":{"g":"building_running_and_managing_containers","l":10809},"r":"output-fragment","x":"mycontainer=$(buildah from localhost/myecho)"}
-{"a":{"g":"building_running_and_managing_containers","l":11796},"r":"output-fragment","x":"now=$(date --iso-8601=seconds)"}
-{"a":{"g":"building_running_and_managing_containers","l":11924},"r":"output-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5131},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5504},"r":"config-fragment","x":"CONSOLIDATED_KARGS=\"/tmp/all-kargs.txt\""}
+{"a":{"g":"using_selinux","l":650},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"using_selinux","l":655},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"using_selinux","l":701},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"using_selinux","l":706},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"building_running_and_managing_containers","l":12284},"r":"output-fragment","x":"*curl 10.88.0.247:8080*"}
 {"a":{"g":"building_running_and_managing_containers","l":3727},"r":"output-fragment","x":"<runtime> spec -b bundle"}
 {"a":{"g":"building_running_and_managing_containers","l":3738},"r":"output-fragment","x":"<runtime> create -b bundle/ myubi"}
 {"a":{"g":"building_running_and_managing_containers","l":3743},"r":"output-fragment","x":"<runtime> start myubi"}
 {"a":{"g":"building_running_and_managing_containers","l":3756},"r":"output-fragment","x":"<runtime> list"}
-{"a":{"g":"building_running_and_managing_containers","l":4026},"r":"output-fragment","x":"microcontainer=$(buildah from registry.access.redhat.com/ubi9/ubi-micro)"}
 {"a":{"g":"building_running_and_managing_containers","l":4565},"r":"output-fragment","x":"(cd /var/lib/containers/sigstore/; find . -type f)"}
 {"a":{"g":"building_running_and_managing_containers","l":4730},"r":"output-fragment","x":"./cosign generate-key-pair"}
 {"a":{"g":"building_running_and_managing_containers","l":6120},"r":"output-fragment","x":"10.88.0.2:8080"}
@@ -123,23 +196,12 @@
 {"a":{"g":"installing_and_using_dynamic_programming_languages","l":1391},"r":"output-fragment","x":"<!DOCTYPE html>"}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":501},"r":"output-fragment","x":"$ c -a <storage_info>"}
 {"a":{"g":"interacting_with_the_command-line_assistant_powered_by_rhel_lightspeed","l":505},"r":"output-fragment","x":"$ c --attachment <storage_info> \"how can I replicate the storage configuration in another"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7386},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7387},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7543},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7544},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7747},"r":"output-fragment","x":"machine_id=$(cat /etc/machine-id)"}
-{"a":{"g":"interactively_installing_rhel_over_the_network","l":7748},"r":"output-fragment","x":"kernel_version=$(uname -r)"}
 {"a":{"g":"managing_certificates_in_idm","l":5495},"r":"output-fragment","x":"./server_certificate_script.sh /etc/ipa/ca.crt"}
 {"a":{"g":"managing_certificates_in_idm","l":5506},"r":"output-fragment","x":"./server_certificate_script.sh /tmp/ca1.pem /tmp/ca2.pem"}
-{"a":{"g":"managing_certificates_in_idm","l":7116},"r":"output-fragment","x":"RA_CERT_BLOB=$(sed -rn '/^-----BEGIN CERTIFICATE-----$/{:1;n;/^-----END"}
-{"a":{"g":"managing_certificates_in_idm","l":7202},"r":"output-fragment","x":"LDAP_CERT_NICKNAME=$(grep nsSSLPersonalitySSL"}
-{"a":{"g":"managing_certificates_in_idm","l":7211},"r":"output-fragment","x":"HOSTNAME=$(hostname -f)"}
-{"a":{"g":"managing_certificates_in_idm","l":7284},"r":"output-fragment","x":"HOSTNAME=$(hostname -f)"}
 {"a":{"g":"managing_file_systems","l":7013},"r":"output-fragment","x":"auto.master, example.com"}
 {"a":{"g":"managing_file_systems","l":7019},"r":"output-fragment","x":"/home, auto.master, example.com"}
 {"a":{"g":"managing_file_systems","l":7031},"r":"output-fragment","x":"auto.home, example.com"}
 {"a":{"g":"managing_file_systems","l":7042},"r":"output-fragment","x":"/, auto.home, example.com"}
-{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3129},"r":"output-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":4957},"r":"output-fragment","x":"*grep -v ^# /etc/kdump.conf | grep -v ^$*"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5520},"r":"output-fragment","x":"*kdumpctl estimate*"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":7580},"r":"output-fragment","x":"/usr/src/kernels/$(uname -r)/scripts/sign-file sha256 sb_cert.priv sb_cert.cer my_module.ko"}
@@ -147,14 +209,10 @@
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8282},"r":"output-fragment","x":"# evmctl ima_verify -k /etc/keys/ima/redhatimarelease-10.der /bin/bash"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8390},"r":"output-fragment","x":"https://www.kernel.org/doc/Documentation/ABI/testing/ima_policy"}
 {"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8391},"r":"output-fragment","x":"PROC_SUPER_MAGIC"}
-{"a":{"g":"managing_storage_devices","l":4227},"r":"output-fragment","x":"ctrlkey= $(nvme gen-dhchap-key -n ${SUBSYSTEM})"}
-{"a":{"g":"managing_storage_devices","l":4303},"r":"output-fragment","x":"HOSTNQN=$(nvme show-hostnqn)"}
-{"a":{"g":"managing_storage_devices","l":4308},"r":"output-fragment","x":"PSK=$(nvme gen-tls-key)"}
 {"a":{"g":"managing_storage_devices","l":7879},"r":"output-fragment","x":"<nvme_encrypted> /dev/disk/by-id/<nvme-partition-id> none header=</home/header>"}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":10142},"r":"output-fragment","x":"{PackageManagerCommand} install ksmtuned"}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":12769},"r":"output-fragment","x":"----- HITM ----- -- Store Refs --     Data address            ---------- cycles --"}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3463},"r":"output-fragment","x":"*tuna [command] --cpus cpu_list *"}
-{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":4819},"r":"output-fragment","x":"home=echo ~"}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":5022},"r":"output-fragment","x":"./Install"}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":5465},"r":"output-fragment","x":"=== LOGGER CONTROL SPECIFICATIONS ==="}
 {"a":{"g":"monitoring_and_managing_system_status_and_performance","l":5727},"r":"output-fragment","x":"./Install"}
@@ -178,7 +236,6 @@
 {"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1595},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
 {"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1667},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
 {"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1752},"r":"output-fragment","x":"$2 is the NIS domain, $3 is the primary NIS server, $4 is the map name"}
-{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5131},"r":"output-fragment","x":"now=$(date --iso-8601=seconds)"}
 {"a":{"g":"using_selinux","l":4407},"r":"output-fragment","x":"./mydaemon.sh"}
 {"a":{"g":"using_selinux","l":4516},"r":"output-fragment","x":"./mydaemon.sh"}
 {"a":{"g":"9.0_release_notes","l":7490},"r":"prose","x":"To have a specific working area directory prefix for Relax-and-Recover"}
@@ -911,10 +968,8 @@
 {"a":{"g":"security_hardening","l":6254},"r":"prose","x":"when containers are used we almost always want to ignore them"}
 {"a":{"g":"security_hardening","l":6256},"r":"prose","x":"MEASUREMENTS"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2284},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2285},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2286},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2288},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2290},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2291},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2292},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"upgrading_from_rhel_8_to_rhel_9","l":2751},"r":"prose","x":"Available choices: True/False"}
@@ -1026,7 +1081,6 @@
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4405},"r":"prose","x":"Add sudo user 'admin' with password 'admin123'."}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4406},"r":"prose","x":"The user can be used with profiles that prevent"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4412},"r":"prose","x":"Run scan and hardening including the tailoring file"}
-{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4571},"r":"prose","x":"LIBMOUNT_FORCE_MOUNT2=always is required for mount command compatibility"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4584},"r":"prose","x":"Copy the systemd service unit that demonstrates dynamic mount point creation"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4585},"r":"prose","x":"The service will:"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4592},"r":"prose","x":"Enable the service to start automatically on boot"}
@@ -1051,17 +1105,13 @@
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":923},"r":"prose","x":"This just changes the output of bootc status. A deeper level"}
 {"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":925},"r":"prose","x":"Define the custom version and release metadata"}
 {"a":{"g":"using_selinux","l":649},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"using_selinux","l":650},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"using_selinux","l":651},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"using_selinux","l":653},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"using_selinux","l":655},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"using_selinux","l":656},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"using_selinux","l":657},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"using_selinux","l":700},"r":"prose","x":"This file controls the state of SELinux on the system."}
-{"a":{"g":"using_selinux","l":701},"r":"prose","x":"SELINUX= can take one of these three values:"}
 {"a":{"g":"using_selinux","l":702},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"using_selinux","l":704},"r":"prose","x":"disabled - No SELinux policy is loaded."}
-{"a":{"g":"using_selinux","l":706},"r":"prose","x":"SELINUXTYPE= can take one of these two values:"}
 {"a":{"g":"using_selinux","l":707},"r":"prose","x":"targeted - Targeted processes are protected,"}
 {"a":{"g":"using_selinux","l":708},"r":"prose","x":"mls - Multi Level Security protection."}
 {"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":713},"r":"prose","x":"/etc/aliases.db might be used by other MTA, make sure nothing"}

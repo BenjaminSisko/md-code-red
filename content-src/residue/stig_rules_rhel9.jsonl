@@ -1,4 +1,4 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"stig_rules","generator":"extract/mine_commands.py","line_count":3218,"reasons":{"config-fragment":477,"interactive-tui":1,"output-fragment":219,"prose":2172,"unparseable":349},"rhel_version":"9","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"stig_rules","generator":"extract/mine_commands.py","line_count":3219,"reasons":{"config-fragment":479,"interactive-tui":1,"output-fragment":219,"prose":2171,"unparseable":349},"rhel_version":"9","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"f":"chk","l":1,"s":"RHEL-09-171011"},"r":"config-fragment","x":"Note: This requirement assumes the use of the RHEL 9 default graphical user interface, Gnome Shell. If the system does not have any graphical user interface installed, this requirement is Not Applicable."}
 {"a":{"f":"chk","l":1,"s":"RHEL-09-211035"},"r":"config-fragment","x":"Note: For RHEL 9 systems running with kernel FIPS mode enabled as specified by RHEL-09-671010, this requirement is Not Applicable."}
 {"a":{"f":"chk","l":1,"s":"RHEL-09-212010"},"r":"config-fragment","x":"Note: For systems that use UEFI, this is not applicable."}
@@ -52,6 +52,7 @@
 {"a":{"f":"chk","l":11,"s":"RHEL-09-411070"},"r":"config-fragment","x":"Directory: /home/disauser --> Actual GID: 1002 (disauser)"}
 {"a":{"f":"chk","l":11,"s":"RHEL-09-653080"},"r":"config-fragment","x":"log_file = /var/log/audit/audit.log"}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-171011"},"r":"config-fragment","x":"Note: The \"\\n \" characters are for formatting only. They will not be displayed on the graphical interface."}
+{"a":{"f":"chk","l":12,"s":"RHEL-09-431010"},"r":"config-fragment","x":"# SELINUX= can take one of these three values:"}
 {"a":{"f":"chk","l":13,"s":"RHEL-09-271025"},"r":"config-fragment","x":"Note: The example below is using the database \"local\" for the system, so the path is \"/etc/dconf/db/local.d\". This path must be modified if a database other than \"local\" is being used."}
 {"a":{"f":"chk","l":13,"s":"RHEL-09-431010"},"r":"config-fragment","x":"# NOTE: In earlier Fedora kernel builds, SELINUX=disabled would also"}
 {"a":{"f":"chk","l":13,"s":"RHEL-09-611195"},"r":"config-fragment","x":"Note: The configuration setting can only be in either the default location, or in the drop in file, not both locations."}
@@ -141,6 +142,7 @@
 {"a":{"f":"chk","l":5,"s":"RHEL-09-411075"},"r":"config-fragment","x":"deny = 3"}
 {"a":{"f":"chk","l":5,"s":"RHEL-09-411090"},"r":"config-fragment","x":"unlock_time = 0"}
 {"a":{"f":"chk","l":5,"s":"RHEL-09-411105"},"r":"config-fragment","x":"dir = /var/log/faillock"}
+{"a":{"f":"chk","l":5,"s":"RHEL-09-412080"},"r":"config-fragment","x":"#StopIdleSessionSec=infinity"}
 {"a":{"f":"chk","l":5,"s":"RHEL-09-611090"},"r":"config-fragment","x":"minlen = 15"}
 {"a":{"f":"chk","l":5,"s":"RHEL-09-611100"},"r":"config-fragment","x":"ocredit = -1"}
 {"a":{"f":"chk","l":5,"s":"RHEL-09-611115"},"r":"config-fragment","x":"difok = 8"}
@@ -1157,7 +1159,6 @@
 {"a":{"f":"chk","l":12,"s":"RHEL-09-255125"},"r":"prose","x":"If any key.pub file has a mode more permissive than \"0644\", this is a finding."}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-291015"},"r":"prose","x":"If there is no evidence that unauthorized peripherals are being blocked before establishing a connection, this is a finding."}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-411065"},"r":"prose","x":"If any interactive users do not have a home directory assigned, this is a finding."}
-{"a":{"f":"chk","l":12,"s":"RHEL-09-431010"},"r":"prose","x":"# SELINUX= can take one of these three values:"}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-611190"},"r":"prose","x":"If the password prompt is not displayed, and the contents of the key are displayed, this is a finding."}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-631010"},"r":"prose","x":"Data:"}
 {"a":{"f":"chk","l":12,"s":"RHEL-09-631015"},"r":"prose","x":"If the certmap section does not exist, ask the SA to indicate how certificates are mapped to accounts."}

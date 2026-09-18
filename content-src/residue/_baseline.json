@@ -8,49 +8,49 @@
  "by_family": {
   "raw_captures": {
    "10": {
-    "config-fragment": 8,
+    "config-fragment": 9,
     "output-fragment": 147,
-    "prose": 168,
+    "prose": 167,
     "unparseable": 9
    },
    "8": {
-    "config-fragment": 8,
+    "config-fragment": 9,
     "output-fragment": 142,
-    "prose": 167,
+    "prose": 166,
     "unparseable": 9
    }
   },
   "redhat_guides": {
    "10": {
-    "config-fragment": 32,
-    "output-fragment": 118,
-    "prose": 811,
+    "config-fragment": 104,
+    "output-fragment": 93,
+    "prose": 804,
     "unparseable": 211
    },
    "7": {
-    "config-fragment": 150,
-    "output-fragment": 164,
-    "prose": 1893,
+    "config-fragment": 193,
+    "output-fragment": 158,
+    "prose": 1879,
     "unparseable": 180
    },
    "8": {
-    "config-fragment": 42,
-    "output-fragment": 123,
-    "prose": 805,
+    "config-fragment": 124,
+    "output-fragment": 101,
+    "prose": 797,
     "unparseable": 218
    },
    "9": {
-    "config-fragment": 46,
-    "output-fragment": 136,
-    "prose": 894,
+    "config-fragment": 131,
+    "output-fragment": 108,
+    "prose": 887,
     "unparseable": 214
    }
   },
   "stig_rules": {
    "10": {
-    "config-fragment": 476,
+    "config-fragment": 478,
     "interactive-tui": 1,
-    "output-fragment": 257,
+    "output-fragment": 255,
     "prose": 2273,
     "unparseable": 345
    },
@@ -69,18 +69,18 @@
     "unparseable": 343
    },
    "9": {
-    "config-fragment": 477,
+    "config-fragment": 479,
     "interactive-tui": 1,
     "output-fragment": 219,
-    "prose": 2172,
+    "prose": 2171,
     "unparseable": 349
    }
   }
  },
- "classified_total": 45431,
- "records_total": 14558,
- "residue_total": 18835,
+ "classified_total": 45265,
+ "records_total": 14488,
+ "residue_total": 19001,
  "unparseable_total": 2077,
- "unrated_fraction_max": 0.9869,
- "unrated_total": 14367
+ "unrated_fraction_max": 0.9868,
+ "unrated_total": 14297
 }
