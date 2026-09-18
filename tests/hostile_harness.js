@@ -3111,6 +3111,125 @@ function main() {
     }
   }
 
+  /* (8c) PIPE-002: THE TARGET IS CLASSIFIED AFTER IT IS NORMALISED ----------
+   *
+   * Marcus Reed's D4 condition PIPE-002. redirectTargetBlast() prefix-matches
+   * the string it is handed, so three spellings of one file got three different
+   * answers: `/tmp/../etc/passwd` rated GREEN (it starts with /tmp),
+   * `/./etc/passwd` and `//etc/passwd` rated unrated (they start with neither).
+   * All three are /etc/passwd to the kernel.
+   *
+   * The `path` FIELD type already refuses `..` and `//`, which is why this was
+   * not reachable by typing a redirect target -- but the function's own comment
+   * says it "has to stand on its own if a target ever arrives by some other
+   * road", and one such road is already open: the de-quoted whole-pipeline
+   * projection reads targets out of a `comment` value, and `/./etc/passwd` is
+   * accepted by isPath() as well (a single-dot component is not `..`).
+   *
+   * So the normalisation is LEXICAL and it happens BEFORE classification, in
+   * the blast rule itself, not in the validator. Each vector below is driven by
+   * BOTH roads: as a validated target where the field type admits it, and
+   * through a comment value on the projection, which is the road that does not
+   * ask the field type anything.
+   */
+  var pathNormChecks = 0;
+  var COMMENT_PROBE = { id: "pipe-note", tool: "grep", blast: "green",
+                        fields: [{ name: "c", type: "comment", required: true, versions: VERSIONS }],
+                        template: [{ lit: "grep" }, { lit: "-r" }, { field: "c" }] };
+  /* [spelling, what it really is, the rating it must get] */
+  var PATH_SPELLINGS = [
+    ["/tmp/../etc/passwd", "/etc/passwd", "red"],          /* Marcus's vector 1 */
+    ["/./etc/passwd", "/etc/passwd", "red"],               /* Marcus's vector 2 */
+    ["//etc/passwd", "/etc/passwd", "red"],                /* Marcus's vector 3 */
+    ["/etc/../etc/shadow", "/etc/shadow", "red"],
+    ["//////etc//passwd", "/etc/passwd", "red"],
+    ["/etc/./ssh/./sshd_config", "/etc/ssh/sshd_config", "red"],
+    ["/tmp/./../etc/passwd", "/etc/passwd", "red"],
+    ["/var/tmp/../../etc/passwd", "/etc/passwd", "red"],
+    ["/../etc/passwd", "/etc/passwd", "red"],              /* .. above / is / (POSIX 4.13) */
+    ["/etc/cron.d/../../tmp/x", "/tmp/x", "unrated"],      /* never green by way of .. */
+    ["/tmp/../tmp/x", "/tmp/x", "unrated"],                /* same: scratch reached BY traversal */
+    ["/usr/./bin/../../etc/passwd", "/etc/passwd", "red"],
+    ["/etc/", "/etc", "red"],                              /* a trailing slash is not a new path */
+    ["/tmp/", "/tmp", "green"],
+    ["/tmp/./report.log", "/tmp/report.log", "green"],     /* . alone cannot mislead: still green */
+    ["//tmp/report.log", "/tmp/report.log", "green"]
+  ];
+  for (var ps = 0; ps < PATH_SPELLINGS.length; ps++) {
+    var spelling = PATH_SPELLINGS[ps][0], realPath = PATH_SPELLINGS[ps][1];
+    var wantRating = PATH_SPELLINGS[ps][2];
+    pathNormChecks++;
+    var got = A.redirectTargetBlast(spelling);
+    var plain = A.redirectTargetBlast(realPath);
+    if (got !== wantRating) {
+      stats.failures.push("PIPE-002 / " + JSON.stringify(spelling) + ": rated '" + got +
+                          "', and it is " + JSON.stringify(realPath) + ", which rates '" + plain +
+                          "'. redirectTargetBlast() prefix-matches an un-normalised string, so a " +
+                          "spelling decides the rating");
+    }
+    pathNormChecks++;
+    /* the projection road: the target is not a `path` field at all, it is text
+       inside a comment value, which is exactly the road PL3 built this function
+       to survive */
+    for (var pnv = 0; pnv < VERSIONS.length; pnv++) {
+      var proj = A.assemblePipeline([{ spec: COMMENT_PROBE, values: { c: "note > " + spelling } }],
+                                    VERSIONS[pnv], realOpts());
+      if (proj === null) continue;               /* the comment type refused it: nothing to rate */
+      if (wantRating === "red" && proj.blast !== "red") {
+        stats.failures.push("PIPE-002 projection / RHEL " + VERSIONS[pnv] + " / " +
+                            JSON.stringify(spelling) + ": the whole pipeline rated '" + proj.blast +
+                            "' with a redirect to " + JSON.stringify(realPath) + " visible in its " +
+                            "de-quoted projection");
+      }
+      if (wantRating === "unrated" && proj.blast === "green") {
+        stats.failures.push("PIPE-002 projection / RHEL " + VERSIONS[pnv] + " / " +
+                            JSON.stringify(spelling) + ": rated green. A scratch path reached by " +
+                            "traversal is not a curated green path, it is a computed one");
+      }
+    }
+  }
+  /* EXECUTION SINKS take the same road, and they are REFUSED rather than rated,
+     so a spelling that dodges the sink list is worse than one that dodges the
+     colour: it composes. */
+  var SINK_SPELLINGS = ["/etc/cron.d/../cron.d/x", "/./etc/cron.d/x", "//etc/cron.d/x",
+                        "/etc/./profile.d/x.sh", "/tmp/../etc/sudoers.d/x",
+                        "/usr/local/bin/../bin/x"];
+  for (var ss = 0; ss < SINK_SPELLINGS.length; ss++) {
+    pathNormChecks++;
+    if (!A.isExecutionSink(SINK_SPELLINGS[ss])) {
+      stats.failures.push("PIPE-002 / execution sink " + JSON.stringify(SINK_SPELLINGS[ss]) +
+                          ": isExecutionSink() said no. A write into a directory the system " +
+                          "executes is refused, and a `.` or a `..` in the spelling must not be " +
+                          "the difference between refused and composed");
+    }
+  }
+  /* CONTROLS. Normalisation must not turn every path red: the ordinary ones
+     keep the ratings PL4 gave them, and a path that merely LOOKS like a system
+     path is still not one. */
+  var NORM_CONTROLS = [["/tmp/report.log", "green"], ["/var/tmp/x", "green"],
+                       ["/home/milo/out.txt", "green"], ["/root/out.txt", "green"],
+                       ["/srv/audit/report.log", "unrated"], ["/data/x", "unrated"],
+                       ["/etc/passwd", "red"], ["/boot/grub2/grub.cfg", "red"],
+                       ["/tmpfoo/x", "unrated"], ["/etcetera/x", "unrated"],
+                       ["/tmp..x/y", "unrated"], ["/etc..d/x", "unrated"]];
+  for (var nc = 0; nc < NORM_CONTROLS.length; nc++) {
+    pathNormChecks++;
+    var ncGot = A.redirectTargetBlast(NORM_CONTROLS[nc][0]);
+    if (ncGot !== NORM_CONTROLS[nc][1]) {
+      stats.failures.push("PIPE-002 control / " + JSON.stringify(NORM_CONTROLS[nc][0]) +
+                          ": rated '" + ncGot + "', not '" + NORM_CONTROLS[nc][1] + "'. " +
+                          (NORM_CONTROLS[nc][1] === "red"
+                            ? "normalisation has stopped seeing a system path"
+                            : "normalisation is rating ordinary paths as something else, which is " +
+                              "how a rule that fires on everything gets clicked through"));
+    }
+    pathNormChecks++;
+    if (NORM_CONTROLS[nc][1] !== "red" && A.isExecutionSink(NORM_CONTROLS[nc][0])) {
+      stats.failures.push("PIPE-002 control / " + JSON.stringify(NORM_CONTROLS[nc][0]) +
+                          ": isExecutionSink() said yes about a path that is not one");
+    }
+  }
+
   /* (9) NEGATIVE CONTROLS FOR THE ORACLE ITSELF. Each of these is a pipeline
          string that is WRONG in a specific way, handed to the oracle with the
          composition it claims to be. Every one must be reported. An oracle that
@@ -3567,6 +3686,7 @@ function main() {
     pipeline_blast_checks: blastChecks,
     pipeline_refusal_checks: refusalChecks,
     pipeline_stage_allowlist_checks: pipeToolChecks,
+    pipeline_target_normalisation_checks: pathNormChecks,
     pipeline_negative_controls: pipeNegatives,
     pipeline_stig_shape_checks: stigShapeChecks,
     pipeline_interpreter_class_checks: interpreterChecks,
@@ -3652,6 +3772,11 @@ function main() {
                 "to in the tool table -- 19 exec wrappers as `<wrapper> <ctx> bash`, an " +
                 "undeclared binary, a declared id whose command runs something else, the same " +
                 "shapes behind xargs, fail-closed with no table, and the declared-tool controls)");
+    console.log("  " + report.pipeline_target_normalisation_checks + " redirect-target " +
+                "NORMALISATION checks (PIPE-002: a target is collapsed lexically -- // to /, . " +
+                "dropped, .. resolved without touching a filesystem -- BEFORE it is classified, " +
+                "driven both as a validated target and through the de-quoted projection, with " +
+                "the execution-sink list asked the same question)");
     console.log("  " + report.pipeline_interpreter_class_checks + " interpreter-class checks " +
                 "(PL2: rule 4 as a CLASS -- a pipe into an interpreter, an xargs child that is " +
                 "one, and an execution sink reached by REDIRECT -- plus TM2-F8's wrapper refusals " +
