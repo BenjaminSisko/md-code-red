@@ -295,17 +295,49 @@ SPLICED_SINK_RE = re.compile(r"(innerHTML|outerHTML|srcdoc|insertAdjacentHTML|cr
 # describe. The ranges are assembled from code points rather than typed, because
 # typing them is the mistake this gate exists to catch.
 # ---------------------------------------------------------------------------
-TROJAN_RANGES = [
-    (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping \t \n \r
-    (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
-    (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
-    (0x200B, 0x200F), (0x2028, 0x2029), (0x202A, 0x202E),     # zero-width, line/paragraph
-                                                              #   separators, bidi overrides
-    (0x2060, 0x206F),                                         # word joiner, invisible format
-                                                              #   and bidi isolates, 2065
-                                                              #   included (MCR-SEC-009)
-    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
-]
+# M8 (threat model v2): ONE trojan range table, never a second copy.
+#
+# There were two. extract/schema.py declared the table for the content side
+# (escape_trojan() writes residue against it, the field validators refuse
+# against it) and qa.py declared an identical one for the gate side. Identical
+# TODAY -- that is the whole problem with a second copy, and this codebase has
+# already watched a copied range table drift once: the evidence exporter's
+# hand-rolled duplicate was missing U+061C, U+00AD, U+206A-U+206F and U+FE0F by
+# the time condition H2 caught it, and the fix was the same fix as this one.
+#
+# So qa.py no longer STATES the table; it READS extract/schema.py's, the same
+# way parse_schema_tuple() reads PROVENANCE_FIELDS and load_build_constants()
+# reads APP_VERSION -- out of the file's text, with no import and no code path
+# in common, so the constant is shared while the check stays independent.
+# schema.py is now the single declaration, and Q17's scan, Q21's tracked-file
+# scan and the miner's residue escaping are provably the same set rather than
+# three sets that happen to agree.
+#
+# The THIRD statement -- template.html's INVISIBLE_RE plus HEADER_UNSAFE_G,
+# which are JavaScript and cannot read a Python file -- is CHECKED rather than
+# removed: Q25 lifts both regexes out of the SHIPPED artifact and proves their
+# union is exactly this table, code point for code point.
+def parse_schema_ranges(src, name):
+    """A module-level list of (lo, hi) hex pairs out of extract/schema.py's TEXT.
+
+    Raises rather than defaulting, for parse_schema_tuple()'s reason: a gate
+    that invents its own table when it cannot read the source of truth is the
+    weaker-copy problem again, with extra steps.
+    """
+    m = re.search(r"^%s\s*=\s*\[(.*?)^\]" % re.escape(name), src, re.M | re.S)
+    if not m:
+        raise ValueError("extract/schema.py declares no module-level %s list that qa.py can read "
+                         "— the one trojan range table has no source of truth (M8)" % name)
+    pairs = [(int(a, 16), int(b, 16))
+             for a, b in re.findall(r"\(\s*(0x[0-9A-Fa-f]+)\s*,\s*(0x[0-9A-Fa-f]+)\s*\)", m.group(1))]
+    if not pairs:
+        raise ValueError("extract/schema.py's %s parsed to an empty list — an empty trojan table "
+                         "is a scanner that refuses nothing (M8)" % name)
+    return pairs
+
+
+with open(os.path.join(REPO, "extract", "schema.py"), encoding="utf-8") as _fh:
+    TROJAN_RANGES = parse_schema_ranges(_fh.read(), "TROJAN_RANGES")
 TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
 
 results = []   # (gate_id, name, status, details)  status in PASS/FAIL/PENDING
@@ -3858,6 +3890,326 @@ def load_sources(ctx):
             ctx["source_rules"][v] = ({}, 0)
 
 
+
+# ---------------------------------------------------------------------------
+# Q25 — anchor re-resolution (threat model v2, M2)
+#
+# THE FINDING THIS ANSWERS. Nothing anywhere asserted that a mined record's
+# `file@sha256#anchor` actually contains the text the record claims. Every other
+# gate took the citation on trust: Q3 checks that a citation EXISTS, Q13 checks
+# that its ids RESOLVE, and neither one opens the source and reads the line. A
+# record can therefore carry a perfectly well-formed DISA citation attached to
+# text DISA never wrote, and every gate stays green. That is MCR-SEC-019 --
+# where exactly this happened once, to one citation, and was caught by a human
+# reading it -- multiplied by 14,488 records and 23,410 stored citations.
+#
+# WHAT IS CHECKED, and it is ALL of it, with no sampling and no tolerance:
+#
+#   1. THE DIGEST. Every file in _meta.source_files is re-hashed and compared.
+#      Without this, "the anchor re-resolves" means only "some file at that path
+#      today happens to contain that text", which is not a claim about the bytes
+#      the extractor read.
+#   2. THE ANCHOR. Every stored occurrence of every record is resolved to its
+#      source line and the record's command text is compared against it. Not a
+#      sample: 23,410 citations is a few seconds of work, and a gate that
+#      samples here would leave the un-sampled citations exactly as unchecked as
+#      they were before this gate existed.
+#   3. THE SPAN CLAIM. A record flagged verbatim_span must be a byte-exact
+#      CONTIGUOUS span of ONE source line -- no embedded newline, and for a Red
+#      Hat guide row, no backslash continuation joined by the stager. M3 lets
+#      exactly this class of record cross into the evidence export as a
+#      quotation attributed to DISA, so the flag has to be earned rather than
+#      asserted.
+#
+# It also carries M8's third statement: template.html's INVISIBLE_RE and
+# HEADER_UNSAFE_G are JavaScript and cannot read extract/schema.py, so their
+# union is lifted out of the SHIPPED artifact and proved equal to the one table,
+# code point for code point.
+# ---------------------------------------------------------------------------
+
+ANCHOR_SOURCE_CACHE = {}
+
+
+def _anchor_file_for(occ):
+    """Where one occurrence's anchor points. Mirrors mine_commands.anchor_file_of()
+    and is deliberately a SECOND statement of it: this gate is an independent
+    re-check of the extractor, and sharing the resolver would make the gate agree
+    with the extractor's bug. The two are held together by the digest check --
+    a path this function gets wrong will not be in _meta.source_files."""
+    if occ.get("s"):
+        return "content/rules_rhel%s.json" % occ.get("v")
+    if occ.get("g"):
+        return "content-src/raw/redhat/rhel%s.candidates.jsonl" % occ.get("v")
+    return occ.get("p")
+
+
+def _stig_rule_index(version):
+    key = ("stig", version)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, "content", "rules_rhel%s.json" % version)
+        with open(path, encoding="utf-8") as fh:
+            ds = json.load(fh)
+        ANCHOR_SOURCE_CACHE[key] = {r.get("i"): r for r in ds.get("rules", [])}
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def _guide_candidate_index(version):
+    key = ("guide", version)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, "content-src", "raw", "redhat", "rhel%s.candidates.jsonl" % version)
+        rows = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                for i, line in enumerate(fh):
+                    line = line.strip()
+                    if not line or i == 0:
+                        continue
+                    obj = json.loads(line)
+                    rows[(obj.get("f"), obj.get("l"))] = obj
+        ANCHOR_SOURCE_CACHE[key] = rows
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def _capture_lines(rel):
+    key = ("raw", rel)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, rel)
+        if not os.path.exists(path):
+            ANCHOR_SOURCE_CACHE[key] = None
+        else:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                ANCHOR_SOURCE_CACHE[key] = fh.read().split("\n")
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def resolve_anchor(rec, occ):
+    """(ok, detail). `ok` is True when the anchor resolves AND carries this
+    record's text. `detail` names the failure, or the span kind on success."""
+    version = occ.get("v")
+    line_no = occ.get("l")
+    text = rec.get("c") or ""
+    if occ.get("s"):
+        rule = _stig_rule_index(version).get(occ.get("s"))
+        if rule is None:
+            return False, "STIG rule %s is not in content/rules_rhel%s.json" % (occ.get("s"), version)
+        field = occ.get("f")
+        if field not in ("chk", "fix"):
+            return False, "occurrence names the field %r, and a STIG anchor is chk or fix" % field
+        lines = (rule.get(field) or "").split("\n")
+        if not isinstance(line_no, int) or line_no < 1 or line_no > len(lines):
+            return False, "line %r is outside %s/%s, which has %d lines" % (
+                line_no, occ.get("s"), field, len(lines))
+        source = lines[line_no - 1]
+        if text not in source:
+            return False, ("the text is not in %s/%s line %d. claimed %r, the line reads %r"
+                           % (occ.get("s"), field, line_no, text[:80], source[:80]))
+        return True, "span"
+    if occ.get("g"):
+        rows = _guide_candidate_index(version)
+        row = rows.get(((occ.get("g") or "") + ".txt", line_no))
+        if row is None:
+            return False, "no staged candidate at %s.txt line %r for RHEL %s" % (
+                occ.get("g"), line_no, version)
+        if (row.get("c") or "") != text:
+            return False, ("the text is not what was staged from %s.txt line %s. claimed %r, "
+                           "staged %r" % (occ.get("g"), line_no, text[:80], (row.get("c") or "")[:80]))
+        return True, ("joined" if row.get("j") else "span")
+    rel = occ.get("p")
+    lines = _capture_lines(rel) if rel else None
+    if lines is None:
+        return False, "staged capture %r does not exist" % rel
+    if not isinstance(line_no, int) or line_no < 1 or line_no > len(lines):
+        return False, "line %r is outside %s, which has %d lines" % (line_no, rel, len(lines))
+    if text not in lines[line_no - 1]:
+        return False, ("the text is not in %s line %d. claimed %r, the line reads %r"
+                       % (rel, line_no, text[:80], lines[line_no - 1][:80]))
+    return True, "span"
+
+
+def anchor_digest_failures(meta):
+    """Every file the anchors point into, re-hashed against what the extractor
+    recorded reading."""
+    failures, checked = [], 0
+    pinned = (meta or {}).get("source_files") or {}
+    if not pinned:
+        return (["reference_commands._meta carries no source_files manifest — without the digest, "
+                 "`file@sha256#anchor` is only `file#anchor`, and an anchor into a file that has "
+                 "changed under it re-resolves against the wrong bytes (M2)"], 0)
+    for rel in sorted(pinned):
+        full = os.path.join(REPO, rel)
+        if not os.path.exists(full):
+            failures.append("pinned source %s does not exist" % rel)
+            continue
+        got = sha256_file(full)
+        want = (pinned[rel] or {}).get("sha256")
+        if got != want:
+            failures.append("pinned source %s hashes to %s, and the extractor recorded reading %s "
+                            "— every anchor into this file resolves against different bytes than "
+                            "the ones it was mined from" % (rel, got[:16], str(want)[:16]))
+        else:
+            checked += 1
+    return failures, checked
+
+
+def anchor_resolution_failures(records, limit=25):
+    """Every stored occurrence of every record, re-resolved. Returns
+    (failures, counts)."""
+    failures = []
+    counts = {"occurrences": 0, "records": 0, "spans": 0, "joined": 0, "verbatim_records": 0}
+    for rec in records:
+        counts["records"] += 1
+        verbatim = bool(rec.get("verbatim_span"))
+        if verbatim:
+            counts["verbatim_records"] += 1
+            if "\n" in (rec.get("c") or ""):
+                failures.append("%s claims verbatim_span and its text carries a newline — that is "
+                                "not a contiguous span of one line" % rec.get("id"))
+        for occ in rec.get("o") or []:
+            counts["occurrences"] += 1
+            ok, detail = resolve_anchor(rec, occ)
+            if not ok:
+                if len(failures) < limit:
+                    failures.append("%s: %s" % (rec.get("id"), detail))
+                continue
+            counts["spans" if detail == "span" else "joined"] += 1
+            if verbatim and detail == "joined":
+                if len(failures) < limit:
+                    failures.append("%s claims verbatim_span, and the staged row it cites was "
+                                    "JOINED from a backslash continuation — the text is this "
+                                    "parser's reconstruction, not a span of any single source "
+                                    "line (M3)" % rec.get("id"))
+    return failures, counts
+
+
+def _js_ranges(pattern):
+    """The code points one JavaScript character class covers, from its source."""
+    body = pattern[pattern.index("[") + 1:pattern.rindex("]")]
+    items = re.findall(r"\\u([0-9A-Fa-f]{4})(?:-\\u([0-9A-Fa-f]{4}))?", body)
+    out = set()
+    for lo, hi in items:
+        a = int(lo, 16)
+        b = int(hi, 16) if hi else a
+        out.update(range(a, b + 1))
+    return out
+
+
+def trojan_table_agreement_failures(app_script):
+    """M8's third statement. template.html's INVISIBLE_RE and HEADER_UNSAFE_G are
+    JavaScript; they cannot read extract/schema.py, so they are LIFTED OUT OF THE
+    SHIPPED ARTIFACT and their union compared to the one table, code point for
+    code point. A drifted copy is what condition H2 already caught once."""
+    failures = []
+    inv = re.search(r"var INVISIBLE_RE=(/\[[^\n]*?\]/);", app_script)
+    hdr = re.search(r"var HEADER_UNSAFE_G=(/\[[^\n]*?\]/g);", app_script)
+    if not inv or not hdr:
+        return ["INVISIBLE_RE and/or HEADER_UNSAFE_G could not be lifted out of the shipped app "
+                "script — M8's third statement of the trojan table cannot be checked, so it is "
+                "not being checked"]
+    got = _js_ranges(inv.group(1)) | _js_ranges(hdr.group(1))
+    want = set()
+    for lo, hi in TROJAN_RANGES:
+        want.update(range(lo, hi + 1))
+    # The ONE declared difference, named here rather than tolerated by a looser
+    # comparison. TROJAN_RANGES deliberately KEEPS tab, LF and CR -- a source
+    # file is allowed to contain them and Q21 would be unusable if it were not.
+    # HEADER_UNSAFE_G deliberately STRIPS them, because the string it guards is
+    # a single clipboard comment line and a newline in it is MCR-SEC-003: the
+    # screen collapses it to one title and the paste is two lines into a root
+    # shell. Both are right for their own job. Stating the exception is what
+    # keeps this a comparison of two tables rather than an agreement to differ.
+    HEADER_ONLY = {0x09, 0x0A, 0x0D}
+    missing = sorted(want - got)
+    extra = sorted(got - want - HEADER_ONLY)
+    if not (HEADER_ONLY <= got):
+        failures.append("the shipped HEADER_UNSAFE_G no longer strips tab/LF/CR (%s) — a newline "
+                        "in a clipboard comment header is MCR-SEC-003, and the header rule is the "
+                        "one place the runtime is SUPPOSED to be stricter than the file rule"
+                        % ", ".join("U+%04X" % c for c in sorted(HEADER_ONLY - got)))
+    if missing:
+        failures.append("the shipped JavaScript range table is MISSING %d code point(s) the one "
+                        "table refuses, first %s — a runtime that strips less than the build "
+                        "refuses is a hole, not a difference of opinion"
+                        % (len(missing), ", ".join("U+%04X" % c for c in missing[:8])))
+    if extra:
+        failures.append("the shipped JavaScript range table covers %d code point(s) the one table "
+                        "does not, first %s — the two have drifted"
+                        % (len(extra), ", ".join("U+%04X" % c for c in extra[:8])))
+    return failures
+
+
+def gate_q25(ctx):
+    f, d = [], []
+    path = os.path.join(REPO, "content", "reference_commands.json")
+    if not os.path.exists(path):
+        return (["content/reference_commands.json is missing — this gate has nothing to resolve"], [])
+    with open(path, encoding="utf-8") as fh:
+        corpus = json.load(fh)
+    meta = corpus.get("_meta") or {}
+    records = corpus.get("commands") or []
+
+    dig_f, dig_n = anchor_digest_failures(meta)
+    f.extend(dig_f)
+    if not dig_f:
+        d.append("%d pinned source file(s) re-hashed and unchanged since the extractor read them "
+                 "— this is the sha256 in file@sha256#anchor" % dig_n)
+
+    res_f, counts = anchor_resolution_failures(records)
+    f.extend(res_f)
+    if not res_f:
+        d.append("%d of %d stored citations across %d records re-resolved to their source and "
+                 "carry exactly the text the record claims — every one, no sampling: %d resolve "
+                 "to a contiguous span of one line, %d to a staged row joined from a backslash "
+                 "continuation"
+                 % (counts["spans"] + counts["joined"], counts["occurrences"], counts["records"],
+                    counts["spans"], counts["joined"]))
+        d.append("%d record(s) claim verbatim_span, and every one of them is a byte-exact "
+                 "contiguous span of ONE source line with no newline and nothing joined — the "
+                 "flag M3 reads before letting a record cross into the evidence export"
+                 % counts["verbatim_records"])
+
+    # NEGATIVE CONTROL. A resolver that has only ever been pointed at correct
+    # anchors has not been shown to resolve anything (AL-GATE3-001). Four
+    # mutations, one per failure mode, all of which MUST be caught.
+    controls = []
+    probe = None
+    for rec in records:
+        if rec.get("o") and (rec["o"][0].get("s")):
+            probe = rec
+            break
+    if probe is None:
+        f.append("no DISA-anchored record to run the negative control against — this gate is "
+                 "reporting a pass it has not earned")
+    else:
+        mutants = [
+            ("wrong text", dict(probe, c=(probe.get("c") or "") + " --definitely-not-in-the-source"),
+             probe["o"][0]),
+            ("wrong line", probe, dict(probe["o"][0], l=99999)),
+            ("wrong rule", probe, dict(probe["o"][0], s="RHEL-00-000000")),
+            ("wrong field", probe, dict(probe["o"][0], f="notafield")),
+        ]
+        for label, mrec, mocc in mutants:
+            ok, _why = resolve_anchor(mrec, mocc)
+            if ok:
+                f.append("the anchor resolver accepted a mutated anchor (%s) — it is not "
+                         "checking what it claims to check" % label)
+            else:
+                controls.append(label)
+        if len(controls) == 4:
+            d.append("4 negative controls ran first and all fired: %s" % ", ".join(controls))
+
+    m8 = trojan_table_agreement_failures(ctx["app_script"])
+    f.extend(m8)
+    if not m8:
+        d.append("M8: one trojan range table. qa.py reads extract/schema.py's TROJAN_RANGES out of "
+                 "its text (no import, no shared code path) and the shipped JavaScript's "
+                 "INVISIBLE_RE + HEADER_UNSAFE_G union, lifted out of the built artifact, covers "
+                 "exactly the same %d code points -- plus tab/LF/CR, the one declared difference, "
+                 "which the file rule keeps and the clipboard-header rule strips (MCR-SEC-003)"
+                 % sum(hi - lo + 1 for lo, hi in TROJAN_RANGES))
+
+    return f, d
+
+
 GATES = [
     ("Q1", "Build integrity and structure (DOCTYPE, two <script>, island parses, versions match, sha256 sidecar)", gate_q1),
     ("Q2", "Air-gap law (no external assets, no network JS, no CDN literals)", gate_q2),
@@ -3881,6 +4233,7 @@ GATES = [
     ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
     ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
     ("Q22", "Declared tool is the invoked binary, and every flag resolves, is curated, or is honestly marked (G1)", gate_q22),
+    ("Q25", "Anchor re-resolution: every citation contains the text it claims (M2)", gate_q25),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 

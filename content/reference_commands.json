@@ -106,6 +106,233 @@
    "o": "occurrences: {v, l} plus s (STIG id) + f (chk|fix), or g (guide slug), or p (staged file path) + x (man section)",
    "n": "true occurrence count before the occurrence list was capped"
   },
+  "source_files": {
+   "content-src/raw/redhat/rhel10.candidates.jsonl": {
+    "sha256": "868a29731c46cd50153e40b518dcd9c0fa82e93f14f12d452049ba52047d3d02",
+    "bytes": 1630370
+   },
+   "content-src/raw/redhat/rhel7.candidates.jsonl": {
+    "sha256": "7eb6d679c7eaf67d773ccf7ea391de3e7fb757aca1b879002eccb2dc78b89a10",
+    "bytes": 850532
+   },
+   "content-src/raw/redhat/rhel8.candidates.jsonl": {
+    "sha256": "a49d14e674358292519198417e6a67429480aee94b13b2c84ad3651696f2f999",
+    "bytes": 1755656
+   },
+   "content-src/raw/redhat/rhel9.candidates.jsonl": {
+    "sha256": "7753d99ca71ea0455f12014ca715f40b6ce34c1911c631714ce931fc9aeb35a3",
+    "bytes": 1756021
+   },
+   "content-src/raw/rhel10/auditctl.man.txt": {
+    "sha256": "bfdeb76191241f4bca4bc205caf4a29c5177d34295b095e6ab14a1044278819b",
+    "bytes": 26795
+   },
+   "content-src/raw/rhel10/ausearch.man.txt": {
+    "sha256": "803fc12260c96729047b299c62b0dc433b090e48e4e52cae28b3acdc1e9c4771",
+    "bytes": 19395
+   },
+   "content-src/raw/rhel10/chage.man.txt": {
+    "sha256": "0b1f9f1baadb8b1b3e88ea5eecf80c1c220c871d6aa06dc6d94d4ea1e2c4d34f",
+    "bytes": 5539
+   },
+   "content-src/raw/rhel10/chronyd.chronyc.man.txt": {
+    "sha256": "1ceb67e336b1a06a829d9585fc9a9e3421bc78f7c1f3e1608a1e429fba8e63e5",
+    "bytes": 76986
+   },
+   "content-src/raw/rhel10/chronyd.man.txt": {
+    "sha256": "4e15a4f8c49df510c983a83f731910cfc0fe7bbaeb673ccf8aa09c12d324c73f",
+    "bytes": 11375
+   },
+   "content-src/raw/rhel10/dnf.man.txt": {
+    "sha256": "befdbc7499c62f7b7be44fe6bf0c40ef10a650c494e00041d937048de5333ce7",
+    "bytes": 95075
+   },
+   "content-src/raw/rhel10/firewall-cmd.man.txt": {
+    "sha256": "1705eaffb9113dd73167cf53ba515bde68e34e42bce8bf489e41fa955b7683b6",
+    "bytes": 68172
+   },
+   "content-src/raw/rhel10/git.man.txt": {
+    "sha256": "3d3dabbccc3605122024b5715ab938675c04af6f0114286f1cec477c8191b208",
+    "bytes": 65366
+   },
+   "content-src/raw/rhel10/journalctl.man.txt": {
+    "sha256": "6f13439b55a2443d4d2453b9e41e81a8c1b72ff654167213a5a5679cda1cef72",
+    "bytes": 47766
+   },
+   "content-src/raw/rhel10/lvcreate.man.txt": {
+    "sha256": "ae0072a6066c9614cd3a68fb2068b4fd064cb1402cceb02cb511fea488b34e65",
+    "bytes": 66188
+   },
+   "content-src/raw/rhel10/lvextend.man.txt": {
+    "sha256": "d2b2cd15f97491500e2263797d774ef053cde48d54e3b32890ea05fc31c858d5",
+    "bytes": 22673
+   },
+   "content-src/raw/rhel10/nmcli.man.txt": {
+    "sha256": "a6f07db95799abebf676f6a0d5e5e925817ec23e2f8204ce9ce1b7436d0521ae",
+    "bytes": 52895
+   },
+   "content-src/raw/rhel10/podman.man.txt": {
+    "sha256": "cab8608b7a6af737e2e7b32cfca6253d57e722f6f8af649d9ae942380705e6b8",
+    "bytes": 46100
+   },
+   "content-src/raw/rhel10/pvcreate.man.txt": {
+    "sha256": "8eb39bee587a03ca0b5de9ec8ab57cd6ed817af8172d9d4c930d4dfa2cf4b600",
+    "bytes": 18058
+   },
+   "content-src/raw/rhel10/rsyslogd.man.txt": {
+    "sha256": "cd02d9a63a5a4f8fae073eab5e738afd97412ccde93739e60742e397f9f7a72c",
+    "bytes": 12382
+   },
+   "content-src/raw/rhel10/semanage.man.txt": {
+    "sha256": "406c356bcf0c0e6df36c2d19b0682974dc603fe34df03d595056ab7b4c1de4d6",
+    "bytes": 2959
+   },
+   "content-src/raw/rhel10/setsebool.man.txt": {
+    "sha256": "6bf95fb68708710c8d2cee0311869a75c890319452810cbb52dd74b0953f8ac7",
+    "bytes": 1511
+   },
+   "content-src/raw/rhel10/sshd.man.txt": {
+    "sha256": "435289eaab2f0c1ef8c6258405f829ba4860dcfe81ad4d22cbe9c2024562436a",
+    "bytes": 37787
+   },
+   "content-src/raw/rhel10/systemctl.man.txt": {
+    "sha256": "28a11da31affa5869bc33d3f49320b132787b64b92f83e4fff9a6bc82f4491e0",
+    "bytes": 129687
+   },
+   "content-src/raw/rhel10/useradd.man.txt": {
+    "sha256": "49b6089c324fda73b348544fafff46a367d1b7c78e0fecb8bb0f2eacc472f196",
+    "bytes": 21576
+   },
+   "content-src/raw/rhel10/usermod.man.txt": {
+    "sha256": "5432febb622dcb3adc066df9b5a8b43a5ff8836ad1ecb7c5156de13be77b2b84",
+    "bytes": 14279
+   },
+   "content-src/raw/rhel10/vgcreate.man.txt": {
+    "sha256": "ec2cb556dc5a9276e8f7c68bab0c86ec9a7d773cf7c6428400fa74fdf5f5f658",
+    "bytes": 18600
+   },
+   "content-src/raw/rhel7/chage.help.txt": {
+    "sha256": "d1cdb9359b30b53e072d8d56da44490650cec1e7b28ee2195ced0e95c8943d4f",
+    "bytes": 819
+   },
+   "content-src/raw/rhel7/useradd.help.txt": {
+    "sha256": "8c226a943d8adf1cd19892db27f43279b2bb5b59c49bcb05e37bf49a38168b00",
+    "bytes": 2036
+   },
+   "content-src/raw/rhel7/usermod.help.txt": {
+    "sha256": "0a9375d73be231e0ce4ea64761038609902f795da6737eb911070fed38c8886a",
+    "bytes": 1835
+   },
+   "content-src/raw/rhel7/yum.help.txt": {
+    "sha256": "77c2c4b4c0f170b9608c42f57872f353ebd35c53267edbe9f3b01d6171ae9583",
+    "bytes": 4892
+   },
+   "content-src/raw/rhel8/auditctl.man.txt": {
+    "sha256": "876fc885d0184875e71a97d3a57497aac79e332ad331b86b190751cb30943f38",
+    "bytes": 25960
+   },
+   "content-src/raw/rhel8/ausearch.man.txt": {
+    "sha256": "3b376ed71347fe7ac1be26a537f6ec8ade7c40953b496d7b359dd7bd37201576",
+    "bytes": 19287
+   },
+   "content-src/raw/rhel8/chage.man.txt": {
+    "sha256": "0bdf714eee240e2929bf262cce77110ac58e92703a9b1d952a60338bff896722",
+    "bytes": 5015
+   },
+   "content-src/raw/rhel8/chronyd.chronyc.man.txt": {
+    "sha256": "d2e439984c34fe8de4e0ae62d27b407e65530a125311e1b338d4ef484637372f",
+    "bytes": 74232
+   },
+   "content-src/raw/rhel8/chronyd.man.txt": {
+    "sha256": "12a1e8f583e7859bba7d02f0f570e6c60d7ceb909689514a57d582721a53b2e9",
+    "bytes": 10848
+   },
+   "content-src/raw/rhel8/dnf.man.txt": {
+    "sha256": "8e0e1a3e57f55d90250b3d3633d1fdb15efe275abe0902e6aca47ee28190b57b",
+    "bytes": 92455
+   },
+   "content-src/raw/rhel8/firewall-cmd.man.txt": {
+    "sha256": "031fe37f717242de1ac74785a489aa06309e00af8d77e45cec77810947b59eee",
+    "bytes": 71066
+   },
+   "content-src/raw/rhel8/git.man.txt": {
+    "sha256": "6936a8aa609e9ce3f59ac10c63c1b2d03a57ddf73c9639ae4d130899c7a4b721",
+    "bytes": 62094
+   },
+   "content-src/raw/rhel8/journalctl.man.txt": {
+    "sha256": "9cc1c026be42a35c472cc1ff5de36727c5a1681d57eb425030c559ec430f5729",
+    "bytes": 28882
+   },
+   "content-src/raw/rhel8/lvcreate.man.txt": {
+    "sha256": "91d1ff94859596477bd0c9b95ef9f78b3791353a005f9820c91e2026131fb487",
+    "bytes": 62400
+   },
+   "content-src/raw/rhel8/lvextend.man.txt": {
+    "sha256": "52731e210c4c7df0eb219fa72905731aeb644b1fd2ddc7580bf9b0d18ede9760",
+    "bytes": 19266
+   },
+   "content-src/raw/rhel8/nmcli.man.txt": {
+    "sha256": "10114c7390ac3845940ab3a9d05a609bdc7010165093ab5c443832b1a75a715c",
+    "bytes": 51604
+   },
+   "content-src/raw/rhel8/podman.man.txt": {
+    "sha256": "5536beaec5157aa09e3026eecb30eed06fa2a898458bb6ccc61235a5bdd50279",
+    "bytes": 43672
+   },
+   "content-src/raw/rhel8/pvcreate.man.txt": {
+    "sha256": "41610071272517320e4f3df865aa631d18f7c0cf4ce57720021e6065190b302e",
+    "bytes": 17775
+   },
+   "content-src/raw/rhel8/rsyslogd.man.txt": {
+    "sha256": "77bdce88d35003c478e85b13333c5441142a0b8b6421408efaedfbf477a2ab62",
+    "bytes": 12349
+   },
+   "content-src/raw/rhel8/semanage.man.txt": {
+    "sha256": "9133b7a68b7caf104b6a57ac3a91cdffb5ba67ecbdab9840ba172e1f06d314e9",
+    "bytes": 2957
+   },
+   "content-src/raw/rhel8/setsebool.man.txt": {
+    "sha256": "1426b9a14b3d018365ff96bf6572edaf3b56df5cdaf716dfaa39aa2ab380fd83",
+    "bytes": 1208
+   },
+   "content-src/raw/rhel8/sshd.man.txt": {
+    "sha256": "2eee0c51ddfefb1da06b266cbde5757dfd5d09f18737819d1c56119ca946d1ca",
+    "bytes": 35114
+   },
+   "content-src/raw/rhel8/systemctl.man.txt": {
+    "sha256": "1a1b4388f3386ae2baffc90bb39b4ac27566ebd7e45f152db5c994d59ca7700b",
+    "bytes": 80686
+   },
+   "content-src/raw/rhel8/useradd.man.txt": {
+    "sha256": "4e7614c989dfd1696df08f956a8bc2f83f7ca9a283b6be72ccea4568b2c8a662",
+    "bytes": 18872
+   },
+   "content-src/raw/rhel8/usermod.man.txt": {
+    "sha256": "697525a79e992fc0ba72415c333c32383a1c74e0cb9a137a145e9ed595ee00e4",
+    "bytes": 12262
+   },
+   "content-src/raw/rhel8/vgcreate.man.txt": {
+    "sha256": "e7a73dd33b02bb97e9d9f80b311f9eda2f49378bed40c807717798464a7af1ea",
+    "bytes": 16908
+   },
+   "content/rules_rhel10.json": {
+    "sha256": "2791b914a85cb4158ed6f94a09b72177a2fe4a536eb7cd6aca4c878be108365a",
+    "bytes": 494013
+   },
+   "content/rules_rhel7.json": {
+    "sha256": "a7459d2b9a4ae6312453d046b17a7be260bafbc5128631b80116de507f2831a2",
+    "bytes": 341868
+   },
+   "content/rules_rhel8.json": {
+    "sha256": "357cf8ac299f6faa4651fe5c2c19d22d9738513048529d60900ec254769bfca2",
+    "bytes": 447893
+   },
+   "content/rules_rhel9.json": {
+    "sha256": "53f8ba4058e0a8dc38d5a3d650833f29c06d64aa7ddbbb6c7c4abbb72b5b7136",
+    "bytes": 471469
+   }
+  },
+  "anchor_form": "file@sha256#anchor -- the file and anchor are derived from each occurrence's own fields by anchor_of(), the digest is looked up here by path. qa.py Q25 re-resolves every citation and fails on a single mismatch (threat model v2, M2)",
   "guide_url_template": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/%s/html-single/%s/index",
   "guide_attribution": "(c) Red Hat, Inc., CC BY-SA 3.0 Unported",
   "guides": {

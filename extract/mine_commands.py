@@ -471,18 +471,69 @@ def occurrence(version, **anchor):
     return o
 
 
+def anchor_file_of(occ):
+    """The committed file one occurrence's anchor resolves INTO.
+
+    One function, so qa.py's Q25 and this extractor cannot disagree about where
+    an anchor points -- which is the whole failure mode M2 names. Q25 imports
+    this rather than restating the path rules.
+    """
+    if occ.get("s"):
+        return "content/rules_rhel%s.json" % occ["v"]
+    if occ.get("g"):
+        return "content-src/raw/redhat/rhel%s.candidates.jsonl" % occ["v"]
+    return occ.get("p")
+
+
 def anchor_of(occ):
     """The re-resolvable anchor string for one occurrence (threat model v2, M2).
 
-    file@#anchor form, resolved by qa.py's Q25 against the committed source. The
-    string is DERIVED, never stored, so it cannot disagree with the fields.
+    file@sha256#anchor form, resolved by qa.py's Q25 against the committed
+    source. Everything but the digest is DERIVED from the occurrence's own
+    fields, so the string cannot disagree with them; the digest is looked up in
+    _meta.source_files, which records the bytes this extractor actually read.
     """
+    path = anchor_file_of(occ)
     if occ.get("s"):
-        return "content/rules_rhel%s.json#%s/%s@%s" % (occ["v"], occ["s"], occ.get("f"), occ.get("l"))
+        return "%s#%s/%s@L%s" % (path, occ["s"], occ.get("f"), occ.get("l"))
     if occ.get("g"):
-        return "content-src/raw/redhat/rhel%s.candidates.jsonl#%s@%s" % (
-            occ["v"], occ["g"], occ.get("l"))
-    return "%s@%s" % (occ.get("p"), occ.get("l"))
+        return "%s#%s@L%s" % (path, occ["g"], occ.get("l"))
+    return "%s@L%s" % (path, occ.get("l"))
+
+
+def sha256_of(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def source_file_manifest(records):
+    """{relpath: {sha256, bytes}} for every file this corpus's anchors point into.
+
+    THIS IS THE `sha256` IN `file@sha256#anchor` (threat model v2, M2). Without
+    it "the anchor re-resolves" means only "some file at that path today contains
+    that text", which is not a claim about the bytes the extractor read -- and
+    an anchor into a file that has since changed under it is exactly how
+    MCR-SEC-019 happened once already.
+
+    Derived from the RECORDS rather than from a directory listing, so a source
+    file nothing cites is not pinned and a cited file cannot be left out.
+    """
+    wanted = set()
+    for rec in records:
+        for occ in rec.get("o") or []:
+            path = anchor_file_of(occ)
+            if path:
+                wanted.add(path)
+    out = {}
+    for rel in sorted(wanted):
+        full = os.path.join(REPO, rel)
+        if not os.path.exists(full):
+            continue
+        out[rel] = {"sha256": sha256_of(full), "bytes": os.path.getsize(full)}
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -1177,6 +1228,16 @@ def generate_payload():
                      "p (staged file path) + x (man section)",
                 "n": "true occurrence count before the occurrence list was capped",
             },
+            # THE `sha256` IN `file@sha256#anchor` (threat model v2, M2). Q25
+            # re-hashes every one of these before it re-resolves a single
+            # anchor, so "the anchor contains the text it claims" is a statement
+            # about the bytes this extractor READ, not about whatever happens to
+            # sit at that path when the gate runs.
+            "source_files": source_file_manifest(records),
+            "anchor_form": ("file@sha256#anchor -- the file and anchor are derived from each "
+                            "occurrence's own fields by anchor_of(), the digest is looked up "
+                            "here by path. qa.py Q25 re-resolves every citation and fails on a "
+                            "single mismatch (threat model v2, M2)"),
             "guide_url_template": GUIDE_URL,
             "guide_attribution": GUIDE_COPYRIGHT,
             "guides": dict(sorted(guides_index.items())),
