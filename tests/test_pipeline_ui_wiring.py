@@ -251,6 +251,59 @@ def audit_every_rendered_value_is_escaped(src):
     return []
 
 
+def audit_every_rating_has_a_badge(src):
+    """PL4 on the screen: `unrated` must be a rating the panel can DRAW.
+
+    The assembler rates a redirect stage green, unrated or red, and the panel
+    renders `sbadge b-<rating>`. A rating with no CSS rule behind it renders as
+    unstyled text next to three styled siblings, which reads as a rendering bug
+    rather than as the product declining to make a claim -- so the stylesheet is
+    checked against the ratings the assembler can actually produce.
+    """
+    f = []
+    names = re.search(r"var BLAST_NAMES=\[(.*?)\];", src)
+    if names is None:
+        return ["no BLAST_NAMES list in the source"]
+    ratings = set(re.findall(r'"([a-z]+)"', names.group(1)))
+    rank = re.search(r"var PIPE_TARGET_RANK=\{(.*?)\};", src, re.S)
+    if rank is None:
+        return ["no PIPE_TARGET_RANK table in the source -- PL4's ranking is gone"]
+    ratings |= set(re.findall(r"([a-z]+)\s*:", rank.group(1)))
+    for r in sorted(ratings):
+        if ".sbadge.b-%s{" % r not in src.replace(" ", ""):
+            f.append("the assembler can rate a stage '%s' and the stylesheet has no "
+                     ".sbadge.b-%s rule, so that rating renders unstyled" % (r, r))
+    if "unrated" not in ratings:
+        f.append("'unrated' is not among the ratings the assembler produces. PL4 is the rule that "
+                 "an unclassified write is never green; without that rating it cannot be kept")
+    panel = body(src, "renderPipelinePanel")
+    if 'b-"+escapeAttr(d.blast)' not in panel.replace(" ", ""):
+        f.append("the panel does not badge a stage with the rating validatePipeline() gave it, so "
+                 "a redirect stage's rating is not shown where the operator composes it")
+    return f
+
+
+def audit_the_header_names_a_pipeline(src):
+    """A two-stage line must not be headed with one stage's tool name."""
+    f = []
+    for fn in ("renderEditor", "renderGeneratorResult"):
+        text = body(src, fn)
+        heads = re.findall(r'html\+="<p class=\\"muted\\">"\+esc\(([a-zA-Z0-9_.]+)\)\+" ', text)
+        for h in heads:
+            if h == "entry.tool":
+                f.append("%s() heads an assembled command with entry.tool. For a pipeline that "
+                         "names ONE stage of several, and the stage that writes the file may not "
+                         "be the one named" % fn)
+    subject = body(src, "resultSubject")
+    if "pipeline" not in subject:
+        f.append("resultSubject() does not distinguish a pipeline from a single command")
+    priv = body(src, "resultPrivilege")
+    if "stages" not in priv:
+        f.append("resultPrivilege() does not read the pipeline's stages, so a stage that requires "
+                 "root can lose its badge to whichever entry happens to be selected")
+    return f
+
+
 AUDITS = (
     ("operator text stays text", audit_operator_text_stays_text),
     ("the picker hands back a key", audit_the_picker_hands_back_a_key),
@@ -259,6 +312,8 @@ AUDITS = (
     ("the closed operator set", audit_the_closed_set),
     ("one sink, one writer", audit_one_sink_one_writer),
     ("every rendered value is escaped", audit_every_rendered_value_is_escaped),
+    ("every rating has a badge (PL4 on the screen)", audit_every_rating_has_a_badge),
+    ("the header names a pipeline as a pipeline", audit_the_header_names_a_pipeline),
 )
 
 
@@ -353,6 +408,27 @@ class TheAuditsAreShownToFail(unittest.TestCase):
         self.assertNotEqual(bad, SRC)
         self.assertCatches(audit_one_sink_one_writer, bad,
                            "renderAll() no longer draws the panel")
+
+    def test_a_rating_with_no_badge_rule_is_caught(self):
+        bad = SRC.replace(".sbadge.b-unrated{", ".sbadge.b-nothing{", 1)
+        self.assertNotEqual(bad, SRC)
+        self.assertCatches(audit_every_rating_has_a_badge, bad,
+                           "the `unrated` rating has no style rule and renders as bare text")
+
+    def test_a_panel_that_drops_the_stage_badge_is_caught(self):
+        panel = body(SRC, "renderPipelinePanel")
+        bad = SRC.replace(panel, panel.replace(
+            'class=\\"sbadge b-"+escapeAttr(d.blast)+"\\">',
+            'class=\\"sbadge\\">', 1))
+        self.assertNotEqual(bad, SRC)
+        self.assertCatches(audit_every_rating_has_a_badge, bad,
+                           "the panel stopped badging a stage with its rating")
+
+    def test_a_pipeline_headed_by_one_stages_tool_is_caught(self):
+        bad = SRC.replace("esc(subjG)", "esc(entry.tool)", 1)
+        self.assertNotEqual(bad, SRC)
+        self.assertCatches(audit_the_header_names_a_pipeline, bad,
+                           "a multi-stage pipeline is headed with a single stage's tool name")
 
     def test_an_unescaped_stage_value_is_caught(self):
         panel = body(SRC, "renderPipelinePanel")

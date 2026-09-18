@@ -2623,6 +2623,92 @@ function main() {
     }
   }
 
+  /* ---- PL4 ON THE SCREEN ------------------------------------------------
+   * The assembler rates a redirect stage green / unrated / red. The PANEL
+   * renders validatePipeline()'s per-stage diagnostic, which is a different
+   * object -- so "a target outside the protected list renders unrated, never
+   * green" is only true if THAT object carries the rating too, and carries the
+   * same one. It did not until this was asserted: an unclassified write
+   * rendered with no badge at all, which an operator reads as "nobody thinks
+   * this is worth a badge" rather than "nobody has ever classified this path".
+   *
+   * Three claims per target, per release:
+   *   (a) the diagnostic's rating EQUALS the assembler's own stage rating --
+   *       one decision, shown in two places, never two opinions;
+   *   (b) a target outside the protected list is exactly "unrated" -- not
+   *       green, because green is a human claim in this product, and not
+   *       silently yellow either;
+   *   (c) the WHOLE pipeline is at least yellow whenever the stage is not
+   *       green: a write is a write, and it cannot rate below the command it
+   *       redirects.
+   */
+  var pl4Checks = 0;
+  var PL4_TARGETS = [
+    ["/tmp/report.log", "green"],
+    ["/var/tmp/report.log", "green"],
+    ["/home/operator/report.log", "green"],
+    ["/srv/audit/report.log", "unrated"],
+    ["/opt2/report.log", "unrated"],
+    ["/data/report.log", "unrated"],
+    ["/etc/passwd", "red"],
+    ["/usr/share/x", "red"],
+    ["/var/lib/misc/x", "red"],
+    ["/boot/grub.cfg", "red"]
+  ];
+  for (var p4 = 0; p4 < PL4_TARGETS.length; p4++) {
+    for (var p4v = 0; p4v < VERSIONS.length; p4v++) {
+      pl4Checks++;
+      var p4t = PL4_TARGETS[p4][0], p4want = PL4_TARGETS[p4][1];
+      var p4stages = [HEAD, { op: "redirect", target: p4t }];
+      var p4res = A.assemblePipeline(p4stages, VERSIONS[p4v], { patterns: realPatterns });
+      if (p4res === null) {
+        stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": a redirect to an " +
+                            "ordinary file was refused, so the rating cannot be shown at all");
+        continue;
+      }
+      var p4vp = A.validatePipeline(p4stages, VERSIONS[p4v], { patterns: realPatterns });
+      var shown = p4vp.stages[1] && p4vp.stages[1].blast;
+      var rated = p4res.stages[1] && p4res.stages[1].blast;
+      if (rated !== p4want) {
+        stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": the assembler rated " +
+                            "this redirect " + rated + ", expected " + p4want);
+      }
+      if (shown !== rated) {
+        stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": the panel would show " +
+                            JSON.stringify(shown) + " and the assembler decided " +
+                            JSON.stringify(rated) + ". One decision, shown where it was made");
+      }
+      if (p4want === "unrated" && shown === "green") {
+        stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": an unclassified write " +
+                            "rendered GREEN. Green is a human claim in this product");
+      }
+      if (p4want !== "green" && p4res.blast === "green") {
+        stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": the whole pipeline " +
+                            "rated green while writing outside a scratch path. A write is a write");
+      }
+    }
+  }
+  /* The negative control for (b): if redirectTargetBlast() ever defaulted to
+     green, the table above would have caught it -- but only because these
+     three paths are genuinely unclassified. Assert that they are, so the
+     control cannot rot into a test of the scratch list. */
+  for (var p4c = 0; p4c < VERSIONS.length; p4c++) {
+    pl4Checks++;
+    var ctlRes = A.assemblePipeline([HEAD, { op: "redirect", target: "/srv/audit/report.log" }],
+                                    VERSIONS[p4c], { patterns: realPatterns });
+    var ctlGreen = A.assemblePipeline([HEAD, { op: "redirect", target: "/tmp/report.log" }],
+                                      VERSIONS[p4c], { patterns: realPatterns });
+    if (ctlRes === null || ctlGreen === null) {
+      stats.failures.push("PL4 control / RHEL " + VERSIONS[p4c] + ": a plain redirect was refused");
+      continue;
+    }
+    if (ctlRes.stages[1].blast === ctlGreen.stages[1].blast) {
+      stats.failures.push("PL4 control / RHEL " + VERSIONS[p4c] + ": an unclassified target and a " +
+                          "scratch target rate the SAME (" + ctlRes.stages[1].blast + "). The " +
+                          "distinction PL4 exists to draw is not being drawn");
+    }
+  }
+
 
 
   /* (7) dangerous.json against the DE-QUOTED projection of the WHOLE pipeline.
@@ -3259,6 +3345,7 @@ function main() {
     pipeline_stig_shape_checks: stigShapeChecks,
     pipeline_interpreter_class_checks: interpreterChecks,
     pipeline_stage_naming_checks: namingChecks,
+    pipeline_target_rating_checks: pl4Checks,
     one_stage_invariants: oneStageInvariants,
     rich_rule_slot_types_refused: richCounts.refusedType,
     rich_rule_slot_types_allowed: richCounts.allowedType,
@@ -3341,6 +3428,10 @@ function main() {
     console.log("  " + report.pipeline_stage_naming_checks + " stage-naming checks (PL6: every " +
                 "incomplete pipeline is null AND validatePipeline() names the one stage that is " +
                 "wrong, never all of them)");
+    console.log("  " + report.pipeline_target_rating_checks + " redirect-target rating checks " +
+                "(PL4: the rating the PANEL shows for a redirect stage is the rating the assembler " +
+                "made, and a target outside the protected list is `unrated` -- never green, " +
+                "because green is a human claim in this product)");
     console.log("  " + oneStageInvariants + " one-stage invariants: a pipeline of one stage is " +
                 "assembleCommand(), byte for byte, on every generator and every release");
     console.log("  " + report.pipeline_stig_shape_checks + " STIG-corpus shape checks (ADR-002: " +

@@ -51,6 +51,11 @@ GOOD = {
     "pipeline_checks": 17092, "pipeline_oracles": 577, "pipeline_negative_controls": 11,
     "pipeline_operator_seam_checks": 332, "pipeline_interpreter_class_checks": 100,
     "pipeline_stage_naming_checks": 36, "one_stage_invariants": 96,
+    # PL4 on the screen: the panel shows the rating the assembler made, and an
+    # unclassified redirect target is `unrated` rather than green. Part of the
+    # report contract for the same reason as the counts above -- Q18's PASS text
+    # states the claim, so the gate has to fail closed when nothing checked it.
+    "pipeline_target_rating_checks": 44,
     # MCR-SEC-010 (CR-T-25). The generated-file oracles are part of the report
     # contract now: Q18 reads both counts and fails on a zero, because a YAML
     # quoter whose oracle silently stopped running is the dead-escaper finding

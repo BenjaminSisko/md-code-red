@@ -3036,6 +3036,12 @@ HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected
                        "pipeline_checks", "pipeline_oracles", "pipeline_negative_controls",
                        "pipeline_operator_seam_checks", "pipeline_interpreter_class_checks",
                        "pipeline_stage_naming_checks", "one_stage_invariants",
+                       # PL4 on the screen: the rating the PANEL shows for a redirect
+                       # stage is the rating the assembler made, and an unclassified
+                       # target is `unrated` rather than green. Counted here because a
+                       # harness that stopped asserting it would leave the claim
+                       # standing in this gate's own PASS text.
+                       "pipeline_target_rating_checks",
                        # MCR-SEC-010. The two file-oracle counts are read the same
                        # way every other count here is: proved present and integral
                        # before they are believed, so a harness that stopped running
@@ -3097,6 +3103,11 @@ def harness_report_failures(rep, returncode, stderr=""):
         f.append("the harness reported ZERO pipeline-oracle negative controls. An oracle nobody "
                  "has watched fail is not disproven; it is unwatched, and the pipeline oracle is "
                  "the only thing asserting that no operator reached the command from data")
+    if not missing and not wrong and not rep["pipeline_target_rating_checks"]:
+        f.append("the harness reported ZERO redirect-target rating checks. PL4 -- an unclassified "
+                 "write renders `unrated`, never green -- is a claim this gate makes in its own "
+                 "PASS text, and a claim with no check behind it is the thing this file exists "
+                 "to refuse")
     if not missing and not wrong and not rep["one_stage_invariants"]:
         f.append("the harness reported ZERO one-stage invariants. A pipeline of one stage must "
                  "equal assembleCommand() byte for byte; unasserted, the composer is free to "
@@ -3138,11 +3149,15 @@ def harness_report_failures(rep, returncode, stderr=""):
                  "at and that no other word is an operator or leaves a metacharacter unquoted; "
                  "%d negative controls proved that oracle can fail; %d interpreter-class checks "
                  "and %d stage-naming checks cover threat-model-v2 PL2 and PL6; and %d one-stage "
-                 "invariants proved a pipeline of one stage is assembleCommand(), byte for byte"
+                 "invariants proved a pipeline of one stage is assembleCommand(), byte for byte; "
+                 "and %d redirect-target rating checks proved the rating the PANEL shows for a "
+                 "redirect stage is the rating the assembler made, with a target outside the "
+                 "protected list rendering `unrated` -- never green, because green in this "
+                 "product means a human curated an entry and said so"
                  % (rep["pipeline_checks"], rep["pipeline_operator_seam_checks"],
                     rep["pipeline_oracles"], rep["pipeline_negative_controls"],
                     rep["pipeline_interpreter_class_checks"], rep["pipeline_stage_naming_checks"],
-                    rep["one_stage_invariants"]))
+                    rep["one_stage_invariants"], rep["pipeline_target_rating_checks"]))
         d.append("what this gate does NOT say about pipelines: it proves the emitted line's "
                  "STRUCTURE is the operator's own and that no value escaped its quoting. It does "
                  "not prove the pipeline is a sensible thing to run, and the blast COMPOSITION "

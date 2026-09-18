@@ -2019,6 +2019,14 @@ function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey){
                  "delay on it, and this tool will not compose it";
       return out;
     }
+    /* PL4, in the UI. assemblePipeline() already RATES this stage; until this
+       line the panel had no way to show it, so a write to a path nobody has
+       classified rendered with no badge at all -- indistinguishable, to the
+       operator, from a stage nobody rated. `unrated` is the answer the product
+       owes them: not green (green is a human claim -- somebody curated an entry
+       and said so), not silently yellow either. redirectTargetBlast() is the
+       same function the assembler calls, asked the same question. */
+    out.blast=redirectTargetBlast(tv.value);
     return out;
   }
   if(out.kind!=="command"&&out.kind!=="xargs"){
@@ -3376,6 +3384,34 @@ function renderAbout(){
    mined reference record are structurally incapable of being stages. The panel
    says WHY rather than silently offering nothing (ADR-002, and PL6's rule that
    a refusal nobody can read gets worked around in a text editor). */
+/* CR-T-31. The one-line heading over an assembled command names the SUBJECT of
+   what is about to run. For a single command that is the entry's tool. For a
+   pipeline it is not: a two-stage line headed "journalctl" tells the operator
+   they are about to run journalctl, and the second stage -- which may be the
+   one that writes a file -- is not named at all. A pipeline says so, and says
+   how many stages it has, because the stage count is the number of things that
+   have to be read before it is run. Both header sites call this, so the screen
+   and the generator panel cannot come to different conclusions. */
+function resultSubject(res,entry){
+  if(res&&res.tool==="pipeline"&&res.stages){
+    return "pipeline of "+res.stages.length+" stages";
+  }
+  return (entry&&entry.tool)?entry.tool:((res&&res.tool)||"");
+}
+/* The privilege badge has the same problem: it is the CURRENT entry's, and for
+   a pipeline the current entry may not even be a stage. Every distinct
+   privilege any stage requires is named, so "requires root" cannot be dropped
+   because the stage needing it is not the one on screen. */
+function resultPrivilege(res,entry){
+  if(!(res&&res.tool==="pipeline"&&res.stages)) return (entry&&entry.privilege)||"";
+  var seen=[],i,st,e;
+  for(i=0;i<res.stages.length;i++){
+    st=res.stages[i];
+    e=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+    if(e&&e.privilege&&!inList(seen,e.privilege)) seen.push(e.privilege);
+  }
+  return seen.join(" + ");
+}
 function cloneValues(v){
   var out={},k;
   for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
@@ -3746,9 +3782,10 @@ function renderEditor(){
     return;
   }
   html+="<h2>"+esc(entry.intent||entry.id)+"</h2>";
-  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
+  var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
+  html+="<p class=\"muted\">"+esc(subjA)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
         (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+
-        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
+        (privA?"<span class=\"badge privilege\">requires ":"")+(privA?esc(privA):"")+(privA?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -3882,8 +3919,9 @@ function renderGeneratorResult(){
     target.innerHTML=html;
     return;
   }
-  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
+  var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
+  html+="<p class=\"muted\">"+esc(subjG)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
+        (privG?"<span class=\"badge privilege\">requires ":"")+(privG?esc(privG):"")+(privG?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
