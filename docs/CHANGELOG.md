@@ -4,6 +4,87 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased
 
+### Added -- the pipeline composer (CR-T-31, branch `salm/milo/pipeline-finish`)
+
+Founder requirement, verbatim: *"I need to be able to pipe commands together as
+well."* `assemblePipeline(stages, version, opts)` lands beside
+`assembleCommand()`, inside `MCR-ASSEMBLER`, pure, and never replacing it.
+
+**The design constraint, which is the whole of the implementation:** a pipeline
+is structure the tool owns, never a value the user supplies. The user picks a
+KEY; the key is resolved by `hasOwnProperty` against `PIPE_OPERATORS`; that
+table's own string literal is emitted. No code path copies operator text out of
+a stage, so `|` never enters a form field -- which matters because `|` is
+exactly the metacharacter the hostile harness rejects tens of thousands of times
+over in every other field of this product.
+
+- **Operator set, closed, ten:** `|`, `&&`, `||`, `;`, `>`, `>>`, `2>`, `2>&1`,
+  `| tee`, `| tee -a`. A redirect TARGET is a validated `path` field, never free
+  text. `xargs` is its own stage kind with `-0`, `-n` and `-I`; `-0` is refused
+  unless the producing stage provably emits NUL-delimited records (`find
+  -print0`, `grep -Z/-z/--null`), and `-n` alongside `-I` is refused because
+  `xargs` resolves that contradiction silently.
+- **A reference (mined) command can never be a stage.** A stage must carry a
+  TEMPLATE the assembler emits word by word; a spec carrying a handed command
+  STRING is refused by `isComposableSpec()`. Structural, not a filter on a
+  picker. Two reasons, one rule (ADR-002): joining two vendor strings produces a
+  command the vendor never published while the citation still claims they did,
+  and a handed string is text this assembler did not compose, so it cannot know
+  the string contains no `|`.
+- **Blast is not the max of the stages.** A write outside a scratch path is at
+  least yellow; a target under `/etc`, `/boot`, `/dev`, `/usr`, `/var/lib`,
+  `/sys`, `/proc` is RED; an execution-sink target (`/etc/cron.d`,
+  `/etc/profile.d`, `/usr/local/bin`, `/var/spool/cron`, ...) is REFUSED, not
+  rated -- `> /etc/cron.d/x` is `| sh` with a timer; `| xargs rm` and any xargs
+  feeding a red child are RED; `;`/`&&`/`||` carry the max; `dangerous.json` is
+  evaluated against the de-quoted projection of the WHOLE pipeline, so a pattern
+  spanning an operator still fires; and the redirect rule is applied a SECOND
+  time to that same projection without consulting the `path` field type, so it
+  stands on its own.
+- **A target outside the protected list renders `unrated`, never green (PL4).**
+  Green in this product is a human claim -- somebody curated an entry and said
+  so. A path nobody has classified is unclassified, not safe.
+- **An interpreter as the final consumer is REFUSED, not rated (PL2), as a
+  CLASS:** a pipe (or `&&`, or a first stage) into `sh`/`bash`/`python`/`perl`;
+  an `xargs` CHILD that is an interpreter, with and without `-0`/`-I`; and an
+  execution sink reached by REDIRECT. `sed` and `awk` still compose -- the line
+  is "does stdin or a written file become code", not "is it powerful".
+- **TM2-F8, nested quoting domains: CLOSED BY REFUSAL.** `su -c`, `sh -c`,
+  `sudo`, `timeout`, `find -exec` and every other wrapper that re-parses its
+  argument is refused as a stage. A second escaping domain gets its own quoter
+  AND its own parsing oracle in the same commit or it does not exist
+  (MCR-SEC-010's rule). `xargs` is the one re-parser present on purpose: it
+  re-parses its INPUT STREAM, not its argv, and that stream is the producing
+  stage's output, never a value from a form.
+- **`null` on every incomplete case, and the panel names the stage (PL6).**
+  `validatePipeline()` gives the UI the same decision per stage, with `ok` being
+  `assemblePipeline()`'s own answer rather than a second opinion. A composer
+  that refuses without saying which stage is wrong gets worked around in a text
+  editor, and a worked-around gate is worse than no gate.
+- **A pipeline of one stage equals `assembleCommand()` byte for byte**, asserted
+  on every generator and every release (108 invariants).
+- **The UI:** a `#pipeline-panel` with one writer, an operator `<select>` whose
+  option VALUES are the closed table's keys and whose LABELS render the emitted
+  text, stage add/remove/reorder/edit, and `Copy`, `Copy with comment` and
+  `Export as Evidence` all acting on the WHOLE pipeline -- the clipboard header
+  and the evidence export name every stage, its operator, its rating and its
+  citation.
+- **Gates:** Q18 extended to cover pipeline assembly explicitly, failing closed
+  on zero pipeline checks, zero oracle negative controls, zero one-stage
+  invariants or zero redirect-target rating checks; 8 new Q5 markers; the
+  harness gains the pipeline oracle (589 comparisons, 11 negative controls) and
+  17,092 hostile-vector pipeline checks; `tests/test_pipeline_stig_shapes.py`
+  re-derives the ADR-002 expressibility measurement from
+  `content/rules_rhel*.json`; `tests/test_pipeline_ui_wiring.py` (15 tests, 9
+  audits, 14 negative controls) gates the panel. Harness 81,577 -> 101,297
+  checks; unit tests 251 -> 293.
+- **Finding PIPE-F1, reported not carved out:** `/dev/null` is 26 of the 31
+  absolute redirect targets in the STIG corpus, and the rule as specified rates
+  `/dev/**` RED. Implemented as specified -- `/dev` holds both the most harmless
+  target and the most catastrophic, so a blanket RED errs safe. A carve-out is a
+  Founder/Marcus decision, and adding one quietly would be the
+  declared-discriminator mistake MCR-SEC-022 names.
+
 ### Fixed
 
 - **qa.py dist/ artifact-selection fail-open (AL-GATE3-001-class).**

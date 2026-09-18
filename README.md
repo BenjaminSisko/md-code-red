@@ -16,6 +16,24 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-17** -- **The pipeline composer (CR-T-31)**, branch
+  `salm/milo/pipeline-finish` (Milo Vance). `assemblePipeline()` joins several
+  commands into one shell line -- `|`, `&&`, `||`, `;`, `>`, `>>`, `2>`,
+  `2>&1`, `| tee`, `| tee -a`, plus an `xargs` stage -- under one rule: **a
+  pipeline is structure the tool owns, never a value the user supplies.** The
+  user picks a KEY out of a closed table and the table's own string literal is
+  emitted, so `|` never enters a form field. A reference (mined) command cannot
+  be a stage by construction; a stage that hands its argument to another
+  interpreter (`su -c`, `sh -c`, `find -exec`) is REFUSED rather than escaped
+  into a second quoting domain with no oracle (TM2-F8); `| sh` and a write into
+  a directory the system executes are refused as one class; blast composes
+  rather than taking the max of the stages, and a redirect target nobody has
+  classified renders `unrated`, never green. New in the gates: the pipeline
+  oracle (589 comparisons, 11 negative controls), 17,092 hostile-vector
+  pipeline checks, 108 one-stage invariants, and
+  `tests/test_pipeline_ui_wiring.py` on the panel. Harness 81,577 -> 101,297
+  checks; unit tests 251 -> 293; all four gates rc=0.
+
 - **2026-09-18** -- **v1.0.0-alpha.1**, branch `salm/taylor/v1.0.0-alpha.1`
   (Taylor Webb, Release Engineer). Version bump off `-dev` (`build.py`
   `APP_VERSION`/`APP_BUILD_DATE`, the single source Q1 checks against the
