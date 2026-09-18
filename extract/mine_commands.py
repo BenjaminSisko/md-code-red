@@ -167,6 +167,53 @@ PROSE_STOPWORDS = frozenset((
     "our us he she they them such use using used into over under about after "
     "before between each other more most some only also but so because while "
     "where what who how does".split()))
+# TM2-F1 / M5. THE HEAD ITSELF IS AN ENGLISH FUNCTION WORD OR A SHELL KEYWORD.
+#
+# This is the rule that closes the last class of false positive the two-word
+# prose test cannot reach. `and an 'archive' contains old metadata
+# configurations.` was mined as a command under the TOOL `and`; `by 'r' to
+# reject the path.` under the tool `by`; `a deep attribute)` under the tool `a`.
+# Every one of those is a wrapped documentation sentence whose first word
+# happened to be lowercase, and every one of them counted as `classified` AND as
+# `recorded`, so the ledger balanced -- which is the exact failure M5 says Q23 is
+# structurally blind to.
+#
+# No language test was going to catch them: `and max_workers parameter` is two
+# tokens and a stopword, and so is `dnf clean all`. What IS decidable is the
+# HEAD. No Linux distribution ships a binary called `and`, `by`, `has` or `the`,
+# and the STIG/guide corpus attests every real binary it names somewhere else.
+# So the test is on the head alone, against a closed list, and it is exact:
+# tests/test_mine_commands.py asserts that not one name on this list is a tool
+# in content/tools.json, a CLI in any flag dictionary, or a man page in any
+# staged manifest -- so the list cannot grow into refusing something real.
+#
+# The shell keywords are here for the reason M4 gives, not for a language
+# reason. `for f in $(ls); do tar xvf $f; done` IS a command line, and its head
+# is not a binary: ADR-002 ruling 1 says the declared tool is the RESOLVED HEAD
+# OF STAGE ONE, and filing that line under the tool `for` states something false
+# about it. A shell construct goes to residue, like every other shape this
+# parser will not read.
+FUNCTION_WORD_HEADS = frozenset("""
+a an and are as at be been being but by can could did do does done else
+for from had has have how however if in into is it its may might must no not
+of on or other our over should so such than that the their them then there
+these they this those to was we were what when where while whom
+whose why will with would you your
+case done elif esac fi then while until do
+""".split())
+# NOT on this list, and the omission is load-bearing: `which` and `who` are
+# REAL BINARIES (/usr/bin/which, /usr/bin/who), and `at` is the scheduler. A
+# refusal list that swallows a real program name is worse than no list, so the
+# rule is "a word that is also a binary is not a function word here", and Q23
+# proves it by intersecting this list with content/tools.json and every flag
+# dictionary. Q23 found `which` and `who` in the first cut of this list.
+# The subset of the above that is a shell KEYWORD rather than an English
+# function word. Both go to residue; they are counted apart because they are
+# different findings -- a keyword head means the line was a real shell construct
+# this parser will not read, and a function-word head means the line was never a
+# command at all.
+SHELL_KEYWORD_HEADS = frozenset("case do done elif else esac fi for if then until while".split())
+
 # An instruction to drive an interactive program, which is a procedure, not an
 # invocation. Checked before prose so the tally separates the two.
 TUI_OPENERS = frozenset((
@@ -249,6 +296,31 @@ def stage_one_head(text):
     if not stages:
         return None
     return schema.head_binary(stages[0])
+
+
+# A sentence boundary OUTSIDE quotes: a plain alphabetic word, a full stop,
+# whitespace, then a capital. The two exclusions are what make it precise rather
+# than merely suggestive:
+#   - the word before the stop must be plain letters, so `dig ipa.example.com. NS`
+#     (a dotted FQDN) is not a sentence and `configurations. They` is;
+#   - quoted runs are removed first, so `shutdown --poweroff 13:59 "Attention.
+#     The system will shut down"` keeps its argument and stays a command.
+SENTENCE_BOUNDARY_RE = re.compile(r"(?<![.\w])[A-Za-z]{2,}\.\s+[A-Z]")
+QUOTED_RUN_RE = re.compile(r"\"[^\"]*\"|'[^']*'|“[^”]*”")
+
+
+def sentence_like(text):
+    """Documentation prose that a wrap happened to start with a lowercase word.
+
+    Separate from prose_like(), which counts function words over a whole line:
+    this one fires on a line that is UNAMBIGUOUSLY two sentences, which a command
+    with a quoted argument is not."""
+    return bool(SENTENCE_BOUNDARY_RE.search(QUOTED_RUN_RE.sub(" ", str(text))))
+
+
+# `device {`, `options {` -- a block opener out of a configuration file, which
+# CONFIG_LINE_RE does not match because there is no separator on the line.
+BLOCK_OPENER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*\s*[{}]$")
 
 
 def prose_like(text):
@@ -418,6 +490,15 @@ def classify(text, prompt, policy, vocab, unavailable, strong=()):
     # left to refuse. The test is on the raw first token of the whole line.
     if ENV_ASSIGN_RE.match(first_token(text)):
         return None, REFUSED_ENV_PREFIX_REASON
+    # TM2-F1 / M5, and checked on the RAW first token for M4's reason: the head
+    # must be decided before any wrapper chain has a chance to resolve past it.
+    raw_head = first_token(text).rsplit("/", 1)[-1]
+    if raw_head.lower() in FUNCTION_WORD_HEADS:
+        return None, ("unparseable" if raw_head.lower() in SHELL_KEYWORD_HEADS else "prose")
+    if BLOCK_OPENER_RE.match(text.strip()):
+        return None, "config-fragment"
+    if sentence_like(text):
+        return None, "prose"
     head_tok = schema.command_head(stages[0])
     if head_tok is None:
         return None, "output-fragment"
@@ -1146,6 +1227,61 @@ def generate_payload():
     for _, _, reason, _, _ in residue:
         residue_counts[reason if reason in RESIDUE_REASONS else "unparseable"] += 1
 
+    # ------------------------------------------------------------------
+    # THE CLOSURE LEDGER (Al's Q23). Per (family, release), and it BALANCES:
+    #
+    #     classified + residue == candidates
+    #     recorded            == classified
+    #
+    # The two equations are not the same check and neither one implies the
+    # other. The first says no source line vanished: every line this extractor
+    # looked at was either taken or declined with a reason, and a line that fell
+    # through a branch and was silently dropped breaks it. The second says
+    # nothing was taken and then LOST between classification and the product --
+    # a record filtered out late, a citation dropped by dedupe, an occurrence
+    # list truncated without the count following it.
+    #
+    # `recorded` counts CITATIONS, not records, and is computed from the
+    # deduped records' true occurrence counts rather than from the stored
+    # occurrence list, which is capped. A ledger that counted only what it
+    # stored would balance by shrinking.
+    #
+    # FAMILY_FILES' short keys are the ones the residue files use; the ledger
+    # uses the long names the rest of _meta uses. Translated once, here.
+    ledger = {}
+
+    def ledger_cell(family, release):
+        return ledger.setdefault(family, {}).setdefault(
+            str(release), {"candidates": 0, "classified": 0, "residue": 0, "recorded": 0,
+                           "records": 0, "unclassified_residue": 0})
+
+    for h in hits:
+        ledger_cell(h["family"], h["occ"]["v"])["classified"] += 1
+    for family, version, reason, _text, _anchor in residue:
+        cell = ledger_cell(FAMILY_FILES[family], version)
+        cell["residue"] += 1
+        if reason == "unparseable":
+            cell["unclassified_residue"] += 1
+    for rec in records:
+        seen_cells = set()
+        for o in rec["o"]:
+            fam = ("stig_rules" if o.get("s") else
+                   "redhat_guides" if o.get("g") else "raw_captures")
+            seen_cells.add((fam, o["v"]))
+        for fam, version in sorted(seen_cells):
+            ledger_cell(fam, version)["records"] += 1
+    # `recorded` is rebuilt from the same hit list the records were deduped from,
+    # so it is the count of classified citations that SURVIVED into a record --
+    # which is what "recorded != classified" is asking about.
+    kept = set(r["c"] for r in records)
+    for h in hits:
+        if h["command"] in kept:
+            ledger_cell(h["family"], h["occ"]["v"])["recorded"] += 1
+    for family in ledger:
+        for version in ledger[family]:
+            cell = ledger[family][version]
+            cell["candidates"] = cell["classified"] + cell["residue"]
+
     totals = {
         "residue_total": len(residue),
         "unparseable_total": residue_counts["unparseable"],
@@ -1228,6 +1364,21 @@ def generate_payload():
                      "p (staged file path) + x (man section)",
                 "n": "true occurrence count before the occurrence list was capped",
             },
+            # The closed per-(family, release) ledger Q23 ratchets against
+            # content-src/closure_baseline.json. Every cell balances twice:
+            # classified + residue == candidates, and recorded == classified.
+            "closure_ledger": ledger,
+            "closure_ledger_note": ("per source family and RHEL release: `candidates` lines seen, "
+                                    "`classified` taken, `residue` declined with a reason, "
+                                    "`recorded` classified citations that survived into a record, "
+                                    "`records` distinct records citing that cell, and "
+                                    "`unclassified_residue` the `unparseable` subset. qa.py Q23 "
+                                    "recomputes residue from content-src/residue/ INDEPENDENTLY "
+                                    "rather than trusting these numbers, and fails when recorded "
+                                    "!= classified, when residue grows against the baseline, when "
+                                    "unclassified residue exceeds its cap, when a declared family "
+                                    "has zero records for a supported release, or when classified "
+                                    "is zero"),
             # THE `sha256` IN `file@sha256#anchor` (threat model v2, M2). Q25
             # re-hashes every one of these before it re-resolves a single
             # anchor, so "the anchor contains the text it claims" is a statement

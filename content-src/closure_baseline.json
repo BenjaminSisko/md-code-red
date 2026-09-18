@@ -1,0 +1,85 @@
+{
+ "_doc": "Q23's ratchet (threat model v2 M5/M6, Al Kowalski's coverage gate). Per source family and RHEL release, the residue this corpus is ACCEPTED to carry. Residue may SHRINK -- a better parser classifies more -- and may never GROW, and the `unparseable` subset may never exceed its cap. Same shape as content-src/flag_coverage_baseline.json and read the same way: the gate fails on a REGRESSION against these numbers, not on the numbers themselves.",
+ "_why_residue_is_the_metric": "ADR-002. A coverage percentage invites the parser to classify more by classifying worse. Residue counts the lines this parser DECLINED, with a closed reason code for each, so the only way to move the number is to read a line correctly that was not read before. It is published, held and ratcheted rather than reported.",
+ "_pinned_on": "2026-09-17",
+ "_pinned_by": "Milo Vance, Toolkit Systems Engineer (SALM) -- pinned on salm/milo/mine-finish after M4 and the TM2-F1 head rules moved 259 lines out of the product and into residue. That move is why these numbers are HIGHER than the stopped run's: it is the point of those commits, not a regression, and pinning here is what makes the NEXT increase a failure.",
+ "_retire_owner": "Milo Vance (extractor, reference tier)",
+ "_retire_by": "2026-10-15",
+ "_retire_note": "A ratchet with no end date stops being a countdown and becomes the plan (MCR-SEC-020 condition F3). By the retire-by date the residue reason mix is re-read and the baseline re-pinned deliberately, or the gate fails and says who owns it.",
+ "_unrated_fraction_max": 0.9868,
+ "_unrated_note": "M6. A mined record is never `green` -- nobody reviewed it -- so nearly all of them are `unrated`, and that is correct. What must not happen is the fraction GROWING: that would mean the tier is getting LESS rated over time, the opposite of the direction it moves once records start being reviewed.",
+ "_accepted_empty_cells": [
+  {
+   "family": "flags",
+   "release": "9",
+   "reason": "content/flags_rhel9.json ships as a ~500-byte skeleton with zero CLIs. There is no RHEL 9 host in the lab to capture man/--help output from (CR-T-12 records the same gap for RHEL 7, solved with a UBI7 container; RHEL 9 has no equivalent yet). The dictionary is HONESTLY EMPTY rather than fabricated, which is the right failure -- but it is still a declared family with zero records for a supported release, so it is accepted here BY NAME, with an owner and a date, instead of being invisible.",
+   "owner": "Caleb Stone (captures, CR-T-12 follow-up)",
+   "retire_by": "2026-10-15"
+  },
+  {
+   "family": "raw_captures",
+   "release": "9",
+   "reason": "The same root cause one layer down: with no RHEL 9 capture files there is nothing for the C2 miner to read, so raw_captures has no RHEL 9 cell at all. Accepted with the dictionary above and retired with it.",
+   "owner": "Caleb Stone (captures, CR-T-12 follow-up)",
+   "retire_by": "2026-10-15"
+  }
+ ],
+ "by_family": {
+  "raw_captures": {
+   "7": {
+    "residue": 0,
+    "unclassified_residue": 0
+   },
+   "8": {
+    "residue": 326,
+    "unclassified_residue": 17
+   },
+   "10": {
+    "residue": 332,
+    "unclassified_residue": 15
+   }
+  },
+  "redhat_guides": {
+   "7": {
+    "residue": 2446,
+    "unclassified_residue": 240
+   },
+   "8": {
+    "residue": 1253,
+    "unclassified_residue": 260
+   },
+   "9": {
+    "residue": 1362,
+    "unclassified_residue": 249
+   },
+   "10": {
+    "residue": 1227,
+    "unclassified_residue": 240
+   }
+  },
+  "stig_rules": {
+   "7": {
+    "residue": 2360,
+    "unclassified_residue": 199
+   },
+   "8": {
+    "residue": 3210,
+    "unclassified_residue": 343
+   },
+   "9": {
+    "residue": 3219,
+    "unclassified_residue": 349
+   },
+   "10": {
+    "residue": 3352,
+    "unclassified_residue": 345
+   }
+  }
+ },
+ "totals": {
+  "residue_total": 19087,
+  "unparseable_total": 2257,
+  "classified_total": 45179,
+  "records_total": 14436
+ }
+}

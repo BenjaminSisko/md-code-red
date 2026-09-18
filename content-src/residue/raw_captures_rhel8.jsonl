@@ -1,4 +1,4 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"raw_captures","generator":"extract/mine_commands.py","line_count":326,"reasons":{"config-fragment":9,"output-fragment":142,"prose":166,"unparseable":9},"rhel_version":"8","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"raw_captures","generator":"extract/mine_commands.py","line_count":326,"reasons":{"config-fragment":9,"output-fragment":142,"prose":158,"unparseable":17},"rhel_version":"8","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"l":11,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-a|--activate y|n|ay"}
 {"a":{"l":12,"p":"content-src/raw/rhel8/lvextend.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-A|--autobackup y|n"}
 {"a":{"l":14,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-A|--autobackup y|n"}
@@ -206,7 +206,6 @@
 {"a":{"l":1252,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"imports an OpenVPN configuration to NetworkManager."}
 {"a":{"l":1255,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"prose","x":"exports NetworkManager VPN profile corp-vpnc as standard Cisco"}
 {"a":{"l":13,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"export Output local customizations"}
-{"a":{"l":1345,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"For more examples see http://fedoraproject.org/wiki/FirewallD"}
 {"a":{"l":1347,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Example 1"}
 {"a":{"l":1348,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"Enable http service in default zone. This is runtime only change, i.e."}
 {"a":{"l":1349,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"prose","x":"effective until restart."}
@@ -224,7 +223,6 @@
 {"a":{"l":1389,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"ta (superblock and bitmap) is also included on the two devices."}
 {"a":{"l":1392,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a mirror LV with two images, and a  useable  size  of  500  MiB."}
 {"a":{"l":1393,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"This  operation  requires  three devices: two for mirror images and one"}
-{"a":{"l":1394,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"for a disk log."}
 {"a":{"l":1397,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a mirror LV with 2 images, and a useable size of 500 MiB.   This"}
 {"a":{"l":1398,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"operation requires 2 devices because the log is in memory."}
 {"a":{"l":1401,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a copy-on-write snapshot of an LV:"}
@@ -246,14 +244,12 @@
 {"a":{"l":1436,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a 1TiB thin LV, first creating a new thin pool for it, where the"}
 {"a":{"l":1437,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"thin pool has 100MiB of space, uses 2 stripes, has a 64KiB stripe size,"}
 {"a":{"l":1438,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"and 256KiB chunk size."}
-{"a":{"l":1441,"p":"content-src/raw/rhel8/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"For examples how to use systemctl in comparsion with old service and"}
 {"a":{"l":1442,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a thin snapshot of a thin LV (the size option must not be used,"}
 {"a":{"l":1442,"p":"content-src/raw/rhel8/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"chkconfig command please see: Managing System Services[2]"}
 {"a":{"l":1443,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"otherwise a copy-on-write snapshot would be created)."}
 {"a":{"l":1446,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a thin snapshot of the  read-only  inactive  LV  named  \"origin\""}
 {"a":{"l":1447,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"which becomes an external origin for the thin snapshot LV."}
 {"a":{"l":1450,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a  cache  pool  from a fast physical device. The cache pool can"}
-{"a":{"l":1451,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"then be used to cache an LV."}
 {"a":{"l":1454,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a cache LV, first creating a new origin LV on  a  slow  physical"}
 {"a":{"l":1455,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"device, then combining the new origin LV with an existing cache pool."}
 {"a":{"l":1459,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a VDO LV vdo0 with VDOPoolLV size of 10GiB and name vpool1."}
@@ -269,7 +265,6 @@
 {"a":{"l":33,"p":"content-src/raw/rhel8/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"permissive Manage process type enforcement mode"}
 {"a":{"l":330,"p":"content-src/raw/rhel8/vgcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a VG with two PVs, using the default physical extent size."}
 {"a":{"l":337,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Initialize a partition and a full device."}
-{"a":{"l":340,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"If  a device is a 4KiB sector drive that compensates for windows parti‐"}
 {"a":{"l":341,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"tioning (sector 7 is the lowest aligned logical block, the 4KiB sectors"}
 {"a":{"l":342,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"start at LBA -1, and consequently sector 63 is aligned on a 4KiB bound‐"}
 {"a":{"l":343,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"ary) manually account for this when initializing for use by LVM."}
@@ -297,11 +292,8 @@
 {"a":{"l":535,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Without arguments, all collected logs are shown unfiltered:"}
 {"a":{"l":539,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"With one match specified, all entries with a field matching the"}
 {"a":{"l":540,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
-{"a":{"l":545,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two different fields are matched, only entries matching both"}
 {"a":{"l":546,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expressions at the same time are shown:"}
-{"a":{"l":550,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two matches refer to the same field, all entries matching either"}
 {"a":{"l":551,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
-{"a":{"l":555,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If the separator \"+\" is used, two expressions may be combined in a"}
 {"a":{"l":556,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"logical OR. The following will show all messages from the Avahi service"}
 {"a":{"l":557,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"process with the PID 28097 plus all messages from the D-Bus service"}
 {"a":{"l":558,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"(from any of its processes):"}
@@ -324,4 +316,12 @@
 {"a":{"l":1201,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"devices."}
 {"a":{"l":1227,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"editor."}
 {"a":{"l":1239,"p":"content-src/raw/rhel8/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"connection."}
+{"a":{"l":1345,"p":"content-src/raw/rhel8/firewall-cmd.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"For more examples see http://fedoraproject.org/wiki/FirewallD"}
+{"a":{"l":1394,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"for a disk log."}
 {"a":{"l":1413,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"tents."}
+{"a":{"l":1441,"p":"content-src/raw/rhel8/systemctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"For examples how to use systemctl in comparsion with old service and"}
+{"a":{"l":1451,"p":"content-src/raw/rhel8/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"then be used to cache an LV."}
+{"a":{"l":340,"p":"content-src/raw/rhel8/pvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If  a device is a 4KiB sector drive that compensates for windows parti‐"}
+{"a":{"l":545,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If two different fields are matched, only entries matching both"}
+{"a":{"l":550,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If two matches refer to the same field, all entries matching either"}
+{"a":{"l":555,"p":"content-src/raw/rhel8/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If the separator \"+\" is used, two expressions may be combined in a"}

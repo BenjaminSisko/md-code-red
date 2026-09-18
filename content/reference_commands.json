@@ -7,17 +7,17 @@
   "extracted_on_note": "the date of the pinned source set, not the date the extractor ran -- mining is a pure function of the committed sources, so a re-run is byte-identical (qa.py Q15)",
   "what_this_is": "vendor reference command text mined from sources this artifact embeds or stages. NOT curated, NOT host-verified, NOT assembled by this tool: no verify text, no undo text, no reviewed blast rating and no capture receipt. content/commands.json is the only tier that carries those, and extract/schema.py refuses those keys here.",
   "no_verification_claim": "nothing in this family was checked against a running binary. Licensing ruling v1 condition 4 requires SME verification against each binary's own --help/man page per RHEL major version before any external or commercial release; internal lab use proceeds without it. No record here says or implies anything was verified.",
-  "record_count": 14488,
-  "citation_count": 45265,
-  "deduped_away": 30777,
+  "record_count": 14436,
+  "citation_count": 45179,
+  "deduped_away": 30743,
   "counts_by_source_module": {
    "raw_captures": 212,
-   "redhat_guides": 41957,
+   "redhat_guides": 41871,
    "stig_rules": 3096
   },
   "records_by_source_module": {
    "raw_captures": 113,
-   "redhat_guides": 12749,
+   "redhat_guides": 12697,
    "stig_rules": 1670
   },
   "citations_by_release": {
@@ -27,10 +27,10 @@
     "10": 104
    },
    "redhat_guides": {
-    "7": 4529,
-    "8": 12993,
-    "9": 12733,
-    "10": 11702
+    "7": 4493,
+    "8": 12980,
+    "9": 12711,
+    "10": 11687
    },
    "stig_rules": {
     "7": 494,
@@ -39,25 +39,25 @@
     "10": 971
    }
   },
-  "distinct_tools": 821,
+  "distinct_tools": 805,
   "candidate_lines": 52149,
   "strong_heads": 847,
-  "verbatim_span_count": 12978,
-  "truncated_count": 1180,
+  "verbatim_span_count": 12931,
+  "truncated_count": 1176,
   "evidence_eligible_count": 1627,
-  "unrated_count": 14297,
+  "unrated_count": 14245,
   "disa_overlap": {
    "count": 38,
    "note": "commands appearing in BOTH the Red Hat guides and the DISA STIG text. Licensing ruling v1 Ruling 2 condition 2: DISA wins on overlap, so these are attributed to DISA (public domain) and their license_class is verbatim-ok, not cc-by-sa-3.0. This nets the Red Hat count down."
   },
   "residue": {
-   "total": 19001,
+   "total": 19087,
    "by_reason": {
-    "config-fragment": 2276,
+    "config-fragment": 2287,
     "interactive-tui": 4,
-    "output-fragment": 1826,
-    "prose": 12818,
-    "unparseable": 2077
+    "output-fragment": 1825,
+    "prose": 12714,
+    "unparseable": 2257
    },
    "closed_reason_set": [
     "prose",
@@ -106,6 +106,103 @@
    "o": "occurrences: {v, l} plus s (STIG id) + f (chk|fix), or g (guide slug), or p (staged file path) + x (man section)",
    "n": "true occurrence count before the occurrence list was capped"
   },
+  "closure_ledger": {
+   "stig_rules": {
+    "7": {
+     "candidates": 2854,
+     "classified": 494,
+     "residue": 2360,
+     "recorded": 494,
+     "records": 425,
+     "unclassified_residue": 199
+    },
+    "8": {
+     "candidates": 3932,
+     "classified": 722,
+     "residue": 3210,
+     "recorded": 722,
+     "records": 577,
+     "unclassified_residue": 343
+    },
+    "9": {
+     "candidates": 4128,
+     "classified": 909,
+     "residue": 3219,
+     "recorded": 909,
+     "records": 714,
+     "unclassified_residue": 349
+    },
+    "10": {
+     "candidates": 4323,
+     "classified": 971,
+     "residue": 3352,
+     "recorded": 971,
+     "records": 731,
+     "unclassified_residue": 345
+    }
+   },
+   "raw_captures": {
+    "10": {
+     "candidates": 436,
+     "classified": 104,
+     "residue": 332,
+     "recorded": 104,
+     "records": 104,
+     "unclassified_residue": 15
+    },
+    "7": {
+     "candidates": 4,
+     "classified": 4,
+     "residue": 0,
+     "recorded": 4,
+     "records": 4,
+     "unclassified_residue": 0
+    },
+    "8": {
+     "candidates": 430,
+     "classified": 104,
+     "residue": 326,
+     "recorded": 104,
+     "records": 104,
+     "unclassified_residue": 17
+    }
+   },
+   "redhat_guides": {
+    "7": {
+     "candidates": 6939,
+     "classified": 4493,
+     "residue": 2446,
+     "recorded": 4493,
+     "records": 3551,
+     "unclassified_residue": 240
+    },
+    "8": {
+     "candidates": 14233,
+     "classified": 12980,
+     "residue": 1253,
+     "recorded": 12980,
+     "records": 6878,
+     "unclassified_residue": 260
+    },
+    "9": {
+     "candidates": 14073,
+     "classified": 12711,
+     "residue": 1362,
+     "recorded": 12711,
+     "records": 5293,
+     "unclassified_residue": 249
+    },
+    "10": {
+     "candidates": 12914,
+     "classified": 11687,
+     "residue": 1227,
+     "recorded": 11687,
+     "records": 2424,
+     "unclassified_residue": 240
+    }
+   }
+  },
+  "closure_ledger_note": "per source family and RHEL release: `candidates` lines seen, `classified` taken, `residue` declined with a reason, `recorded` classified citations that survived into a record, `records` distinct records citing that cell, and `unclassified_residue` the `unparseable` subset. qa.py Q23 recomputes residue from content-src/residue/ INDEPENDENTLY rather than trusting these numbers, and fails when recorded != classified, when residue grows against the baseline, when unclassified residue exceeds its cap, when a declared family has zero records for a supported release, or when classified is zero",
   "source_files": {
    "content-src/raw/redhat/rhel10.candidates.jsonl": {
     "sha256": "868a29731c46cd50153e40b518dcd9c0fa82e93f14f12d452049ba52047d3d02",
@@ -1010,70 +1107,6 @@
    "trunc": true
   },
   {
-   "id": "ref-1987b2d433e2ecef",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "a",
-   "c": "a deep attribute)",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "anaconda_customization_guide",
-     "l": 2204
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-74d00c08e4d6f0e6",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "a",
-   "c": "a symlink to our /usr/lib/container-auth.json (a persistent file)",
-   "v": [
-    "10"
-   ],
-   "o": [
-    {
-     "v": "10",
-     "g": "using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems",
-     "l": 3961
-    }
-   ],
-   "n": 3
-  },
-  {
-   "id": "ref-308c0d2364747a16",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": false,
-   "k": "invocation",
-   "t": "a",
-   "c": "a volume group's metadata, instead of always granting the read-only",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8943
-    }
-   ],
-   "n": 1,
-   "trunc": true
-  },
-  {
    "id": "ref-49f58166b916c9c6",
    "tier": "reference",
    "authority": "documentary",
@@ -1708,48 +1741,6 @@
      "v": "7",
      "g": "installation_guide",
      "l": 21156
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-26eba92a479444c9",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "and",
-   "c": "and an 'archive' contains old metadata configurations. They are",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8742
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-17a076780b3d7ce7",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "and",
-   "c": "and max_workers parameter",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "virtualization_deployment_and_administration_guide",
-     "l": 7734
     }
    ],
    "n": 1
@@ -7920,27 +7911,6 @@
     }
    ],
    "n": 4
-  },
-  {
-   "id": "ref-b51919f8804ddda2",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "are",
-   "c": "are checked during pvscan --cache. To filter a device and prevent",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9099
-    }
-   ],
-   "n": 1
   },
   {
    "id": "ref-f5c427fb60c10b00",
@@ -21726,48 +21696,6 @@
    "n": 3
   },
   {
-   "id": "ref-517356ce97ce6724",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "by",
-   "c": "by 'r' to reject the path. The first regex in the list to match the",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8188
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-ad15d78997fdf464",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "by",
-   "c": "by pvscan --cache), devices/filter is ignored and all devices are",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9087
-    }
-   ],
-   "n": 1
-  },
-  {
    "id": "ref-2007aeedc434cb8a",
    "tier": "reference",
    "authority": "documentary",
@@ -21889,28 +21817,6 @@
     }
    ],
    "n": 4
-  },
-  {
-   "id": "ref-ae44f66e11ea06d5",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": false,
-   "k": "invocation",
-   "t": "c",
-   "c": "c \"I cannot access my server with SSH. Can you give me a list of things to",
-   "v": [
-    "10"
-   ],
-   "o": [
-    {
-     "v": "10",
-     "g": "interacting_with_the_command-line_assistant",
-     "l": 1213
-    }
-   ],
-   "n": 1,
-   "trunc": true
   },
   {
    "id": "ref-076908d039b33f0a",
@@ -57322,56 +57228,6 @@
     }
    ],
    "n": 2
-  },
-  {
-   "id": "ref-5820dcf8ca68b66d",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "device",
-   "c": "device path names. Each regex is delimited by a vertical bar '|'",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8186
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-5257c715adabd00d",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "device",
-   "c": "device {",
-   "v": [
-    "7",
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "dm_multipath",
-     "l": 2507
-    },
-    {
-     "v": "8",
-     "g": "configuring_device_mapper_multipath",
-     "l": 2875
-    }
-   ],
-   "n": 4
   },
   {
    "id": "ref-09ff96729a2e03d5",
@@ -96923,379 +96779,6 @@
    "n": 2
   },
   {
-   "id": "ref-a1351f9be616c423",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for blueprint in $(find /var/lib/lorax/composer/blueprints/git/workspace/master -name",
-   "v": [
-    "8"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "8.3_release_notes",
-     "l": 6886
-    },
-    {
-     "v": "8",
-     "g": "8.4_release_notes",
-     "l": 7415
-    }
-   ],
-   "n": 3
-  },
-  {
-   "id": "ref-41838a98b081aaf6",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for f in $(ls); do tar xvf $f; done",
-   "v": [
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "building_running_and_managing_containers",
-     "l": 4189
-    },
-    {
-     "v": "9",
-     "g": "building_running_and_managing_containers",
-     "l": 4451
-    }
-   ],
-   "n": 3,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-5559efb4bb85ed0c",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for f in PK KEK db dbx; do tail -c +41 $f.auth > $f.esl; done",
-   "v": [
-    "9"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "deploying_rhel_9_on_amazon_web_services",
-     "l": 3178
-    }
-   ],
-   "n": 1,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-246083daf7e36ab5",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in \"diun\" \"manufacturer\" \"device-ca\" \"owner\"; do fdo-admin-tool generate-key-and-cert",
-   "v": [
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "composing_installing_and_managing_rhel_for_edge_images",
-     "l": 5223
-    },
-    {
-     "v": "9",
-     "g": "composing_installing_and_managing_rhel_for_edge_images",
-     "l": 6646
-    }
-   ],
-   "n": 3,
-   "st": [
-    "for",
-    "do"
-   ]
-  },
-  {
-   "id": "ref-b5c58293483aa9e4",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in \"diun\" \"manufacturer\" \"device_ca\" \"owner\"; do fdo-admin-tool generate-key-and-cert $i; done",
-   "v": [
-    "9"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "9.1_release_notes",
-     "l": 944
-    }
-   ],
-   "n": 1,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-91f3e38636bef5c7",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in /var/log/pcp/pmlogger/rhel*/*.0; do pmdumplog -L $i; done",
-   "v": [
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "monitoring_and_managing_system_status_and_performance",
-     "l": 5009
-    },
-    {
-     "v": "9",
-     "g": "monitoring_and_managing_system_status_and_performance",
-     "l": 5368
-    }
-   ],
-   "n": 3,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-5272351bda2a6841",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in `pgrep rcu[^c]` ; do taskset -pc 0 $i ; done",
-   "v": [
-    "7",
-    "8",
-    "9"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "performance_tuning_guide",
-     "l": 2628
-    },
-    {
-     "v": "8",
-     "g": "monitoring_and_managing_system_status_and_performance",
-     "l": 12890
-    }
-   ],
-   "n": 3,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-e8cd5dc8d892de2a",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in ftp http https; do unset ${i}_proxy; done",
-   "v": [
-    "7",
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "linux_domain_identity_authentication_and_policy_guide",
-     "l": 27272
-    },
-    {
-     "v": "8",
-     "g": "installing_identity_management",
-     "l": 2404
-    }
-   ],
-   "n": 4,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-dc531a56898581fa",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for i in pgrep rcu[^c] ; do taskset -pc 0 $i ; done",
-   "v": [
-    "10"
-   ],
-   "o": [
-    {
-     "v": "10",
-     "g": "monitoring_and_managing_system_status_and_performance",
-     "l": 7438
-    }
-   ],
-   "n": 1,
-   "st": [
-    "for",
-    "do",
-    "done"
-   ]
-  },
-  {
-   "id": "ref-09ed510440b3fc8e",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for kernel in `rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}\\n'`; do",
-   "v": [
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "securing_networks",
-     "l": 3212
-    },
-    {
-     "v": "10",
-     "g": "securing_networks",
-     "l": 3575
-    }
-   ],
-   "n": 2,
-   "st": [
-    "for",
-    "do"
-   ]
-  },
-  {
-   "id": "ref-e2f945f88aafcf7d",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for pid in $(ps -eo pid,comm | awk '/vdo/ {print $1}');",
-   "v": [
-    "10"
-   ],
-   "o": [
-    {
-     "v": "10",
-     "g": "deduplicating_and_compressing_logical_volumes_on_rhel",
-     "l": 1765
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-4fd9ef4d821e9a38",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "for",
-   "c": "for pid in `ps -eo pid,comm | grep kvdo | awk '{ print $1 }'`",
-   "v": [
-    "8",
-    "9"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "deduplicating_and_compressing_logical_volumes_on_rhel",
-     "l": 1851
-    },
-    {
-     "v": "9",
-     "g": "deduplicating_and_compressing_logical_volumes_on_rhel",
-     "l": 1777
-    }
-   ],
-   "n": 2
-  },
-  {
-   "id": "ref-e91c974420d3d0e2",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": false,
-   "k": "invocation",
-   "t": "for",
-   "c": "for vm in $(az vm list-instances --resource-group \"<resource_group>\" --name \"<availability_set>\" --query \"[].name\" -o tsv); do",
-   "v": [
-    "10"
-   ],
-   "o": [
-    {
-     "v": "10",
-     "g": "deploying_and_managing_rhel_on_microsoft_azure",
-     "l": 4320
-    }
-   ],
-   "n": 1,
-   "st": [
-    "for",
-    "do"
-   ]
-  },
-  {
    "id": "ref-ad95d5fa651ba86d",
    "tier": "reference",
    "authority": "documentary",
@@ -124988,28 +124471,6 @@
    "trunc": true
   },
   {
-   "id": "ref-2ae404626dd6de1f",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": false,
-   "k": "invocation",
-   "t": "has",
-   "c": "has failed. It is left to the user to run lvconvert --repair",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9540
-    }
-   ],
-   "n": 1,
-   "trunc": true
-  },
-  {
    "id": "ref-ef185585d7a70644",
    "tier": "reference",
    "authority": "documentary",
@@ -127440,117 +126901,6 @@
    "n": 2
   },
   {
-   "id": "ref-b56fcca421b9b508",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "in",
-   "c": "in /etc/yum.repos.d",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "system_administrators_guide",
-     "l": 6910
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-602704a22a0f5cf6",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "in",
-   "c": "in /tmp or $TMPDIR for the ISO image or even the backup archive.",
-   "v": [
-    "9"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "9.0_release_notes",
-     "l": 7497
-    },
-    {
-     "v": "9",
-     "g": "9.1_release_notes",
-     "l": 7502
-    }
-   ],
-   "n": 5
-  },
-  {
-   "id": "ref-e8f404743bafd9b8",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": false,
-   "k": "invocation",
-   "t": "in",
-   "c": "in kernel's memory management code:",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "systemtap_beginners_guide",
-     "l": 2594
-    }
-   ],
-   "n": 1,
-   "trunc": true
-  },
-  {
-   "id": "ref-0164ab9874ad2464",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "in",
-   "c": "in progress. A directory like /tmp that may get wiped on reboot is OK.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8937
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-547014b17fab14cc",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "in",
-   "c": "in them.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9834
-    }
-   ],
-   "n": 1
-  },
-  {
    "id": "ref-7ed74be23078d430",
    "tier": "reference",
    "authority": "documentary",
@@ -127588,27 +126938,6 @@
      "v": "7",
      "g": "logical_volume_manager_administration",
      "l": 9173
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-783394ea49b08d10",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "includes",
-   "c": "includes the 'a' argument: --activate ay or -a ay. The 'a' (auto)",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9434
     }
    ],
    "n": 1
@@ -161530,27 +160859,6 @@
     "locate",
     "grep"
    ]
-  },
-  {
-   "id": "ref-013fd02f0f73a65a",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "locking",
-   "c": "locking type. It is used by the --readonly option that offers",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8899
-    }
-   ],
-   "n": 1
   },
   {
    "id": "ref-1bc07ea320c08eee",
@@ -215847,75 +215155,6 @@
    "n": 1
   },
   {
-   "id": "ref-e87738adbe44e668",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "of",
-   "c": "of clients allowed",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "virtualization_deployment_and_administration_guide",
-     "l": 7705
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-18b362debab4fbb6",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "of",
-   "c": "of customization is available by also changing the contents of /usr/lib/os-release.",
-   "v": [
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems",
-     "l": 924
-    },
-    {
-     "v": "10",
-     "g": "using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems",
-     "l": 996
-    }
-   ],
-   "n": 2
-  },
-  {
-   "id": "ref-1e2ba276f9d78f7e",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "of",
-   "c": "of week 01. (alt O)",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 10097
-    }
-   ],
-   "n": 1
-  },
-  {
    "id": "ref-5e4c16724e591eee",
    "tier": "reference",
    "authority": "documentary",
@@ -218914,48 +218153,6 @@
     }
    ],
    "n": 2
-  },
-  {
-   "id": "ref-6c59c7f7bb6ec455",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "or",
-   "c": "or VG.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9404
-    }
-   ],
-   "n": 3
-  },
-  {
-   "id": "ref-e424479266c7f41e",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "or",
-   "c": "or erased unless the --wipesignatures option is used directly.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8479
-    }
-   ],
-   "n": 1
   },
   {
    "id": "ref-e570929c164bc64b",
@@ -317515,286 +316712,6 @@
    "n": 3
   },
   {
-   "id": "ref-deb0bf92e3e9a65c",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "that",
-   "c": "that it contains both keys with /proto and without /proto for both",
-   "v": [
-    "8"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "8.10_release_notes",
-     "l": 11801
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-e36091b8d894809c",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the 'datastream' key could be omitted.",
-   "v": [
-    "8",
-    "9",
-    "10"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "composing_a_customized_rhel_system_image",
-     "l": 3954
-    },
-    {
-     "v": "9",
-     "g": "composing_a_customized_rhel_system_image",
-     "l": 3778
-    }
-   ],
-   "n": 3
-  },
-  {
-   "id": "ref-f9485208ac08df09",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the 'exec tail' line above.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "system_administrators_guide",
-     "l": 32188
-    }
-   ],
-   "n": 2
-  },
-  {
-   "id": "ref-91cb047d797d0621",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the administrative functions.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "system_administrators_guide",
-     "l": 21191
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-a7959f132b992308",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the command has an exit status of 0. Set to \"\" to skip this check.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9140
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-979022a38dbfc2bd",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the date. (alt E)",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 10110
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-5985df5fc0bbc506",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the device. This policy acts like 'remove' if no suitable device",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9575
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-481e167fb2ac4719",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the error messages.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8828
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-9c65713373e4d44d",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the host with a matching system ID. See 'man lvmsystemid' for",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9253
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-eda89f810d7cc06b",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the next entry.",
-   "v": [
-    "8"
-   ],
-   "o": [
-    {
-     "v": "8",
-     "g": "8.10_release_notes",
-     "l": 11811
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-26eb25c613410da4",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the output has only log report by using --logonly command line",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 8620
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-c777bebf32687535",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the seconds, see %T below.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 10069
-    }
-   ],
-   "n": 1
-  },
-  {
-   "id": "ref-f8fcd8d4e8fb691d",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "the",
-   "c": "the time. (alt E)",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 10107
-    }
-   ],
-   "n": 1
-  },
-  {
    "id": "ref-91d4d8262f69d58e",
    "tier": "reference",
    "authority": "documentary",
@@ -353301,27 +352218,6 @@
    "n": 6
   },
   {
-   "id": "ref-c2967960f0ca16ff",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "was",
-   "c": "was never a valid path in the /dev filesystem.",
-   "v": [
-    "7"
-   ],
-   "o": [
-    {
-     "v": "7",
-     "g": "logical_volume_manager_administration",
-     "l": 9064
-    }
-   ],
-   "n": 1
-  },
-  {
    "id": "ref-591d3b37ca8bf35f",
    "tier": "reference",
    "authority": "documentary",
@@ -353838,32 +352734,6 @@
     }
    ],
    "n": 1
-  },
-  {
-   "id": "ref-23b8909558521144",
-   "tier": "reference",
-   "authority": "documentary",
-   "license_class": "cc-by-sa-3.0",
-   "verbatim_span": true,
-   "k": "invocation",
-   "t": "where",
-   "c": "where /prefix/for/rear/working/directory must already exist.",
-   "v": [
-    "9"
-   ],
-   "o": [
-    {
-     "v": "9",
-     "g": "9.0_release_notes",
-     "l": 7495
-    },
-    {
-     "v": "9",
-     "g": "9.1_release_notes",
-     "l": 7500
-    }
-   ],
-   "n": 5
   },
   {
    "id": "ref-5c909f45aff81a00",

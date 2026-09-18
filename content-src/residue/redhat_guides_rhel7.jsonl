@@ -1,8 +1,9 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":2410,"reasons":{"config-fragment":193,"output-fragment":158,"prose":1879,"unparseable":180},"rhel_version":"7","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":2446,"reasons":{"config-fragment":198,"output-fragment":157,"prose":1851,"unparseable":240},"rhel_version":"7","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"g":"desktop_migration_and_administration_guide","l":2074},"r":"config-fragment","x":"fc-list : file"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":4086},"r":"config-fragment","x":"DCONF_PROFILE=gdm gsettings list-recursively org.gnome.login-screen"}
 {"a":{"g":"developer_guide","l":4528},"r":"config-fragment","x":"Samples: 1083783860000"}
 {"a":{"g":"developer_guide","l":4567},"r":"config-fragment","x":"Samples: 472520675377"}
+{"a":{"g":"dm_multipath","l":2507},"r":"config-fragment","x":"device {"}
 {"a":{"g":"dm_multipath","l":941},"r":"config-fragment","x":"NOTE: This file is automatically maintained by multipath and multipathd."}
 {"a":{"g":"image_builder_guide","l":1269},"r":"config-fragment","x":"BUCKET=bucketname"}
 {"a":{"g":"installation_guide","l":2556},"r":"config-fragment","x":"kr=$(uname -r)"}
@@ -50,7 +51,9 @@
 {"a":{"g":"logical_volume_manager_administration","l":10334},"r":"config-fragment","x":"two_word_unknown_device = 0"}
 {"a":{"g":"logical_volume_manager_administration","l":10358},"r":"config-fragment","x":"raid_library = \"libdevmapper-event-lvm2raid.so\""}
 {"a":{"g":"logical_volume_manager_administration","l":10377},"r":"config-fragment","x":"executable = \"/usr/sbin/dmeventd\""}
+{"a":{"g":"logical_volume_manager_administration","l":10383},"r":"config-fragment","x":"tags {"}
 {"a":{"g":"logical_volume_manager_administration","l":10389},"r":"config-fragment","x":"hosttags = 0"}
+{"a":{"g":"logical_volume_manager_administration","l":10408},"r":"config-fragment","x":"tag {"}
 {"a":{"g":"logical_volume_manager_administration","l":8179},"r":"config-fragment","x":"preferred_names = [ \"^/dev/mpath/\", \"^/dev/mapper/mpath\", \"^/dev/[hs]d\" ]"}
 {"a":{"g":"logical_volume_manager_administration","l":8202},"r":"config-fragment","x":"filter = [ \"a|.*/|\" ]"}
 {"a":{"g":"logical_volume_manager_administration","l":8204},"r":"config-fragment","x":"filter = [ \"r|/dev/cdrom|\" ]"}
@@ -65,6 +68,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8436},"r":"config-fragment","x":"cling_tag_list = [ \"@site1\", \"@site2\" ]"}
 {"a":{"g":"logical_volume_manager_administration","l":8493},"r":"config-fragment","x":"raid_stripe_all_devices = 0"}
 {"a":{"g":"logical_volume_manager_administration","l":8511},"r":"config-fragment","x":"cache_mode = \"writethrough\""}
+{"a":{"g":"logical_volume_manager_administration","l":8530},"r":"config-fragment","x":"cache_settings {"}
 {"a":{"g":"logical_volume_manager_administration","l":8553},"r":"config-fragment","x":"thin_pool_zero = 1"}
 {"a":{"g":"logical_volume_manager_administration","l":8564},"r":"config-fragment","x":"thin_pool_discards = \"passdown\""}
 {"a":{"g":"logical_volume_manager_administration","l":8582},"r":"config-fragment","x":"thin_pool_chunk_size_policy = \"generic\""}
@@ -105,6 +109,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9652},"r":"config-fragment","x":"thin_pool_autoextend_percent = 20"}
 {"a":{"g":"logical_volume_manager_administration","l":9676},"r":"config-fragment","x":"mlock_filter = [ \"locale/locale-archive\", \"gconv/gconv-modules.cache\" ]"}
 {"a":{"g":"logical_volume_manager_administration","l":9711},"r":"config-fragment","x":"auto_set_activation_skip = 1"}
+{"a":{"g":"logical_volume_manager_administration","l":9754},"r":"config-fragment","x":"metadata {"}
 {"a":{"g":"logical_volume_manager_administration","l":9765},"r":"config-fragment","x":"check_pv_device_sizes = 1"}
 {"a":{"g":"logical_volume_manager_administration","l":9774},"r":"config-fragment","x":"record_lvs_history = 0"}
 {"a":{"g":"logical_volume_manager_administration","l":9781},"r":"config-fragment","x":"lvs_history_retention_time = 0"}
@@ -114,6 +119,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9837},"r":"config-fragment","x":"pvmetadataignore = 0"}
 {"a":{"g":"logical_volume_manager_administration","l":9842},"r":"config-fragment","x":"stripesize = 64"}
 {"a":{"g":"logical_volume_manager_administration","l":9864},"r":"config-fragment","x":"dirs = [ \"/etc/lvm/metadata\", \"/mnt/disk2/lvm/metadata2\" ]"}
+{"a":{"g":"logical_volume_manager_administration","l":9873},"r":"config-fragment","x":"report {"}
 {"a":{"g":"logical_volume_manager_administration","l":9889},"r":"config-fragment","x":"output_format = \"basic\""}
 {"a":{"g":"logical_volume_manager_administration","l":9899},"r":"config-fragment","x":"compact_output = 0"}
 {"a":{"g":"logical_volume_manager_administration","l":9916},"r":"config-fragment","x":"compact_output_cols = \"\""}
@@ -191,7 +197,6 @@
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1985},"r":"config-fragment","x":"LOGFILE=/var/log/ksmtuned"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1986},"r":"config-fragment","x":"DEBUG=1"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":427},"r":"config-fragment","x":"Events: 7K cycles"}
-{"a":{"g":"windows_integration_guide","l":5057},"r":"config-fragment","x":"NOTE: IPA certificate uses the SHA-256 hash function. SHA-256 was"}
 {"a":{"g":"7.9_release_notes","l":2580},"r":"output-fragment","x":"grubby-args=\"crashkernel=256M\" --update-kernel"}
 {"a":{"g":"anaconda_customization_guide","l":2206},"r":"output-fragment","x":"accepting/rejecting user's input"}
 {"a":{"g":"automating_system_administration_by_using_rhel_system_roles_in_rhel_7.9","l":4761},"r":"output-fragment","x":"*cp /etc/postfix/main.cf /etc/postfix/main.cf.backup*"}
@@ -270,7 +275,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":10121},"r":"output-fragment","x":"%%"}
 {"a":{"g":"logical_volume_manager_administration","l":8173},"r":"output-fragment","x":"/dev/mapper, /dev/disk, /dev/dm-*, /dev/block."}
 {"a":{"g":"logical_volume_manager_administration","l":8187},"r":"output-fragment","x":"(or any character) and is preceded by 'a' to accept the path, or"}
-{"a":{"g":"logical_volume_manager_administration","l":8247},"r":"output-fragment","x":"Enable/disable writing the cache file. See devices/cache_dir."}
 {"a":{"g":"logical_volume_manager_administration","l":8574},"r":"output-fragment","x":"64KiB."}
 {"a":{"g":"logical_volume_manager_administration","l":8579},"r":"output-fragment","x":"512KiB."}
 {"a":{"g":"logical_volume_manager_administration","l":8658},"r":"output-fragment","x":"<lvm command> --logonly --configreport log -S help for the"}
@@ -373,7 +377,6 @@
 {"a":{"g":"anaconda_customization_guide","l":1761},"r":"prose","x":"nothing to do here"}
 {"a":{"g":"anaconda_customization_guide","l":1792},"r":"prose","x":"this spoke is always ready"}
 {"a":{"g":"anaconda_customization_guide","l":1825},"r":"prose","x":"this is an optional spoke that is not mandatory to be completed"}
-{"a":{"g":"anaconda_customization_guide","l":1854},"r":"prose","x":"If --reverse was specified in the kickstart, reverse the text"}
 {"a":{"g":"anaconda_customization_guide","l":1904},"r":"prose","x":"every GUIObject gets ksdata in __init__"}
 {"a":{"g":"anaconda_customization_guide","l":1907},"r":"prose","x":"show dialog above the lightbox"}
 {"a":{"g":"anaconda_customization_guide","l":2073},"r":"prose","x":"nothing to do here"}
@@ -386,6 +389,7 @@
 {"a":{"g":"anaconda_customization_guide","l":2201},"r":"prose","x":"TITLE specifies descriptive title of the entry"}
 {"a":{"g":"anaconda_customization_guide","l":2202},"r":"prose","x":"ATTRIBUTE specifies attribute of self.args that should be set to the"}
 {"a":{"g":"anaconda_customization_guide","l":2203},"r":"prose","x":"value entered by the user (may contain dots, i.e. may specify"}
+{"a":{"g":"anaconda_customization_guide","l":2204},"r":"prose","x":"a deep attribute)"}
 {"a":{"g":"anaconda_customization_guide","l":2205},"r":"prose","x":"CHECKING_RE specifies compiled RE used for deciding about"}
 {"a":{"g":"anaconda_customization_guide","l":2207},"r":"prose","x":"TYPE may be one of EditTUISpoke.CHECK or EditTUISpoke.PASSWORD used"}
 {"a":{"g":"anaconda_customization_guide","l":2208},"r":"prose","x":"instead of CHECKING_RE for simple checkboxes or password entries,"}
@@ -430,7 +434,6 @@
 {"a":{"g":"desktop_migration_and_administration_guide","l":1335},"r":"prose","x":"Set the Right Alt key as the Compose key and enable it"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":1571},"r":"prose","x":"plymouth-set-default-theme spinfinity"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":1619},"r":"prose","x":"plymouth-set-default-theme newtheme"}
-{"a":{"g":"desktop_migration_and_administration_guide","l":1835},"r":"prose","x":"Do not show the user list"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":1864},"r":"prose","x":"Specify the dconf path"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":1867},"r":"prose","x":"Specify the path to the desktop background image file"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":1869},"r":"prose","x":"Specify one of the rendering options for the background image:"}
@@ -448,7 +451,6 @@
 {"a":{"g":"desktop_migration_and_administration_guide","l":2847},"r":"prose","x":"Set gedit, terminal and nautilus as default favorites"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":2869},"r":"prose","x":"This line defines a system database called first_floor"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":2890},"r":"prose","x":"This sample sets gedit, terminal and nautilus as default favorites"}
-{"a":{"g":"desktop_migration_and_administration_guide","l":2891},"r":"prose","x":"for all users in the first floor"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":3357},"r":"prose","x":"Prevent users from changing values for the following key:"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":3391},"r":"prose","x":"Enable Ctrl-Alt-Backspace for all users"}
 {"a":{"g":"desktop_migration_and_administration_guide","l":3397},"r":"prose","x":"Lock the list of enabled XKB options"}
@@ -548,7 +550,6 @@
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":28875},"r":"prose","x":"CA, server.example.com, masters, ipa, etc, example.com"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":3378},"r":"prose","x":"Generate SSH keys to ensure that ipa-client-install uploads them to the IdM server"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":3381},"r":"prose","x":"Run the client install script"}
-{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":4246},"r":"prose","x":"for i in _ldap._tcp _kerberos._tcp _kerberos._udp _kerberos-master._tcp _kerberos-"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":5670},"r":"prose","x":"ipa-crlgen-manage status"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":5676},"r":"prose","x":"ipa-crlgen-manage disable"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":5682},"r":"prose","x":"ipa-crlgen-manage enable"}
@@ -583,6 +584,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":10063},"r":"prose","x":"string for the current locale."}
 {"a":{"g":"logical_volume_manager_administration","l":10065},"r":"prose","x":"The time in a.m. or p.m. notation. In the POSIX locale this is"}
 {"a":{"g":"logical_volume_manager_administration","l":10068},"r":"prose","x":"The time in 24-hour notation (%H:%M). For a version including"}
+{"a":{"g":"logical_volume_manager_administration","l":10069},"r":"prose","x":"the seconds, see %T below."}
 {"a":{"g":"logical_volume_manager_administration","l":10071},"r":"prose","x":"The number of seconds since the Epoch,"}
 {"a":{"g":"logical_volume_manager_administration","l":10074},"r":"prose","x":"The second as a decimal number (range 00 to 60). (The range is"}
 {"a":{"g":"logical_volume_manager_administration","l":10075},"r":"prose","x":"up to 60 to allow for occasional leap seconds.) (alt O)"}
@@ -600,8 +602,11 @@
 {"a":{"g":"logical_volume_manager_administration","l":10093},"r":"prose","x":"See also %u. (alt O)"}
 {"a":{"g":"logical_volume_manager_administration","l":10095},"r":"prose","x":"The week number of the current year as a decimal number,"}
 {"a":{"g":"logical_volume_manager_administration","l":10096},"r":"prose","x":"range 00 to 53, starting with the first Monday as the first day"}
+{"a":{"g":"logical_volume_manager_administration","l":10097},"r":"prose","x":"of week 01. (alt O)"}
 {"a":{"g":"logical_volume_manager_administration","l":10106},"r":"prose","x":"The preferred date representation for the current locale without"}
+{"a":{"g":"logical_volume_manager_administration","l":10107},"r":"prose","x":"the time. (alt E)"}
 {"a":{"g":"logical_volume_manager_administration","l":10109},"r":"prose","x":"The preferred time representation for the current locale without"}
+{"a":{"g":"logical_volume_manager_administration","l":10110},"r":"prose","x":"the date. (alt E)"}
 {"a":{"g":"logical_volume_manager_administration","l":10112},"r":"prose","x":"The year as a decimal number without a century (range 00 to 99)."}
 {"a":{"g":"logical_volume_manager_administration","l":10115},"r":"prose","x":"The year as a decimal number including the century. (alt E)"}
 {"a":{"g":"logical_volume_manager_administration","l":10117},"r":"prose","x":"The +hhmm or -hhmm numeric timezone (that is, the hour and minute"}
@@ -791,7 +796,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8068},"r":"prose","x":"arrive at the final values used by LVM."}
 {"a":{"g":"logical_volume_manager_administration","l":8070},"r":"prose","x":"Refer to 'man lvmconfig' for information about displaying the built-in"}
 {"a":{"g":"logical_volume_manager_administration","l":8071},"r":"prose","x":"and configured values used by LVM."}
-{"a":{"g":"logical_volume_manager_administration","l":8073},"r":"prose","x":"If a default value is set in this file (not commented out), then a"}
 {"a":{"g":"logical_volume_manager_administration","l":8074},"r":"prose","x":"new version of LVM using this file will continue using that value,"}
 {"a":{"g":"logical_volume_manager_administration","l":8075},"r":"prose","x":"even if the new version of LVM changes the built-in default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8077},"r":"prose","x":"To put this file in a different directory and override /etc/lvm set"}
@@ -801,7 +805,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8090},"r":"prose","x":"Configuration section config."}
 {"a":{"g":"logical_volume_manager_administration","l":8091},"r":"prose","x":"How LVM configuration settings are handled."}
 {"a":{"g":"logical_volume_manager_administration","l":8094},"r":"prose","x":"Configuration option config/checks."}
-{"a":{"g":"logical_volume_manager_administration","l":8095},"r":"prose","x":"If enabled, any LVM configuration mismatch is reported."}
 {"a":{"g":"logical_volume_manager_administration","l":8096},"r":"prose","x":"This implies checking that the configuration key is understood by"}
 {"a":{"g":"logical_volume_manager_administration","l":8097},"r":"prose","x":"LVM and that the value of the key is the proper type. If disabled,"}
 {"a":{"g":"logical_volume_manager_administration","l":8098},"r":"prose","x":"any configuration mismatch is ignored and the default value is used"}
@@ -843,11 +846,9 @@
 {"a":{"g":"logical_volume_manager_administration","l":8159},"r":"prose","x":"compiled with udev support."}
 {"a":{"g":"logical_volume_manager_administration","l":8163},"r":"prose","x":"Configuration option devices/preferred_names."}
 {"a":{"g":"logical_volume_manager_administration","l":8164},"r":"prose","x":"Select which path name to display for a block device."}
-{"a":{"g":"logical_volume_manager_administration","l":8165},"r":"prose","x":"If multiple path names exist for a block device, and LVM needs to"}
 {"a":{"g":"logical_volume_manager_administration","l":8166},"r":"prose","x":"display a name for the device, the path names are matched against"}
 {"a":{"g":"logical_volume_manager_administration","l":8167},"r":"prose","x":"each item in this list of regular expressions. The first match is"}
 {"a":{"g":"logical_volume_manager_administration","l":8168},"r":"prose","x":"used. Try to avoid using undescriptive /dev/dm-N names, if present."}
-{"a":{"g":"logical_volume_manager_administration","l":8169},"r":"prose","x":"If no preferred name matches, or if preferred_names are not defined,"}
 {"a":{"g":"logical_volume_manager_administration","l":8170},"r":"prose","x":"the following built-in preferences are applied in order until one"}
 {"a":{"g":"logical_volume_manager_administration","l":8171},"r":"prose","x":"produces a preferred name:"}
 {"a":{"g":"logical_volume_manager_administration","l":8172},"r":"prose","x":"Prefer names with path prefixes in the order of:"}
@@ -858,6 +859,8 @@
 {"a":{"g":"logical_volume_manager_administration","l":8183},"r":"prose","x":"Configuration option devices/filter."}
 {"a":{"g":"logical_volume_manager_administration","l":8184},"r":"prose","x":"Limit the block devices that are used by LVM commands."}
 {"a":{"g":"logical_volume_manager_administration","l":8185},"r":"prose","x":"This is a list of regular expressions used to accept or reject block"}
+{"a":{"g":"logical_volume_manager_administration","l":8186},"r":"prose","x":"device path names. Each regex is delimited by a vertical bar '|'"}
+{"a":{"g":"logical_volume_manager_administration","l":8188},"r":"prose","x":"by 'r' to reject the path. The first regex in the list to match the"}
 {"a":{"g":"logical_volume_manager_administration","l":8190},"r":"prose","x":"When multiple path names exist for a block device, if any path name"}
 {"a":{"g":"logical_volume_manager_administration","l":8192},"r":"prose","x":"accepted. If all the path names match an 'r' pattern first, then the"}
 {"a":{"g":"logical_volume_manager_administration","l":8193},"r":"prose","x":"device is rejected. Unmatching path names do not affect the accept"}
@@ -891,6 +894,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8242},"r":"prose","x":"Configuration option devices/cache_file_prefix."}
 {"a":{"g":"logical_volume_manager_administration","l":8243},"r":"prose","x":"A prefix used before the .cache file name. See devices/cache_dir."}
 {"a":{"g":"logical_volume_manager_administration","l":8246},"r":"prose","x":"Configuration option devices/write_cache_state."}
+{"a":{"g":"logical_volume_manager_administration","l":8247},"r":"prose","x":"Enable/disable writing the cache file. See devices/cache_dir."}
 {"a":{"g":"logical_volume_manager_administration","l":8250},"r":"prose","x":"Configuration option devices/types."}
 {"a":{"g":"logical_volume_manager_administration","l":8251},"r":"prose","x":"List of additional acceptable block device types."}
 {"a":{"g":"logical_volume_manager_administration","l":8252},"r":"prose","x":"These are of device type names from /proc/devices, followed by the"}
@@ -915,7 +919,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8290},"r":"prose","x":"This applies if a PV is placed directly on an md device."}
 {"a":{"g":"logical_volume_manager_administration","l":8293},"r":"prose","x":"Configuration option devices/default_data_alignment."}
 {"a":{"g":"logical_volume_manager_administration","l":8294},"r":"prose","x":"Default alignment of the start of a PV data area in MB."}
-{"a":{"g":"logical_volume_manager_administration","l":8295},"r":"prose","x":"If set to 0, a value of 64KiB will be used."}
 {"a":{"g":"logical_volume_manager_administration","l":8296},"r":"prose","x":"Set to 1 for 1MiB, 2 for 2MiB, etc."}
 {"a":{"g":"logical_volume_manager_administration","l":8297},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8300},"r":"prose","x":"Configuration option devices/data_alignment_detection."}
@@ -925,11 +928,9 @@
 {"a":{"g":"logical_volume_manager_administration","l":8304},"r":"prose","x":"request the device can perform without incurring a read-modify-write"}
 {"a":{"g":"logical_volume_manager_administration","l":8305},"r":"prose","x":"penalty, e.g. MD chunk size. optimal_io_size is the device's"}
 {"a":{"g":"logical_volume_manager_administration","l":8307},"r":"prose","x":"minimum_io_size is used if optimal_io_size is undefined (0)."}
-{"a":{"g":"logical_volume_manager_administration","l":8308},"r":"prose","x":"If md_chunk_alignment is enabled, that detects the optimal_io_size."}
 {"a":{"g":"logical_volume_manager_administration","l":8309},"r":"prose","x":"This setting takes precedence over md_chunk_alignment."}
 {"a":{"g":"logical_volume_manager_administration","l":8312},"r":"prose","x":"Configuration option devices/data_alignment."}
 {"a":{"g":"logical_volume_manager_administration","l":8313},"r":"prose","x":"Alignment of the start of a PV data area in KiB."}
-{"a":{"g":"logical_volume_manager_administration","l":8314},"r":"prose","x":"If a PV is placed directly on an md device and md_chunk_alignment or"}
 {"a":{"g":"logical_volume_manager_administration","l":8315},"r":"prose","x":"data_alignment_detection are enabled, then this setting is ignored."}
 {"a":{"g":"logical_volume_manager_administration","l":8316},"r":"prose","x":"Otherwise, md_chunk_alignment and data_alignment_detection are"}
 {"a":{"g":"logical_volume_manager_administration","l":8317},"r":"prose","x":"disabled if this is set. Set to 0 to use the default alignment or the"}
@@ -947,7 +948,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8341},"r":"prose","x":"Otherwise, LVM waits for a suspended device to become accessible."}
 {"a":{"g":"logical_volume_manager_administration","l":8342},"r":"prose","x":"This should only be needed in recovery situations."}
 {"a":{"g":"logical_volume_manager_administration","l":8345},"r":"prose","x":"Configuration option devices/ignore_lvm_mirrors."}
-{"a":{"g":"logical_volume_manager_administration","l":8346},"r":"prose","x":"Do not scan 'mirror' LVs to avoid possible deadlocks."}
 {"a":{"g":"logical_volume_manager_administration","l":8347},"r":"prose","x":"This avoids possible deadlocks when using the 'mirror' segment type."}
 {"a":{"g":"logical_volume_manager_administration","l":8348},"r":"prose","x":"This setting determines whether LVs using the 'mirror' segment type"}
 {"a":{"g":"logical_volume_manager_administration","l":8349},"r":"prose","x":"are scanned for LVM labels. This affects the ability of mirrors to"}
@@ -1042,12 +1042,12 @@
 {"a":{"g":"logical_volume_manager_administration","l":8476},"r":"prose","x":"depends on the detection code that is selected (see"}
 {"a":{"g":"logical_volume_manager_administration","l":8477},"r":"prose","x":"use_blkid_wiping.) Wiping each detected signature must be confirmed."}
 {"a":{"g":"logical_volume_manager_administration","l":8478},"r":"prose","x":"When this setting is disabled, signatures on new LVs are not detected"}
+{"a":{"g":"logical_volume_manager_administration","l":8479},"r":"prose","x":"or erased unless the --wipesignatures option is used directly."}
 {"a":{"g":"logical_volume_manager_administration","l":8482},"r":"prose","x":"Configuration option allocation/mirror_logs_require_separate_pvs."}
 {"a":{"g":"logical_volume_manager_administration","l":8483},"r":"prose","x":"Mirror logs and images will always use different PVs."}
 {"a":{"g":"logical_volume_manager_administration","l":8484},"r":"prose","x":"The default setting changed in version 2.02.85."}
 {"a":{"g":"logical_volume_manager_administration","l":8487},"r":"prose","x":"Configuration option allocation/raid_stripe_all_devices."}
 {"a":{"g":"logical_volume_manager_administration","l":8488},"r":"prose","x":"Stripe across all PVs when RAID stripes are not specified."}
-{"a":{"g":"logical_volume_manager_administration","l":8489},"r":"prose","x":"If enabled, all PVs in the VG or on the command line are used for raid0/4/5/6/10"}
 {"a":{"g":"logical_volume_manager_administration","l":8490},"r":"prose","x":"when the command does not specify the number of stripes to use."}
 {"a":{"g":"logical_volume_manager_administration","l":8491},"r":"prose","x":"This was the default behaviour until release 2.02.162."}
 {"a":{"g":"logical_volume_manager_administration","l":8492},"r":"prose","x":"This configuration option has an automatic default value."}
@@ -1094,9 +1094,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8566},"r":"prose","x":"Configuration option allocation/thin_pool_chunk_size_policy."}
 {"a":{"g":"logical_volume_manager_administration","l":8567},"r":"prose","x":"The chunk size calculation policy for thin pool volumes."}
 {"a":{"g":"logical_volume_manager_administration","l":8569},"r":"prose","x":"Accepted values:"}
-{"a":{"g":"logical_volume_manager_administration","l":8571},"r":"prose","x":"If thin_pool_chunk_size is defined, use it. Otherwise, calculate"}
 {"a":{"g":"logical_volume_manager_administration","l":8572},"r":"prose","x":"the chunk size based on estimation and device hints exposed in"}
-{"a":{"g":"logical_volume_manager_administration","l":8576},"r":"prose","x":"If thin_pool_chunk_size is defined, use it. Otherwise, calculate"}
 {"a":{"g":"logical_volume_manager_administration","l":8577},"r":"prose","x":"the chunk size for performance based on device hints exposed in"}
 {"a":{"g":"logical_volume_manager_administration","l":8581},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8584},"r":"prose","x":"Configuration option allocation/thin_pool_chunk_size."}
@@ -1114,7 +1112,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8607},"r":"prose","x":"How LVM log information is reported."}
 {"a":{"g":"logical_volume_manager_administration","l":8610},"r":"prose","x":"Configuration option log/report_command_log."}
 {"a":{"g":"logical_volume_manager_administration","l":8611},"r":"prose","x":"Enable or disable LVM log reporting."}
-{"a":{"g":"logical_volume_manager_administration","l":8612},"r":"prose","x":"If enabled, LVM will collect a log of operations, messages,"}
 {"a":{"g":"logical_volume_manager_administration","l":8613},"r":"prose","x":"per-object return codes with object identification and associated"}
 {"a":{"g":"logical_volume_manager_administration","l":8614},"r":"prose","x":"error numbers (errnos) during LVM command processing. Then the"}
 {"a":{"g":"logical_volume_manager_administration","l":8615},"r":"prose","x":"log is either reported solely or in addition to any existing"}
@@ -1122,6 +1119,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8617},"r":"prose","x":"(e.g. pvs, vgs, lvs, lvm fullreport), then the log is reported in"}
 {"a":{"g":"logical_volume_manager_administration","l":8618},"r":"prose","x":"addition to any existing reports. Otherwise, there's only log report"}
 {"a":{"g":"logical_volume_manager_administration","l":8619},"r":"prose","x":"on output. For all applicable LVM commands, you can request that"}
+{"a":{"g":"logical_volume_manager_administration","l":8620},"r":"prose","x":"the output has only log report by using --logonly command line"}
 {"a":{"g":"logical_volume_manager_administration","l":8621},"r":"prose","x":"option. Use log/command_log_cols and log/command_log_sort settings"}
 {"a":{"g":"logical_volume_manager_administration","l":8622},"r":"prose","x":"to define fields to display and sort fields for the log report."}
 {"a":{"g":"logical_volume_manager_administration","l":8623},"r":"prose","x":"You can also use log/command_log_selection to define selection"}
@@ -1130,12 +1128,10 @@
 {"a":{"g":"logical_volume_manager_administration","l":8628},"r":"prose","x":"Configuration option log/command_log_sort."}
 {"a":{"g":"logical_volume_manager_administration","l":8629},"r":"prose","x":"List of columns to sort by when reporting command log."}
 {"a":{"g":"logical_volume_manager_administration","l":8630},"r":"prose","x":"See <lvm command> --logonly --configreport log -o help"}
-{"a":{"g":"logical_volume_manager_administration","l":8631},"r":"prose","x":"for the list of possible fields."}
 {"a":{"g":"logical_volume_manager_administration","l":8632},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8635},"r":"prose","x":"Configuration option log/command_log_cols."}
 {"a":{"g":"logical_volume_manager_administration","l":8636},"r":"prose","x":"List of columns to report when reporting command log."}
 {"a":{"g":"logical_volume_manager_administration","l":8637},"r":"prose","x":"See <lvm command> --logonly --configreport log -o help"}
-{"a":{"g":"logical_volume_manager_administration","l":8638},"r":"prose","x":"for the list of possible fields."}
 {"a":{"g":"logical_volume_manager_administration","l":8639},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8644},"r":"prose","x":"Configuration option log/command_log_selection."}
 {"a":{"g":"logical_volume_manager_administration","l":8645},"r":"prose","x":"Selection criteria used when reporting command log."}
@@ -1147,7 +1143,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8659},"r":"prose","x":"list of possible fields and selection operators. You can also"}
 {"a":{"g":"logical_volume_manager_administration","l":8660},"r":"prose","x":"define selection criteria for log report on command line directly"}
 {"a":{"g":"logical_volume_manager_administration","l":8662},"r":"prose","x":"which has precedence over log/command_log_selection setting."}
-{"a":{"g":"logical_volume_manager_administration","l":8663},"r":"prose","x":"For more information about selection criteria in general, see"}
 {"a":{"g":"logical_volume_manager_administration","l":8665},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8668},"r":"prose","x":"Configuration option log/verbose."}
 {"a":{"g":"logical_volume_manager_administration","l":8669},"r":"prose","x":"Controls the messages sent to stdout or stderr."}
@@ -1157,7 +1152,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8675},"r":"prose","x":"still produce output: dumpconfig, lvdisplay, lvmdiskscan, lvs, pvck,"}
 {"a":{"g":"logical_volume_manager_administration","l":8676},"r":"prose","x":"pvdisplay, pvs, version, vgcfgrestore -l, vgdisplay, vgs."}
 {"a":{"g":"logical_volume_manager_administration","l":8677},"r":"prose","x":"Non-essential messages are shifted from log level 4 to log level 5"}
-{"a":{"g":"logical_volume_manager_administration","l":8678},"r":"prose","x":"for syslog and lvm2_log_fn purposes."}
 {"a":{"g":"logical_volume_manager_administration","l":8679},"r":"prose","x":"Any 'yes' or 'no' questions not overridden by other arguments are"}
 {"a":{"g":"logical_volume_manager_administration","l":8680},"r":"prose","x":"suppressed and default to 'no'."}
 {"a":{"g":"logical_volume_manager_administration","l":8683},"r":"prose","x":"Configuration option log/syslog."}
@@ -1190,6 +1184,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8739},"r":"prose","x":"Configuration section backup."}
 {"a":{"g":"logical_volume_manager_administration","l":8740},"r":"prose","x":"How LVM metadata is backed up and archived."}
 {"a":{"g":"logical_volume_manager_administration","l":8741},"r":"prose","x":"In LVM, a 'backup' is a copy of the metadata for the current system,"}
+{"a":{"g":"logical_volume_manager_administration","l":8742},"r":"prose","x":"and an 'archive' contains old metadata configurations. They are"}
 {"a":{"g":"logical_volume_manager_administration","l":8743},"r":"prose","x":"stored in a human readable text format."}
 {"a":{"g":"logical_volume_manager_administration","l":8746},"r":"prose","x":"Configuration option backup/backup."}
 {"a":{"g":"logical_volume_manager_administration","l":8747},"r":"prose","x":"Maintain a backup of the current metadata configuration."}
@@ -1225,7 +1220,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8810},"r":"prose","x":"Distinguish between powers of 1024 and 1000 bytes."}
 {"a":{"g":"logical_volume_manager_administration","l":8811},"r":"prose","x":"The LVM commands distinguish between powers of 1024 bytes,"}
 {"a":{"g":"logical_volume_manager_administration","l":8812},"r":"prose","x":"e.g. KiB, MiB, GiB, and powers of 1000 bytes, e.g. KB, MB, GB."}
-{"a":{"g":"logical_volume_manager_administration","l":8813},"r":"prose","x":"If scripts depend on the old behaviour, disable this setting"}
 {"a":{"g":"logical_volume_manager_administration","l":8814},"r":"prose","x":"temporarily until they are updated."}
 {"a":{"g":"logical_volume_manager_administration","l":8817},"r":"prose","x":"Configuration option global/suffix."}
 {"a":{"g":"logical_volume_manager_administration","l":8818},"r":"prose","x":"Display unit suffix for sizes."}
@@ -1235,6 +1229,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8825},"r":"prose","x":"Disable to use the tools to manipulate LVM metadata without"}
 {"a":{"g":"logical_volume_manager_administration","l":8826},"r":"prose","x":"activating any logical volumes. If the device-mapper driver"}
 {"a":{"g":"logical_volume_manager_administration","l":8827},"r":"prose","x":"is not present in the kernel, disabling this should suppress"}
+{"a":{"g":"logical_volume_manager_administration","l":8828},"r":"prose","x":"the error messages."}
 {"a":{"g":"logical_volume_manager_administration","l":8831},"r":"prose","x":"Configuration option global/fallback_to_lvm1."}
 {"a":{"g":"logical_volume_manager_administration","l":8832},"r":"prose","x":"Try running LVM1 tools if LVM cannot communicate with DM."}
 {"a":{"g":"logical_volume_manager_administration","l":8833},"r":"prose","x":"This option only applies to 2.4 kernels and is provided to help"}
@@ -1249,7 +1244,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":8855},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":8858},"r":"prose","x":"Configuration option global/format_libraries."}
 {"a":{"g":"logical_volume_manager_administration","l":8859},"r":"prose","x":"Shared libraries that process different metadata formats."}
-{"a":{"g":"logical_volume_manager_administration","l":8860},"r":"prose","x":"If support for LVM1 metadata was compiled as a shared library use"}
 {"a":{"g":"logical_volume_manager_administration","l":8862},"r":"prose","x":"This configuration option does not have a default value defined."}
 {"a":{"g":"logical_volume_manager_administration","l":8864},"r":"prose","x":"Configuration option global/segment_libraries."}
 {"a":{"g":"logical_volume_manager_administration","l":8865},"r":"prose","x":"This configuration option does not have a default value defined."}
@@ -1273,7 +1267,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":8895},"r":"prose","x":"Offers dummy locking for tools that do not need any locks."}
 {"a":{"g":"logical_volume_manager_administration","l":8896},"r":"prose","x":"You should not need to set this directly; the tools will select"}
 {"a":{"g":"logical_volume_manager_administration","l":8897},"r":"prose","x":"when to use it instead of the configured locking_type."}
-{"a":{"g":"logical_volume_manager_administration","l":8898},"r":"prose","x":"Do not use lvmetad or the kernel device-mapper driver with this"}
+{"a":{"g":"logical_volume_manager_administration","l":8899},"r":"prose","x":"locking type. It is used by the --readonly option that offers"}
 {"a":{"g":"logical_volume_manager_administration","l":8900},"r":"prose","x":"read-only access to Volume Group metadata that cannot be locked"}
 {"a":{"g":"logical_volume_manager_administration","l":8908},"r":"prose","x":"safely because it belongs to an inaccessible domain and might be"}
 {"a":{"g":"logical_volume_manager_administration","l":8909},"r":"prose","x":"in use, for example a virtual machine image or a disk that is"}
@@ -1282,12 +1276,10 @@
 {"a":{"g":"logical_volume_manager_administration","l":8915},"r":"prose","x":"When disabled, fail if a lock request would block."}
 {"a":{"g":"logical_volume_manager_administration","l":8918},"r":"prose","x":"Configuration option global/fallback_to_clustered_locking."}
 {"a":{"g":"logical_volume_manager_administration","l":8919},"r":"prose","x":"Attempt to use built-in cluster locking if locking_type 2 fails."}
-{"a":{"g":"logical_volume_manager_administration","l":8920},"r":"prose","x":"If using external locking (type 2) and initialisation fails, with"}
 {"a":{"g":"logical_volume_manager_administration","l":8921},"r":"prose","x":"this enabled, an attempt will be made to use the built-in clustered"}
 {"a":{"g":"logical_volume_manager_administration","l":8922},"r":"prose","x":"locking. Disable this if using a customised locking_library."}
 {"a":{"g":"logical_volume_manager_administration","l":8925},"r":"prose","x":"Configuration option global/fallback_to_local_locking."}
 {"a":{"g":"logical_volume_manager_administration","l":8926},"r":"prose","x":"Use locking_type 1 (local) if locking_type 2 or 3 fail."}
-{"a":{"g":"logical_volume_manager_administration","l":8927},"r":"prose","x":"If an attempt to initialise type 2 or type 3 locking failed, perhaps"}
 {"a":{"g":"logical_volume_manager_administration","l":8928},"r":"prose","x":"because cluster components such as clvmd are not running, with this"}
 {"a":{"g":"logical_volume_manager_administration","l":8929},"r":"prose","x":"enabled, an attempt will be made to use local file-based locking"}
 {"a":{"g":"logical_volume_manager_administration","l":8930},"r":"prose","x":"(type 1). If this succeeds, only commands against local VGs will"}
@@ -1295,9 +1287,11 @@
 {"a":{"g":"logical_volume_manager_administration","l":8934},"r":"prose","x":"Configuration option global/locking_dir."}
 {"a":{"g":"logical_volume_manager_administration","l":8935},"r":"prose","x":"Directory to use for LVM command file locks."}
 {"a":{"g":"logical_volume_manager_administration","l":8936},"r":"prose","x":"Local non-LV directory that holds file-based locks while commands are"}
+{"a":{"g":"logical_volume_manager_administration","l":8937},"r":"prose","x":"in progress. A directory like /tmp that may get wiped on reboot is OK."}
 {"a":{"g":"logical_volume_manager_administration","l":8940},"r":"prose","x":"Configuration option global/prioritise_write_locks."}
 {"a":{"g":"logical_volume_manager_administration","l":8941},"r":"prose","x":"Allow quicker VG write access during high volume read access."}
 {"a":{"g":"logical_volume_manager_administration","l":8942},"r":"prose","x":"When there are competing read-only and read-write access requests for"}
+{"a":{"g":"logical_volume_manager_administration","l":8943},"r":"prose","x":"a volume group's metadata, instead of always granting the read-only"}
 {"a":{"g":"logical_volume_manager_administration","l":8944},"r":"prose","x":"requests immediately, delay them to allow the read-write requests to"}
 {"a":{"g":"logical_volume_manager_administration","l":8945},"r":"prose","x":"be serviced. Without this setting, write access may be stalled by a"}
 {"a":{"g":"logical_volume_manager_administration","l":8946},"r":"prose","x":"high volume of read-only requests. This option only affects"}
@@ -1372,6 +1366,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9061},"r":"prose","x":"The default format for displaying LV names in lvdisplay was changed"}
 {"a":{"g":"logical_volume_manager_administration","l":9062},"r":"prose","x":"in version 2.02.89 to show the LV name and path separately."}
 {"a":{"g":"logical_volume_manager_administration","l":9063},"r":"prose","x":"Previously this was always shown as /dev/vgname/lvname even when that"}
+{"a":{"g":"logical_volume_manager_administration","l":9064},"r":"prose","x":"was never a valid path in the /dev filesystem."}
 {"a":{"g":"logical_volume_manager_administration","l":9065},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9068},"r":"prose","x":"Configuration option global/use_lvmetad."}
 {"a":{"g":"logical_volume_manager_administration","l":9069},"r":"prose","x":"Use lvmetad to cache metadata and reduce disk scanning."}
@@ -1383,8 +1378,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9075},"r":"prose","x":"up for LVM to work correctly. (The udev rules should be installed"}
 {"a":{"g":"logical_volume_manager_administration","l":9076},"r":"prose","x":"by default.) Without a proper udev setup, changes in the system's"}
 {"a":{"g":"logical_volume_manager_administration","l":9077},"r":"prose","x":"block device configuration will be unknown to LVM, and ignored"}
-{"a":{"g":"logical_volume_manager_administration","l":9078},"r":"prose","x":"until a manual 'pvscan --cache' is run. If lvmetad was running"}
-{"a":{"g":"logical_volume_manager_administration","l":9079},"r":"prose","x":"while use_lvmetad was disabled, it must be stopped, use_lvmetad"}
 {"a":{"g":"logical_volume_manager_administration","l":9080},"r":"prose","x":"enabled, and then started. When using lvmetad, LV activation is"}
 {"a":{"g":"logical_volume_manager_administration","l":9081},"r":"prose","x":"switched to an automatic, event-based mode. In this mode, LVs are"}
 {"a":{"g":"logical_volume_manager_administration","l":9082},"r":"prose","x":"activated based on incoming udev events that inform lvmetad when"}
@@ -1392,10 +1385,12 @@
 {"a":{"g":"logical_volume_manager_administration","l":9084},"r":"prose","x":"it is auto-activated. The auto_activation_volume_list setting"}
 {"a":{"g":"logical_volume_manager_administration","l":9085},"r":"prose","x":"controls which LVs are auto-activated (all by default.)"}
 {"a":{"g":"logical_volume_manager_administration","l":9086},"r":"prose","x":"When lvmetad is updated (automatically by udev events, or directly"}
+{"a":{"g":"logical_volume_manager_administration","l":9087},"r":"prose","x":"by pvscan --cache), devices/filter is ignored and all devices are"}
 {"a":{"g":"logical_volume_manager_administration","l":9088},"r":"prose","x":"scanned by default. lvmetad always keeps unfiltered information"}
 {"a":{"g":"logical_volume_manager_administration","l":9089},"r":"prose","x":"which is provided to LVM commands. Each LVM command then filters"}
 {"a":{"g":"logical_volume_manager_administration","l":9097},"r":"prose","x":"based on devices/filter. This does not apply to other, non-regexp,"}
 {"a":{"g":"logical_volume_manager_administration","l":9098},"r":"prose","x":"filtering settings: component filters such as multipath and MD"}
+{"a":{"g":"logical_volume_manager_administration","l":9099},"r":"prose","x":"are checked during pvscan --cache. To filter a device and prevent"}
 {"a":{"g":"logical_volume_manager_administration","l":9100},"r":"prose","x":"scanning from the LVM system entirely, including lvmetad, use"}
 {"a":{"g":"logical_volume_manager_administration","l":9104},"r":"prose","x":"Configuration option global/lvmetad_update_wait_time."}
 {"a":{"g":"logical_volume_manager_administration","l":9105},"r":"prose","x":"The number of seconds a command will wait for lvmetad update to finish."}
@@ -1405,7 +1400,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9111},"r":"prose","x":"Configuration option global/use_lvmlockd."}
 {"a":{"g":"logical_volume_manager_administration","l":9112},"r":"prose","x":"Use lvmlockd for locking among hosts using LVM on shared storage."}
 {"a":{"g":"logical_volume_manager_administration","l":9113},"r":"prose","x":"Applicable only if LVM is compiled with lockd support in which"}
-{"a":{"g":"logical_volume_manager_administration","l":9114},"r":"prose","x":"case there is also lvmlockd(8) man page available for more"}
 {"a":{"g":"logical_volume_manager_administration","l":9118},"r":"prose","x":"Configuration option global/lvmlockd_lock_retries."}
 {"a":{"g":"logical_volume_manager_administration","l":9119},"r":"prose","x":"Retry lvmlockd lock requests this many times."}
 {"a":{"g":"logical_volume_manager_administration","l":9120},"r":"prose","x":"Applicable only if LVM is compiled with lockd support"}
@@ -1424,6 +1418,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9137},"r":"prose","x":"LVM uses this command to check that a thin metadata device is in a"}
 {"a":{"g":"logical_volume_manager_administration","l":9138},"r":"prose","x":"usable state. When a thin pool is activated and after it is"}
 {"a":{"g":"logical_volume_manager_administration","l":9139},"r":"prose","x":"deactivated, this command is run. Activation will only proceed if"}
+{"a":{"g":"logical_volume_manager_administration","l":9140},"r":"prose","x":"the command has an exit status of 0. Set to \"\" to skip this check."}
 {"a":{"g":"logical_volume_manager_administration","l":9143},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9146},"r":"prose","x":"Configuration option global/thin_dump_executable."}
 {"a":{"g":"logical_volume_manager_administration","l":9147},"r":"prose","x":"The full path to the thin_dump command."}
@@ -1452,6 +1447,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9194},"r":"prose","x":"Configuration option global/cache_disabled_features."}
 {"a":{"g":"logical_volume_manager_administration","l":9195},"r":"prose","x":"Features to not use in the cache driver."}
 {"a":{"g":"logical_volume_manager_administration","l":9196},"r":"prose","x":"This can be helpful for testing, or to avoid using a feature that is"}
+{"a":{"g":"logical_volume_manager_administration","l":9197},"r":"prose","x":"causing problems. Features include: policy_mq, policy_smq."}
 {"a":{"g":"logical_volume_manager_administration","l":9199},"r":"prose","x":"Example"}
 {"a":{"g":"logical_volume_manager_administration","l":9202},"r":"prose","x":"This configuration option does not have a default value defined."}
 {"a":{"g":"logical_volume_manager_administration","l":9204},"r":"prose","x":"Configuration option global/cache_check_executable."}
@@ -1480,6 +1476,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9250},"r":"prose","x":"The method LVM uses to set the local system ID."}
 {"a":{"g":"logical_volume_manager_administration","l":9251},"r":"prose","x":"Volume Groups can also be given a system ID (by vgcreate, vgchange,"}
 {"a":{"g":"logical_volume_manager_administration","l":9252},"r":"prose","x":"or vgimport.) A VG on shared storage devices is accessible only to"}
+{"a":{"g":"logical_volume_manager_administration","l":9253},"r":"prose","x":"the host with a matching system ID. See 'man lvmsystemid' for"}
 {"a":{"g":"logical_volume_manager_administration","l":9254},"r":"prose","x":"information on limitations and correct usage."}
 {"a":{"g":"logical_volume_manager_administration","l":9256},"r":"prose","x":"Accepted values:"}
 {"a":{"g":"logical_volume_manager_administration","l":9258},"r":"prose","x":"The host has no system ID."}
@@ -1539,7 +1536,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9341},"r":"prose","x":"events. Useful for diagnosing problems with LVM/udev interactions."}
 {"a":{"g":"logical_volume_manager_administration","l":9351},"r":"prose","x":"Configuration option activation/retry_deactivation."}
 {"a":{"g":"logical_volume_manager_administration","l":9352},"r":"prose","x":"Retry failed LV deactivation."}
-{"a":{"g":"logical_volume_manager_administration","l":9353},"r":"prose","x":"If LV deactivation fails, LVM will retry for a few seconds before"}
 {"a":{"g":"logical_volume_manager_administration","l":9354},"r":"prose","x":"failing. This may happen because a process run from a quick udev rule"}
 {"a":{"g":"logical_volume_manager_administration","l":9355},"r":"prose","x":"temporarily opened the device."}
 {"a":{"g":"logical_volume_manager_administration","l":9358},"r":"prose","x":"Configuration option activation/missing_stripe_filler."}
@@ -1563,16 +1559,15 @@
 {"a":{"g":"logical_volume_manager_administration","l":9385},"r":"prose","x":"Configuration option activation/process_priority."}
 {"a":{"g":"logical_volume_manager_administration","l":9386},"r":"prose","x":"Nice value used while devices are suspended."}
 {"a":{"g":"logical_volume_manager_administration","l":9387},"r":"prose","x":"Use a high priority so that LVs are suspended"}
-{"a":{"g":"logical_volume_manager_administration","l":9388},"r":"prose","x":"for the shortest possible time."}
 {"a":{"g":"logical_volume_manager_administration","l":9391},"r":"prose","x":"Configuration option activation/volume_list."}
 {"a":{"g":"logical_volume_manager_administration","l":9392},"r":"prose","x":"Only LVs selected by this list are activated."}
-{"a":{"g":"logical_volume_manager_administration","l":9393},"r":"prose","x":"If this list is defined, an LV is only activated if it matches an"}
 {"a":{"g":"logical_volume_manager_administration","l":9394},"r":"prose","x":"entry in this list. If this list is undefined, it imposes no limits"}
 {"a":{"g":"logical_volume_manager_administration","l":9395},"r":"prose","x":"on LV activation (all are allowed)."}
 {"a":{"g":"logical_volume_manager_administration","l":9397},"r":"prose","x":"Accepted values:"}
 {"a":{"g":"logical_volume_manager_administration","l":9399},"r":"prose","x":"The VG name is matched exactly and selects all LVs in the VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9401},"r":"prose","x":"The VG name and LV name are matched exactly and selects the LV."}
 {"a":{"g":"logical_volume_manager_administration","l":9403},"r":"prose","x":"Selects an LV if the specified tag matches a tag set on the LV"}
+{"a":{"g":"logical_volume_manager_administration","l":9404},"r":"prose","x":"or VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9413},"r":"prose","x":"Selects an LV if a tag defined on the host is also set on the LV"}
 {"a":{"g":"logical_volume_manager_administration","l":9414},"r":"prose","x":"or VG. See tags/hosttags. If any host tags exist but volume_list"}
 {"a":{"g":"logical_volume_manager_administration","l":9415},"r":"prose","x":"is not defined, a default single-entry list containing '@*'"}
@@ -1584,11 +1579,11 @@
 {"a":{"g":"logical_volume_manager_administration","l":9425},"r":"prose","x":"This list works like volume_list, but it is used only by"}
 {"a":{"g":"logical_volume_manager_administration","l":9426},"r":"prose","x":"auto-activation commands. It does not apply to direct activation"}
 {"a":{"g":"logical_volume_manager_administration","l":9427},"r":"prose","x":"commands. If this list is defined, an LV is only auto-activated"}
-{"a":{"g":"logical_volume_manager_administration","l":9428},"r":"prose","x":"if it matches an entry in this list. If this list is undefined, it"}
 {"a":{"g":"logical_volume_manager_administration","l":9429},"r":"prose","x":"imposes no limits on LV auto-activation (all are allowed.) If this"}
 {"a":{"g":"logical_volume_manager_administration","l":9431},"r":"prose","x":"auto-activation. An LV that is selected by this list for"}
 {"a":{"g":"logical_volume_manager_administration","l":9432},"r":"prose","x":"auto-activation, must also be selected by volume_list (if defined)"}
 {"a":{"g":"logical_volume_manager_administration","l":9433},"r":"prose","x":"before it is activated. Auto-activation is an activation command that"}
+{"a":{"g":"logical_volume_manager_administration","l":9434},"r":"prose","x":"includes the 'a' argument: --activate ay or -a ay. The 'a' (auto)"}
 {"a":{"g":"logical_volume_manager_administration","l":9435},"r":"prose","x":"argument for auto-activation is meant to be used by activation"}
 {"a":{"g":"logical_volume_manager_administration","l":9436},"r":"prose","x":"commands that are run automatically by the system, as opposed to LVM"}
 {"a":{"g":"logical_volume_manager_administration","l":9437},"r":"prose","x":"commands run directly by a user. A user may also use the 'a' flag"}
@@ -1598,6 +1593,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9443},"r":"prose","x":"The VG name is matched exactly and selects all LVs in the VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9445},"r":"prose","x":"The VG name and LV name are matched exactly and selects the LV."}
 {"a":{"g":"logical_volume_manager_administration","l":9447},"r":"prose","x":"Selects an LV if the specified tag matches a tag set on the LV"}
+{"a":{"g":"logical_volume_manager_administration","l":9448},"r":"prose","x":"or VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9450},"r":"prose","x":"Selects an LV if a tag defined on the host is also set on the LV"}
 {"a":{"g":"logical_volume_manager_administration","l":9451},"r":"prose","x":"or VG. See tags/hosttags. If any host tags exist but volume_list"}
 {"a":{"g":"logical_volume_manager_administration","l":9452},"r":"prose","x":"is not defined, a default single-entry list containing '@*'"}
@@ -1606,13 +1602,13 @@
 {"a":{"g":"logical_volume_manager_administration","l":9458},"r":"prose","x":"This configuration option does not have a default value defined."}
 {"a":{"g":"logical_volume_manager_administration","l":9460},"r":"prose","x":"Configuration option activation/read_only_volume_list."}
 {"a":{"g":"logical_volume_manager_administration","l":9461},"r":"prose","x":"LVs in this list are activated in read-only mode."}
-{"a":{"g":"logical_volume_manager_administration","l":9462},"r":"prose","x":"If this list is defined, each LV that is to be activated is checked"}
 {"a":{"g":"logical_volume_manager_administration","l":9463},"r":"prose","x":"against this list, and if it matches, it is activated in read-only"}
 {"a":{"g":"logical_volume_manager_administration","l":9464},"r":"prose","x":"mode. This overrides the permission setting stored in the metadata,"}
 {"a":{"g":"logical_volume_manager_administration","l":9467},"r":"prose","x":"Accepted values:"}
 {"a":{"g":"logical_volume_manager_administration","l":9476},"r":"prose","x":"The VG name is matched exactly and selects all LVs in the VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9478},"r":"prose","x":"The VG name and LV name are matched exactly and selects the LV."}
 {"a":{"g":"logical_volume_manager_administration","l":9480},"r":"prose","x":"Selects an LV if the specified tag matches a tag set on the LV"}
+{"a":{"g":"logical_volume_manager_administration","l":9481},"r":"prose","x":"or VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9483},"r":"prose","x":"Selects an LV if a tag defined on the host is also set on the LV"}
 {"a":{"g":"logical_volume_manager_administration","l":9484},"r":"prose","x":"or VG. See tags/hosttags. If any host tags exist but volume_list"}
 {"a":{"g":"logical_volume_manager_administration","l":9485},"r":"prose","x":"is not defined, a default single-entry list containing '@*'"}
@@ -1621,7 +1617,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9491},"r":"prose","x":"This configuration option does not have a default value defined."}
 {"a":{"g":"logical_volume_manager_administration","l":9493},"r":"prose","x":"Configuration option activation/raid_region_size."}
 {"a":{"g":"logical_volume_manager_administration","l":9494},"r":"prose","x":"Size in KiB of each raid or mirror synchronization region."}
-{"a":{"g":"logical_volume_manager_administration","l":9495},"r":"prose","x":"For raid or mirror segment types, this is the amount of data that is"}
 {"a":{"g":"logical_volume_manager_administration","l":9496},"r":"prose","x":"copied at once when initializing, or moved at once by pvmove."}
 {"a":{"g":"logical_volume_manager_administration","l":9499},"r":"prose","x":"Configuration option activation/error_when_full."}
 {"a":{"g":"logical_volume_manager_administration","l":9500},"r":"prose","x":"Return errors if a thin pool runs out of space."}
@@ -1640,11 +1635,11 @@
 {"a":{"g":"logical_volume_manager_administration","l":9521},"r":"prose","x":"Configuration option activation/raid_fault_policy."}
 {"a":{"g":"logical_volume_manager_administration","l":9522},"r":"prose","x":"Defines how a device failure in a RAID LV is handled."}
 {"a":{"g":"logical_volume_manager_administration","l":9523},"r":"prose","x":"This includes LVs that have the following segment types:"}
-{"a":{"g":"logical_volume_manager_administration","l":9525},"r":"prose","x":"If a device in the LV fails, the policy determines the steps"}
 {"a":{"g":"logical_volume_manager_administration","l":9526},"r":"prose","x":"performed by dmeventd automatically, and the steps perfomed by the"}
 {"a":{"g":"logical_volume_manager_administration","l":9528},"r":"prose","x":"Automatic handling requires dmeventd to be monitoring the LV."}
 {"a":{"g":"logical_volume_manager_administration","l":9530},"r":"prose","x":"Accepted values:"}
 {"a":{"g":"logical_volume_manager_administration","l":9539},"r":"prose","x":"Use the system log to warn the user that a device in the RAID LV"}
+{"a":{"g":"logical_volume_manager_administration","l":9540},"r":"prose","x":"has failed. It is left to the user to run lvconvert --repair"}
 {"a":{"g":"logical_volume_manager_administration","l":9541},"r":"prose","x":"manually to remove or replace the failed device. As long as the"}
 {"a":{"g":"logical_volume_manager_administration","l":9542},"r":"prose","x":"number of failed devices does not exceed the redundancy of the LV"}
 {"a":{"g":"logical_volume_manager_administration","l":9543},"r":"prose","x":"(1 device for raid4/5, 2 for raid6), the LV will remain usable."}
@@ -1671,6 +1666,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9572},"r":"prose","x":"sync state through crashes/reboots. Using this policy for a"}
 {"a":{"g":"logical_volume_manager_administration","l":9573},"r":"prose","x":"mirror device is slow, as it requires the mirror to resynchronize"}
 {"a":{"g":"logical_volume_manager_administration","l":9574},"r":"prose","x":"the devices, but it will preserve the mirror characteristic of"}
+{"a":{"g":"logical_volume_manager_administration","l":9575},"r":"prose","x":"the device. This policy acts like 'remove' if no suitable device"}
 {"a":{"g":"logical_volume_manager_administration","l":9576},"r":"prose","x":"and space can be allocated for the replacement."}
 {"a":{"g":"logical_volume_manager_administration","l":9578},"r":"prose","x":"Not yet implemented. Useful to place the log device temporarily"}
 {"a":{"g":"logical_volume_manager_administration","l":9579},"r":"prose","x":"on the same physical volume as one of the mirror images. This"}
@@ -1718,12 +1714,9 @@
 {"a":{"g":"logical_volume_manager_administration","l":9650},"r":"prose","x":"thin pool exceeds 700M, it is extended to 1.2G, and when it exceeds"}
 {"a":{"g":"logical_volume_manager_administration","l":9651},"r":"prose","x":"840M, it is extended to 1.44G:"}
 {"a":{"g":"logical_volume_manager_administration","l":9656},"r":"prose","x":"Configuration option activation/mlock_filter."}
-{"a":{"g":"logical_volume_manager_administration","l":9664},"r":"prose","x":"Do not mlock these memory areas."}
-{"a":{"g":"logical_volume_manager_administration","l":9665},"r":"prose","x":"While activating devices, I/O to devices being (re)configured is"}
 {"a":{"g":"logical_volume_manager_administration","l":9666},"r":"prose","x":"suspended. As a precaution against deadlocks, LVM pins memory it is"}
 {"a":{"g":"logical_volume_manager_administration","l":9667},"r":"prose","x":"using so it is not paged out, and will not require I/O to reread."}
 {"a":{"g":"logical_volume_manager_administration","l":9668},"r":"prose","x":"Groups of pages that are known not to be accessed during activation"}
-{"a":{"g":"logical_volume_manager_administration","l":9669},"r":"prose","x":"do not need to be pinned into memory. Each string listed in this"}
 {"a":{"g":"logical_volume_manager_administration","l":9671},"r":"prose","x":"pages corresponding to lines that match are not pinned. On some"}
 {"a":{"g":"logical_volume_manager_administration","l":9672},"r":"prose","x":"systems, locale-archive was found to make up over 80% of the memory"}
 {"a":{"g":"logical_volume_manager_administration","l":9673},"r":"prose","x":"used by the process."}
@@ -1778,7 +1771,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9753},"r":"prose","x":"This configuration section has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9756},"r":"prose","x":"Configuration option metadata/check_pv_device_sizes."}
 {"a":{"g":"logical_volume_manager_administration","l":9757},"r":"prose","x":"Check device sizes are not smaller than corresponding PV sizes."}
-{"a":{"g":"logical_volume_manager_administration","l":9758},"r":"prose","x":"If device size is less than corresponding PV size found in metadata,"}
 {"a":{"g":"logical_volume_manager_administration","l":9759},"r":"prose","x":"there is always a risk of data loss. If this option is set, then LVM"}
 {"a":{"g":"logical_volume_manager_administration","l":9760},"r":"prose","x":"issues a warning message each time it finds that the device size is"}
 {"a":{"g":"logical_volume_manager_administration","l":9761},"r":"prose","x":"less than corresponding PV size. You should not disable this unless"}
@@ -1811,7 +1803,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9808},"r":"prose","x":"Configuration option metadata/vgmetadatacopies."}
 {"a":{"g":"logical_volume_manager_administration","l":9809},"r":"prose","x":"Number of copies of metadata to maintain for each VG."}
 {"a":{"g":"logical_volume_manager_administration","l":9810},"r":"prose","x":"The --vgmetadatacopies option overrides this setting."}
-{"a":{"g":"logical_volume_manager_administration","l":9811},"r":"prose","x":"If set to a non-zero value, LVM automatically chooses which of the"}
 {"a":{"g":"logical_volume_manager_administration","l":9812},"r":"prose","x":"available metadata areas to use to achieve the requested number of"}
 {"a":{"g":"logical_volume_manager_administration","l":9813},"r":"prose","x":"copies of the VG metadata. If you set a value larger than the the"}
 {"a":{"g":"logical_volume_manager_administration","l":9814},"r":"prose","x":"total number of metadata areas available, then metadata is stored in"}
@@ -1828,7 +1819,7 @@
 {"a":{"g":"logical_volume_manager_administration","l":9830},"r":"prose","x":"Configuration option metadata/pvmetadataignore."}
 {"a":{"g":"logical_volume_manager_administration","l":9831},"r":"prose","x":"Ignore metadata areas on a new PV."}
 {"a":{"g":"logical_volume_manager_administration","l":9832},"r":"prose","x":"The --metadataignore option overrides this setting."}
-{"a":{"g":"logical_volume_manager_administration","l":9833},"r":"prose","x":"If metadata areas on a PV are ignored, LVM will not store metadata"}
+{"a":{"g":"logical_volume_manager_administration","l":9834},"r":"prose","x":"in them."}
 {"a":{"g":"logical_volume_manager_administration","l":9835},"r":"prose","x":"This configuration option is advanced."}
 {"a":{"g":"logical_volume_manager_administration","l":9836},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9839},"r":"prose","x":"Configuration option metadata/stripesize."}
@@ -1851,7 +1842,6 @@
 {"a":{"g":"logical_volume_manager_administration","l":9872},"r":"prose","x":"This configuration section has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9875},"r":"prose","x":"Configuration option report/output_format."}
 {"a":{"g":"logical_volume_manager_administration","l":9876},"r":"prose","x":"Format of LVM command's report output."}
-{"a":{"g":"logical_volume_manager_administration","l":9877},"r":"prose","x":"If there is more than one report per command, then the format"}
 {"a":{"g":"logical_volume_manager_administration","l":9878},"r":"prose","x":"is applied for all reports. You can also change output format"}
 {"a":{"g":"logical_volume_manager_administration","l":9880},"r":"prose","x":"has precedence over log/output_format setting."}
 {"a":{"g":"logical_volume_manager_administration","l":9881},"r":"prose","x":"Accepted values:"}
@@ -1861,15 +1851,11 @@
 {"a":{"g":"logical_volume_manager_administration","l":9887},"r":"prose","x":"JSON format."}
 {"a":{"g":"logical_volume_manager_administration","l":9888},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9891},"r":"prose","x":"Configuration option report/compact_output."}
-{"a":{"g":"logical_volume_manager_administration","l":9892},"r":"prose","x":"Do not print empty values for all report fields."}
-{"a":{"g":"logical_volume_manager_administration","l":9893},"r":"prose","x":"If enabled, all fields that don't have a value set for any of the"}
 {"a":{"g":"logical_volume_manager_administration","l":9894},"r":"prose","x":"rows reported are skipped and not printed. Compact output is"}
 {"a":{"g":"logical_volume_manager_administration","l":9895},"r":"prose","x":"applicable only if report/buffered is enabled. If you need to"}
 {"a":{"g":"logical_volume_manager_administration","l":9896},"r":"prose","x":"compact only specified fields, use compact_output=0 and define"}
 {"a":{"g":"logical_volume_manager_administration","l":9898},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9901},"r":"prose","x":"Configuration option report/compact_output_cols."}
-{"a":{"g":"logical_volume_manager_administration","l":9902},"r":"prose","x":"Do not print empty values for specified report fields."}
-{"a":{"g":"logical_volume_manager_administration","l":9903},"r":"prose","x":"If defined, specified fields that don't have a value set for any"}
 {"a":{"g":"logical_volume_manager_administration","l":9904},"r":"prose","x":"of the rows reported are skipped and not printed. Compact output"}
 {"a":{"g":"logical_volume_manager_administration","l":9905},"r":"prose","x":"is applicable only if report/buffered is enabled. If you need to"}
 {"a":{"g":"logical_volume_manager_administration","l":9906},"r":"prose","x":"compact all fields, use compact_output=1 instead in which case"}
@@ -1903,11 +1889,9 @@
 {"a":{"g":"logical_volume_manager_administration","l":9955},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9958},"r":"prose","x":"Configuration option report/colums_as_rows."}
 {"a":{"g":"logical_volume_manager_administration","l":9959},"r":"prose","x":"Output each column as a row."}
-{"a":{"g":"logical_volume_manager_administration","l":9960},"r":"prose","x":"If set, this also implies report/prefixes=1."}
 {"a":{"g":"logical_volume_manager_administration","l":9961},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9964},"r":"prose","x":"Configuration option report/binary_values_as_numeric."}
 {"a":{"g":"logical_volume_manager_administration","l":9965},"r":"prose","x":"Use binary values 0 or 1 instead of descriptive literal values."}
-{"a":{"g":"logical_volume_manager_administration","l":9966},"r":"prose","x":"For columns that have exactly two valid values to report"}
 {"a":{"g":"logical_volume_manager_administration","l":9968},"r":"prose","x":"value could not be determined)."}
 {"a":{"g":"logical_volume_manager_administration","l":9969},"r":"prose","x":"This configuration option has an automatic default value."}
 {"a":{"g":"logical_volume_manager_administration","l":9979},"r":"prose","x":"Configuration option report/time_format."}
@@ -1927,7 +1911,6 @@
 {"a":{"g":"migration_planning_guide","l":1845},"r":"prose","x":"Secret DNSBL name Name in postscreen(8) replies"}
 {"a":{"g":"networking_guide","l":10300},"r":"prose","x":"configuration for rdma tuning"}
 {"a":{"g":"networking_guide","l":10303},"r":"prose","x":"rdma tuning end"}
-{"a":{"g":"networking_guide","l":10669},"r":"prose","x":"For reference:"}
 {"a":{"g":"networking_guide","l":10670},"r":"prose","x":"IPv4 IANA reserved multicast addresses:"}
 {"a":{"g":"networking_guide","l":10672},"r":"prose","x":"IPv6 IANA reserved multicast addresses:"}
 {"a":{"g":"networking_guide","l":11447},"r":"prose","x":"DHCP Server Configuration file."}
@@ -1964,19 +1947,15 @@
 {"a":{"g":"security_guide","l":5181},"r":"prose","x":"rsakey AQPFKElpV"}
 {"a":{"g":"security_guide","l":5224},"r":"prose","x":"load and initiate automatically"}
 {"a":{"g":"security_guide","l":5492},"r":"prose","x":"Support (roaming) MOBIKE clients (RFC 4555)"}
-{"a":{"g":"security_guide","l":5496},"r":"prose","x":"if access to the LAN is given, enable this, otherwise use 0.0.0.0/0"}
 {"a":{"g":"security_guide","l":5506},"r":"prose","x":"pick an IP address pool to assign to remote users"}
 {"a":{"g":"security_guide","l":5507},"r":"prose","x":"100.64.0.0/16 prevents RFC1918 clashes when remote users are behind NAT"}
-{"a":{"g":"security_guide","l":5509},"r":"prose","x":"if you want remote clients to use some local DNS zones and servers"}
 {"a":{"g":"security_guide","l":5515},"r":"prose","x":"optionally, run the client X.509 ID through pam to allow/deny client"}
 {"a":{"g":"security_guide","l":5517},"r":"prose","x":"load connection, don't initiate"}
 {"a":{"g":"security_guide","l":5547},"r":"prose","x":"pick up our dynamic IP"}
 {"a":{"g":"security_guide","l":5553},"r":"prose","x":"right can also be a DNS hostname"}
-{"a":{"g":"security_guide","l":5555},"r":"prose","x":"if access to the remote LAN is required, enable this, otherwise use 0.0.0.0/0"}
 {"a":{"g":"security_guide","l":5561},"r":"prose","x":"allow narrowing to the server’s suggested assigned IP and remote subnet"}
 {"a":{"g":"security_guide","l":5563},"r":"prose","x":"Support (roaming) MOBIKE clients (RFC 4555)"}
 {"a":{"g":"security_guide","l":5565},"r":"prose","x":"Initiate connection"}
-{"a":{"g":"security_guide","l":5664},"r":"prose","x":"for walled-garden on xauth failure"}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1670},"r":"prose","x":"This file controls the state of SELinux on the system."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1672},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
 {"a":{"g":"selinux_users_and_administrators_guide","l":1674},"r":"prose","x":"disabled - No SELinux policy is loaded."}
@@ -2019,11 +1998,6 @@
 {"a":{"g":"storage_administration_guide","l":12554},"r":"prose","x":"dcbtool sc ethX dcb on"}
 {"a":{"g":"storage_administration_guide","l":13508},"r":"prose","x":"BEGIN RECORD 2.0-871"}
 {"a":{"g":"storage_administration_guide","l":13515},"r":"prose","x":"END RECORD"}
-{"a":{"g":"storage_administration_guide","l":19434},"r":"prose","x":"for i in {01..10}; do"}
-{"a":{"g":"storage_administration_guide","l":19705},"r":"prose","x":"for depth in 1 2 4 8 16 32 64 128 256 512 1024 2048; do"}
-{"a":{"g":"storage_administration_guide","l":19768},"r":"prose","x":"for iosize in 4 8 16 32 64 128 256 512 1024; do"}
-{"a":{"g":"storage_administration_guide","l":19834},"r":"prose","x":"for readmix in 0 10 20 30 40 50 60 70 80 90 100; do"}
-{"a":{"g":"storage_administration_guide","l":19887},"r":"prose","x":"for readmix in 20 50 80; do"}
 {"a":{"g":"storage_administration_guide","l":4250},"r":"prose","x":"extended LDIF"}
 {"a":{"g":"storage_administration_guide","l":4253},"r":"prose","x":"base <> with scope subtree"}
 {"a":{"g":"storage_administration_guide","l":4270},"r":"prose","x":"extended LDIF"}
@@ -2062,6 +2036,7 @@
 {"a":{"g":"system_administrators_guide","l":13266},"r":"prose","x":"is identical to the entry \"NSSProtocol SSLv3,TLSv1.0,TLSv1.1\"."}
 {"a":{"g":"system_administrators_guide","l":14835},"r":"prose","x":"— Refers to a variable set earlier in the rc file. This is often used to set a common mailbox that is"}
 {"a":{"g":"system_administrators_guide","l":15453},"r":"prose","x":"Global parameters"}
+{"a":{"g":"system_administrators_guide","l":21191},"r":"prose","x":"the administrative functions."}
 {"a":{"g":"system_administrators_guide","l":21243},"r":"prose","x":"Command line options for ntpd"}
 {"a":{"g":"system_administrators_guide","l":21414},"r":"prose","x":"Hosts on local network are less restricted."}
 {"a":{"g":"system_administrators_guide","l":22612},"r":"prose","x":"Configuration file for timemaster"}
@@ -2071,7 +2046,6 @@
 {"a":{"g":"system_administrators_guide","l":2430},"r":"prose","x":"Min/max values for automatic uid selection in useradd"}
 {"a":{"g":"system_administrators_guide","l":2434},"r":"prose","x":"System accounts"}
 {"a":{"g":"system_administrators_guide","l":26769},"r":"prose","x":"These are passed by reference to indication_callback"}
-{"a":{"g":"system_administrators_guide","l":26774},"r":"prose","x":"Do something with ind, var1 and var2"}
 {"a":{"g":"system_administrators_guide","l":26964},"r":"prose","x":"Set static IPv4 address"}
 {"a":{"g":"system_administrators_guide","l":27030},"r":"prose","x":"Find the devices to add to the volume group"}
 {"a":{"g":"system_administrators_guide","l":27038},"r":"prose","x":"call would be faster, but this is easier to read):"}
@@ -2090,10 +2064,8 @@
 {"a":{"g":"system_administrators_guide","l":29051},"r":"prose","x":"Adding this ruleset to process remote messages"}
 {"a":{"g":"system_administrators_guide","l":29211},"r":"prose","x":"File 1"}
 {"a":{"g":"system_administrators_guide","l":29218},"r":"prose","x":"File 2"}
-{"a":{"g":"system_administrators_guide","l":30432},"r":"prose","x":"For details see man 4 crontabs"}
 {"a":{"g":"system_administrators_guide","l":30434},"r":"prose","x":"Example of job definition:"}
 {"a":{"g":"system_administrators_guide","l":30447},"r":"prose","x":"* * * * * user-name command to be executed"}
-{"a":{"g":"system_administrators_guide","l":30565},"r":"prose","x":"Do not run jobs when on battery power"}
 {"a":{"g":"system_administrators_guide","l":30877},"r":"prose","x":"The script needs to execute after:"}
 {"a":{"g":"system_administrators_guide","l":30878},"r":"prose","x":"network interfaces are configured"}
 {"a":{"g":"system_administrators_guide","l":30881},"r":"prose","x":"all remote filesystems (NFS/_netdev) are mounted"}
@@ -2104,13 +2076,16 @@
 {"a":{"g":"system_administrators_guide","l":32109},"r":"prose","x":"DEFAULTKERNEL specifies the default kernel package type"}
 {"a":{"g":"system_administrators_guide","l":32186},"r":"prose","x":"This file provides an easy way to add custom menu entries. Simply type the"}
 {"a":{"g":"system_administrators_guide","l":32187},"r":"prose","x":"menu entries you want to add after this comment. Be careful not to change"}
+{"a":{"g":"system_administrators_guide","l":32188},"r":"prose","x":"the 'exec tail' line above."}
 {"a":{"g":"system_administrators_guide","l":32235},"r":"prose","x":"This file provides an easy way to add custom menu entries. Simply type the"}
 {"a":{"g":"system_administrators_guide","l":32236},"r":"prose","x":"menu entries you want to add after this comment. Be careful not to change"}
+{"a":{"g":"system_administrators_guide","l":32237},"r":"prose","x":"the 'exec tail' line above."}
 {"a":{"g":"system_administrators_guide","l":4271},"r":"prose","x":"By default, we want umask to get set. This sets it for non-login shell."}
 {"a":{"g":"system_administrators_guide","l":4304},"r":"prose","x":"The permission mask is initialized to this value. If not specified,"}
 {"a":{"g":"system_administrators_guide","l":4305},"r":"prose","x":"the permission mask will be initialized to 022."}
 {"a":{"g":"system_administrators_guide","l":6576},"r":"prose","x":"The transaction finished successfully, but yum"}
 {"a":{"g":"system_administrators_guide","l":6909},"r":"prose","x":"PUT YOUR REPOS HERE OR IN separate files named file.repo"}
+{"a":{"g":"system_administrators_guide","l":6910},"r":"prose","x":"in /etc/yum.repos.d"}
 {"a":{"g":"system_administrators_guide","l":7193},"r":"prose","x":"Red Hat Repositories"}
 {"a":{"g":"system_administrators_guide","l":7194},"r":"prose","x":"Managed by (rhsm) subscription-manager"}
 {"a":{"g":"system_administrators_guide","l":9653},"r":"prose","x":"postfix Postfix Mail Transfer Agent"}
@@ -2141,6 +2116,7 @@
 {"a":{"g":"systemtap_beginners_guide","l":2379},"r":"prose","x":"so the values are cumulative since the script started."}
 {"a":{"g":"systemtap_beginners_guide","l":2486},"r":"prose","x":"dev and ino are defined by vfs.write and vfs.read"}
 {"a":{"g":"systemtap_beginners_guide","l":2593},"r":"prose","x":"The following line command will probe all the functions"}
+{"a":{"g":"systemtap_beginners_guide","l":2594},"r":"prose","x":"in kernel's memory management code:"}
 {"a":{"g":"systemtap_beginners_guide","l":2606},"r":"prose","x":"(fn+ in called) # Sort by function name"}
 {"a":{"g":"systemtap_beginners_guide","l":2845},"r":"prose","x":"Copyright (C) 2009 Red Hat, Inc."}
 {"a":{"g":"systemtap_beginners_guide","l":2846},"r":"prose","x":"Written by Ulrich Drepper <drepper@redhat.com>"}
@@ -2175,14 +2151,12 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28198},"r":"prose","x":"guest which is stuck or ignores shutdown requests and a guest"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28199},"r":"prose","x":"which just needs a long time to shutdown. When setting"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28203},"r":"prose","x":"value suitable for your guests."}
-{"a":{"g":"virtualization_deployment_and_administration_guide","l":28206},"r":"prose","x":"If set to non-zero, shutdown will suspend guests concurrently. Number of"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28209},"r":"prose","x":"guests on shutdown at any time will not exceed number set in this variable."}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28212},"r":"prose","x":"Number of seconds we're willing to wait for a guest to shut down. If parallel"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28213},"r":"prose","x":"shutdown is enabled, this timeout applies as a timeout for shutting down all"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28214},"r":"prose","x":"guests on a single URI defined in the variable URIS. If this is 0, then there"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28215},"r":"prose","x":"is no time out (use with caution, as guests might not respond to a shutdown"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28218},"r":"prose","x":"request). The default value is 300 seconds (5 minutes)."}
-{"a":{"g":"virtualization_deployment_and_administration_guide","l":28221},"r":"prose","x":"If non-zero, try to bypass the file system cache when saving and"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28222},"r":"prose","x":"restoring guests, even though this may give slower operation for"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28225},"r":"prose","x":"some file systems."}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5055},"r":"prose","x":"gluster volume status"}
@@ -2195,8 +2169,8 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7698},"r":"prose","x":"connection succeeds."}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7701},"r":"prose","x":"The minimum limit sets the number of workers to start up"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7702},"r":"prose","x":"initially. If the number of active clients exceeds this,"}
-{"a":{"g":"virtualization_deployment_and_administration_guide","l":7703},"r":"prose","x":"then more threads are spawned, upto max_workers limit."}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7704},"r":"prose","x":"Typically you'd want max_workers to equal maximum number"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":7705},"r":"prose","x":"of clients allowed"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7710},"r":"prose","x":"The number of priority workers. If all workers from above"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7711},"r":"prose","x":"pool will stuck, some calls marked as high priority"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7712},"r":"prose","x":"(notably domainDestroy) can be executed in this pool."}
@@ -2210,6 +2184,7 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7731},"r":"prose","x":"Limit on concurrent requests from a single client"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7732},"r":"prose","x":"connection. To avoid one client monopolizing the server"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":7733},"r":"prose","x":"this should be a small fraction of the global max_requests"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":7734},"r":"prose","x":"and max_workers parameter"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1949},"r":"prose","x":"Configuration file for ksmtuned."}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1950},"r":"prose","x":"How long ksmtuned should sleep between tuning adjustments"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":1953},"r":"prose","x":"Millisecond sleep between ksm scans for 16Gb server."}
@@ -2223,6 +2198,7 @@
 {"a":{"g":"windows_integration_guide","l":5052},"r":"prose","x":"Schema Compatibility plugin has not been configured on this server. To"}
 {"a":{"g":"windows_integration_guide","l":5053},"r":"prose","x":"configure it, run \"ipa-adtrust-install --enable-compat\""}
 {"a":{"g":"windows_integration_guide","l":5054},"r":"prose","x":"Install required packages via yum"}
+{"a":{"g":"windows_integration_guide","l":5057},"r":"prose","x":"NOTE: IPA certificate uses the SHA-256 hash function. SHA-256 was"}
 {"a":{"g":"windows_integration_guide","l":5058},"r":"prose","x":"introduced in RHEL5.2. Therefore, clients older than RHEL5.2 will not"}
 {"a":{"g":"windows_integration_guide","l":5059},"r":"prose","x":"be able to interoperate with IPA server 3.x."}
 {"a":{"g":"windows_integration_guide","l":5060},"r":"prose","x":"Please note that this script assumes /etc/openldap/cacerts as the"}
@@ -2230,6 +2206,7 @@
 {"a":{"g":"windows_integration_guide","l":5062},"r":"prose","x":"system the script needs to be modified accordingly."}
 {"a":{"g":"windows_integration_guide","l":5063},"r":"prose","x":"Download the CA certificate of the IPA server"}
 {"a":{"g":"7.6_release_notes","l":4853},"r":"unparseable","x":"/etc/systemd/system/radiusd.service.d/ipa-otp.conf"}
+{"a":{"g":"anaconda_customization_guide","l":1854},"r":"unparseable","x":"If --reverse was specified in the kickstart, reverse the text"}
 {"a":{"g":"anaconda_customization_guide","l":2209},"r":"unparseable","x":"respectively"}
 {"a":{"g":"anaconda_customization_guide","l":412},"r":"unparseable","x":"implantisomd5 ../NEWISO.iso"}
 {"a":{"g":"automating_system_administration_by_using_rhel_system_roles_in_rhel_7.9","l":11603},"r":"unparseable","x":"to."}
@@ -2238,6 +2215,8 @@
 {"a":{"g":"deploying_red_hat_enterprise_linux_7_on_public_cloud_platforms","l":798},"r":"unparseable","x":"poweroff"}
 {"a":{"g":"deploying_red_hat_enterprise_linux_7_on_public_cloud_platforms","l":831},"r":"unparseable","x":"sh align.sh <image-xxx>.raw"}
 {"a":{"g":"deploying_red_hat_enterprise_linux_7_on_public_cloud_platforms","l":891},"r":"unparseable","x":"sudo sh -c 'echo -e \"[azure-cli]\\nname=Azure"}
+{"a":{"g":"desktop_migration_and_administration_guide","l":1835},"r":"unparseable","x":"Do not show the user list"}
+{"a":{"g":"desktop_migration_and_administration_guide","l":2891},"r":"unparseable","x":"for all users in the first floor"}
 {"a":{"g":"developer_guide","l":2803},"r":"unparseable","x":"updatedb"}
 {"a":{"g":"developer_guide","l":3820},"r":"unparseable","x":"sosreport"}
 {"a":{"g":"developer_guide","l":4004},"r":"unparseable","x":"sosreport"}
@@ -2272,16 +2251,16 @@
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":18878},"r":"unparseable","x":"ipa-cert-fix"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":19383},"r":"unparseable","x":"ipa-certupdate"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":20363},"r":"unparseable","x":"nisdomainname example.com"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":27272},"r":"unparseable","x":"for i in ftp http https; do unset ${i}_proxy; done"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":3404},"r":"unparseable","x":"env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null getcert list"}
 {"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":3405},"r":"unparseable","x":"env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null ipa-client-install"}
+{"a":{"g":"linux_domain_identity_authentication_and_policy_guide","l":4246},"r":"unparseable","x":"for i in _ldap._tcp _kerberos._tcp _kerberos._udp _kerberos-master._tcp _kerberos-"}
 {"a":{"g":"logical_volume_manager_administration","l":10000},"r":"unparseable","x":"locale (alt E)"}
 {"a":{"g":"logical_volume_manager_administration","l":10016},"r":"unparseable","x":"available."}
 {"a":{"g":"logical_volume_manager_administration","l":10060},"r":"unparseable","x":"treated as \"PM\" and midnight as \"AM\"."}
 {"a":{"g":"logical_volume_manager_administration","l":10066},"r":"unparseable","x":"equivalent to %I:%M:%S %p."}
 {"a":{"g":"logical_volume_manager_administration","l":10072},"r":"unparseable","x":"1970-01-01 00:00:00 +0000 (UTC)"}
-{"a":{"g":"logical_volume_manager_administration","l":10383},"r":"unparseable","x":"tags {"}
 {"a":{"g":"logical_volume_manager_administration","l":10404},"r":"unparseable","x":"tags { foo { } bar { host_list = [ \"machine1\", \"machine2\" ] } }"}
-{"a":{"g":"logical_volume_manager_administration","l":10408},"r":"unparseable","x":"tag {"}
 {"a":{"g":"logical_volume_manager_administration","l":1285},"r":"unparseable","x":"lvmdiskscan"}
 {"a":{"g":"logical_volume_manager_administration","l":1355},"r":"unparseable","x":"pvscan"}
 {"a":{"g":"logical_volume_manager_administration","l":1623},"r":"unparseable","x":"vgdisplay new_vg"}
@@ -2298,29 +2277,49 @@
 {"a":{"g":"logical_volume_manager_administration","l":6822},"r":"unparseable","x":"pvscan"}
 {"a":{"g":"logical_volume_manager_administration","l":6823},"r":"unparseable","x":"vgscan"}
 {"a":{"g":"logical_volume_manager_administration","l":8062},"r":"unparseable","x":"/etc/lvm/lvm.conf file."}
+{"a":{"g":"logical_volume_manager_administration","l":8073},"r":"unparseable","x":"If a default value is set in this file (not commented out), then a"}
+{"a":{"g":"logical_volume_manager_administration","l":8095},"r":"unparseable","x":"If enabled, any LVM configuration mismatch is reported."}
 {"a":{"g":"logical_volume_manager_administration","l":8155},"r":"unparseable","x":"none"}
 {"a":{"g":"logical_volume_manager_administration","l":8157},"r":"unparseable","x":"udev"}
+{"a":{"g":"logical_volume_manager_administration","l":8165},"r":"unparseable","x":"If multiple path names exist for a block device, and LVM needs to"}
+{"a":{"g":"logical_volume_manager_administration","l":8169},"r":"unparseable","x":"If no preferred name matches, or if preferred_names are not defined,"}
 {"a":{"g":"logical_volume_manager_administration","l":8189},"r":"unparseable","x":"path is used, producing the 'a' or 'r' result for the device."}
 {"a":{"g":"logical_volume_manager_administration","l":8191},"r":"unparseable","x":"matches an 'a' pattern before an 'r' pattern, then the device is"}
 {"a":{"g":"logical_volume_manager_administration","l":8195},"r":"unparseable","x":"then the device is accepted. Be careful mixing 'a' and 'r' patterns,"}
+{"a":{"g":"logical_volume_manager_administration","l":8295},"r":"unparseable","x":"If set to 0, a value of 64KiB will be used."}
+{"a":{"g":"logical_volume_manager_administration","l":8308},"r":"unparseable","x":"If md_chunk_alignment is enabled, that detects the optimal_io_size."}
+{"a":{"g":"logical_volume_manager_administration","l":8314},"r":"unparseable","x":"If a PV is placed directly on an md device and md_chunk_alignment or"}
+{"a":{"g":"logical_volume_manager_administration","l":8346},"r":"unparseable","x":"Do not scan 'mirror' LVs to avoid possible deadlocks."}
+{"a":{"g":"logical_volume_manager_administration","l":8489},"r":"unparseable","x":"If enabled, all PVs in the VG or on the command line are used for raid0/4/5/6/10"}
 {"a":{"g":"logical_volume_manager_administration","l":8503},"r":"unparseable","x":"writethrough"}
 {"a":{"g":"logical_volume_manager_administration","l":8505},"r":"unparseable","x":"writeback"}
-{"a":{"g":"logical_volume_manager_administration","l":8530},"r":"unparseable","x":"cache_settings {"}
 {"a":{"g":"logical_volume_manager_administration","l":8559},"r":"unparseable","x":"ignore"}
 {"a":{"g":"logical_volume_manager_administration","l":8560},"r":"unparseable","x":"nopassdown"}
 {"a":{"g":"logical_volume_manager_administration","l":8561},"r":"unparseable","x":"passdown"}
 {"a":{"g":"logical_volume_manager_administration","l":8570},"r":"unparseable","x":"generic"}
+{"a":{"g":"logical_volume_manager_administration","l":8571},"r":"unparseable","x":"If thin_pool_chunk_size is defined, use it. Otherwise, calculate"}
 {"a":{"g":"logical_volume_manager_administration","l":8573},"r":"unparseable","x":"sysfs - the minimum_io_size. The chunk size is always at least"}
 {"a":{"g":"logical_volume_manager_administration","l":8575},"r":"unparseable","x":"performance"}
+{"a":{"g":"logical_volume_manager_administration","l":8576},"r":"unparseable","x":"If thin_pool_chunk_size is defined, use it. Otherwise, calculate"}
 {"a":{"g":"logical_volume_manager_administration","l":8578},"r":"unparseable","x":"sysfs - the optimal_io_size. The chunk size is always at least"}
+{"a":{"g":"logical_volume_manager_administration","l":8612},"r":"unparseable","x":"If enabled, LVM will collect a log of operations, messages,"}
+{"a":{"g":"logical_volume_manager_administration","l":8631},"r":"unparseable","x":"for the list of possible fields."}
+{"a":{"g":"logical_volume_manager_administration","l":8638},"r":"unparseable","x":"for the list of possible fields."}
+{"a":{"g":"logical_volume_manager_administration","l":8663},"r":"unparseable","x":"For more information about selection criteria in general, see"}
+{"a":{"g":"logical_volume_manager_administration","l":8678},"r":"unparseable","x":"for syslog and lvm2_log_fn purposes."}
+{"a":{"g":"logical_volume_manager_administration","l":8813},"r":"unparseable","x":"If scripts depend on the old behaviour, disable this setting"}
 {"a":{"g":"logical_volume_manager_administration","l":8852},"r":"unparseable","x":"lvm1"}
 {"a":{"g":"logical_volume_manager_administration","l":8853},"r":"unparseable","x":"lvm2"}
+{"a":{"g":"logical_volume_manager_administration","l":8860},"r":"unparseable","x":"If support for LVM1 metadata was compiled as a shared library use"}
 {"a":{"g":"logical_volume_manager_administration","l":8880},"r":"unparseable","x":"0"}
 {"a":{"g":"logical_volume_manager_administration","l":8883},"r":"unparseable","x":"1"}
 {"a":{"g":"logical_volume_manager_administration","l":8885},"r":"unparseable","x":"2"}
 {"a":{"g":"logical_volume_manager_administration","l":8887},"r":"unparseable","x":"3"}
 {"a":{"g":"logical_volume_manager_administration","l":8891},"r":"unparseable","x":"4"}
 {"a":{"g":"logical_volume_manager_administration","l":8894},"r":"unparseable","x":"5"}
+{"a":{"g":"logical_volume_manager_administration","l":8898},"r":"unparseable","x":"Do not use lvmetad or the kernel device-mapper driver with this"}
+{"a":{"g":"logical_volume_manager_administration","l":8920},"r":"unparseable","x":"If using external locking (type 2) and initialisation fails, with"}
+{"a":{"g":"logical_volume_manager_administration","l":8927},"r":"unparseable","x":"If an attempt to initialise type 2 or type 3 locking failed, perhaps"}
 {"a":{"g":"logical_volume_manager_administration","l":8947},"r":"unparseable","x":"locking_type 1 viz. local file-based locking."}
 {"a":{"g":"logical_volume_manager_administration","l":8992},"r":"unparseable","x":"mirror"}
 {"a":{"g":"logical_volume_manager_administration","l":9000},"r":"unparseable","x":"raid1"}
@@ -2328,39 +2327,60 @@
 {"a":{"g":"logical_volume_manager_administration","l":9024},"r":"unparseable","x":"mirror"}
 {"a":{"g":"logical_volume_manager_administration","l":9046},"r":"unparseable","x":"snapshot"}
 {"a":{"g":"logical_volume_manager_administration","l":9051},"r":"unparseable","x":"thin"}
+{"a":{"g":"logical_volume_manager_administration","l":9078},"r":"unparseable","x":"until a manual 'pvscan --cache' is run. If lvmetad was running"}
+{"a":{"g":"logical_volume_manager_administration","l":9079},"r":"unparseable","x":"while use_lvmetad was disabled, it must be stopped, use_lvmetad"}
+{"a":{"g":"logical_volume_manager_administration","l":9114},"r":"unparseable","x":"case there is also lvmlockd(8) man page available for more"}
 {"a":{"g":"logical_volume_manager_administration","l":9115},"r":"unparseable","x":"information."}
-{"a":{"g":"logical_volume_manager_administration","l":9197},"r":"unparseable","x":"causing problems. Features include: policy_mq, policy_smq."}
 {"a":{"g":"logical_volume_manager_administration","l":9209},"r":"unparseable","x":"command has an exit status of 0. Set to \"\" to skip this check."}
 {"a":{"g":"logical_volume_manager_administration","l":9257},"r":"unparseable","x":"none"}
 {"a":{"g":"logical_volume_manager_administration","l":9259},"r":"unparseable","x":"lvmlocal"}
 {"a":{"g":"logical_volume_manager_administration","l":9265},"r":"unparseable","x":"machineid"}
 {"a":{"g":"logical_volume_manager_administration","l":9316},"r":"unparseable","x":"problem."}
+{"a":{"g":"logical_volume_manager_administration","l":9353},"r":"unparseable","x":"If LV deactivation fails, LVM will retry for a few seconds before"}
 {"a":{"g":"logical_volume_manager_administration","l":9372},"r":"unparseable","x":"stripe."}
+{"a":{"g":"logical_volume_manager_administration","l":9388},"r":"unparseable","x":"for the shortest possible time."}
+{"a":{"g":"logical_volume_manager_administration","l":9393},"r":"unparseable","x":"If this list is defined, an LV is only activated if it matches an"}
 {"a":{"g":"logical_volume_manager_administration","l":9398},"r":"unparseable","x":"vgname"}
+{"a":{"g":"logical_volume_manager_administration","l":9428},"r":"unparseable","x":"if it matches an entry in this list. If this list is undefined, it"}
 {"a":{"g":"logical_volume_manager_administration","l":9430},"r":"unparseable","x":"list is defined and empty, i.e. \"[]\", then no LVs are selected for"}
 {"a":{"g":"logical_volume_manager_administration","l":9442},"r":"unparseable","x":"vgname"}
+{"a":{"g":"logical_volume_manager_administration","l":9462},"r":"unparseable","x":"If this list is defined, each LV that is to be activated is checked"}
 {"a":{"g":"logical_volume_manager_administration","l":9465},"r":"unparseable","x":"e.g. from --permission rw."}
 {"a":{"g":"logical_volume_manager_administration","l":9475},"r":"unparseable","x":"vgname"}
+{"a":{"g":"logical_volume_manager_administration","l":9495},"r":"unparseable","x":"For raid or mirror segment types, this is the amount of data that is"}
 {"a":{"g":"logical_volume_manager_administration","l":9514},"r":"unparseable","x":"none"}
 {"a":{"g":"logical_volume_manager_administration","l":9516},"r":"unparseable","x":"auto"}
+{"a":{"g":"logical_volume_manager_administration","l":9525},"r":"unparseable","x":"If a device in the LV fails, the policy determines the steps"}
 {"a":{"g":"logical_volume_manager_administration","l":9538},"r":"unparseable","x":"warn"}
 {"a":{"g":"logical_volume_manager_administration","l":9544},"r":"unparseable","x":"allocate"}
 {"a":{"g":"logical_volume_manager_administration","l":9561},"r":"unparseable","x":"remove"}
 {"a":{"g":"logical_volume_manager_administration","l":9568},"r":"unparseable","x":"allocate"}
 {"a":{"g":"logical_volume_manager_administration","l":9577},"r":"unparseable","x":"allocate_anywhere"}
 {"a":{"g":"logical_volume_manager_administration","l":9583},"r":"unparseable","x":"replacement."}
+{"a":{"g":"logical_volume_manager_administration","l":9664},"r":"unparseable","x":"Do not mlock these memory areas."}
+{"a":{"g":"logical_volume_manager_administration","l":9665},"r":"unparseable","x":"While activating devices, I/O to devices being (re)configured is"}
+{"a":{"g":"logical_volume_manager_administration","l":9669},"r":"unparseable","x":"do not need to be pinned into memory. Each string listed in this"}
 {"a":{"g":"logical_volume_manager_administration","l":9718},"r":"unparseable","x":"complete"}
 {"a":{"g":"logical_volume_manager_administration","l":9728},"r":"unparseable","x":"degraded"}
 {"a":{"g":"logical_volume_manager_administration","l":9733},"r":"unparseable","x":"partial"}
-{"a":{"g":"logical_volume_manager_administration","l":9754},"r":"unparseable","x":"metadata {"}
+{"a":{"g":"logical_volume_manager_administration","l":9758},"r":"unparseable","x":"If device size is less than corresponding PV size found in metadata,"}
 {"a":{"g":"logical_volume_manager_administration","l":9795},"r":"unparseable","x":"2"}
 {"a":{"g":"logical_volume_manager_administration","l":9798},"r":"unparseable","x":"1"}
 {"a":{"g":"logical_volume_manager_administration","l":9800},"r":"unparseable","x":"0"}
+{"a":{"g":"logical_volume_manager_administration","l":9811},"r":"unparseable","x":"If set to a non-zero value, LVM automatically chooses which of the"}
+{"a":{"g":"logical_volume_manager_administration","l":9833},"r":"unparseable","x":"If metadata areas on a PV are ignored, LVM will not store metadata"}
 {"a":{"g":"logical_volume_manager_administration","l":9856},"r":"unparseable","x":"on-disk metadata (pvmetadatacopies = 0). Or this can be in addition"}
-{"a":{"g":"logical_volume_manager_administration","l":9873},"r":"unparseable","x":"report {"}
+{"a":{"g":"logical_volume_manager_administration","l":9877},"r":"unparseable","x":"If there is more than one report per command, then the format"}
 {"a":{"g":"logical_volume_manager_administration","l":9882},"r":"unparseable","x":"basic"}
 {"a":{"g":"logical_volume_manager_administration","l":9886},"r":"unparseable","x":"json"}
+{"a":{"g":"logical_volume_manager_administration","l":9892},"r":"unparseable","x":"Do not print empty values for all report fields."}
+{"a":{"g":"logical_volume_manager_administration","l":9893},"r":"unparseable","x":"If enabled, all fields that don't have a value set for any of the"}
+{"a":{"g":"logical_volume_manager_administration","l":9902},"r":"unparseable","x":"Do not print empty values for specified report fields."}
+{"a":{"g":"logical_volume_manager_administration","l":9903},"r":"unparseable","x":"If defined, specified fields that don't have a value set for any"}
+{"a":{"g":"logical_volume_manager_administration","l":9960},"r":"unparseable","x":"If set, this also implies report/prefixes=1."}
+{"a":{"g":"logical_volume_manager_administration","l":9966},"r":"unparseable","x":"For columns that have exactly two valid values to report"}
 {"a":{"g":"logical_volume_manager_administration","l":9993},"r":"unparseable","x":"locale."}
+{"a":{"g":"networking_guide","l":10669},"r":"unparseable","x":"For reference:"}
 {"a":{"g":"networking_guide","l":10676},"r":"unparseable","x":"1 = 256"}
 {"a":{"g":"networking_guide","l":10677},"r":"unparseable","x":"2 = 512"}
 {"a":{"g":"networking_guide","l":10678},"r":"unparseable","x":"3 = 1024"}
@@ -2379,15 +2399,28 @@
 {"a":{"g":"networking_guide","l":9691},"r":"unparseable","x":"traceroute redhat.com"}
 {"a":{"g":"networking_guide","l":9713},"r":"unparseable","x":"traceroute redhat.com"}
 {"a":{"g":"performance_tuning_guide","l":1984},"r":"unparseable","x":"pmstore xfs.control.reset 1"}
+{"a":{"g":"performance_tuning_guide","l":2628},"r":"unparseable","x":"for i in `pgrep rcu[^c]` ; do taskset -pc 0 $i ; done"}
 {"a":{"g":"performance_tuning_guide","l":3209},"r":"unparseable","x":"cg_annotate cachegrind.out.pid"}
 {"a":{"g":"performance_tuning_guide","l":3273},"r":"unparseable","x":"ms_print massif.out.pid"}
 {"a":{"g":"security_guide","l":11162},"r":"unparseable","x":"/etc/nftables/example_firewall.nft"}
+{"a":{"g":"security_guide","l":5496},"r":"unparseable","x":"if access to the LAN is given, enable this, otherwise use 0.0.0.0/0"}
+{"a":{"g":"security_guide","l":5509},"r":"unparseable","x":"if you want remote clients to use some local DNS zones and servers"}
+{"a":{"g":"security_guide","l":5555},"r":"unparseable","x":"if access to the remote LAN is required, enable this, otherwise use 0.0.0.0/0"}
+{"a":{"g":"security_guide","l":5664},"r":"unparseable","x":"for walled-garden on xauth failure"}
 {"a":{"g":"storage_administration_guide","l":11740},"r":"unparseable","x":"targetcli"}
 {"a":{"g":"storage_administration_guide","l":12558},"r":"unparseable","x":"dcbtool sc ethX app:fcoe e:1"}
 {"a":{"g":"storage_administration_guide","l":15495},"r":"unparseable","x":"dmidecode"}
 {"a":{"g":"storage_administration_guide","l":15504},"r":"unparseable","x":"dmidecode"}
+{"a":{"g":"storage_administration_guide","l":19434},"r":"unparseable","x":"for i in {01..10}; do"}
+{"a":{"g":"storage_administration_guide","l":19705},"r":"unparseable","x":"for depth in 1 2 4 8 16 32 64 128 256 512 1024 2048; do"}
+{"a":{"g":"storage_administration_guide","l":19768},"r":"unparseable","x":"for iosize in 4 8 16 32 64 128 256 512 1024; do"}
+{"a":{"g":"storage_administration_guide","l":19834},"r":"unparseable","x":"for readmix in 0 10 20 30 40 50 60 70 80 90 100; do"}
+{"a":{"g":"storage_administration_guide","l":19887},"r":"unparseable","x":"for readmix in 20 50 80; do"}
 {"a":{"g":"system_administrators_guide","l":12015},"r":"unparseable","x":"init 3"}
 {"a":{"g":"system_administrators_guide","l":12016},"r":"unparseable","x":"init 5"}
+{"a":{"g":"system_administrators_guide","l":26774},"r":"unparseable","x":"Do something with ind, var1 and var2"}
+{"a":{"g":"system_administrators_guide","l":30432},"r":"unparseable","x":"For details see man 4 crontabs"}
+{"a":{"g":"system_administrators_guide","l":30565},"r":"unparseable","x":"Do not run jobs when on battery power"}
 {"a":{"g":"systemtap_beginners_guide","l":2330},"r":"unparseable","x":"traceio.stp"}
 {"a":{"g":"systemtap_beginners_guide","l":3051},"r":"unparseable","x":"5 seconds"}
 {"a":{"g":"upgrading_from_rhel_6_to_rhel_7","l":1046},"r":"unparseable","x":"bash noauto_postupgrade.d/install_rpmlist.sh kickstart/RHRHEL7rpmlist_kept"}
@@ -2402,10 +2435,13 @@
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":27595},"r":"unparseable","x":"kvm_stat"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":27608},"r":"unparseable","x":"kvm_stat"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":28185},"r":"unparseable","x":"libvirtd"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":28206},"r":"unparseable","x":"If set to non-zero, shutdown will suspend guests concurrently. Number of"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":28221},"r":"unparseable","x":"If non-zero, try to bypass the file system cache when saving and"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":29503},"r":"unparseable","x":"virt-xml-validate config.xml"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":29743},"r":"unparseable","x":"virt-xml-validate libvirt.xml"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5185},"r":"unparseable","x":"targetcli"}
 {"a":{"g":"virtualization_deployment_and_administration_guide","l":5360},"r":"unparseable","x":"saveconfig"}
+{"a":{"g":"virtualization_deployment_and_administration_guide","l":7703},"r":"unparseable","x":"then more threads are spawned, upto max_workers limit."}
 {"a":{"g":"virtualization_getting_started_guide","l":1782},"r":"unparseable","x":"virt-manager"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":2253},"r":"unparseable","x":"/usr/share/doc/libvirt-python-2.0.0/examples/nodestats.py"}
 {"a":{"g":"virtualization_tuning_and_optimization_guide","l":2653},"r":"unparseable","x":"lstopo-no-graphics"}

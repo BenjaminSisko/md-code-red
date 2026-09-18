@@ -2,7 +2,7 @@
  "_meta": {
   "generator": "extract/mine_commands.py",
   "pinned_on": "2026-09-17",
-  "unparseable_cap": 2077,
+  "unparseable_cap": 2257,
   "what_this_is": "the ratchet qa.py's coverage gate reads. Residue may SHRINK (a better parser classifies more) and may never GROW, and the unparseable count may never exceed its cap -- ADR-002: residue is the real metric, so it is published and held."
  },
  "by_family": {
@@ -10,40 +10,40 @@
    "10": {
     "config-fragment": 9,
     "output-fragment": 147,
-    "prose": 167,
-    "unparseable": 9
+    "prose": 161,
+    "unparseable": 15
    },
    "8": {
     "config-fragment": 9,
     "output-fragment": 142,
-    "prose": 166,
-    "unparseable": 9
+    "prose": 158,
+    "unparseable": 17
    }
   },
   "redhat_guides": {
    "10": {
-    "config-fragment": 104,
+    "config-fragment": 106,
     "output-fragment": 93,
-    "prose": 804,
-    "unparseable": 211
+    "prose": 788,
+    "unparseable": 240
    },
    "7": {
-    "config-fragment": 193,
-    "output-fragment": 158,
-    "prose": 1879,
-    "unparseable": 180
+    "config-fragment": 198,
+    "output-fragment": 157,
+    "prose": 1851,
+    "unparseable": 240
    },
    "8": {
-    "config-fragment": 124,
+    "config-fragment": 126,
     "output-fragment": 101,
-    "prose": 797,
-    "unparseable": 218
+    "prose": 766,
+    "unparseable": 260
    },
    "9": {
-    "config-fragment": 131,
+    "config-fragment": 133,
     "output-fragment": 108,
-    "prose": 887,
-    "unparseable": 214
+    "prose": 872,
+    "unparseable": 249
    }
   },
   "stig_rules": {
@@ -77,10 +77,10 @@
    }
   }
  },
- "classified_total": 45265,
- "records_total": 14488,
- "residue_total": 19001,
- "unparseable_total": 2077,
+ "classified_total": 45179,
+ "records_total": 14436,
+ "residue_total": 19087,
+ "unparseable_total": 2257,
  "unrated_fraction_max": 0.9868,
- "unrated_total": 14297
+ "unrated_total": 14245
 }

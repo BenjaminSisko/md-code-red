@@ -1,4 +1,4 @@
-{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"raw_captures","generator":"extract/mine_commands.py","line_count":332,"reasons":{"config-fragment":9,"output-fragment":147,"prose":167,"unparseable":9},"rhel_version":"10","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"raw_captures","generator":"extract/mine_commands.py","line_count":332,"reasons":{"config-fragment":9,"output-fragment":147,"prose":161,"unparseable":15},"rhel_version":"10","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
 {"a":{"l":1021,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"config-fragment","x":"_SYSTEMD_UNIT=name.service"}
 {"a":{"l":11,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-a|--activate y|n|ay"}
 {"a":{"l":12,"p":"content-src/raw/rhel10/lvextend.man.txt","x":"SYNOPSIS"},"r":"config-fragment","x":"-A|--autobackup y|n"}
@@ -155,11 +155,8 @@
 {"a":{"l":9,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ position_args ]"}
 {"a":{"l":9,"p":"content-src/raw/rhel10/lvextend.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[ position_args ]"}
 {"a":{"l":9,"p":"content-src/raw/rhel10/sshd.man.txt","x":"SYNOPSIS"},"r":"output-fragment","x":"[-h host_key_file] [-o option] [-p port] [-u len]"}
-{"a":{"l":1000,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two different fields are matched, only entries matching both"}
 {"a":{"l":1001,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expressions at the same time are shown:"}
-{"a":{"l":1005,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If two matches refer to the same field, all entries matching either"}
 {"a":{"l":1006,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
-{"a":{"l":1010,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"If the separator \"+\" is used, two expressions may be combined in a"}
 {"a":{"l":1011,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"logical OR. The following will show all messages from the Avahi service"}
 {"a":{"l":1012,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"process with the PID 28097 plus all messages from the D-Bus service"}
 {"a":{"l":1013,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"(from any of its processes):"}
@@ -270,7 +267,6 @@
 {"a":{"l":1506,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a  thin  snapshot  of  the read-only inactive LV named \"origin\""}
 {"a":{"l":1507,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"which becomes an external origin for the thin snapshot LV."}
 {"a":{"l":1510,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create a cache pool from a fast physical device.  The  cache  pool  can"}
-{"a":{"l":1511,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"then be used to cache an LV."}
 {"a":{"l":1514,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Create  a  cache  LV, first creating a new origin LV on a slow physical"}
 {"a":{"l":1515,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"device, then combining the new origin LV with an existing cache pool."}
 {"a":{"l":1517,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"/dev/slow1"}
@@ -279,7 +275,6 @@
 {"a":{"l":18,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"user  Manage  SELinux  confined  users (Roles and levels for an SELinux"}
 {"a":{"l":21,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"port Manage network port type definitions"}
 {"a":{"l":23,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"interface Manage network interface type definitions"}
-{"a":{"l":2409,"p":"content-src/raw/rhel10/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"For examples how to use systemctl in comparison with old service and"}
 {"a":{"l":2410,"p":"content-src/raw/rhel10/systemctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"chkconfig commands please see: Managing System Services[4]"}
 {"a":{"l":25,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"module Manage SELinux policy modules"}
 {"a":{"l":27,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"node Manage network node type definitions"}
@@ -287,7 +282,6 @@
 {"a":{"l":31,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"boolean Manage booleans to selectively enable functionality"}
 {"a":{"l":33,"p":"content-src/raw/rhel10/semanage.man.txt","x":"SYNOPSIS"},"r":"prose","x":"permissive Manage process type enforcement mode"}
 {"a":{"l":342,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"Initialize a partition and a full device."}
-{"a":{"l":345,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"If a device is a 4 KiB sector drive that compensates for windows parti‐"}
 {"a":{"l":346,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"tioning  (sector  7 is the lowest aligned logical block, the 4 KiB sec‐"}
 {"a":{"l":347,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"tors start at LBA -1, and consequently sector 63 is aligned on a  4 KiB"}
 {"a":{"l":348,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"prose","x":"boundary) manually account for this when initializing for use by LVM."}
@@ -322,6 +316,9 @@
 {"a":{"l":990,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"Without arguments, all collected logs are shown unfiltered:"}
 {"a":{"l":994,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"With one match specified, all entries with a field matching the"}
 {"a":{"l":995,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"prose","x":"expression are shown:"}
+{"a":{"l":1000,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If two different fields are matched, only entries matching both"}
+{"a":{"l":1005,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If two matches refer to the same field, all entries matching either"}
+{"a":{"l":1010,"p":"content-src/raw/rhel10/journalctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If the separator \"+\" is used, two expressions may be combined in a"}
 {"a":{"l":1186,"p":"content-src/raw/rhel10/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"displayed."}
 {"a":{"l":1199,"p":"content-src/raw/rhel10/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"activation."}
 {"a":{"l":1214,"p":"content-src/raw/rhel10/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"connection."}
@@ -331,3 +328,6 @@
 {"a":{"l":1264,"p":"content-src/raw/rhel10/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"editor."}
 {"a":{"l":1276,"p":"content-src/raw/rhel10/nmcli.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"connection."}
 {"a":{"l":1473,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"extents."}
+{"a":{"l":1511,"p":"content-src/raw/rhel10/lvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"then be used to cache an LV."}
+{"a":{"l":2409,"p":"content-src/raw/rhel10/systemctl.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"For examples how to use systemctl in comparison with old service and"}
+{"a":{"l":345,"p":"content-src/raw/rhel10/pvcreate.man.txt","x":"EXAMPLES"},"r":"unparseable","x":"If a device is a 4 KiB sector drive that compensates for windows parti‐"}

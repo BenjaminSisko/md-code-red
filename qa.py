@@ -4210,6 +4210,470 @@ def gate_q25(ctx):
     return f, d
 
 
+# ---------------------------------------------------------------------------
+# Q23 — closure coverage, and classifier accuracy on POSITIVE output
+#
+# Al Kowalski's coverage gate, plus threat model v2 M5 and M6.
+#
+# M5 IS THE IMPORTANT HALF, and it is important because of what it says about
+# the OTHER half: "Q23 as specified is structurally blind to a misclassification,
+# because a false positive counts as `classified` AND `recorded` and the ledger
+# balances while a PAM line or a fragment of `ls -l` output sits in the product
+# under a DISA citation."
+#
+# That is exactly right, and it was not hypothetical. Running the accuracy
+# component for the first time on this corpus found 56 records that balanced the
+# ledger perfectly and were not commands:
+#
+#     tool `and`     "and an 'archive' contains old metadata configurations. They are"
+#     tool `by`      "by 'r' to reject the path. The first regex in the list to match"
+#     tool `device`  "device {"
+#     tool `for`     "for f in $(ls); do tar xvf $f; done"
+#
+# The first three are wrapped documentation sentences whose first word happened
+# to be lowercase. The fourth is a real shell construct whose head is not a
+# binary, so filing it under the tool `for` states something false about it.
+# extract/mine_commands.py now refuses all four shapes; this gate is what keeps
+# them refused.
+#
+# THE RE-ASSERTION IS INDEPENDENT. It does not call classify(), does not import
+# the miner, and does not share its tokenizer: it re-reads the pinned source
+# line at the anchor and asks four questions of its own, each of which is a FACT
+# about the document rather than a judgment about language:
+#
+#   1. Did the SOURCE mark this as a command? A shell prompt in the STIG or
+#      guide text, or a SYNOPSIS/EXAMPLES/USAGE section in a man page. Evidence
+#      from the vendor, not from this project's parser.
+#   2. Does this gate's OWN tokenizer resolve the same stage-one binary the
+#      record declares? A separate 15-line implementation, so a bug in the
+#      miner's wrapper chain cannot be agreed with.
+#   3. Is the head a real head? Not an English function word, not a shell
+#      keyword. Precise rather than probabilistic: no distribution ships a
+#      binary called `and` or `has`.
+#   4. Is the line a command rather than two sentences or a config block opener?
+#
+# The sample is Q10's proven shape: FIXED STRIDE, no RNG, at least 20 per
+# (family, release), so a failure is reproducible by re-running the same
+# command rather than by getting unlucky twice.
+# ---------------------------------------------------------------------------
+
+CLOSURE_BASELINE = os.path.join(REPO, "content-src", "closure_baseline.json")
+Q23_MIN_SAMPLE = 20
+
+# Heads that are not binaries. Restated here rather than imported from the
+# extractor for the reason every re-check in this file is restated: a gate that
+# shares the extractor's list agrees with the extractor's mistakes. Q23 asserts
+# the two lists AGREE, which catches drift without creating a shared code path.
+Q23_FUNCTION_WORD_HEADS = frozenset("""
+a an and are as at be been being but by can could did do does done else
+for from had has have how however if in into is it its may might must no not
+of on or other our over should so such than that the their them then there
+these they this those to was we were what when where while whom
+whose why will with would you your
+case done elif esac fi then while until do
+""".split())
+Q23_SENTENCE_RE = re.compile(r"(?<![.\w])[A-Za-z]{2,}\.\s+[A-Z]")
+Q23_QUOTED_RE = re.compile("\"[^\"]*\"|'[^']*'|“[^”]*”")
+Q23_BLOCK_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*\s*[{}]$")
+Q23_PROMPT_RE = re.compile(r"^\s*([$#])\s")
+Q23_TIGHT_PROMPT_RE = re.compile(r"^\s*([$#])\S")
+Q23_COMMAND_SECTIONS = ("SYNOPSIS", "EXAMPLES", "USAGE")
+# Wrappers this gate walks through on its way to the program name. Its own
+# short table; schema.py's TRANSPARENT_WRAPPERS is richer, and Q23 asserting the
+# head with a SIMPLER table is the point -- it will disagree loudly rather than
+# quietly agree.
+# Each maps to the options of THAT wrapper which consume the following token.
+# Without them `sudo -u root auditctl -s` resolves to the program `root`, which
+# is the bug this gate's own test caught on its first run.
+Q23_WRAPPERS = {
+    "sudo": ("-u", "-g", "-U", "-C", "-p", "-r", "-t", "-T", "-h", "-D", "-R",
+             "--user", "--group", "--other-user", "--prompt", "--role", "--type",
+             "--chdir", "--close-from", "--host", "--command-timeout"),
+    "runuser": ("-u", "-g", "-G", "-s", "--user", "--group", "--supp-group", "--shell"),
+    "nohup": (),
+    "time": ("-f", "-o", "--format", "--output"),
+    "command": (),
+    "doas": ("-u", "-C"),
+    "setsid": (),
+    "stdbuf": ("-i", "-o", "-e", "--input", "--output", "--error"),
+    "ionice": ("-c", "-n", "-p", "-P", "-u"),
+    "nice": ("-n", "--adjustment"),
+}
+
+
+def q23_tokens(text):
+    """Whitespace tokens honouring quotes. Written out rather than reused: this
+    gate must be able to disagree with the extractor's tokenizer."""
+    out, buf, quote = [], "", None
+    for ch in str(text):
+        if quote:
+            buf += ch
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf += ch
+            continue
+        if ch.isspace():
+            if buf:
+                out.append(buf)
+                buf = ""
+            continue
+        buf += ch
+    if buf:
+        out.append(buf)
+    return out
+
+
+def q23_head(text):
+    """The program name this gate believes the line invokes."""
+    toks = q23_tokens(text)
+    i = 0
+    while i < len(toks):
+        name = toks[i].rsplit("/", 1)[-1]
+        if name not in Q23_WRAPPERS:
+            return name
+        takes_arg = Q23_WRAPPERS[name]
+        i += 1
+        while i < len(toks) and toks[i].startswith("-") and toks[i] != "-":
+            opt = toks[i]
+            if opt == "--":
+                i += 1
+                break
+            i += 1
+            if opt in takes_arg:
+                i += 1
+            elif "=" in opt:
+                pass                       # --user=root carries its own argument
+    return None
+
+
+def q23_sentence_like(text):
+    return bool(Q23_SENTENCE_RE.search(Q23_QUOTED_RE.sub(" ", str(text))))
+
+
+def q23_source_marks_a_command(occ, source_line):
+    """Did the DOCUMENT say this was a command? The one piece of evidence in the
+    whole re-assertion that does not come from this project at all."""
+    if occ.get("p"):
+        return (occ.get("x") or "") in Q23_COMMAND_SECTIONS
+    if occ.get("g"):
+        rows = _guide_candidate_index(occ.get("v"))
+        row = rows.get(((occ.get("g") or "") + ".txt", occ.get("l")))
+        return bool(row) and (row.get("pr") in ("$", "#"))
+    stripped = (source_line or "").strip()
+    return bool(Q23_PROMPT_RE.match(stripped) or Q23_TIGHT_PROMPT_RE.match(stripped))
+
+
+def q23_source_line(rec, occ):
+    """The pinned line at this anchor, re-read. None when it does not resolve --
+    which Q25 has already failed on, so Q23 does not fail twice for it."""
+    if occ.get("s"):
+        rule = _stig_rule_index(occ.get("v")).get(occ.get("s"))
+        if rule is None:
+            return None
+        lines = (rule.get(occ.get("f")) or "").split("\n")
+    elif occ.get("g"):
+        rows = _guide_candidate_index(occ.get("v"))
+        row = rows.get(((occ.get("g") or "") + ".txt", occ.get("l")))
+        return row.get("c") if row else None
+    else:
+        lines = _capture_lines(occ.get("p")) if occ.get("p") else None
+        if lines is None:
+            return None
+    n = occ.get("l")
+    if not isinstance(n, int) or n < 1 or n > len(lines):
+        return None
+    return lines[n - 1]
+
+
+def q23_reassert(rec, occ):
+    """(ok, why). The independent re-assertion. `why` names the disagreement."""
+    text = rec.get("c") or ""
+    # The shape tests first, because they are properties of the RECORD and hold
+    # whether or not the anchor resolves. Running them after the source lookup
+    # meant an unresolvable anchor skipped them entirely -- caught by this
+    # gate's own test, which handed it a record with a path that does not exist
+    # and watched it come back clean.
+    raw_head = (q23_tokens(text) or [""])[0].rsplit("/", 1)[-1]
+    if raw_head.lower() in Q23_FUNCTION_WORD_HEADS:
+        return False, ("the head %r is an English function word or a shell keyword, not a binary"
+                       % raw_head)
+    if Q23_BLOCK_RE.match(text.strip()):
+        return False, "the line is a configuration block opener, not an invocation"
+    if q23_sentence_like(text):
+        return False, "the line reads as two sentences of documentation prose"
+    line = q23_source_line(rec, occ)
+    if line is not None and not q23_source_marks_a_command(occ, line):
+        return False, ("the source does not mark this as a command -- no shell prompt, and not in "
+                       "a SYNOPSIS/EXAMPLES/USAGE section")
+    head = q23_head(text)
+    if head is None:
+        return False, "this gate resolves no program name on the line"
+    if head != rec.get("t"):
+        return False, ("the record declares the tool %r and this gate resolves %r"
+                       % (rec.get("t"), head))
+    return True, None
+
+
+def q23_accuracy_sample(records, stride_min=Q23_MIN_SAMPLE):
+    """(failures, counts). Fixed stride, no RNG, at least stride_min per
+    (family, release)."""
+    cells = {}
+    for rec in records:
+        for occ in rec.get("o") or []:
+            fam = ("stig_rules" if occ.get("s") else
+                   "redhat_guides" if occ.get("g") else "raw_captures")
+            cells.setdefault((fam, str(occ.get("v"))), []).append((rec, occ))
+    failures, sampled, thin = [], 0, []
+    for key in sorted(cells):
+        pairs = cells[key]
+        want = min(len(pairs), max(stride_min, len(pairs) // 100))
+        if len(pairs) < stride_min:
+            thin.append("%s/RHEL %s has only %d citation(s)" % (key[0], key[1], len(pairs)))
+        step = max(1, len(pairs) // want)
+        for i in range(0, len(pairs), step):
+            rec, occ = pairs[i]
+            sampled += 1
+            ok, why = q23_reassert(rec, occ)
+            if not ok and len(failures) < 25:
+                failures.append("%s (%s/RHEL %s, tool %r): %s -- %r"
+                                % (rec.get("id"), key[0], key[1], rec.get("t"), why,
+                                   (rec.get("c") or "")[:70]))
+    return failures, {"sampled": sampled, "cells": len(cells), "thin": thin}
+
+
+def q23_recount_residue():
+    """Residue counted from content-src/residue/*.jsonl, INDEPENDENTLY of the
+    numbers _meta reports. A ledger that checks itself against its own summary
+    is an assertion that addition works."""
+    out = {}
+    root = os.path.join(REPO, "content-src", "residue")
+    if not os.path.isdir(root):
+        return out
+    for name in sorted(os.listdir(root)):
+        if not name.endswith(".jsonl"):
+            continue
+        family, _sep, rel = name[:-6].rpartition("_rhel")
+        cell = out.setdefault(family, {}).setdefault(rel, {"residue": 0, "unclassified_residue": 0})
+        with open(os.path.join(root, name), encoding="utf-8") as fh:
+            for i, line in enumerate(fh):
+                line = line.strip()
+                if not line or i == 0:
+                    continue
+                row = json.loads(line)
+                cell["residue"] += 1
+                if row.get("r") == "unparseable":
+                    cell["unclassified_residue"] += 1
+    return out
+
+
+def gate_q23(ctx):
+    import datetime
+    f, d = [], []
+    corpus_path = os.path.join(REPO, "content", "reference_commands.json")
+    if not os.path.exists(corpus_path):
+        return (["content/reference_commands.json is missing"], [])
+    with open(corpus_path, encoding="utf-8") as fh:
+        corpus = json.load(fh)
+    meta = corpus.get("_meta") or {}
+    records = corpus.get("commands") or []
+    ledger = meta.get("closure_ledger") or {}
+    if not ledger:
+        return (["reference_commands._meta carries no closure_ledger — this gate has no per-family "
+                 "coverage to check, and a coverage gate with nothing to count passes silently"], [])
+
+    if not os.path.exists(CLOSURE_BASELINE):
+        return (["content-src/closure_baseline.json is missing — Q23's ratchet has no baseline, and "
+                 "a ratchet with no baseline accepts anything"], [])
+    with open(CLOSURE_BASELINE, encoding="utf-8") as fh:
+        baseline = json.load(fh)
+    owner, retire_by = baseline.get("_retire_owner"), baseline.get("_retire_by")
+    pinned_by = baseline.get("_pinned_by")
+    if not owner or not retire_by or not pinned_by:
+        f.append("the closure baseline names no _pinned_by/_retire_owner/_retire_by. An accepted "
+                 "residual nobody owns and nobody has to revisit is not a countdown, it is the "
+                 "plan (MCR-SEC-020, condition F3)")
+    else:
+        try:
+            deadline = datetime.date(*[int(x) for x in retire_by.split("-")])
+        except (ValueError, TypeError):
+            deadline = None
+            f.append("the closure baseline's _retire_by %r is not an ISO date" % retire_by)
+        if deadline and datetime.date.today() > deadline:
+            f.append("the closure baseline expired on %s and has not been re-dated. Owner: %s. The "
+                     "residue mix stops being accepted by default" % (retire_by, owner))
+        elif deadline:
+            d.append("closure baseline pinned %s by %s, retires %s, owner %s"
+                     % (baseline.get("_pinned_on"), str(pinned_by).split(" -- ")[0],
+                        retire_by, owner))
+
+    # --- the ledger balances, twice, in every cell -------------------------
+    counted = q23_recount_residue()
+    bal_f, cells = [], 0
+    for family in sorted(ledger):
+        for rel in sorted(ledger[family], key=lambda x: int(x)):
+            cell = ledger[family][rel]
+            cells += 1
+            if cell["classified"] + cell["residue"] != cell["candidates"]:
+                bal_f.append("%s/RHEL %s: classified %d + residue %d != candidates %d — a source "
+                             "line was neither taken nor declined, so it left no trace anywhere"
+                             % (family, rel, cell["classified"], cell["residue"], cell["candidates"]))
+            if cell["recorded"] != cell["classified"]:
+                bal_f.append("%s/RHEL %s: recorded %d != classified %d — %d citation(s) were "
+                             "accepted by the parser and are not in the product"
+                             % (family, rel, cell["recorded"], cell["classified"],
+                                cell["classified"] - cell["recorded"]))
+            if cell["classified"] == 0:
+                bal_f.append("%s/RHEL %s: classified is ZERO. A family that classifies nothing is "
+                             "not covered, it is absent" % (family, rel))
+            got = (counted.get(family) or {}).get(rel)
+            if got is None and cell["residue"]:
+                bal_f.append("%s/RHEL %s: the ledger claims %d residue lines and there is no "
+                             "content-src/residue file to count" % (family, rel, cell["residue"]))
+            elif got is None:
+                pass       # a cell that declined nothing writes no file; absence IS the count
+            elif got["residue"] != cell["residue"]:
+                bal_f.append("%s/RHEL %s: the ledger says %d residue lines, content-src/residue/ "
+                             "holds %d" % (family, rel, cell["residue"], got["residue"]))
+    f.extend(bal_f)
+    if not bal_f:
+        d.append("the closure ledger balances in all %d (family, release) cells: classified + "
+                 "residue == candidates, recorded == classified, classified > 0, and every residue "
+                 "count matches an independent line count of content-src/residue/" % cells)
+
+    # --- the ratchet: residue may shrink, never grow -----------------------
+    base_by = baseline.get("by_family") or {}
+    grew = []
+    for family in sorted(ledger):
+        for rel in sorted(ledger[family], key=lambda x: int(x)):
+            cell = ledger[family][rel]
+            want = (base_by.get(family) or {}).get(rel)
+            if want is None:
+                grew.append("%s/RHEL %s is not in the closure baseline — a new cell is pinned "
+                            "deliberately, not accepted by appearing" % (family, rel))
+                continue
+            if cell["residue"] > want["residue"]:
+                grew.append("%s/RHEL %s: residue GREW from %d to %d. Residue may shrink and may "
+                            "never grow (ADR-002)" % (family, rel, want["residue"], cell["residue"]))
+            if cell["unclassified_residue"] > want["unclassified_residue"]:
+                grew.append("%s/RHEL %s: unclassified residue %d exceeds its cap of %d"
+                            % (family, rel, cell["unclassified_residue"],
+                               want["unclassified_residue"]))
+    f.extend(grew)
+    if not grew:
+        shrunk = sum(max(0, (base_by.get(fam, {}).get(rel, {}).get("residue", 0)
+                             - ledger[fam][rel]["residue"]))
+                     for fam in ledger for rel in ledger[fam])
+        d.append("residue held or shrank in every cell against the baseline pinned %s (%d line(s) "
+                 "reclaimed since it was pinned), and no cell's unclassified residue exceeds its cap"
+                 % (baseline.get("_pinned_on"), shrunk))
+
+    # --- M6: the unrated fraction ratchets too -----------------------------
+    unrated = meta.get("unrated_count") or 0
+    total = len(records) or 1
+    frac = round(unrated / float(total), 4)
+    cap = baseline.get("_unrated_fraction_max")
+    if cap is None:
+        f.append("the closure baseline records no _unrated_fraction_max — M6 has nothing to ratchet")
+    elif frac > cap:
+        f.append("the unrated fraction GREW from %.4f to %.4f (%d of %d records). A mined record is "
+                 "never green and that is correct; the fraction getting LARGER means the tier is "
+                 "becoming less rated over time (M6)" % (cap, frac, unrated, total))
+    else:
+        d.append("M6: %d of %d records are unrated (%.4f), at or below the pinned %.4f. Never "
+                 "green, because nobody reviewed them" % (unrated, total, frac, cap))
+
+    # --- a declared family with zero records for a supported release -------
+    accepted = {}
+    for row in baseline.get("_accepted_empty_cells") or []:
+        accepted[(row.get("family"), str(row.get("release")))] = row
+    empty = []
+    declared = {}
+    for family in ledger:
+        for rel in ledger[family]:
+            declared[(family, rel)] = ledger[family][rel]["records"]
+    # The flag dictionaries are a declared content family too, and the one that
+    # is empty today. Al: "wire the failure in."
+    for v in VERSIONS:
+        path = os.path.join(CONTENT, "flags_rhel%s.json" % v)
+        clis = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                clis = (json.load(fh).get("clis") or {})
+        declared[("flags", v)] = len(clis)
+    for family in sorted(set(k[0] for k in declared)):
+        for v in VERSIONS:
+            key = (family, v)
+            count = declared.get(key, 0)
+            if count:
+                continue
+            row = accepted.get(key)
+            if not row:
+                empty.append("the declared family %r has ZERO records for the supported release "
+                             "RHEL %s, and the closure baseline does not accept that cell by name. "
+                             "A family that ships empty for a release ships a silence the operator "
+                             "reads as 'nothing applies here'" % (family, v))
+            elif not row.get("owner") or not row.get("retire_by"):
+                empty.append("the closure baseline accepts %s/RHEL %s as empty with no owner or "
+                             "retire_by" % (family, v))
+    f.extend(empty)
+    if not empty:
+        names = ", ".join("%s/RHEL %s" % k for k in sorted(accepted))
+        d.append("every declared family has records for every supported release, except %d cell(s) "
+                 "the baseline accepts BY NAME with an owner and a date: %s"
+                 % (len(accepted), names or "none"))
+
+    # --- M5: accuracy on POSITIVE output -----------------------------------
+    acc_f, acc = q23_accuracy_sample(records)
+    f.extend(acc_f)
+    if not acc_f:
+        d.append("M5: %d sampled citations across %d (family, release) cells, fixed stride and no "
+                 "RNG, at least %d per cell. Each one re-resolved to its anchor, its pinned source "
+                 "line re-read, and its classification re-asserted INDEPENDENTLY — the source's own "
+                 "prompt or man section, this gate's own tokenizer and wrapper table, its own head "
+                 "and prose tests. No disagreement" % (acc["sampled"], acc["cells"], Q23_MIN_SAMPLE))
+    for note in acc["thin"]:
+        d.append("M5 note: %s, so the whole cell was sampled rather than a stride of it" % note)
+
+    # The two head lists must AGREE without sharing a code path.
+    try:
+        with open(os.path.join(REPO, "extract", "mine_commands.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        m = re.search(r'FUNCTION_WORD_HEADS = frozenset\("""(.*?)"""', src, re.S)
+        theirs = frozenset(m.group(1).split()) if m else frozenset()
+        if theirs != Q23_FUNCTION_WORD_HEADS:
+            f.append("the extractor's FUNCTION_WORD_HEADS and this gate's copy have drifted: "
+                     "extractor-only %s, gate-only %s"
+                     % (sorted(theirs - Q23_FUNCTION_WORD_HEADS)[:6],
+                        sorted(Q23_FUNCTION_WORD_HEADS - theirs)[:6]))
+        else:
+            d.append("the extractor's non-binary head list and this gate's independent copy name "
+                     "the same %d words" % len(theirs))
+    except (IOError, OSError):
+        f.append("extract/mine_commands.py could not be read to compare head lists")
+
+    # No name on that list may be a real binary this product knows.
+    known = set()
+    with open(os.path.join(CONTENT, "tools.json"), encoding="utf-8") as fh:
+        known |= set(t.get("id") for t in json.load(fh).get("tools", []))
+    for v in VERSIONS:
+        path = os.path.join(CONTENT, "flags_rhel%s.json" % v)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                known |= set((json.load(fh).get("clis") or {}).keys())
+    collide = sorted(Q23_FUNCTION_WORD_HEADS & known)
+    if collide:
+        f.append("the non-binary head list names %s, which this product catalogues as real "
+                 "tool(s) — the list has grown into refusing something real" % ", ".join(collide))
+    else:
+        d.append("no name on the non-binary head list is a tool in content/tools.json or a CLI in "
+                 "any flag dictionary, so the list cannot be refusing a real binary")
+
+    return f, d
+
+
 GATES = [
     ("Q1", "Build integrity and structure (DOCTYPE, two <script>, island parses, versions match, sha256 sidecar)", gate_q1),
     ("Q2", "Air-gap law (no external assets, no network JS, no CDN literals)", gate_q2),
@@ -4233,6 +4697,7 @@ GATES = [
     ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
     ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
     ("Q22", "Declared tool is the invoked binary, and every flag resolves, is curated, or is honestly marked (G1)", gate_q22),
+    ("Q23", "Closure coverage per family and release, and classifier accuracy on positive output (M5/M6)", gate_q23),
     ("Q25", "Anchor re-resolution: every citation contains the text it claims (M2)", gate_q25),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
