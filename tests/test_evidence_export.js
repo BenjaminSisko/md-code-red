@@ -117,7 +117,7 @@ function main() {
     ["NIST SP 800-53 controls: CM-6 b", "NIST controls"],
     ["Assembled command (RHEL 8, blast green):", "assembled-command header"],
     ["systemctl is-active firewalld", "the assembled command itself"],
-    ["Content fingerprint (sha256 of the embedded data island): " + "deadbeef".repeat(8), "content fingerprint"],
+    ["Content fingerprint (sha256 of every embedded data island): " + "deadbeef".repeat(8), "content fingerprint"],
     ["STIG version: V2R8  benchmark date: 01 Jul 2026", "STIG version/benchmark date"]
   ].forEach(function (pair) {
     if (textA.indexOf(pair[0]) < 0) failures.push("evidence text is missing required line for " + pair[1] + ": " + pair[0]);

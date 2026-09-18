@@ -5,7 +5,7 @@
   Version:            __VERSION__
   Last modified:      __BUILT_DATE__
   Classification:     __CLASSIFICATION__
-  Content fingerprint (SHA-256 of the data island): __CONTENT_FINGERPRINT__
+  Content fingerprint (SHA-256 of every data island): __CONTENT_FINGERPRINT__
   Air-gap certified:  YES — zero network calls, zero external assets, one file.
   ----------------------------------------------------------------------------
   Built by build.py from template.html + content/. Never patched by hand:
@@ -307,6 +307,34 @@ code,pre{font-family:var(--font-mono);}
 </div>
 
 <script id="mcr-data" type="application/json">/*__DATA__*/</script>
+<!-- THE REFERENCE CORPUS. Four more JSON islands, and NOT ONE of them is parsed
+     at boot (Al Kowalski's ruling: lazy per-family, per-tier hydration is
+     mandatory past 5,000 corpus records, and the inverted index lands before the
+     second family does; this tranche is 14,488 records across three families).
+
+     mcr-ref-index is the build-time inverted index: token -> posting list. The
+     palette parses it on the first keystroke and uses it to decide which
+     families a query can possibly hit. Each mcr-ref-FAMILY island holds that
+     family's records alone, and is parsed the first time something actually
+     needs one -- so a search that only matches DISA text never pays for the
+     4.1 MB of Red Hat documentation, and an operator who never opens the
+     Reference rail never pays for any of it.
+
+     They are separate ELEMENTS rather than strings inside mcr-data on purpose:
+     JSON-escaping the families into the main island measured 32.8% larger, and
+     it would hide them from qa.py, the test harnesses and anyone reading the
+     shipped file. build.py's ISLANDS list is the one declaration of this set,
+     and qa.py Q1 names the same set and proves each one parses.
+
+     No element name is spelled out anywhere in this comment: Q1 counts script
+     elements with a regular expression over the raw file, which cannot tell
+     markup from a comment describing markup, and a comment that mentions the
+     tag by name adds a phantom element to that count. -->
+
+<script id="mcr-ref-index" type="application/json">/*__REF_INDEX__*/</script>
+<script id="mcr-ref-stig_rules" type="application/json">/*__REF_STIG_RULES__*/</script>
+<script id="mcr-ref-raw_captures" type="application/json">/*__REF_RAW_CAPTURES__*/</script>
+<script id="mcr-ref-redhat_guides" type="application/json">/*__REF_REDHAT_GUIDES__*/</script>
 <script>
 "use strict";
 (function(){
@@ -548,6 +576,15 @@ function inList(arr,v){
   if(!arr) return false;
   for(var i=0;i<arr.length;i++){ if(arr[i]===v) return true; }
   return false;
+}
+/* Array#indexOf on a plain array, written out for the ESR-era browsers this
+   file's polyfill block already accommodates. Returns the array length for a
+   value that is not present, so a caller sorting by position puts an unknown
+   kind last instead of first (-1 would sort it above everything). */
+function indexOfIn(arr,v){
+  if(!arr) return 0;
+  for(var i=0;i<arr.length;i++){ if(arr[i]===v) return i; }
+  return arr.length;
 }
 
 function isIpv4(s){
@@ -1463,21 +1500,17 @@ function buildIndex(datasets){
                           (r.n||[]).join(" ")).toLowerCase()});
     }
   }
-  /* The REFERENCE tier. Its own `kind`, so the palette can never present a
-     mined line in the same group as a curated entry -- the grouping IS the
-     honesty here. The haystack carries the command text, the tool and every
-     STIG id the record cites, which is what "searchable by tool, by STIG id,
-     by text" means for this family. */
-  var refs=(datasets.REFCMDS&&datasets.REFCMDS.commands)||[];
-  for(i=0;i<refs.length;i++){
-    var rf=refs[i];
-    if(!rf||!rf.id) continue;
-    var stigids="",oc=rf.o||[],oi;
-    for(oi=0;oi<oc.length;oi++){ if(oc[oi].s) stigids+=" "+oc[oi].s; }
-    idx.push({kind:"Reference",id:rf.id,tool:rf.t||null,version:(rf.v&&rf.v[0])||null,cat:null,
-              label:rf.c,
-              hay:String(rf.c+" "+(rf.t||"")+stigids).toLowerCase()});
-  }
+  /* The REFERENCE tier is NOT built here, and its absence is the design.
+     This function walks whole datasets to build lower-cased haystacks; doing
+     that for 14,488 mined records would hydrate all three family islands on
+     the first keystroke and hand back a 19,000-entry array -- eager loading
+     wearing a lazy function's name. The corpus is searched through the
+     build-time inverted index instead (queryReference(), MCR-HYDRATE), which
+     resolves postings first and hydrates only the families a query can
+     actually reach. "Reference" keeps its slot in INDEX_KIND_ORDER below:
+     queryIndex() never emits that group, and paletteMatches() splices the
+     index's answer into the same position, so the grouping order an operator
+     sees is still stated exactly once. */
   var cciMap=(datasets.CCI_NIST&&datasets.CCI_NIST.cci)||{};
   var cciIds=[],cck;
   for(cck in cciMap){ if(Object.prototype.hasOwnProperty.call(cciMap,cck)) cciIds.push(cck); }
@@ -1606,7 +1639,7 @@ function formatEvidenceText(opts){
   function kv(label,val){ push(label+": "+(val===null||val===undefined||val===""?"not captured":val)); }
   push("MD CODE RED — Evidence Export");
   push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
-  push("Content fingerprint (sha256 of the embedded data island): "+(opts.contentFingerprint||""));
+  push("Content fingerprint (sha256 of every embedded data island): "+(opts.contentFingerprint||""));
   /* Per-version verification status (task item 4): the receipt line for THE
      EXPORTED VERSION ONLY, never every version the entry carries — an export
      is evidence for one command on one release, and printing other versions'
@@ -1922,13 +1955,194 @@ function entryById(id){
   for(var i=0;i<entries.length;i++){ if(entries[i].id===id) return entries[i]; }
   return null;
 }
-/* ============ reference-tier lookups ============
-   A lazily built {tool: [record, ...]} index. 14,558 records is too many to scan
-   per render, and too many to index at boot: this is built on first use and kept
-   for the life of the page, the same shape as SEARCH_INDEX. */
-var REF_BY_TOOL=null,REF_BY_ID=null;
-function refDataset(){ return (DATASETS.REFCMDS&&DATASETS.REFCMDS.commands)||[]; }
+/* ===== MCR-HYDRATE-BEGIN ====================================================
+   Lazy per-family hydration of the reference corpus, and the reader for the
+   build-time inverted index.
+
+   THE RULE BEING OBEYED. Al Kowalski: lazy per-family, per-tier hydration is
+   mandatory at 5,000 corpus records, and the inverted search index has to be in
+   place before the second family lands. This tranche is 14,488 records across
+   three families, so both clocks had already expired when it was written.
+
+   WHAT "PER-TIER" MEANS HERE. The CURATED tier -- DATASETS.COMMANDS and
+   everything the assembler reads -- is hydrated at boot and always will be: it
+   is the product, it is 183 entries, and every panel needs it. The REFERENCE
+   tier is never hydrated at boot. That asymmetry is the tier boundary expressed
+   as a load order, and it is the reason opening this file costs the same as it
+   did before the corpus existed.
+
+   WHAT "PER-FAMILY" MEANS HERE. stig_rules (1,656 records, 0.5 MB),
+   raw_captures (110, 0.04 MB) and redhat_guides (12,722, 4.3 MB) are three
+   separate islands. hydrateFamily() parses one, once. A search whose terms only
+   occur in DISA text resolves entirely out of the index and hydrates only
+   stig_rules; the 4.1 MB of Red Hat documentation is parsed the first time a
+   query actually reaches it, and not before.
+
+   EVERYTHING BELOW IS PURE except hydrateFamily() and refIndex(), which read
+   exactly one thing from the DOM -- the textContent of a JSON data island,
+   looked up by id -- and cache the parse. That is deliberate: it keeps the
+   whole family liftable by the tests, which reach these functions through
+   readIsland() rather than by patching the DOM. (The island element's tag is
+   deliberately not spelled out in any comment in this file: Q1 counts script
+   elements with a regular expression over the raw bytes, and a comment naming
+   the tag adds a phantom element to that count.)
+   ========================================================================== */
+/* The parsed islands, once each. `null` means "not yet"; a family that fails to
+   parse caches [] so a corrupt island degrades to an empty family rather than
+   re-throwing on every render. */
+var REF_FAMILIES={},REF_INDEX=null,REF_BY_TOOL=null,REF_BY_ID=null,REF_HYDRATED={};
+function readIsland(id){
+  var node=document.getElementById(id);
+  if(!node) return null;
+  try{ return JSON.parse(node.textContent); }catch(e){ return null; }
+}
 function refMeta(){ return (DATASETS.REFCMDS&&DATASETS.REFCMDS._meta)||{}; }
+/* The manifest build.py left in the main island: which families exist, which
+   island each lives in, and how many records it holds. Available WITHOUT
+   hydrating anything, which is what lets the sidebar offer a family by name and
+   count before the operator has paid for it. */
+function refLazyManifest(){
+  var lazy=(DATASETS.REFCMDS&&DATASETS.REFCMDS._lazy)||{};
+  return (lazy.families instanceof Array)?lazy.families:[];
+}
+function refFamilyNames(){
+  var m=refLazyManifest(),out=[],i;
+  for(i=0;i<m.length;i++){ if(m[i]&&m[i].name) out.push(m[i].name); }
+  return out;
+}
+function refFamilyCount(name){
+  var m=refLazyManifest(),i;
+  for(i=0;i<m.length;i++){ if(m[i]&&m[i].name===name) return m[i].count||0; }
+  return 0;
+}
+function refFamilyIsHydrated(name){
+  return Object.prototype.hasOwnProperty.call(REF_HYDRATED,name);
+}
+/* Parse ONE family's island. Idempotent, and the only place a reference record
+   comes into existence. */
+function hydrateFamily(name){
+  if(Object.prototype.hasOwnProperty.call(REF_FAMILIES,name)) return REF_FAMILIES[name];
+  var m=refLazyManifest(),island=null,i;
+  for(i=0;i<m.length;i++){ if(m[i]&&m[i].name===name) island=m[i].island; }
+  var recs=island?readIsland(island):null;
+  REF_FAMILIES[name]=(recs instanceof Array)?recs:[];
+  REF_HYDRATED[name]=true;
+  REF_BY_TOOL=null; REF_BY_ID=null;        /* the tool index spans hydrated families */
+  return REF_FAMILIES[name];
+}
+/* The inverted index. Parsed on the first keystroke, never at boot. */
+function refIndex(){
+  if(REF_INDEX===null){
+    var lazy=(DATASETS.REFCMDS&&DATASETS.REFCMDS._lazy)||{};
+    var got=lazy.index_island?readIsland(lazy.index_island):null;
+    REF_INDEX=(got&&got.t)?got:{f:[],stride:1000000,min_token:2,counts:{},t:{}};
+  }
+  return REF_INDEX;
+}
+/* A posting is one integer: family index * stride + ordinal. Decoding needs the
+   index's own declared stride and family order, never a constant typed twice. */
+function refPostingFamily(idx,posting){ return (idx.f||[])[Math.floor(posting/(idx.stride||1000000))]||null; }
+function refPostingOrdinal(idx,posting){ return posting%(idx.stride||1000000); }
+/* Every token of the index dictionary that CONTAINS this term.
+
+   Substring, not prefix, and the reason matters: the flat runtime index this
+   replaces did `hay.indexOf(needle)`, so `config` found `sshd_config` and an
+   operator who searched that way kept getting answers. A prefix-only index
+   would have silently stopped answering. Scanning the dictionary is how the
+   old behaviour survives the change -- 13k short strings instead of 14k
+   records with their haystacks rebuilt per keystroke. */
+function refTokensMatching(idx,term){
+  var out=[],tokens=idx.t||{},k;
+  for(k in tokens){ if(Object.prototype.hasOwnProperty.call(tokens,k)&&k.indexOf(term)>=0) out.push(k); }
+  return out;
+}
+/* {postings: [...], families: {name:true}} for a query: every term must match
+   (AND), exactly like queryIndex()'s own rule. Returns the posting set and the
+   families it touches, so the caller can hydrate only those. */
+function refSearchPostings(idx,terms){
+  var acc=null,ti,i,j;
+  for(ti=0;ti<terms.length;ti++){
+    var term=terms[ti],seen={},toks=refTokensMatching(idx,term);
+    for(i=0;i<toks.length;i++){
+      /* Posting lists are delta-encoded ([first, gap, gap, ...]) because the
+         values are seven digits and the gaps are two or three -- 0.78 MB of
+         index becomes 0.34 MB. The running sum is the decode. The encoding is
+         read off the island rather than assumed, so a future index that ships
+         raw values still resolves correctly instead of silently pointing every
+         posting at the wrong record. */
+      var list=idx.t[toks[i]]||[],delta=(idx.enc==="delta"),run=0;
+      for(j=0;j<list.length;j++){ run=delta?(run+list[j]):list[j]; seen[run]=true; }
+    }
+    if(acc===null){ acc=seen; continue; }
+    var next={},k;
+    for(k in acc){ if(Object.prototype.hasOwnProperty.call(acc,k)&&seen[k]) next[k]=true; }
+    acc=next;
+  }
+  var postings=[],fams={},kk;
+  for(kk in (acc||{})){
+    if(!Object.prototype.hasOwnProperty.call(acc,kk)) continue;
+    var p=Number(kk);
+    postings.push(p);
+    var fam=refPostingFamily(idx,p);
+    if(fam) fams[fam]=true;
+  }
+  postings.sort(function(a,b){ return a-b; });
+  return {postings:postings,families:fams};
+}
+/* Resolve postings to records, hydrating only the families they name. `cap` is
+   how many records the caller can actually display -- the palette shows eight
+   -- so a query matching 16,000 postings still only materialises eight. */
+function refResolvePostings(idx,postings,cap){
+  var out=[],i;
+  for(i=0;i<postings.length&&out.length<cap;i++){
+    var fam=refPostingFamily(idx,postings[i]);
+    if(!fam) continue;
+    var recs=hydrateFamily(fam);
+    var rec=recs[refPostingOrdinal(idx,postings[i])];
+    if(rec) out.push(rec);
+  }
+  return out;
+}
+/* The palette's Reference group. Same hit shape queryIndex() produces, so
+   renderPalette() cannot tell where a group came from and does not need to --
+   what it CAN tell is the kind, which is the honesty boundary and is never
+   blurred: a mined line is a "Reference" hit, always, and INDEX_KIND_ORDER puts
+   that group below Command.
+
+   `terms` is split the same way queryIndex() splits it. A term shorter than the
+   index's own min_token is not in the dictionary at all, so it is dropped from
+   the reference search rather than silently matching everything -- and if EVERY
+   term is dropped, the group is empty rather than 14,488 records long. */
+function queryReference(idx,q,cap){
+  var raw=String(q||"").toLowerCase().split(/\s+/),terms=[],ti;
+  var min=idx.min_token||2;
+  for(ti=0;ti<raw.length;ti++){ if(raw[ti]&&raw[ti].length>=min) terms.push(raw[ti]); }
+  if(!terms.length) return {kind:"Reference",hits:[],total:0};
+  var found=refSearchPostings(idx,terms);
+  var recs=refResolvePostings(idx,found.postings,cap||8),hits=[],i;
+  for(i=0;i<recs.length;i++){
+    var rf=recs[i];
+    hits.push({kind:"Reference",id:rf.id,tool:rf.t||null,
+               version:(rf.v&&rf.v[0])||null,cat:null,label:rf.c});
+  }
+  return {kind:"Reference",hits:hits,total:found.postings.length};
+}
+/* ===== MCR-HYDRATE-END ====================================================== */
+
+/* refDataset() is every record of every HYDRATED family, and it is deliberately
+   NOT "every record". Nothing in the app is allowed to want all 14,488 at once:
+   a caller that does would undo the hydration boundary by accident, which is
+   exactly how a lazy loader becomes an eager one six months later. The one
+   consumer is the tool index below, which spans what has been loaded. */
+function refDataset(){
+  var out=[],names=refFamilyNames(),i,j;
+  for(i=0;i<names.length;i++){
+    if(!refFamilyIsHydrated(names[i])) continue;
+    var recs=REF_FAMILIES[names[i]]||[];
+    for(j=0;j<recs.length;j++) out.push(recs[j]);
+  }
+  return out;
+}
 function buildRefIndexes(){
   if(REF_BY_TOOL) return;
   REF_BY_TOOL={}; REF_BY_ID={};
@@ -1941,10 +2155,23 @@ function buildRefIndexes(){
     REF_BY_TOOL[r.t].push(r);
   }
 }
+/* By id. A 'ref-' id names a family implicitly -- it is in exactly one -- but
+   nothing in the id says which, so a lookup for a record the operator reached
+   through search (already hydrated) is free, and a lookup for one restored from
+   a bookmark hydrates families in declaration order until it finds it. Smallest
+   first, so the common case never reaches the 4.3 MB family. */
 function refCommandById(id){
   if(typeof id!=="string"||id.indexOf("ref-")!==0) return null;
   buildRefIndexes();
-  return Object.prototype.hasOwnProperty.call(REF_BY_ID,id)?REF_BY_ID[id]:null;
+  if(Object.prototype.hasOwnProperty.call(REF_BY_ID,id)) return REF_BY_ID[id];
+  var names=refFamilyNames(),i;
+  for(i=0;i<names.length;i++){
+    if(refFamilyIsHydrated(names[i])) continue;
+    hydrateFamily(names[i]);
+    buildRefIndexes();
+    if(Object.prototype.hasOwnProperty.call(REF_BY_ID,id)) return REF_BY_ID[id];
+  }
+  return null;
 }
 function refCommandsForTool(toolId){
   buildRefIndexes();
@@ -2667,18 +2894,55 @@ var REF_SIDEBAR_CAP=40;
 /* The Reference rail: every tool the mined tier knows, including the 800-odd
    this product does not catalogue and therefore does not list in the builder.
    Without it those records would be reachable only by search. */
+/* The family names an operator sees, and the one-line statement of what each
+   family IS. Spelled out rather than derived from the slug: "stig_rules" is a
+   build-time identifier and "DISA STIG check and fix text" is what the operator
+   is actually being offered. */
+var REF_FAMILY_LABELS={
+  stig_rules:{label:"DISA STIG check and fix text",
+              note:"governing — a requirement, attributable to DISA"},
+  raw_captures:{label:"Staged man pages and --help output",
+                note:"documentary — how a binary documents itself"},
+  redhat_guides:{label:"Red Hat product documentation",
+                 note:"documentary — (c) Red Hat, Inc., CC BY-SA 3.0 Unported"}
+};
 function renderReferenceSidebar(){
   var html="<p class=\"region-label\">Reference commands</p>";
   html+="<p class=\"muted reftier\">Vendor reference text, mined from the DISA STIG check and fix "+
         "text, the staged man pages and the Red Hat product documentation. Not curated, not "+
         "host-verified, not assembled by this tool. No verify step, no undo step, no blast "+
         "rating.</p>";
-  var tools=refToolNames(),i;
-  if(!tools.length){
+  /* THE FAMILY LIST, and it is drawn before anything is hydrated. Al's ruling
+     is lazy per-family hydration; this is the part of it the operator can
+     actually see. Each family shows its name, its authority and its record
+     count -- all of which live in the main island's manifest -- and loads only
+     when it is asked for. A jump box that only wants the DISA family parses
+     0.5 MB and never touches the 4.3 MB of Red Hat documentation. */
+  var fams=refFamilyNames(),fi,anyRecords=false;
+  html+="<p class=\"region-label\">Source families</p><ul class=\"list\" data-listnav=\"reffams\">";
+  for(fi=0;fi<fams.length;fi++){
+    var fname=fams[fi],meta=REF_FAMILY_LABELS[fname]||{label:fname,note:""};
+    var count=refFamilyCount(fname),loaded=refFamilyIsHydrated(fname);
+    if(count) anyRecords=true;
+    html+="<li><button type=\"button\" class=\"row\" data-reffam=\""+escapeAttr(fname)+
+          "\" aria-current=\""+(loaded?"true":"false")+"\">"+esc(meta.label)+
+          "<span class=\"why\">"+esc(String(count))+" record"+(count===1?"":"s")+" · "+
+          esc(meta.note)+" · "+esc(loaded?"loaded":"select to load")+"</span></button></li>";
+  }
+  html+="</ul>";
+  if(!anyRecords){
     html+="<p class=\"muted\">This build embeds no reference commands.</p>";
     el("sidebar-body").innerHTML=html;
     return;
   }
+  var tools=refToolNames(),i;
+  if(!tools.length){
+    html+="<p class=\"muted\">No source family is loaded yet. Choose one above to browse it by "+
+          "tool — or press / and search, which loads only the families your terms reach.</p>";
+    el("sidebar-body").innerHTML=html;
+    return;
+  }
+  html+="<p class=\"region-label\">Tools in the loaded families</p>";
   html+="<ul class=\"list\" data-listnav=\"reftools\">";
   for(i=0;i<tools.length;i++){
     var tid=tools[i];
@@ -2740,7 +3004,7 @@ function renderAbout(){
   html+="<p class=\"muted\">Version "+esc(APP_VERSION)+" · built "+esc(APP_BUILD_DATE)+
         " · "+esc(APP_CLASSIFICATION)+"</p>";
   html+="<p class=\"region-label\">Content fingerprint</p>";
-  html+="<p class=\"muted\">sha256 of the embedded data island, computed by build.py: "+
+  html+="<p class=\"muted\">sha256 of every embedded data island \u2014 the curated content and all three reference families \u2014 computed by build.py: "+
         esc(CONTENT_FINGERPRINT)+"</p>";
   html+="<p class=\"region-label\">STIG releases embedded in this build</p>";
   html+="<ul class=\"list\">";
@@ -3206,6 +3470,20 @@ function ensureSearchIndex(){
 }
 function paletteMatches(q){
   var result=queryIndex(ensureSearchIndex(),q);
+  /* Splice the reference tier in at the position INDEX_KIND_ORDER already
+     names for it. queryIndex() built the curated groups; the corpus answers
+     separately, through the inverted index, and gets inserted rather than
+     concatenated so "Reference sits below Command" stays one statement in one
+     array instead of an ordering rule repeated here. */
+  var refGroup=queryReference(refIndex(),q,INDEX_GROUP_CAP);
+  if(refGroup.hits.length){
+    var want=indexOfIn(INDEX_KIND_ORDER,"Reference"),at=result.groups.length,g;
+    for(g=0;g<result.groups.length;g++){
+      if(indexOfIn(INDEX_KIND_ORDER,result.groups[g].kind)>want){ at=g; break; }
+    }
+    result.groups.splice(at,0,{kind:"Reference",hits:refGroup.hits});
+    result.total+=refGroup.total;
+  }
   var flat=[],gi,hi;
   for(gi=0;gi<result.groups.length;gi++){
     for(hi=0;hi<result.groups[gi].hits.length;hi++) flat.push(result.groups[gi].hits[hi]);
@@ -3340,6 +3618,15 @@ function selectRefTool(id,toggle){
   STATE.refToolId=(toggle&&STATE.refToolId===id)?null:id;
   renderAll();
 }
+/* Hydrate one family, on the operator's own instruction. There is no unload:
+   a parsed family stays parsed for the life of the page, which is the same
+   contract SEARCH_INDEX has had since CR-T-29 -- the cost is paid once and the
+   page never gets slower again. */
+function selectRefFamily(name){
+  if(!name) return;
+  hydrateFamily(name);
+  renderAll();
+}
 function doRefCopy(withComment){
   var rec=STATE.refId?refCommandById(STATE.refId):null;
   if(!rec){ toast("Nothing to copy."); return; }
@@ -3431,6 +3718,8 @@ document.addEventListener("click",function(ev){
   if(refrow){ selectRefCommand(refrow.getAttribute("data-ref")); return; }
   var reftool=t.closest("[data-reftool]");
   if(reftool){ selectRefTool(reftool.getAttribute("data-reftool"),true); return; }
+  var reffam=t.closest("[data-reffam]");
+  if(reffam){ selectRefFamily(reffam.getAttribute("data-reffam")); return; }
   var hit=t.closest("[data-hit]");
   if(hit){ activateHit(parseInt(hit.getAttribute("data-hit"),10)); return; }
   var line=t.closest("[data-line]");

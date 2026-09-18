@@ -1,6 +1,6 @@
 MD CODE RED — Evidence Export
 Tool version: v1.0.0-alpha.1  built 2026-09-18
-Content fingerprint (sha256 of the embedded data island): 692c037a9a1599fdafe364e2aa70ce2081baf04380b5187a50bb6917aafc00a2
+Content fingerprint (sha256 of every embedded data island): 6cb1839c6e1d44e6a2c89dce253ef4705195e2944b4e662a7ebd9bb91ce9db83
 
 STIG ID: RHEL-09-251015
 STIG version: V2R9  benchmark date: 01 Jul 2026

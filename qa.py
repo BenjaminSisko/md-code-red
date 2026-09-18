@@ -61,6 +61,20 @@ NS = {"x": "http://checklists.nist.gov/xccdf/1.1"}
 CCI_NS = {"c": "http://iase.disa.mil/cci"}
 VERSIONS = ("7", "8", "9", "10")
 
+# The JSON data islands the shipped artifact may contain, in the order it states
+# them. build.py's ISLANDS is the producer of this list and this is the gate's
+# independent statement of it: Q1 fails on a mismatch either way, so a new island
+# has to be declared in two places by two different hands, and an UNdeclared one
+# fails the build rather than adding itself.
+#
+# The order is load-bearing three times over: it is the order the file is written
+# in, the input order of the content fingerprint, and the family index the
+# reference index's posting encoding resolves against.
+EXPECTED_ISLANDS = ("mcr-data", "mcr-ref-index", "mcr-ref-stig_rules",
+                    "mcr-ref-raw_captures", "mcr-ref-redhat_guides")
+ISLAND_PLACEHOLDERS = ("/*__DATA__*/", "/*__REF_INDEX__*/", "/*__REF_STIG_RULES__*/",
+                       "/*__REF_RAW_CAPTURES__*/", "/*__REF_REDHAT_GUIDES__*/")
+
 XCCDF = {
     "7": "U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
     "8": "U_RHEL_8_STIG_V2R8_Manual-xccdf.xml",
@@ -1428,20 +1442,35 @@ def gate_q1(ctx):
             f.append("missing %s" % label)
     if not f:
         d.append("DOCTYPE/html/head/body present")
+    # The island set is NAMED, not counted. It used to be "exactly 2 <script>
+    # elements" -- fine while there was one island, and the wrong shape the
+    # moment the reference corpus moved into per-family islands for Al's lazy
+    # hydration ruling, because a count cannot tell a deliberate new island from
+    # a stray one. So this asserts the exact declared set: build.py's ISLANDS is
+    # the one place the list lives, qa.py names the same ids here, and anything
+    # else in the file is a failure rather than an increment.
     scripts = re.findall(r"<script\b[^>]*>", html)
-    if len(scripts) != 2:
-        f.append("expected exactly 2 <script> elements, found %d" % len(scripts))
-    else:
-        if 'type="application/json"' not in scripts[0] or 'id="mcr-data"' not in scripts[0]:
-            f.append("first <script> is not the id=mcr-data application/json data island")
-        if "src=" in scripts[1] or "type=" in scripts[1]:
-            f.append("second <script> is not a plain inline application script")
-        d.append("exactly two <script> elements: one JSON data island, one app script "
-                 "(BQP Gate 2 #2, declared deviation per ADR-001 §7.4)")
+    json_scripts = [s for s in scripts if 'type="application/json"' in s]
+    app_scripts = [s for s in scripts if s not in json_scripts]
+    found_ids = [(re.search(r'id="([^"]+)"', s) or [None, None])[1] for s in json_scripts]
+    if found_ids != list(EXPECTED_ISLANDS):
+        f.append("the JSON data islands in the shipped file are %r, and the declared set is %r "
+                 "(build.py ISLANDS). An island this gate does not name is either a new family "
+                 "nobody declared or a stray <script> in the template"
+                 % (found_ids, list(EXPECTED_ISLANDS)))
+    if len(app_scripts) != 1:
+        f.append("expected exactly 1 inline application script, found %d" % len(app_scripts))
+    elif "src=" in app_scripts[0] or "type=" in app_scripts[0]:
+        f.append("the application script is not a plain inline <script>")
+    if found_ids == list(EXPECTED_ISLANDS) and len(app_scripts) == 1:
+        d.append("exactly %d JSON data islands (%s) and one app script "
+                 "(BQP Gate 2 #2, declared deviation per ADR-001 §7.4)"
+                 % (len(EXPECTED_ISLANDS), ", ".join(EXPECTED_ISLANDS)))
     if html.count("<script") != html.count("</script>"):
         f.append("unbalanced <script> open/close counts")
-    if "/*__DATA__*/" in html:
-        f.append("template placeholder /*__DATA__*/ was not replaced")
+    for placeholder in ISLAND_PLACEHOLDERS:
+        if placeholder in html:
+            f.append("template placeholder %s was not replaced" % placeholder)
     for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__",
                   "__DEFAULT_VERSION__"):
         if token in html:
@@ -1451,11 +1480,26 @@ def gate_q1(ctx):
         f.append("data island does not parse as JSON")
     else:
         d.append("data island parses (%.2f MB of JSON)" % (ctx["island_len"] / 1024.0 / 1024.0))
-    esc_f = island_escape_failures(ctx["island"])
+    # EVERY island, not just mcr-data. The reference corpus is the largest body
+    # of vendor-controlled text this artifact carries and is exactly the payload
+    # MCR-SEC-007 was written about; checking only the island it no longer lives
+    # in would have quietly retired the gate.
+    esc_f = []
+    parsed_islands = 0
+    for iid, text in ctx["islands"]:
+        esc_f.extend("%s: %s" % (iid, msg) for msg in island_escape_failures(text))
+        try:
+            json.loads(text)
+            parsed_islands += 1
+        except (ValueError, TypeError):
+            f.append("island %s does not parse as JSON" % iid)
     f.extend(esc_f)
     if not esc_f:
-        d.append("no raw '<' or '>' anywhere in the data island — '</script', '<!--', '-->' and "
-                 "'<script' are all closed by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)")
+        d.append("no raw '<' or '>' anywhere in any of the %d data islands (%.2f MB of JSON in "
+                 "total, all %d parsing) — '</script', '<!--', '-->' and '<script' are all closed "
+                 "by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)"
+                 % (len(ctx["islands"]),
+                    sum(len(t) for _i, t in ctx["islands"]) / 1024.0 / 1024.0, parsed_islands))
     consts = ctx["build_consts"]
     version = consts.get("APP_VERSION")
     checks = [
@@ -1492,31 +1536,36 @@ def gate_q1(ctx):
         else:
             d.append("sha256 sidecar matches: %s" % got[:32])
 
-    # CR-T-28/CR-T-30. The content fingerprint is defined as the sha256 of
-    # exactly the bytes inside <script id="mcr-data">...</script> — the same
-    # bytes this file already extracted as ctx["island"] — computed by
-    # build.py BEFORE that payload was substituted into the template and
-    # embedded as the CONTENT_FINGERPRINT constant, never inside the JSON
-    # island itself (a hash inside the thing it hashes is circular). This is
-    # the independent re-check: re-hash the shipped island and compare it to
-    # the constant the shell actually carries, so the evidence exporter and
-    # the About panel cannot print a fingerprint that does not match what
-    # shipped.
+    # CR-T-28/CR-T-30. The content fingerprint is the sha256 of EVERY island's
+    # bytes, joined by a newline in build.py's ISLANDS declaration order, and
+    # computed there BEFORE the payloads were substituted into the template. It
+    # is embedded as the CONTENT_FINGERPRINT constant, never inside any island
+    # (a hash inside the thing it hashes is circular).
+    #
+    # It covered only mcr-data while mcr-data was the whole content. Now that
+    # the reference corpus ships as its own islands, hashing mcr-data alone
+    # would mean an operator could re-mine 14,488 records, change every one of
+    # them, and export evidence carrying an UNCHANGED fingerprint -- a
+    # fingerprint that stops covering most of the content is worse than no
+    # fingerprint, because it still reads as a guarantee. This is the
+    # independent re-check: re-join every shipped island the same way and
+    # compare.
     fp_m = re.search(r'var CONTENT_FINGERPRINT="([^"]*)"', html)
     if not fp_m or not fp_m.group(1) or fp_m.group(1) == "__CONTENT_FINGERPRINT__":
         f.append("CONTENT_FINGERPRINT constant is missing or unsubstituted in the shipped shell")
-    elif not ctx["island"]:
-        f.append("content fingerprint cannot be checked — the data island did not extract")
+    elif not ctx["islands"]:
+        f.append("content fingerprint cannot be checked — no data island extracted")
     else:
         want_fp = fp_m.group(1)
-        got_fp = hashlib.sha256(ctx["island"].encode("utf-8")).hexdigest()
+        got_fp = hashlib.sha256(
+            "\n".join(text for _iid, text in ctx["islands"]).encode("utf-8")).hexdigest()
         if want_fp != got_fp:
-            f.append("content fingerprint %s does not match a fresh sha256 of the shipped data "
-                     "island %s — the embedded constant and the island have drifted"
+            f.append("content fingerprint %s does not match a fresh sha256 of the shipped islands "
+                     "%s — the embedded constant and the content have drifted"
                      % (want_fp[:16], got_fp[:16]))
         else:
-            d.append("content fingerprint matches a fresh sha256 of the shipped data island: %s"
-                     % got_fp[:32])
+            d.append("content fingerprint matches a fresh sha256 of all %d shipped islands: %s"
+                     % (len(ctx["islands"]), got_fp[:32]))
 
     # Milo Vance, daily-commands tranche (2026-09-17), problem 3: the version
     # selector used to open on a hard-coded "9" -- the one RHEL release with no
@@ -3756,8 +3805,13 @@ def build_ctx():
         sys.exit(1)
     with open(artifact, encoding="utf-8") as fh:
         html = fh.read()
-    m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
-    island = m.group(1) if m else ""
+    # EVERY JSON island, in the order the file states them -- build.py's ISLANDS
+    # order, which is also the fingerprint input order and the family index the
+    # posting encoding resolves against.
+    islands = [(m.group(1), m.group(2)) for m in re.finditer(
+        r'<script id="([^"]+)" type="application/json">(.*?)</script>', html, re.S)]
+    by_id = dict(islands)
+    island = by_id.get("mcr-data", "")
     data = None
     if island:
         try:
@@ -3768,12 +3822,23 @@ def build_ctx():
         except json.JSONDecodeError:
             data = None
     app = re.findall(r"<script>(.*?)</script>", html, re.S)
+    # `shell` is "the artifact minus its vendor-controlled payload", and it has
+    # to lose ALL the islands now, not just mcr-data: the leak scan, the marker
+    # scan and the air-gap scan all read it, and a 4.3 MB corpus of Red Hat
+    # documentation left inside it would have them scanning vendor prose for
+    # hand-written mistakes.
+    shell = html
+    for _iid, text in islands:
+        if text:
+            shell = shell.replace(text, "")
     ctx = {
         "artifact": artifact,
         "html": html,
         "island": island,
         "island_len": len(island),
-        "shell": html.replace(island, "") if island else html,
+        "islands": islands,
+        "islands_by_id": by_id,
+        "shell": shell,
         "app_script": app[-1] if app else "",
         "data": data,
         "build_consts": load_build_constants(),
