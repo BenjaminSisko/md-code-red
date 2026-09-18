@@ -158,6 +158,21 @@ MARKERS = [
     ("de-quoted projection for the destructive table", "function unquoteCommand(", None),
     ("rich-rule slot allow-list", "var RICHRULE_SLOT_TYPES=", None),
     ("template flag/lit token allow-lists", "var FLAG_TOKEN_RE=", None),
+    # CR-T-31 — the pipeline composer. The operator table is the structural
+    # claim: an operator is a KEY into a closed table owned by the tool, never
+    # text a user supplies, so `|` can never enter a form field.
+    ("pipeline composer", "function assemblePipeline(", None),
+    ("closed pipeline operator table", "var PIPE_OPERATORS=", None),
+    ("pipeline operator emission allow-list", "var PIPE_OPERATOR_EMITS=", None),
+    ("pipeline stage diagnostics (which stage is incomplete)", "function validatePipeline(", None),
+    ("redirect-target blast rule (independent of the field type)", "function redirectTargetBlast(", None),
+    ("execution-sink refusal", "function isExecutionSink(", None),
+    ("nested-quoting-domain refusal", "function reparsesItsArgument(", None),
+    # The UI half of the same claim: the panel is where an operator would become
+    # typeable if it ever did. Its option VALUES are the closed table's keys and
+    # its only free-text inputs are a validated path and a validated integer --
+    # asserted mechanically by tests/test_pipeline_ui_wiring.py.
+    ("pipeline panel (operator picker emits keys, never text)", "function renderPipelinePanel(", None),
     # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
@@ -3014,6 +3029,19 @@ def gate_q17(ctx):
 # identical whether the harness broke or whether it caught something real.
 HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected",
                        "quoted_safe", "positive_controls", "invariants", "assembler_bytes",
+                       # CR-T-31. Q18's statement has to cover PIPELINE assembly too, or
+                       # the gate reads as "command assembly is proved safe" over a build
+                       # that also composes pipelines -- the MCR-SEC-010 mistake, in the
+                       # gate rather than in the code.
+                       "pipeline_checks", "pipeline_oracles", "pipeline_negative_controls",
+                       "pipeline_operator_seam_checks", "pipeline_interpreter_class_checks",
+                       "pipeline_stage_naming_checks", "one_stage_invariants",
+                       # PL4 on the screen: the rating the PANEL shows for a redirect
+                       # stage is the rating the assembler made, and an unclassified
+                       # target is `unrated` rather than green. Counted here because a
+                       # harness that stopped asserting it would leave the claim
+                       # standing in this gate's own PASS text.
+                       "pipeline_target_rating_checks",
                        # MCR-SEC-010. The two file-oracle counts are read the same
                        # way every other count here is: proved present and integral
                        # before they are believed, so a harness that stopped running
@@ -3066,6 +3094,24 @@ def harness_report_failures(rep, returncode, stderr=""):
         f.append("the harness reported ZERO checks. A sweep that ran nothing rejects nothing and "
                  "quotes nothing safely, so it passes by having done no work — the same empty-set "
                  "fail-open Q9 has guarded since CR-T-07 (AL-GATE3-004)")
+    if not missing and not wrong and not rep["pipeline_checks"]:
+        f.append("the harness reported ZERO pipeline checks. This build composes pipelines, so a "
+                 "PASS here would be stating that command assembly is safe while saying nothing "
+                 "at all about the operator seam — the same empty-set fail-open, one tranche later "
+                 "(CR-T-31)")
+    if not missing and not wrong and not rep["pipeline_negative_controls"]:
+        f.append("the harness reported ZERO pipeline-oracle negative controls. An oracle nobody "
+                 "has watched fail is not disproven; it is unwatched, and the pipeline oracle is "
+                 "the only thing asserting that no operator reached the command from data")
+    if not missing and not wrong and not rep["pipeline_target_rating_checks"]:
+        f.append("the harness reported ZERO redirect-target rating checks. PL4 -- an unclassified "
+                 "write renders `unrated`, never green -- is a claim this gate makes in its own "
+                 "PASS text, and a claim with no check behind it is the thing this file exists "
+                 "to refuse")
+    if not missing and not wrong and not rep["one_stage_invariants"]:
+        f.append("the harness reported ZERO one-stage invariants. A pipeline of one stage must "
+                 "equal assembleCommand() byte for byte; unasserted, the composer is free to "
+                 "become a second, weaker assembler")
     # MCR-SEC-010, the same empty-set rule applied to the file oracles. A YAML
     # quoter whose oracle ran zero times is a dead escaper again — it just takes
     # one more step to notice, because this time the function has a call site and
@@ -3092,6 +3138,32 @@ def harness_report_failures(rep, returncode, stderr=""):
                  "release, in every argument shape) and %d invariants — a validator that rejected "
                  "everything would fail this gate, not pass it"
                  % (rep["positive_controls"], rep["invariants"]))
+        d.append("PIPELINE assembly is covered by this same gate and this same statement "
+                 "(CR-T-31): %d pipeline checks drove every hostile vector into every field of "
+                 "every stage of multi-stage pipelines and into every redirect target; %d "
+                 "operator-seam checks drove every vector, every prototype-chain key and the "
+                 "operator TEXT itself into the stage's `op` slot and every one was refused, "
+                 "because an operator is a KEY into a closed table the tool owns and never a "
+                 "value a user supplies; %d pipeline-oracle comparisons asserted that every "
+                 "operator in the emitted line is at exactly the index the operator composed it "
+                 "at and that no other word is an operator or leaves a metacharacter unquoted; "
+                 "%d negative controls proved that oracle can fail; %d interpreter-class checks "
+                 "and %d stage-naming checks cover threat-model-v2 PL2 and PL6; and %d one-stage "
+                 "invariants proved a pipeline of one stage is assembleCommand(), byte for byte; "
+                 "and %d redirect-target rating checks proved the rating the PANEL shows for a "
+                 "redirect stage is the rating the assembler made, with a target outside the "
+                 "protected list rendering `unrated` -- never green, because green in this "
+                 "product means a human curated an entry and said so"
+                 % (rep["pipeline_checks"], rep["pipeline_operator_seam_checks"],
+                    rep["pipeline_oracles"], rep["pipeline_negative_controls"],
+                    rep["pipeline_interpreter_class_checks"], rep["pipeline_stage_naming_checks"],
+                    rep["one_stage_invariants"], rep["pipeline_target_rating_checks"]))
+        d.append("what this gate does NOT say about pipelines: it proves the emitted line's "
+                 "STRUCTURE is the operator's own and that no value escaped its quoting. It does "
+                 "not prove the pipeline is a sensible thing to run, and the blast COMPOSITION "
+                 "rules it asserts are policy over a target path and a child binary — a path "
+                 "class nobody has written down still rates `unrated`, which is the honest answer "
+                 "and not a safe one")
         d.append("%d YAML-file and %d INI-file oracle checks: every generated playbook, inventory "
                  "and ansible.cfg was PARSED and compared line for line to the operator's intent — "
                  "every value back out exactly as it went in, every operator value quoted, every "

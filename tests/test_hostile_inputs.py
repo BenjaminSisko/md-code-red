@@ -74,9 +74,32 @@ class HostileInputTests(unittest.TestCase):
                     # is itself computed from the entries and their declared
                     # fields/versions, not a constant, so a new generator or
                     # field changes this total on its own).
-                    + self.report["content_spec_checks"])
+                    + self.report["content_spec_checks"]
+                    # CR-T-31: the PIPELINE sweeps fold into the same headline
+                    # count, so "N checks" on the console is the whole of what
+                    # the harness proved and not the command half of it. Read
+                    # out of the report for the same reason content_spec_checks
+                    # is: it is derived from the fixture and the operator table,
+                    # not a constant somebody has to remember to bump.
+                    + self.report["pipeline_checks"])
         self.assertEqual(self.report["checks"], expected,
                          "the harness did not run every field type x vector x release x shape")
+        # the pipeline half, stated in its own terms: every vector into every
+        # field of every stage of three multi-stage shapes, plus the redirect
+        # target, plus the operator seam and the ten operator controls.
+        expected_pipeline = (types * vectors * 4 * 3          # 3 shapes x every type/vector/release
+                             + vectors * 4                    # every vector into a redirect target
+                             + self.report["pipeline_operator_seam_checks"]
+                             + self.report["pipeline_operator_controls"])
+        self.assertEqual(self.report["pipeline_checks"], expected_pipeline,
+                         "the pipeline sweep did not drive every vector into every field of every "
+                         "stage")
+        self.assertGreater(self.report["pipeline_negative_controls"], 0,
+                           "the pipeline oracle has no negative control — an oracle nobody has "
+                           "watched fail proves nothing")
+        self.assertGreater(self.report["one_stage_invariants"], 0,
+                           "the one-stage invariant (a pipeline of one stage IS assembleCommand(), "
+                           "byte for byte) was never asserted")
         self.assertGreater(self.report["content_spec_checks"], 0,
                            "no real generator spec was fuzzed — CR-T-17's content-spec sweep is dead")
         self.assertGreater(self.report["content_spec_entries"], 0,

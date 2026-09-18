@@ -21,9 +21,21 @@ This is the part of the two-tier model this repo actually runs and can prove:
 `python3 qa.py` -- 22 gates plus an optional Node syntax check, against the
 **shipped artifact**. `docs/QA_GATES.md` is the full authority -- what each
 gate proves, how it has been watched fail, and its stated residual -- and is not
-duplicated here. On this build: all 22 gates plus `JS` PASS, 204 unit tests OK
-(`python3 -m unittest discover -s tests`), and 81,577 hostile-input checks with
+duplicated here. On this build: all 22 gates plus `JS` PASS, 293 unit tests OK
+(`python3 -m unittest discover -s tests`), and 101,297 hostile-input checks with
 0 failures (`node tests/hostile_harness.js`).
+
+**The pipeline composer (CR-T-31)** is gated by the same suite and is documented
+in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
+what runs on every build: 17,092 hostile-vector checks into every field of every
+stage; 589 pipeline-oracle comparisons with 11 negative controls that FAIL if
+the oracle agrees with a line it should reject; 332 operator-seam refusals; 100
+interpreter-class checks; 44 redirect-target rating checks; 108 one-stage
+invariants (a pipeline of one stage equals `assembleCommand()` byte for byte);
+and `tests/test_pipeline_ui_wiring.py` (15 tests, 9 audits, 14 negative
+controls) on the panel the harness cannot see. Q18 fails closed on a zero in any
+of those counts, so a harness that stopped checking pipelines cannot pass by
+saying nothing about them.
 
 ## Formal Test Plan (company record)
 

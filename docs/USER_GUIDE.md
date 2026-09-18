@@ -53,6 +53,88 @@ A handful of entries (3 of 27 -- `firewalld-service-active`,
 checks with no form: pick the tool, pick the one command, and the version-specific
 command renders directly.
 
+### Journey 1b: Build a pipeline
+
+Real work is rarely one command. The **Pipeline** panel, under the assembled
+command, joins several of them into one shell line -- and it does it without ever
+letting you type an operator.
+
+**Why there is no text box for the `|`.** A pipe, a `&&`, a `>` are exactly the
+characters this tool refuses everywhere else: every field you fill in is
+single-quoted before it reaches a command, precisely so that a `|` you type stays
+a literal `|` and never becomes a pipe. If the composer let you type an operator,
+that guarantee would be gone the moment anything stripped the quotes. So the
+operator is not something you supply. You pick one from a fixed list of ten, and
+the tool writes it:
+
+| You pick | It writes | It means |
+|---|---|---|
+| pipe | `\|` | send this command's output into the next one |
+| and | `&&` | run the next one only if this one succeeds |
+| or | `\|\|` | run the next one only if this one fails |
+| then | `;` | run the next one either way |
+| write to a file | `>` | write output to a file, replacing it |
+| append to a file | `>>` | add output to the end of a file |
+| write errors to a file | `2>` | send error output to a file |
+| errors with output | `2>&1` | send errors wherever output is going |
+| tee | `\| tee` | write output to a file AND keep it flowing |
+| tee (append) | `\| tee -a` | add to a file AND keep it flowing |
+
+**Walkthrough.**
+
+1. Build a first command the ordinary way (Journey 1). With the `journalctl`
+   generator and `unit: sshd.service`, that is
+   `journalctl --no-pager --unit='sshd.service'`.
+2. In the **Pipeline** panel, click **Add to pipeline**. It becomes **Stage 1**,
+   marked *editing* -- the fields above still belong to it, so typing keeps
+   editing that stage.
+3. Pick the next command from the sidebar as usual, fill its fields, and click
+   **Add current command as a stage**. It arrives as **Stage 2**, joined by a
+   pipe. Change the join with the **joined by** dropdown on that stage.
+4. Or click **Add a redirection** for a stage that is a file rather than a
+   command: choose `>`, `>>`, `2>`, `| tee` or `| tee -a` and type the path in
+   the **file** box. The path is validated like any other field -- it is not
+   free text, and it is quoted in the command.
+5. The assembled line above updates as you go:
+   `journalctl --no-pager --unit='sshd.service' | tee '/srv/audit/sshd.log'`.
+   **Copy**, **Copy with comment** and **Export as Evidence** all now act on the
+   WHOLE pipeline; the comment header and the evidence export name every stage,
+   its operator, its rating and its citation.
+
+**When nothing assembles, read the stage.** A pipeline that is not finished
+produces no command at all -- nothing partial is ever shown as if it were
+complete. The panel names the ONE stage that is wrong and why: *"stage 2: the
+file to write: no value"*, *"stage 3: still needed: unit"*. Fix that stage and
+the line appears.
+
+**What the composer will not build, and why.**
+
+* **Only a guided form can be a stage.** A reference command is a quoted vendor
+  string. Joining two of those produces a command the vendor never published
+  while the citation still says they did -- so a reference entry is refused as a
+  stage by construction, and the panel says so rather than hiding the button.
+* **No stage may hand its argument to another interpreter.** `su -c`, `sh -c`,
+  `sudo`, `timeout`, `find -exec` and the rest re-parse what you give them,
+  which is a second set of quoting rules this tool does not claim to know. It
+  refuses those shapes outright instead of guessing at them.
+* **No pipeline ends in a shell.** `| sh`, `| bash`, `| python`, an `xargs`
+  whose child is one of those, and a write into a directory the system later
+  executes (`> /etc/cron.d/...`, `| tee /etc/profile.d/...`) are all refused.
+  They all mean the same thing: a command whose text only exists at run time,
+  which cannot be read, rated, cited or undone. A red banner over something
+  unreviewable would just teach you to click through red.
+* **Eight stages, maximum.** Not a technical limit -- a refusal to render
+  something nobody will read before running it as root.
+
+**Ratings, when a pipeline writes.** A pipeline is not rated as the worst of its
+stages. A write outside a scratch path (`/tmp`, `/var/tmp`, `/home`, `/root`) is
+a write and rates at least **yellow**; a target under `/etc`, `/boot`, `/dev`,
+`/usr`, `/var/lib`, `/sys` or `/proc` is **red**; `| xargs rm` and friends are
+**red** whatever the arguments say. A target in none of those lists shows as
+**unrated** -- not green. Green in this tool means a person curated that entry
+and said so; a path nobody has ever classified is unclassified, not safe, and
+you are entitled to see the difference.
+
 ### Journey 2: Build STIG evidence for an audit package
 
 1. Press `/` (when focus is not already in a text field) or `Ctrl+K` / `Cmd+K`

@@ -179,6 +179,27 @@ code,pre{font-family:var(--font-mono);}
 .vbadge.v-verified{border-color:var(--success); color:var(--success);}
 .vbadge.v-captured{border-color:var(--warning); color:var(--warning);}
 .vbadge.v-unverified{color:var(--text-muted);}
+.stagelist{margin:0 0 12px;}
+.stagerow{border:1px solid var(--border-primary); border-radius:6px; padding:8px 10px;
+  margin:0 0 8px; background:var(--bg-surface);}
+.stagerow.bad{border-color:var(--danger);}
+.stagerow .stagehead{display:flex; flex-wrap:wrap; gap:8px; align-items:baseline;
+  justify-content:space-between;}
+.stagerow .stageno{font-size:11px; color:var(--text-muted); text-transform:uppercase;
+  letter-spacing:.06em;}
+.stagerow .stagecmd{font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);
+  overflow-x:auto; white-space:pre; display:block; margin:4px 0 0;}
+.stagerow .stagewhy{margin:4px 0 0; font-size:12px; color:var(--danger);}
+.stagerow .stageops{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; align-items:center;}
+.stagerow select,.stagerow input{font:inherit; font-size:12px; padding:3px 6px;
+  border:1px solid var(--border-primary); border-radius:5px; background:var(--bg-editor);
+  color:var(--text-primary);}
+.sbadge{display:inline-block; border:1px solid var(--border-primary); border-radius:999px;
+  padding:0 8px; font-size:11px; color:var(--text-muted);}
+.sbadge.b-green{border-color:var(--success); color:var(--success);}
+.sbadge.b-yellow{border-color:var(--warning); color:var(--warning);}
+.sbadge.b-red{border-color:var(--danger); color:var(--danger);}
+.sbadge.b-unrated{border-color:var(--text-muted); color:var(--text-muted);}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
@@ -266,6 +287,11 @@ code,pre{font-family:var(--font-mono);}
     <h2>Loading</h2>
     <p class="muted" id="editor-empty">Reading the embedded content island.</p>
   </div>
+  <!-- CR-T-31: renderPipelinePanel() owns this sink exclusively, as its own
+       statement, the same composition rule every other multi-sink renderer in
+       this file follows (Q17: a bare call's return is never spliced into
+       another function's accumulator). -->
+  <div id="pipeline-panel"></div>
   <!-- print view (CR-T-30, UI spec §4): the screen's STIG panel lives in
        #inspector, which @media print hides along with the rest of the chrome.
        renderStigPanel() writes the SAME content here, in a separate statement,
@@ -1354,6 +1380,737 @@ function assembleCommand(spec,version,values,opts){
           blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version,
           doc:doc};
 }
+
+/* ---- the pipeline composer (CR-T-31) -------------------------------------
+   Founder requirement, verbatim: "I need to be able to pipe commands
+   together as well."
+
+   THE DESIGN CONSTRAINT, and the reason this code is shaped the way it is:
+
+     A PIPELINE IS STRUCTURE THE TOOL OWNS, NEVER A VALUE THE USER SUPPLIES.
+
+   `|` is precisely the metacharacter the hostile harness rejects tens of
+   thousands of times over -- 80,525 rejections in the single-command sweep on
+   the day this was written, and the pipeline sweeps below add their own.
+   The moment an operator can be TYPED, every allow-list in this block is
+   void: a `comment` field carrying "| sh" would be perfectly shQuote'd, pass
+   every containment check, and still be a pipe the instant the quoting is
+   stripped by any future sink. So the user never supplies an operator. The user
+   supplies a KEY, the key is looked up in a closed table, and the table's own
+   string literal is what is emitted.
+
+   What that makes UNEXPRESSIBLE (as opposed to merely policed):
+
+     - There is no code path that copies operator text out of a stage. Every
+       operator word in the output came from PIPE_OPERATORS, which is a literal
+       in this file. A stage object has no field whose contents reach the
+       command as an operator; `op` is consumed by hasOwnProperty lookup and
+       then discarded.
+     - A command stage must carry a TEMPLATE -- a token list this assembler
+       emits word by word. A spec whose command is a STRING it was handed
+       (`rhel_versions[v].command`, which is how every static entry and every
+       mined REFERENCE record carries its command) cannot be a stage at all.
+       Two things follow from one rule, which is why it is the rule:
+         (a) PROVENANCE. ADR-002: joining two vendor strings produces a command
+             the vendor never published while the citation still claims they
+             did. That false attribution would travel into an accreditation
+             package through Export as Evidence, which prints every stage's
+             source. A mined record is structurally incapable of being a stage
+             -- not filtered out of the picker, which a future picker could
+             forget to do.
+         (b) OPERATORS FROM DATA. A handed string is text this assembler did
+             not compose, so it cannot know the string contains no `|`. DISA's
+             own check text is full of them: 625 top-level pipes across the
+             1,492 embedded rules. A mined record reaching a stage would carry
+             an operator the user never composed, straight past the closed set.
+             Requiring a template means every word of every stage came from a
+             LIT_TOKEN_RE/FLAG_TOKEN_RE token or a shQuote'd validated value,
+             and neither admits a shell metacharacter.
+     - A redirect TARGET is a `path`-typed field run through validateField() and
+       shQuote()d like every other value, so it is a quoted word and not a
+       filename fragment concatenated into a redirection.
+     - The xargs replace string is emitted by this function, never typed:
+       `{}` is not admitted by ANY field type's allow-list or by LIT_TOKEN_RE,
+       so it could not be authored even in curated content.
+
+   What is merely POLICED, honestly labelled:
+
+     - pipeOperator() re-checks the table's own `emit` against a closed list of
+       the ten legal emissions. Today that check is unreachable, exactly like
+       composeRichRule()'s character rule: the table is the control. It is what
+       still holds if a future author adds a row saying {emit:"| sh"}.
+     - stageCommandClean() re-checks that a stage's OWN assembled text carries
+       no bare operator word and no unquoted shell metacharacter. Unreachable
+       today for the same reason -- a template cannot emit one -- and it is the
+       check that still holds if a future token type is added to the assembler
+       without this file being read.
+     - The shell-stage refusal and the blast composition rules below are
+       policy over an assembled command's first bare word. A tool set that
+       one day ships /bin/sh as an entry would be caught by the refusal, not
+       made impossible by it.
+
+   assemblePipeline() is PURE and lives inside MCR-ASSEMBLER on purpose: the
+   hostile harness lifts this block verbatim and drives the pipeline oracle
+   through it, so the pipe composer is proved by the same gate as the command
+   assembler, on the shipped artifact.
+
+   A PIPELINE OF ONE STAGE EQUALS assembleCommand() BYTE FOR BYTE. That is not
+   a coincidence to be maintained: every command stage IS an assembleCommand()
+   call, and a one-stage pipeline pushes exactly that string and joins nothing
+   to it. The harness asserts it anyway, on every generator and every release,
+   because "structurally guaranteed" is a claim and a gate is a proof. */
+
+/* Eight is a shell command line an operator can still read on one screen and
+   still reason about before running it as root. There is no technical limit
+   being approximated here; it is a refusal to render something nobody reviews. */
+var MAX_PIPELINE_STAGES=8;
+
+/* The closed operator set. `emit` is the ONLY source of an operator word in an
+   assembled pipeline. `takes` says what the stage carrying this operator may
+   also carry, and is the whole of the stage-shape rule:
+     "stage" - a command (or an xargs stage) follows
+     "path"  - a validated absolute path follows, and nothing else
+     "none"  - nothing follows; the operator is the entire stage */
+var PIPE_OPERATORS={
+  pipe:        {emit:"|",         takes:"stage",label:"pipe stdout into the next command"},
+  and:         {emit:"&&",        takes:"stage",label:"run the next command only if this one succeeds"},
+  or:          {emit:"||",        takes:"stage",label:"run the next command only if this one fails"},
+  seq:         {emit:";",         takes:"stage",label:"run the next command either way"},
+  redirect:    {emit:">",         takes:"path", label:"write stdout to a file, replacing it"},
+  append:      {emit:">>",        takes:"path", label:"append stdout to a file"},
+  redirect_err:{emit:"2>",        takes:"path", label:"write stderr to a file, replacing it"},
+  err_to_out:  {emit:"2>&1",      takes:"none", label:"send stderr wherever stdout is going"},
+  tee:         {emit:"| tee",     takes:"path", label:"write stdout to a file and keep it flowing"},
+  tee_append:  {emit:"| tee -a",  takes:"path", label:"append stdout to a file and keep it flowing"}
+};
+/* The key order the UI offers, stated once so a <select> never has to iterate
+   an object and inherit whatever the engine's key order happens to be. The
+   harness asserts this list and the table's own keys are the same set: a key
+   in one and not the other is either an operator nobody can pick or a picker
+   for an operator that does not exist. */
+var PIPE_OPERATOR_KEYS=["pipe","and","or","seq","redirect","append","redirect_err",
+                        "err_to_out","tee","tee_append"];
+/* Rule 2 (see the block comment): the emissions this product will ever write,
+   as a closed list, re-checked at emit time. RICHRULE_VALUE_RE's sibling. */
+var PIPE_OPERATOR_EMITS=["|","&&","||",";",">",">>","2>","2>&1","| tee","| tee -a"];
+
+function pipeOperator(key){
+  if(typeof key!=="string") return null;
+  if(!Object.prototype.hasOwnProperty.call(PIPE_OPERATORS,key)) return null;  /* own keys only:
+      "constructor", "toString" and "__proto__" are not operators */
+  var op=PIPE_OPERATORS[key];
+  if(!op||typeof op.emit!=="string") return null;
+  if(!inList(PIPE_OPERATOR_EMITS,op.emit)) return null;   /* fail closed on a bad table row */
+  if(!inList(["stage","path","none"],op.takes)) return null;
+  return op;
+}
+
+/* The words of an assembled command, split the way a POSIX shell would, each
+   carrying whether ANY part of it was single-quoted. Used for exactly two
+   questions, both of which must be asked of BARE text only: "what binary does
+   this stage invoke" and "does this stage emit NUL-delimited output". A value
+   is always a quoted word, so neither question can ever be answered by one. */
+function commandWords(s){
+  var str=String(s),words=[],cur="",quoted=false,started=false,inQ=false,i=0;
+  function flush(){ if(started) words.push({text:cur,quoted:quoted}); cur="";quoted=false;started=false; }
+  while(i<str.length){
+    var c=str.charAt(i);
+    if(inQ){
+      if(c==="'") inQ=false; else cur+=c;
+      i++; started=true; continue;
+    }
+    if(c==="'"){ inQ=true; quoted=true; started=true; i++; continue; }
+    /* shQuote()'s embedded-quote idiom is 'a'\''b': the backslash-escaped quote
+       sits OUTSIDE the single quotes and is one escaped, inert character. It is
+       protected text, not bare text, so it marks the word quoted -- exactly the
+       rule tests/hostile_harness.js's own tokeniser applies. Reading it as bare
+       would make every value containing an apostrophe unreadable. */
+    if(c==="\\"&&i+1<str.length){ cur+=str.charAt(i+1); quoted=true; started=true; i+=2; continue; }
+    if(c==="\\") return null;                     /* a trailing backslash is malformed */
+    if(c===" "){ flush(); i++; continue; }
+    cur+=c; i++; started=true;
+  }
+  if(inQ) return null;                          /* unbalanced quoting: unreadable, refuse */
+  flush();
+  return words;
+}
+/* The binary a command invokes, as a bare basename, or null if the command does
+   not start with a bare word (which no assembleCommand() output ever does -- the
+   first token of every template is a `lit`). */
+function invokedBinary(command){
+  var words=commandWords(command);
+  if(words===null||!words.length) return null;
+  if(words[0].quoted) return null;
+  var base=words[0].text,cut=base.lastIndexOf("/");
+  if(cut>=0) base=base.slice(cut+1);
+  return base===""?null:base;
+}
+
+/* ---- rule 4, stated as a CLASS (threat model v2, condition PL2) ----------
+   The class is "AN INTERPRETER IS THE FINAL CONSUMER", not "the command is
+   spelled sh". A name list catches the obvious shape and misses two that matter
+   just as much, so all three are named here and all three are REFUSED:
+
+     (1) a stage whose binary reads a PROGRAM from standard input
+         (`| sh`, `| bash`, `| python`, `| perl`, ...),
+     (2) an xargs stage whose CHILD is one of those -- the interpreter is one
+         level down and the pipe operator in front of it says `xargs`, which is
+         why a name check on the stage's own binary misses it, and
+     (3) an EXECUTION SINK reached by REDIRECT rather than by pipe: a write into
+         a directory whose contents the system later executes is arbitrary
+         execution with a delay on it. `> /etc/cron.d/x` and `| tee
+         /etc/profile.d/x.sh` are `| sh` with a timer.
+
+   REFUSED, not rated, and here is the choice stated plainly: the product's
+   promise is that every command it emits can be explained flag by flag, rated,
+   cited and undone. A command whose text will only exist at run time keeps none
+   of those. A red banner over an unreviewable command is theatre -- it trains
+   the operator to click through red -- so the composer will not build one.
+
+   sed and awk are deliberately NOT interpreters for this purpose. They take
+   their program as an ARGUMENT, which is a validated field like any other; they
+   do not execute standard input. The line is "does stdin or a written file
+   become code", not "is it powerful". */
+var SHELL_TOOLS=["sh","bash","dash","zsh","ksh","ksh93","csh","tcsh","ash","busybox",
+                 "python","python2","python3","perl","ruby","php","node","lua","tclsh",
+                 "expect","source","eval"];
+
+/* ---- TM2-F8: nested quoting domains --------------------------------------
+   `su -c '...'`, `sh -c '...'`, `find ... -exec ... {} \;` and every wrapper
+   that takes another command as its argument RE-PARSE that argument with their
+   own rules. A value correctly single-quoted for the outer shell is then
+   re-interpreted by an inner one, and shQuote() -- which is a POSIX SHELL
+   quoter and nothing else -- is the wrong escaper for that second domain.
+
+   This is exactly the shape the dead YAML quoter was deleted to stop
+   pretending about (MCR-SEC-010): a second escaping domain with no sink, no
+   oracle and a comment claiming it was safe. A second domain gets its own quoter AND its own
+   parsing oracle in the same commit, or it does not exist.
+
+   It does not exist in this tranche. Every wrapper below is REFUSED as a stage
+   binary, and find's -exec family is refused as a bare token, so this composer
+   cannot emit a stage whose argument a child re-parses. Refusing is the
+   acceptable answer; a half-closed second domain is not.
+
+   xargs is the one re-parser that is here on purpose, and the reason it is safe
+   is worth writing down: xargs re-parses its INPUT STREAM, not its argv, and
+   that stream is the producing stage's output -- filenames on a disk -- never a
+   value from a form. Nothing this composer emits enters that domain. The `-0`
+   rule below is what keeps the domain honest for the data that DOES enter it. */
+var WRAPPER_TOOLS=["su","runuser","sudo","env","nohup","setsid","timeout","nice","ionice",
+                   "chroot","stdbuf","systemd-run","watch","script","strace","ltrace",
+                   "unshare","nsenter","flock","setpriv","doas","xargs"];
+var EXEC_OPTION_TOKENS=["-exec","-execdir","-ok","-okdir"];
+
+function isShellInvocation(tool,command){
+  if(tool!==undefined&&tool!==null&&inList(SHELL_TOOLS,String(tool))) return true;
+  var base=invokedBinary(command);
+  if(base===null) return true;                  /* unreadable first word: refuse, never guess */
+  return inList(SHELL_TOOLS,base);
+}
+/* TM2-F8's predicate: does this stage hand its argument to a child parser? */
+function reparsesItsArgument(tool,command){
+  if(tool!==undefined&&tool!==null&&inList(WRAPPER_TOOLS,String(tool))) return true;
+  var base=invokedBinary(command);
+  if(base===null) return true;
+  if(inList(WRAPPER_TOOLS,base)) return true;
+  var words=commandWords(command);
+  if(words===null) return true;
+  for(var i=1;i<words.length;i++){
+    if(!words[i].quoted && inList(EXEC_OPTION_TOKENS,words[i].text)) return true;
+  }
+  return false;
+}
+/* One question for every stage, asked once, so rule 4 is a class and not a
+   list: may this assembled command stand as a stage at all? */
+function stageRefused(tool,command){
+  if(isShellInvocation(tool,command)) return true;
+  if(reparsesItsArgument(tool,command)) return true;
+  return false;
+}
+
+/* Rule 2 for the stage text itself (see the block comment). Every word of an
+   assembleCommand() output is a LIT_TOKEN_RE/FLAG_TOKEN_RE token or a
+   shQuote'd value, so no bare operator and no unquoted metacharacter can occur
+   in one -- this cannot fail today. It is what still holds if a future token
+   type emits something wider, and it is the single assertion that makes
+   "every operator in the pipeline came from the closed table" true by CHECK as
+   well as by construction. The harness's pipeline oracle asserts the same
+   property from the outside; this is the inside half. */
+var PIPE_BARE_WORD_RE=/^[A-Za-z0-9_.\/=:,+@%-]+$/;
+function stageCommandClean(command){
+  var words=commandWords(command);
+  if(words===null) return false;                /* unbalanced quoting */
+  if(!words.length) return false;
+  for(var i=0;i<words.length;i++){
+    if(words[i].quoted) continue;               /* a value: contained by definition */
+    if(inList(PIPE_OPERATOR_EMITS,words[i].text)) return false;
+    if(!PIPE_BARE_WORD_RE.test(words[i].text)) return false;
+  }
+  return true;
+}
+/* A stage's spec must be a TEMPLATE spec -- a token list this assembler emits
+   word by word -- never a spec carrying a handed command string. See (a) and
+   (b) in the block comment: one rule, two reasons. */
+function isComposableSpec(spec){
+  if(!spec||typeof spec!=="object") return false;
+  if(spec.rhel_versions!==undefined&&spec.rhel_versions!==null) return false;
+  if(!spec.template||typeof spec.template.length!=="number"||!spec.template.length) return false;
+  return true;
+}
+
+/* xargs -0 is only correct behind a producer that actually emits NUL-delimited
+   records. Fed anything else it silently treats the whole stream as one
+   argument, and `find . -name '*.conf' | xargs -0 rm` deletes something nobody
+   named. The producer test reads BARE words only, so a user value of -print0
+   (already impossible: validateField refuses a leading dash on every type)
+   could not satisfy it even if it existed. */
+var NUL_PRODUCERS={find:["-print0"],grep:["-Z","--null","-z"],
+                   egrep:["-Z","--null","-z"],fgrep:["-Z","--null","-z"]};
+function producesNulDelimited(command){
+  var base=invokedBinary(command);
+  if(base===null) return false;
+  if(!Object.prototype.hasOwnProperty.call(NUL_PRODUCERS,base)) return false;
+  var toks=NUL_PRODUCERS[base],words=commandWords(command);
+  if(words===null) return false;
+  for(var i=1;i<words.length;i++){
+    if(!words[i].quoted && inList(toks,words[i].text)) return true;
+  }
+  return false;
+}
+
+/* Tools whose whole job is destruction, so `| xargs <tool>` is RED whatever the
+   arguments are: the operator is handing a list they have not read to something
+   that does not ask twice. The derived half of the same rule is below -- an
+   xargs stage whose CHILD assembles red is red, whether or not its binary is
+   named here. */
+var XARGS_RED_TOOLS=["rm","unlink","rmdir","kill","pkill","killall","shred","dd",
+                     "wipefs","mkfs","truncate","chattr"];
+
+/* ---- where a redirect may point (conditions PL3 and PL4) -----------------
+   Three classes, and the third is the one that matters most:
+
+     SCRATCH   /tmp, /var/tmp, /home, /root -- the ordinary case. Green.
+     SYSTEM    /etc, /boot, /dev, /usr, /var/lib -- RED. `> /etc/passwd`
+               truncates the file before the command it redirects has produced
+               a single byte, so the damage is done whether or not the command
+               works.
+     UNRATED   everything else. NOT green, and not silently yellow either.
+               PL4: green is a HUMAN CLAIM in this product -- somebody curated
+               an entry and said so. A write to a path nobody classified is not
+               a safe write; it is an unclassified one, and the operator is
+               entitled to see the difference between "reviewed and low blast"
+               and "nobody has ever looked at this path". It ranks as yellow for
+               gating (never green, never below a stage's own rating) and it
+               RENDERS as `unrated`, which is what it is.
+
+   EXECUTION SINKS are a separate answer again: a directory whose contents the
+   system later executes is not a write to be rated, it is `| sh` with a timer,
+   and it is REFUSED by the same rule-4 class that refuses `| bash` (PL2). Most
+   of these sit under /etc or /usr and would be red anyway; /var/spool/cron,
+   /usr/local and /opt are the ones that would not, which is the whole reason
+   this list is written out rather than assumed.
+
+   Matched as "is this the directory, or is it under it" -- never as a
+   substring, so /tmpfoo is not /tmp and /etcetera is not /etc. */
+var PIPE_SYSTEM_DIRS=["/etc","/boot","/dev","/usr","/var/lib","/sys","/proc"];
+var PIPE_SCRATCH_DIRS=["/tmp","/var/tmp","/home","/root"];
+var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/etc/cron.weekly",
+                         "/etc/cron.monthly","/etc/crontab","/var/spool/cron","/etc/profile.d",
+                         "/etc/profile","/etc/bashrc","/etc/bash.bashrc","/etc/sudoers.d",
+                         "/etc/sudoers","/etc/systemd/system","/usr/lib/systemd/system",
+                         "/etc/init.d","/etc/rc.d","/etc/ld.so.conf.d","/etc/ld.so.preload",
+                         "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
+                         "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
+                         "/usr/libexec","/etc/xdg/autostart"];
+function underDir(target,dir){
+  var t=String(target);
+  return t===dir || t.indexOf(dir+"/")===0;
+}
+/* PL2 rule-4 class, redirect half: is this target somewhere the system executes? */
+function isExecutionSink(target){
+  for(var i=0;i<PIPE_EXEC_SINK_DIRS.length;i++){
+    if(underDir(target,PIPE_EXEC_SINK_DIRS[i])) return true;
+  }
+  return false;
+}
+/* PL3: this function takes a STRING and nothing else. It does not consult the
+   `path` field type, the stage shape, or anything the form did. The field type
+   is a VALIDATOR; this is the blast rule, and it has to stand on its own if a
+   target ever arrives by some other road -- which is exactly what the de-quoted
+   whole-pipeline projection below feeds it. */
+function redirectTargetBlast(target){
+  var t=String(target),i;
+  for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
+  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){ if(underDir(t,PIPE_SCRATCH_DIRS[i])) return "green"; }
+  return "unrated";                             /* PL4: never green by default */
+}
+/* `unrated` is not a fourth blast colour: it is a rating the product declines to
+   make, and it is ranked with the writes so it can never rate BELOW one. */
+var PIPE_TARGET_RANK={green:0,unrated:1,red:2};
+
+var BLAST_NAMES=["green","yellow","red"];
+
+/* PL3, the half that does not trust the form. The de-quoted projection of the
+   WHOLE pipeline is scanned for redirections the way MCR-SEC-008 scans it for
+   destructive patterns, and every target found is classified by the same
+   redirectTargetBlast() above. A structurally composed target is found twice,
+   by two independent roads, which is the point: if a target ever reaches the
+   command without passing validateField -- a future stage kind, a spec that
+   emits one, a value that contains one -- the rating still fires.
+
+   This RAISES and never lowers. A `comment` field that merely mentions
+   "> /etc/passwd" will raise the rating of a harmless command, and that is the
+   correct direction to be wrong in: an over-rated command costs a second look,
+   an under-rated one costs the host. */
+function projectedRedirectTargets(dequoted){
+  var w=String(dequoted).split(/[ \t]+/),out=[],i,t,j;
+  for(i=0;i<w.length;i++){
+    t=w[i];
+    if(t==="") continue;
+    if(t===">"||t===">>"||t==="2>"){ if(i+1<w.length&&w[i+1]!=="") out.push(w[i+1]); continue; }
+    if(t.indexOf("2>")===0&&t.length>2&&t.charAt(2)!=="&"){ out.push(t.slice(2)); continue; }
+    if(t.indexOf(">>")===0&&t.length>2){ out.push(t.slice(2)); continue; }
+    if(t.charAt(0)===">"&&t.length>1&&t.charAt(1)!==">"){ out.push(t.slice(1)); continue; }
+    if(t==="tee"){
+      j=i+1;
+      if(j<w.length&&w[j]==="-a") j++;
+      if(j<w.length&&w[j]!=="") out.push(w[j]);
+      continue;
+    }
+  }
+  return out;
+}
+
+/* assemblePipeline(stages, version, opts) -> {command, stages[], flags[], blast} | null
+
+   `stages` is an ordered list. Stage 0 carries no operator; every later stage
+   carries `op`, a KEY of PIPE_OPERATORS. A stage is one of:
+
+     command   {op, spec, values}                assembled by assembleCommand()
+     xargs     {op:"pipe", kind:"xargs", xargs:{nul,maxArgs,replace}, spec, values}
+     path      {op, target}                      for an operator whose takes is "path"
+     operator  {op}                              for an operator whose takes is "none"
+
+   NULL is the only answer for anything incomplete, invalid, gated off the
+   selected release, or outside the closed operator set -- the same rule
+   assembleCommand() keeps, for the same reason (threat-model-v1 section 3.4).
+   There is no partial pipeline return shape. */
+function assemblePipeline(stages,version,opts){
+  opts=opts||{};
+  var patterns=opts.patterns||[];
+  if(!stages||typeof stages.length!=="number"||!stages.length) return null;
+  if(stages.length>MAX_PIPELINE_STAGES) return null;
+  if(!inList(["7","8","9","10"],version)) return null;
+  var words=[],flags=[],stageRecords=[],rank=0,i,j;
+  var prevOpKey=null,prevKind=null,prevCommand=null;
+
+  for(i=0;i<stages.length;i++){
+    var st=stages[i];
+    if(!st||typeof st!=="object") return null;
+    var opKey=(st.op===undefined||st.op===null)?null:st.op;
+    var op=null;
+    if(i===0){
+      if(opKey!==null) return null;             /* the first stage joins nothing */
+    }else{
+      op=pipeOperator(opKey);
+      if(op===null) return null;                /* not in the closed set: the whole seam */
+      /* stdout is already spoken for: a pipe or a tee after `>`/`>>` receives
+         nothing at all, which looks like it worked. 2> is fine -- stderr is a
+         different stream and stdout still flows. */
+      if((opKey==="pipe"||opKey==="tee"||opKey==="tee_append")&&
+         (prevOpKey==="redirect"||prevOpKey==="append")) return null;
+      words.push(op.emit);
+    }
+    var takes=(op===null)?"stage":op.takes;
+    var kind=(st.kind===undefined||st.kind===null)?"command":String(st.kind);
+
+    if(takes==="none"){
+      if(st.spec!==undefined&&st.spec!==null) return null;
+      if(st.values!==undefined&&st.values!==null) return null;
+      if(st.target!==undefined&&st.target!==null) return null;
+      if(st.kind!==undefined&&st.kind!==null) return null;
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      stageRecords.push({index:i,op:opKey,kind:"operator",command:null,target:null,
+                  blast:"green",spec:null});
+      prevOpKey=opKey; prevKind="operator";
+      continue;
+    }
+
+    if(takes==="path"){
+      if(st.spec!==undefined&&st.spec!==null) return null;
+      if(st.values!==undefined&&st.values!==null) return null;
+      if(st.kind!==undefined&&st.kind!==null) return null;
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      var tgt=validateField("path",st.target,null);
+      if(!tgt.ok) return null;                  /* a target is a FIELD, never free text */
+      /* PL2, rule-4 class: a write into a directory the system executes is
+         arbitrary execution with a delay on it, and is refused exactly like
+         `| sh` -- never rated, because a rating implies it could be copied. */
+      if(isExecutionSink(tgt.value)) return null;
+      words.push(shQuote(tgt.value));
+      var tb=redirectTargetBlast(tgt.value);
+      if(PIPE_TARGET_RANK[tb]>rank) rank=PIPE_TARGET_RANK[tb];
+      stageRecords.push({index:i,op:opKey,kind:"redirect",command:null,target:tgt.value,
+                  blast:tb,spec:null});
+      prevOpKey=opKey; prevKind="redirect";
+      continue;
+    }
+
+    /* takes === "stage": a command, or an xargs stage */
+    if(st.target!==undefined&&st.target!==null) return null;
+    if(kind==="command"){
+      if(st.xargs!==undefined&&st.xargs!==null) return null;
+      if(!isComposableSpec(st.spec)) return null;   /* a handed string is not a stage */
+      var res=assembleCommand(st.spec,version,st.values||{},{patterns:patterns});
+      if(res===null) return null;               /* incomplete, invalid, or gated off */
+      if(stageRefused(st.spec&&st.spec.tool,res.command)) return null;   /* PL2 / TM2-F8 */
+      if(!stageCommandClean(res.command)) return null;
+      words.push(res.command);
+      for(j=0;j<(res.flags||[]).length;j++) flags.push(res.flags[j]);
+      if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
+      stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
+                  blast:res.blast,spec:st.spec});
+      prevOpKey=opKey; prevKind="command"; prevCommand=res.command;
+      continue;
+    }
+
+    if(kind==="xargs"){
+      if(i===0) return null;                    /* xargs with nothing feeding it */
+      if(opKey!=="pipe") return null;           /* only a pipe feeds xargs */
+      if(prevKind!=="command") return null;     /* the producer must be the stage before it */
+      var x=st.xargs||{};
+      var xw=["xargs"];
+      var nul=(x.nul===undefined||x.nul===null)?false:x.nul;
+      var replace=(x.replace===undefined||x.replace===null)?false:x.replace;
+      var maxArgs=(x.maxArgs===undefined||x.maxArgs===null)?"":x.maxArgs;
+      if(nul!==true&&nul!==false) return null;
+      if(replace!==true&&replace!==false) return null;
+      if(nul===true){
+        if(prevCommand===null||!producesNulDelimited(prevCommand)) return null;
+        xw.push("-0");
+      }
+      /* -I implies -L1 in xargs(1), so -n alongside it is a contradiction the
+         tool resolves silently in whichever order the flags happen to land.
+         A contradiction is refused here rather than guessed at. */
+      if(maxArgs!==""&&replace===true) return null;
+      if(maxArgs!==""){
+        var mv=validateField("integer",maxArgs,null);
+        if(!mv.ok) return null;
+        if(mv.value==="0") return null;         /* -n 0 is not a batch size */
+        xw.push("-n");                          /* MCR-SEC-015: a short option takes a SPACE */
+        xw.push(shQuote(mv.value));
+      }
+      if(replace===true){
+        xw.push("-I");                          /* short option, space-joined, same rule */
+        xw.push(shQuote("{}"));                 /* the replace string is EMITTED, never typed:
+                                                   no field type and no LIT_TOKEN_RE admits a brace */
+      }
+      if(!isComposableSpec(st.spec)) return null;   /* a handed string is not a stage */
+      var child=assembleCommand(st.spec,version,st.values||{},{patterns:patterns});
+      if(child===null) return null;
+      /* PL2 shape (2): the interpreter is one level down, behind `xargs`, and
+         with or without -0. The class predicate is asked of the CHILD, which is
+         the command that actually runs. */
+      if(stageRefused(st.spec&&st.spec.tool,child.command)) return null;
+      if(!stageCommandClean(child.command)) return null;
+      xw.push(child.command);
+      if(replace===true) xw.push(shQuote("{}"));
+      var xcmd=xw.join(" ");
+      var childBase=invokedBinary(child.command);
+      var xrank=BLAST_RANK[child.blast];
+      /* composition rule: xargs feeding a destructive tool, or feeding anything
+         that already assembles red, is RED whatever the child's own rating says.
+         `find / -name core | xargs rm` is not the blast radius of `rm` on one
+         path the operator typed and read. */
+      if((childBase!==null&&inList(XARGS_RED_TOOLS,childBase))||child.blast==="red"){
+        xrank=BLAST_RANK.red;
+      }
+      if(xrank>rank) rank=xrank;
+      words.push(xcmd);
+      flags.push({flag:"xargs",explain:null});
+      if(nul===true) flags.push({flag:"-0",explain:null});
+      if(maxArgs!=="") flags.push({flag:"-n",explain:null});
+      if(replace===true) flags.push({flag:"-I",explain:null});
+      for(j=0;j<(child.flags||[]).length;j++) flags.push(child.flags[j]);
+      stageRecords.push({index:i,op:opKey,kind:"xargs",command:xcmd,target:null,
+                  blast:BLAST_NAMES[xrank],spec:st.spec});
+      prevOpKey=opKey; prevKind="xargs"; prevCommand=xcmd;
+      continue;
+    }
+    return null;                                /* an unknown stage kind is never guessed */
+  }
+
+  var command=words.join(" ");
+  if(command==="") return null;
+  /* MCR-SEC-008, composed: the destructive table is matched against the WHOLE
+     pipeline and its de-quoted projection, not stage by stage, so a pattern that
+     spans an operator ("rm -rf /" reached through `| xargs rm -rf '/etc/pki'`)
+     still fires. blastFor() already matches both forms; what changes here is
+     that it is handed the entire line. */
+  /* PL3: the second, independent road to the same rule. Every redirect target
+     visible in the DE-QUOTED projection of the whole pipeline is classified by
+     redirectTargetBlast() again, whether or not it came through a validated
+     `path` field. Raises only. */
+  var projected=projectedRedirectTargets(unquoteCommand(command)),pi;
+  for(pi=0;pi<projected.length;pi++){
+    var ptb=redirectTargetBlast(projected[pi]);
+    if(PIPE_TARGET_RANK[ptb]>rank) rank=PIPE_TARGET_RANK[ptb];
+  }
+  var b=blastFor(command,BLAST_NAMES[rank],patterns);
+  var ops=[];
+  for(i=0;i<stageRecords.length;i++){ if(stageRecords[i].op!==null) ops.push(stageRecords[i].op); }
+  return {id:"pipeline",tool:"pipeline",command:command,flags:flags,
+          blast:b.blast,blast_reasons:b.reasons,notes:null,resolved_from:null,
+          version:version,stages:stageRecords,operators:ops};
+}
+
+/* ---- validatePipeline() -- condition PL6 ---------------------------------
+   assemblePipeline() answers one question, null or a pipeline, and that is
+   correct: a half-formed pipeline is worse than a blocked button. But a
+   composer that refuses without saying WHICH STAGE is wrong is a usability
+   failure, and a usability failure on a gate gets worked around -- an operator
+   who cannot see why stage 3 will not compose assembles the line by hand in a
+   text editor, which is the outcome this whole product exists to prevent. A
+   worked-around gate is worse than no gate.
+
+   So this is the pipeline's validateSpec(): the UI's window into the same
+   decision, per stage, naming the stage and the reason. It NEVER returns a
+   command, partial or otherwise -- the only producer of a command string is
+   assemblePipeline(), and `ok` here is assemblePipeline()'s own answer rather
+   than a second opinion that could drift from it. */
+function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey){
+  var out={index:index,kind:"command",ok:true,reason:null,missing:[],invalid:[]};
+  if(!st||typeof st!=="object"){ out.ok=false; out.reason="this stage is not a stage"; return out; }
+  var opKey=(st.op===undefined||st.op===null)?null:st.op;
+  var op=null;
+  if(index===0){
+    if(opKey!==null){ out.ok=false; out.reason="the first stage joins nothing, so it carries no operator"; return out; }
+  }else{
+    op=pipeOperator(opKey);
+    if(op===null){
+      out.ok=false;
+      out.reason="the operator is not one of the "+PIPE_OPERATOR_KEYS.length+" this tool composes";
+      return out;
+    }
+    if((opKey==="pipe"||opKey==="tee"||opKey==="tee_append")&&
+       (prevOpKey==="redirect"||prevOpKey==="append")){
+      out.ok=false;
+      out.reason="standard output is already redirected to a file, so this stage would receive nothing";
+      return out;
+    }
+  }
+  var takes=(op===null)?"stage":op.takes;
+  out.kind=(takes==="none")?"operator":(takes==="path"?"redirect":
+            ((st.kind===undefined||st.kind===null)?"command":String(st.kind)));
+  if(takes==="none"){
+    if(st.spec||st.target||st.values||st.kind||st.xargs){
+      out.ok=false; out.reason="this operator stands alone and carries nothing else";
+    }
+    return out;
+  }
+  if(takes==="path"){
+    if(st.spec||st.kind||st.xargs){ out.ok=false; out.reason="a redirect carries a target, not a command"; return out; }
+    var tv=validateField("path",st.target,null);
+    if(!tv.ok){ out.ok=false; out.reason="the file to write: "+tv.reason; return out; }
+    if(isExecutionSink(tv.value)){
+      out.ok=false;
+      out.reason="writing into a directory the system executes is arbitrary execution with a "+
+                 "delay on it, and this tool will not compose it";
+      return out;
+    }
+    /* PL4, in the UI. assemblePipeline() already RATES this stage; until this
+       line the panel had no way to show it, so a write to a path nobody has
+       classified rendered with no badge at all -- indistinguishable, to the
+       operator, from a stage nobody rated. `unrated` is the answer the product
+       owes them: not green (green is a human claim -- somebody curated an entry
+       and said so), not silently yellow either. redirectTargetBlast() is the
+       same function the assembler calls, asked the same question. */
+    out.blast=redirectTargetBlast(tv.value);
+    return out;
+  }
+  if(out.kind!=="command"&&out.kind!=="xargs"){
+    out.ok=false; out.reason="unknown stage kind"; return out;
+  }
+  if(out.kind==="xargs"){
+    if(index===0){ out.ok=false; out.reason="xargs needs a command in front of it to read from"; return out; }
+    if(opKey!=="pipe"){ out.ok=false; out.reason="only a pipe feeds xargs"; return out; }
+    if(prevKind!=="command"){ out.ok=false; out.reason="the stage feeding xargs must be a command"; return out; }
+    var x=st.xargs||{};
+    if(x.nul===true&&(prevCommand===null||!producesNulDelimited(prevCommand))){
+      out.ok=false;
+      out.reason="-0 reads NUL-delimited records, and the stage in front of it does not produce "+
+                 "them (find -print0, grep -Z)";
+      return out;
+    }
+    if(x.replace===true&&x.maxArgs!==undefined&&x.maxArgs!==null&&x.maxArgs!==""){
+      out.ok=false; out.reason="-I and -n contradict each other; xargs resolves that silently"; return out;
+    }
+    if(x.maxArgs!==undefined&&x.maxArgs!==null&&x.maxArgs!==""){
+      var mv=validateField("integer",x.maxArgs,null);
+      if(!mv.ok){ out.ok=false; out.reason="arguments per run: "+mv.reason; return out; }
+      if(mv.value==="0"){ out.ok=false; out.reason="arguments per run: 0 is not a batch size"; return out; }
+    }
+  }
+  if(!isComposableSpec(st.spec)){
+    out.ok=false;
+    out.reason="only a guided form composes into a pipeline. A reference command is a quoted "+
+               "vendor string, and joining two of them would produce a command the vendor never "+
+               "published while the citation still says they did";
+    return out;
+  }
+  if(st.spec.versions && !inList(st.spec.versions,version)){
+    out.ok=false; out.reason=GATED_COPY+version; return out;
+  }
+  var v=validateSpec(st.spec,version,st.values||{});
+  out.missing=v.missing;
+  out.invalid=v.invalid;
+  if(!v.ok){
+    out.ok=false;
+    out.reason=v.missing.length?("still needed: "+v.missing.join(", ")):"a value is not valid for its field";
+    return out;
+  }
+  var res=assembleCommand(st.spec,version,st.values||{},{patterns:[]});
+  if(res===null){ out.ok=false; out.reason="this command cannot be completed on RHEL "+version; return out; }
+  if(stageRefused(st.spec.tool,res.command)){
+    out.ok=false;
+    out.reason="this command hands its argument to another interpreter, which re-parses it -- "+
+               "a second quoting domain this tool does not compose into";
+    return out;
+  }
+  out.command=res.command;
+  out.blast=res.blast;
+  return out;
+}
+function validatePipeline(stages,version,opts){
+  var out={ok:false,stages:[],reason:null};
+  if(!stages||typeof stages.length!=="number"||!stages.length){
+    out.reason="the pipeline is empty";
+    return out;
+  }
+  if(stages.length>MAX_PIPELINE_STAGES){
+    out.reason="a pipeline is capped at "+MAX_PIPELINE_STAGES+" stages so it stays reviewable";
+    return out;
+  }
+  var prevKind=null,prevCommand=null,prevOpKey=null,i;
+  for(i=0;i<stages.length;i++){
+    var d=pipelineStageReason(stages[i],i,version,prevKind,prevCommand,prevOpKey);
+    out.stages.push(d);
+    prevKind=d.kind;
+    prevOpKey=(stages[i]&&stages[i].op!==undefined&&stages[i].op!==null)?stages[i].op:null;
+    if(d.kind==="command"||d.kind==="xargs") prevCommand=d.command||null;
+  }
+  /* `ok` is assemblePipeline()'s own answer, not a second opinion: one decision,
+     explained here, made there (MCR-SEC-012's rule applied to the composer). */
+  out.ok=assemblePipeline(stages,version,opts||{})!==null;
+  if(!out.ok&&out.reason===null){
+    for(i=0;i<out.stages.length;i++){
+      if(!out.stages[i].ok){ out.reason="stage "+(i+1)+": "+out.stages[i].reason; break; }
+    }
+  }
+  return out;
+}
+
 /* ===== MCR-ASSEMBLER-END ================================================== */
 
 /* ===== MCR-INDEX-BEGIN =====================================================
@@ -1604,6 +2361,41 @@ function formatEvidenceText(opts){
     }
     push("");
   }
+  /* CR-T-31. A pipeline's export names EVERY stage and EVERY stage's source
+     citation, not the first one standing in for the line. This text crosses
+     trust boundary 5 into an SCTM/ATO package: an export that cites one vendor
+     manual for a command composed from three is a false attribution, and it
+     is false in the direction that matters -- it claims provenance the composed
+     line does not have. opts.stages is built by the caller from the SAME
+     rendered-state object the screen reads (MCR-SEC-012); nothing is
+     reassembled in here. */
+  var pstages=opts.stages||null,si,sj;
+  if(pstages&&pstages.length){
+    push("Pipeline: "+pstages.length+" stages, composed in this tool. The operators between "+
+         "stages are emitted by the tool from a fixed set; they are not values anyone typed.");
+    push("");
+    for(si=0;si<pstages.length;si++){
+      var ps=pstages[si];
+      push("  Stage "+(si+1)+(ps.operator?"  (joined by: "+ps.operator+")":"")+
+           "  [blast "+(ps.blast||"not rated")+"]");
+      if(ps.intent) push("    Intent: "+ps.intent);
+      if(ps.command) push("    Command: "+ps.command);
+      if(ps.target) push("    File written: "+ps.target);
+      if(ps.source){
+        push("    Source citation: "+(ps.source.title||"")+" — "+
+             (ps.source.url_or_man||ps.source.version||"")+" (version "+(ps.source.version||"?")+
+             ", retrieved "+(ps.source.retrieved_on||"?")+")");
+      }else{
+        push("    Source citation: not recorded on this stage.");
+      }
+      var pstig=ps.stig||[];
+      for(sj=0;sj<pstig.length;sj++){
+        push("    STIG: "+(pstig[sj].stig_id||"")+"  NIST: "+
+             ((pstig[sj].nist||[]).join(", ")||"none mapped"));
+      }
+    }
+    push("");
+  }
   if(res){
     push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
     push(res.command||"");
@@ -1709,6 +2501,13 @@ var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
            /* CR-T-26: a STIG rule opened from search with no associated command. */
            stigRuleId:null,stigRuleVersion:null,
            /* CR-T-28 */ evidenceOpen:false,
+           /* CR-T-31 — the pipeline: an ordered list of stages, each an entry ID
+              and its own form values. An operator is stored as a KEY into the
+              assembler's closed table, never as operator text, so no part of
+              this array can ever contribute a metacharacter to a command.
+              pipelineEditing is the index whose values STATE.formValues IS (by
+              reference), so a keystroke edits the stage in place. */
+           pipeline:[],pipelineEditing:null,pipelineRev:0,
            /* CR-T-30 — resolved to real entry/tool IDs at boot, IDs only, never raw text. */
            favorites:[],recent:[]};
 (function(){
@@ -1883,7 +2682,15 @@ var RESULT={key:null,value:null};
    computed once and reused by the gutter, the banner, the inspector and the
    clipboard, exactly like a static entry's key never needing formValues at
    all (a plain string concatenation is a no-op when the object is empty). */
-function resultKey(){ return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey(); }
+/* CR-T-31: a pipeline is part of the state assembly reads, so it is part of the
+   cache key. pipelineRev is bumped by every mutation (add, remove, reorder,
+   operator change, target change) rather than serialising the array, so a stage
+   whose VALUES are edited in place -- STATE.formValues IS that stage's values
+   object -- is still caught by formValuesKey() below. */
+function resultKey(){
+  return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey()+
+         "|p"+STATE.pipeline.length+":"+STATE.pipelineRev;
+}
 function formValuesKey(){
   var keys=[],k,out=[];
   for(k in STATE.formValues){ if(Object.prototype.hasOwnProperty.call(STATE.formValues,k)) keys.push(k); }
@@ -1894,6 +2701,16 @@ function formValuesKey(){
   return out.join("&");
 }
 function computeResult(){
+  /* CR-T-31. When a pipeline exists it IS the result: the gutter, the banner,
+     the inspector, Copy, Copy with comment and Export as Evidence all read
+     currentResult(), so routing the pipeline through this one function is what
+     makes every one of them operate on the WHOLE pipeline without a second
+     code path to keep in step (MCR-SEC-012's rule, applied to the composer). */
+  if(STATE.pipeline.length){
+    var pres=assemblePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+    if(!pres) return null;
+    return withCopyPayloads(pres,null);
+  }
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
@@ -1916,10 +2733,38 @@ function currentResult(){
    "# "-prefixed here: commentPayload() owns the prefix so that exactly one
    place in this file decides what a clipboard line looks like (MCR-SEC-003). */
 function commentHeaderLines(res,entry,blast){
-  var lines=[APP_NAME+" "+APP_VERSION+" — RHEL "+res.version];
+  var lines=[APP_NAME+" "+APP_VERSION+" — RHEL "+res.version],i,j;
+  /* CR-T-31: a pipeline's header names EVERY stage, with the entry each stage
+     came from and that entry's STIG rows -- not the first stage's intent
+     standing in for the whole line. A clipboard comment that describes one
+     third of what is about to run is the Explainer row of threat-model §4. */
+  if(res.stages){
+    for(i=0;i<res.stages.length;i++){
+      var st=res.stages[i];
+      var stEntry=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+      var opLabel=st.op?(PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit+" ":""):"";
+      if(st.kind==="redirect"){
+        lines.push("stage "+(i+1)+": "+opLabel+st.target+"  ["+st.blast+"]");
+        continue;
+      }
+      if(st.kind==="operator"){
+        lines.push("stage "+(i+1)+": "+opLabel);
+        continue;
+      }
+      lines.push("stage "+(i+1)+": "+opLabel+((stEntry&&stEntry.intent)||st.command||"")+
+                 "  ["+st.blast+"]");
+      var srows=stEntry?stigRowsFor(stEntry):[];
+      for(j=0;j<srows.length;j++){
+        lines.push("  STIG: "+srows[j].stig_id+" (CAT "+catFor(srows[j])+")  NIST: "+
+                   ((srows[j].nist||[]).join(", ")||"n/a"));
+      }
+    }
+    lines.push("blast: "+blast);
+    return lines;
+  }
   if(entry&&entry.intent) lines.push("intent: "+entry.intent);
   var stig=entry?stigRowsFor(entry):[];
-  for(var i=0;i<stig.length;i++){
+  for(i=0;i<stig.length;i++){
     lines.push("STIG: "+stig[i].stig_id+" (CAT "+catFor(stig[i])+")  NIST: "+((stig[i].nist||[]).join(", ")||"n/a"));
   }
   lines.push("blast: "+blast);
@@ -2040,6 +2885,23 @@ function doCopyDoc(){
    STATE._evidenceText so the Copy button on the modal copies precisely what
    is shown — the same rule doCopy() already applies to the clipboard preview
    (threat-model-v1 §9, MCR-SEC-003). */
+/* CR-T-31: the per-stage evidence rows. Built from STATE.pipeline (for the
+   entry each stage came from and its citation) alongside res.stages (for what
+   the assembler actually emitted), by index -- never by re-assembling. */
+function evidenceStageRows(res){
+  if(!res||!res.stages||!res.stages.length) return null;
+  var rows=[],i;
+  for(i=0;i<res.stages.length;i++){
+    var st=res.stages[i];
+    var stEntry=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+    rows.push({operator:st.op&&PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit:null,
+               intent:stEntry?(stEntry.intent||stEntry.id):null,
+               command:st.command||null,target:st.target||null,blast:st.blast||null,
+               source:stEntry?(stEntry.source||null):null,
+               stig:stEntry?stigRowsFor(stEntry):[]});
+  }
+  return rows;
+}
 function evidenceContext(){
   var res=currentResult();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
@@ -2085,7 +2947,8 @@ function renderEvidenceModal(){
     res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,version:ctx.version,
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
     stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
-    source:src,operatorDate:operatorDate,vstatus:vstatus
+    source:src,operatorDate:operatorDate,vstatus:vstatus,
+    stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
   var html="<p class=\"region-label\">Export as Evidence — SCTM-ready, plain text</p>";
@@ -2499,6 +3362,383 @@ function renderAbout(){
   html+="<pre class=\"aboutblock\">"+esc(ATTRIBUTION_BLOCK)+"</pre>";
   el("editor-card").innerHTML=html;
 }
+/* ============ CR-T-31: the pipeline composer's UI ==========================
+   The doctrine this whole panel exists to keep: A PIPELINE IS STRUCTURE THE
+   TOOL OWNS, NEVER A VALUE THE USER SUPPLIES. There is therefore no text input
+   anywhere in this panel that accepts an operator. The operator picker is a
+   <select> whose OPTION VALUES are the assembler's own closed-table KEYS --
+   "pipe", "and", "redirect" -- and whose option LABELS render the emitted text
+   for the operator to read. `|` appears on screen, escaped, as a label. It
+   never appears in a value, never reaches STATE, and never reaches a command
+   except from PIPE_OPERATORS' own string literal.
+
+   A stage's values object IS STATE.formValues while that stage is being edited
+   (by reference), so a keystroke in the generator form edits the stage in place
+   with no second copy to keep in step. Selecting a different entry leaves stage
+   editing, which is why pipelineEdit() and selectEntry() are the only two
+   places STATE.pipelineEditing changes.
+
+   Only a GENERATOR entry can become a stage. That is not a filter this panel
+   applies for tidiness -- assemblePipeline() refuses a spec that carries a
+   handed command string outright (isComposableSpec), so a static entry and a
+   mined reference record are structurally incapable of being stages. The panel
+   says WHY rather than silently offering nothing (ADR-002, and PL6's rule that
+   a refusal nobody can read gets worked around in a text editor). */
+/* CR-T-31. The one-line heading over an assembled command names the SUBJECT of
+   what is about to run. For a single command that is the entry's tool. For a
+   pipeline it is not: a two-stage line headed "journalctl" tells the operator
+   they are about to run journalctl, and the second stage -- which may be the
+   one that writes a file -- is not named at all. A pipeline says so, and says
+   how many stages it has, because the stage count is the number of things that
+   have to be read before it is run. Both header sites call this, so the screen
+   and the generator panel cannot come to different conclusions. */
+function resultSubject(res,entry){
+  if(res&&res.tool==="pipeline"&&res.stages){
+    return "pipeline of "+res.stages.length+" stages";
+  }
+  return (entry&&entry.tool)?entry.tool:((res&&res.tool)||"");
+}
+/* The privilege badge has the same problem: it is the CURRENT entry's, and for
+   a pipeline the current entry may not even be a stage. Every distinct
+   privilege any stage requires is named, so "requires root" cannot be dropped
+   because the stage needing it is not the one on screen. */
+function resultPrivilege(res,entry){
+  if(!(res&&res.tool==="pipeline"&&res.stages)) return (entry&&entry.privilege)||"";
+  var seen=[],i,st,e;
+  for(i=0;i<res.stages.length;i++){
+    st=res.stages[i];
+    e=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+    if(e&&e.privilege&&!inList(seen,e.privilege)) seen.push(e.privilege);
+  }
+  return seen.join(" + ");
+}
+function cloneValues(v){
+  var out={},k;
+  for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
+  return out;
+}
+function bumpPipeline(){ STATE.pipelineRev++; }
+/* The assembler's stage array, built fresh from STATE. Every command stage
+   hands over the ENTRY as its spec -- the same object assembleCommand() is
+   given for a single command -- so a stage is assembled by exactly the code a
+   one-command build uses, which is what makes the one-stage invariant hold by
+   construction rather than by care. */
+function pipelineStages(){
+  var out=[],i;
+  for(i=0;i<STATE.pipeline.length;i++){
+    var row=STATE.pipeline[i];
+    var stage={};
+    if(i>0) stage.op=row.op;
+    if(row.kind==="redirect"){ stage.target=row.target||""; out.push(stage); continue; }
+    if(row.kind==="operator"){ out.push(stage); continue; }
+    stage.spec=entryById(row.entryId);
+    stage.values=row.values;
+    if(row.kind==="xargs"){
+      stage.kind="xargs";
+      stage.xargs={nul:row.xargs.nul===true,replace:row.xargs.replace===true,
+                   maxArgs:row.xargs.maxArgs||""};
+    }
+    out.push(stage);
+  }
+  return out;
+}
+/* The shape of a stage row in STATE, derived from the operator's `takes`: a
+   path operator carries a target and no command, a standalone operator carries
+   neither. Deriving it here means the click router never has to decide what
+   kind of stage an operator implies, and the two can never disagree. */
+function pipelineRowFor(opKey,entryId,values){
+  var op=opKey?PIPE_OPERATORS[opKey]:null;
+  var takes=op?op.takes:"stage";
+  if(takes==="path") return {kind:"redirect",op:opKey,target:"",entryId:null,values:{},xargs:{}};
+  if(takes==="none") return {kind:"operator",op:opKey,target:"",entryId:null,values:{},xargs:{}};
+  return {kind:"command",op:opKey,target:"",entryId:entryId,values:values,
+          xargs:{nul:false,replace:false,maxArgs:""}};
+}
+function pipelineAdd(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(!entry||!isGeneratorEntry(entry)){
+    toast("Only a guided form composes into a pipeline. Pick a generator entry first.");
+    return;
+  }
+  var first=STATE.pipeline.length===0;
+  var row=pipelineRowFor(first?null:"pipe",entry.id,cloneValues(STATE.formValues));
+  STATE.pipeline.push(row);
+  STATE.pipelineEditing=STATE.pipeline.length-1;
+  STATE.formValues=row.values;                  /* by reference: a keystroke edits the stage */
+  bumpPipeline();
+  renderAll();
+}
+function pipelineRemove(i){
+  if(i<0||i>=STATE.pipeline.length) return;
+  STATE.pipeline.splice(i,1);
+  /* The new first stage joins nothing, so it cannot keep an operator -- and a
+     redirect or a standalone operator cannot LEAD a pipeline at all, because
+     there is nothing in front of it to redirect. Removing the one command in
+     front of `> /tmp/a >> /tmp/b` leaves TWO such rows, so this drops them
+     until the head is a command, rather than once: a single shift left the
+     head row carrying a stale operator, which assemblePipeline() then refused
+     with "only a guided form composes into a pipeline" -- a true refusal
+     naming the wrong reason, which PL6 calls a gate that gets worked around. */
+  while(STATE.pipeline.length&&STATE.pipeline[0].kind!=="command"&&
+        STATE.pipeline[0].kind!=="xargs"){
+    STATE.pipeline.shift();
+  }
+  if(STATE.pipeline.length){
+    STATE.pipeline[0].op=null;
+    /* xargs reads what the stage in front of it produced, so it cannot lead
+       either. It carries an entry and its values, though, so it is DEMOTED to
+       an ordinary command stage rather than discarded: the operator keeps the
+       form they filled in and the pipeline composes. */
+    if(STATE.pipeline[0].kind==="xargs") STATE.pipeline[0].kind="command";
+  }
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineClear(){
+  STATE.pipeline=[];
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineMove(i,delta){
+  var j=i+delta;
+  if(i<0||i>=STATE.pipeline.length||j<0||j>=STATE.pipeline.length) return;
+  /* Only a command can stand first: a redirect has nothing in front of it to
+     redirect, and xargs has nothing in front of it to read. Refused HERE, with
+     a reason, rather than allowed and then refused by assemblePipeline() under
+     a reason about something else (PL6). */
+  if(j===0&&STATE.pipeline[i].kind!=="command"){
+    toast(STATE.pipeline[i].kind==="xargs"
+          ?"xargs reads what the stage in front of it produced, so it cannot be the first stage."
+          :"Only a command can be the first stage: there is nothing in front of this one to redirect.");
+    return;
+  }
+  var a=STATE.pipeline[i],b=STATE.pipeline[j];
+  /* the OPERATORS stay with their positions, not with their stages: stage 1
+     never carries one and every later stage always does, so reordering can
+     never produce a pipeline whose first stage is joined to something. */
+  var aop=a.op,bop=b.op;
+  STATE.pipeline[i]=b; STATE.pipeline[j]=a;
+  STATE.pipeline[i].op=aop; STATE.pipeline[j].op=bop;
+  if(STATE.pipeline[0]) STATE.pipeline[0].op=null;
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+/* A redirection is a stage with no command: an operator and a validated file.
+   It is added with `redirect` selected and an empty target, which is an
+   INCOMPLETE stage -- the pipeline refuses to assemble and the panel names it,
+   which is the behaviour PL6 asks for and not a state to be avoided. */
+function pipelineAddRedirect(){
+  if(!STATE.pipeline.length){
+    toast("A redirection needs a command in front of it. Add a command stage first.");
+    return;
+  }
+  if(STATE.pipeline.length>=MAX_PIPELINE_STAGES){
+    toast("A pipeline is capped at "+MAX_PIPELINE_STAGES+" stages so it stays reviewable.");
+    return;
+  }
+  STATE.pipeline.push(pipelineRowFor("redirect",null,{}));
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineEdit(i){
+  var row=STATE.pipeline[i];
+  if(!row||(row.kind!=="command"&&row.kind!=="xargs")) return;
+  STATE.pipelineEditing=i;
+  STATE.entryId=row.entryId;
+  STATE.formValues=row.values;                  /* by reference, as above */
+  bumpPipeline();
+  renderAll();
+}
+/* The operator picker. `key` arrives from a <select> whose option values are
+   the closed table's keys; anything that is not an own key of that table is
+   discarded here and again inside the assembler. Two refusals, and the second
+   one is the one that counts: even if this function were wrong, assembler-side
+   pipeOperator() would still return null and the pipeline would not compose. */
+function pipelineSetOp(i,key){
+  if(i<=0||i>=STATE.pipeline.length) return;
+  if(!Object.prototype.hasOwnProperty.call(PIPE_OPERATORS,key)) return;
+  var was=STATE.pipeline[i];
+  var row=pipelineRowFor(key,was.entryId,was.values);
+  if(row.kind==="command"&&(was.kind==="command"||was.kind==="xargs")){
+    row.kind=was.kind; row.xargs=was.xargs;     /* keep an xargs stage an xargs stage */
+  }else{
+    /* Switching a command stage to `>` makes it a redirect, and the entry and
+       the values the operator filled in are carried along UNUSED so that
+       switching back restores them instead of silently discarding a filled-in
+       form. pipelineStages() reads entryId/values for command and xargs rows
+       ONLY, and assemblePipeline() refuses a path stage that carries a spec or
+       values at all, so nothing here can reach an assembled command. */
+    row.entryId=was.entryId;
+    row.values=was.values;
+    row.target=was.target||"";
+    row.xargs=was.xargs||{nul:false,replace:false,maxArgs:""};
+    /* a redirect has no form, so it cannot be the stage the form is editing */
+    if(STATE.pipelineEditing===i){ STATE.pipelineEditing=null; STATE.formValues={}; }
+  }
+  STATE.pipeline[i]=row;
+  bumpPipeline();
+  renderAll();
+}
+function pipelineSetKind(i,kind){
+  var row=STATE.pipeline[i];
+  if(!row||(row.kind!=="command"&&row.kind!=="xargs")) return;
+  row.kind=(kind==="xargs")?"xargs":"command";
+  bumpPipeline();
+  renderAll();
+}
+function pipelineSetField(i,field,value){
+  var row=STATE.pipeline[i];
+  if(!row) return;
+  if(field==="target"){ row.target=value; }
+  else if(field==="maxargs"){ row.xargs.maxArgs=value; }
+  else if(field==="nul"){ row.xargs.nul=(value==="1"); }
+  else if(field==="replace"){ row.xargs.replace=(value==="1"); }
+  else return;
+  bumpPipeline();
+  reRenderEditorAndInspector();
+  renderPipelinePanel();
+}
+/* PL6: the panel names the stage that is incomplete, and only that stage.
+   validatePipeline() is the assembler's own decision, per stage, so what this
+   renders can never disagree with what assemblePipeline() did. */
+function renderPipelinePanel(){
+  var target=el("pipeline-panel");
+  if(!target) return;
+  if(!STATE.pipeline.length){
+    var cur=STATE.entryId?entryById(STATE.entryId):null;
+    if(cur&&isGeneratorEntry(cur)){
+      target.innerHTML="<div class=\"card\"><p class=\"region-label\">Pipeline</p>"+
+        "<p class=\"muted\">Add this command as the first stage, then pick an operator and add "+
+        "the next one. The operator is chosen from a fixed list this tool emits itself; there is "+
+        "no field anywhere that accepts a pipe or a redirection as text.</p>"+
+        "<div class=\"toolbar\"><button type=\"button\" class=\"btn\" data-pipe-action=\"add\">"+
+        "Add to pipeline</button></div></div>";
+      return;
+    }
+    if(cur){
+      /* ADR-002, said out loud rather than by offering nothing. A reference or
+         static entry carries a command as a STRING the vendor published; a
+         stage must carry a TEMPLATE this assembler emits word by word, which is
+         why isComposableSpec() refuses one STRUCTURALLY rather than a picker
+         filtering it out. An operator who sees no button and no reason
+         concludes the feature is broken and assembles the line by hand, which
+         is the outcome the whole composer exists to prevent (PL6). */
+      target.innerHTML="<div class=\"card\"><p class=\"region-label\">Pipeline</p>"+
+        "<p class=\"muted\">This entry cannot be a pipeline stage. Its command is a quoted "+
+        "vendor string, and joining two of those would produce a command the vendor never "+
+        "published while the citation still said they did -- so the composer refuses it by "+
+        "construction, not by hiding the button. Pick a guided form (a generator entry) to "+
+        "build a pipeline.</p></div>";
+      return;
+    }
+    target.innerHTML="";
+    return;
+  }
+  var v=validatePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+  var html="<div class=\"card\"><p class=\"region-label\">Pipeline — "+
+           esc(String(STATE.pipeline.length))+" of "+esc(String(MAX_PIPELINE_STAGES))+" stages</p>";
+  html+="<div class=\"stagelist\">";
+  for(var i=0;i<STATE.pipeline.length;i++){
+    var row=STATE.pipeline[i];
+    var d=v.stages[i]||{ok:true,reason:null};
+    var rowEntry=row.entryId?entryById(row.entryId):null;
+    html+="<div class=\""+(d.ok?"stagerow":"stagerow bad")+"\">";
+    html+="<div class=\"stagehead\"><span class=\"stageno\">Stage "+esc(String(i+1))+
+          (i===STATE.pipelineEditing?" — editing":"")+"</span>";
+    if(d.blast){
+      html+="<span class=\"sbadge b-"+escapeAttr(d.blast)+"\">"+esc(d.blast)+"</span>";
+    }
+    html+="</div>";
+    if(i>0){
+      html+="<div class=\"stageops\"><label for=\"pipeop-"+escapeAttr(String(i))+"\">joined by</label>";
+      html+="<select id=\"pipeop-"+escapeAttr(String(i))+"\" data-pipe-field=\"op\" data-pipe-index=\""+
+            escapeAttr(String(i))+"\" aria-label=\"Operator joining stage "+escapeAttr(String(i+1))+
+            " to the stage before it\">";
+      for(var k=0;k<PIPE_OPERATOR_KEYS.length;k++){
+        var key=PIPE_OPERATOR_KEYS[k];
+        html+="<option value=\""+escapeAttr(key)+"\""+(row.op===key?" selected":"")+">"+
+              esc(PIPE_OPERATORS[key].emit)+"  —  "+esc(PIPE_OPERATORS[key].label)+"</option>";
+      }
+      html+="</select></div>";
+    }
+    if(row.kind==="redirect"){
+      html+="<div class=\"stageops\"><label for=\"pipetgt-"+escapeAttr(String(i))+"\">file</label>";
+      html+="<input type=\"text\" id=\"pipetgt-"+escapeAttr(String(i))+"\" data-pipe-field=\"target\" "+
+            "data-pipe-index=\""+escapeAttr(String(i))+"\" maxlength=\"255\" "+
+            "placeholder=\"absolute path\" value=\""+escapeAttr(row.target||"")+"\"></div>";
+    }else if(row.kind==="operator"){
+      html+="<span class=\"stagecmd\">"+esc(PIPE_OPERATORS[row.op]?PIPE_OPERATORS[row.op].emit:"")+
+            "</span>";
+    }else{
+      html+="<span class=\"stagecmd\">"+esc(d.command||((rowEntry&&rowEntry.intent)||row.entryId||""))+
+            "</span>";
+      html+="<div class=\"stageops\">";
+      if(i>0){
+        html+="<label for=\"pipekind-"+escapeAttr(String(i))+"\">run</label>";
+        html+="<select id=\"pipekind-"+escapeAttr(String(i))+"\" data-pipe-field=\"kind\" "+
+              "data-pipe-index=\""+escapeAttr(String(i))+"\">";
+        html+="<option value=\"command\""+(row.kind==="command"?" selected":"")+">directly</option>";
+        html+="<option value=\"xargs\""+(row.kind==="xargs"?" selected":"")+">once per input line (xargs)</option>";
+        html+="</select>";
+      }
+      if(row.kind==="xargs"){
+        html+="<label><input type=\"checkbox\" data-pipe-field=\"nul\" data-pipe-index=\""+
+              escapeAttr(String(i))+"\""+(row.xargs.nul?" checked":"")+"> -0 (NUL-delimited input)</label>";
+        html+="<label><input type=\"checkbox\" data-pipe-field=\"replace\" data-pipe-index=\""+
+              escapeAttr(String(i))+"\""+(row.xargs.replace?" checked":"")+"> -I (one at a time)</label>";
+        html+="<label for=\"pipen-"+escapeAttr(String(i))+"\">-n</label>";
+        html+="<input type=\"text\" id=\"pipen-"+escapeAttr(String(i))+"\" data-pipe-field=\"maxargs\" "+
+              "data-pipe-index=\""+escapeAttr(String(i))+"\" maxlength=\"10\" placeholder=\"per run\" "+
+              "value=\""+escapeAttr(row.xargs.maxArgs||"")+"\">";
+      }
+      html+="</div>";
+    }
+    if(!d.ok&&d.reason){
+      html+="<p class=\"stagewhy\">Stage "+esc(String(i+1))+": "+esc(d.reason)+"</p>";
+    }
+    html+="<div class=\"stageops\">";
+    if(row.kind==="command"||row.kind==="xargs"){
+      html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"edit\" data-pipe-index=\""+
+            escapeAttr(String(i))+"\">Edit fields</button>";
+    }
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"up\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\""+(i===0?" disabled aria-disabled=\"true\"":"")+
+          " aria-label=\"Move stage "+escapeAttr(String(i+1))+" earlier\">Move up</button>";
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"down\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\""+(i===STATE.pipeline.length-1?" disabled aria-disabled=\"true\"":"")+
+          " aria-label=\"Move stage "+escapeAttr(String(i+1))+" later\">Move down</button>";
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"remove\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\" aria-label=\"Remove stage "+escapeAttr(String(i+1))+
+          "\">Remove</button>";
+    html+="</div></div>";
+  }
+  html+="</div>";
+  if(!v.ok&&v.reason){
+    html+="<p class=\"stagewhy\">"+esc(v.reason)+"</p>";
+    html+="<p class=\"muted\">Nothing is assembled while a stage is incomplete. A half-formed "+
+          "pipeline is worse than a blocked button, and this panel names the stage rather than "+
+          "leaving you to find it.</p>";
+  }
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"add\""+
+        (STATE.pipeline.length>=MAX_PIPELINE_STAGES?" disabled aria-disabled=\"true\" title=\"A pipeline is capped so it stays reviewable\"":"")+
+        ">Add current command as a stage</button>";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"redirect\""+
+        (STATE.pipeline.length>=MAX_PIPELINE_STAGES?" disabled aria-disabled=\"true\"":"")+
+        ">Add a redirection</button>";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"clear\">Clear pipeline</button>";
+  html+="</div></div>";
+  target.innerHTML=html;
+}
+
 function renderEditor(){
   var html="";
   if(STATE.rail==="about"){
@@ -2542,9 +3782,10 @@ function renderEditor(){
     return;
   }
   html+="<h2>"+esc(entry.intent||entry.id)+"</h2>";
-  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
+  var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
+  html+="<p class=\"muted\">"+esc(subjA)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
         (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+
-        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
+        (privA?"<span class=\"badge privilege\">requires ":"")+(privA?esc(privA):"")+(privA?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -2678,8 +3919,9 @@ function renderGeneratorResult(){
     target.innerHTML=html;
     return;
   }
-  html+="<p class=\"muted\">"+esc(entry.tool)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (entry.privilege?"<span class=\"badge privilege\">requires ":"")+(entry.privilege?esc(entry.privilege):"")+(entry.privilege?"</span>":"")+"</p>";
+  var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
+  html+="<p class=\"muted\">"+esc(subjG)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
+        (privG?"<span class=\"badge privilege\">requires ":"")+(privG?esc(privG):"")+(privG?"</span>":"")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
@@ -2956,6 +4198,11 @@ function selectTool(id,toggle){
   renderAll();
 }
 function selectEntry(id){
+  /* CR-T-31: picking a different entry leaves stage editing. The
+     STATE.formValues={} below then replaces the stage's own values object
+     rather than emptying it -- which is exactly the distinction that matters,
+     because while editing they are the same object. */
+  STATE.pipelineEditing=null;
   var entry=entryById(id);
   if(!entry) return;
   if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
@@ -3012,6 +4259,7 @@ function renderAll(){
   renderVersionSelector();
   renderToolList();
   renderEditor();
+  renderPipelinePanel();       /* CR-T-31: its own sink, its own statement (Q17) */
   renderInspector();
   renderStatusBar();
   renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
@@ -3039,6 +4287,21 @@ document.addEventListener("click",function(ev){
   }
   if(t===el("palette")){ closePalette(); return; }
   if(t===el("evidence-modal")){ closeEvidenceModal(); return; }
+  /* CR-T-31: the pipeline's own controls. An index and a verb, nothing else —
+     no control in this panel carries operator TEXT, only a closed-table key. */
+  var pa=t.closest("[data-pipe-action]");
+  if(pa){
+    var pidx=parseInt(pa.getAttribute("data-pipe-index"),10);
+    var pact=pa.getAttribute("data-pipe-action");
+    if(pact==="add"){ pipelineAdd(); return; }
+    if(pact==="clear"){ pipelineClear(); return; }
+    if(pact==="redirect"){ pipelineAddRedirect(); return; }
+    if(pact==="edit"){ pipelineEdit(pidx); return; }
+    if(pact==="remove"){ pipelineRemove(pidx); return; }
+    if(pact==="up"){ pipelineMove(pidx,-1); return; }
+    if(pact==="down"){ pipelineMove(pidx,1); return; }
+    return;
+  }
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
@@ -3079,12 +4342,29 @@ function reRenderEditorAndInspector(){
    event for <select>/checkbox on older engines) route through the same
    handler; re-running it twice for one edit is idempotent. */
 function onFieldChange(ev){
+  /* CR-T-31 first: a pipeline control is never a generator field, and routing
+     it here keeps one input listener in this file rather than two. */
+  var pf=ev.target&&ev.target.closest?ev.target.closest("[data-pipe-field]"):null;
+  if(pf){
+    var pi=parseInt(pf.getAttribute("data-pipe-index"),10);
+    var pname=pf.getAttribute("data-pipe-field");
+    if(pname==="op"){ pipelineSetOp(pi,pf.value); return; }
+    if(pname==="kind"){ pipelineSetKind(pi,pf.value); return; }
+    if(pname==="nul"||pname==="replace"){ pipelineSetField(pi,pname,pf.checked?"1":"0"); return; }
+    pipelineSetField(pi,pname,pf.value);
+    return;
+  }
   var f=ev.target&&ev.target.closest?ev.target.closest("[data-field]"):null;
   if(!f) return;
   var name=f.getAttribute("data-field");
   var val=f.value;
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
+  /* When a stage is being edited, STATE.formValues IS that stage's values
+     object, so the line above has already changed the pipeline: bump the
+     result cache key and redraw the stage list along with everything else. */
+  if(STATE.pipelineEditing!==null) bumpPipeline();
   renderGeneratorResult();
+  renderPipelinePanel();
   renderInspector();
 }
 document.addEventListener("input",function(ev){
@@ -3138,6 +4418,16 @@ var KEYMAP=[
    doc:"Copy the command with its comment header",run:function(){ doCopy(true); }},
   {id:"export-evidence",keys:["e","E"],mods:"ctrl",whenTyping:false,
    doc:"Export as Evidence",run:function(){ exportEvidence(); }},
+  /* CR-T-31. Ctrl+Shift+P adds the command on screen as the next stage;
+     Ctrl+Shift+Backspace clears the pipeline. Both are listed in KEYMAP like
+     every other binding, so docs/USER_GUIDE.md stays checkable against one
+     array (UI spec section 5) and nothing in this file attaches a second
+     keydown listener. */
+  {id:"pipeline-add",keys:["p","P"],mods:"ctrlShift",whenTyping:true,
+   doc:"Add the command on screen to the pipeline as the next stage",
+   run:function(){ pipelineAdd(); }},
+  {id:"pipeline-clear",keys:["Backspace"],mods:"ctrlShift",whenTyping:false,
+   doc:"Clear the pipeline",run:function(){ pipelineClear(); }},
   {id:"rail-jump",keys:["1","2","3","4","5"],mods:"ctrlAlt",whenTyping:true,
    doc:"Jump to rail 1-5",run:function(ev){ railAt(parseInt(ev.key,10)); }}
 ];
