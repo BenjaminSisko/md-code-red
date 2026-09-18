@@ -2886,6 +2886,182 @@ function main() {
     }
   }
 
+  /* (8b) PIPE-001: A STAGE BINARY IS A DECLARED TOOL, OR IT IS NOT A STAGE ----
+   *
+   * Marcus Reed's D4 review of the merged composer, condition PIPE-001. Rule 4
+   * was written as a CLASS and implemented as two name lists: isShellInvocation()
+   * and reparsesItsArgument() both key on WORD ONE, so any binary that is not on
+   * either list and then execs a shell composes. Thirteen of the nineteen exec
+   * wrappers he tried went through as `<wrapper> <ctx> bash`, and -- the finding
+   * under the finding -- a stage binary was not required to be a DECLARED TOOL
+   * at all: `definitely-not-a-real-tool --go` composed.
+   *
+   * The fix is structural, the way MCR-SEC-001 closed the token grammar: a
+   * stage's command must invoke the BINARY THAT ITS DECLARED TOOL RESOLVES TO in
+   * the tool table it is handed. That is an allow-list, so the whole wrapper
+   * class is unexpressible by construction rather than by enumeration; these
+   * nineteen rows are evidence that the rule fires, not the rule itself.
+   *
+   * The tool table arrives through opts, which is how the pattern table already
+   * arrives (the assembler block is PURE and reads no dataset). No table means
+   * NOTHING composes -- a composer that fails open when the caller forgets the
+   * allow-list is the allow-list not existing. That is the last check here.
+   */
+  var pipeToolChecks = 0;
+  var realTools = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "tools.json"),
+                                              "utf8")).tools) || [];
+  if (!realTools.length) {
+    stats.failures.push("content/tools.json carries no tools, so the stage allow-list under test " +
+                        "here is empty and every row below would pass for the wrong reason");
+  }
+  function realOpts() { return { patterns: realPatterns, tools: realTools }; }
+  /* `<wrapper> <ctx> bash`: word one is the wrapper, so every name check in the
+     composer is asked about the wrong word. Thirteen of these are the ones
+     Marcus got through; the six marked `was refused` were already caught by
+     WRAPPER_TOOLS and are here so this table proves the NEW rule covers the old
+     one too, rather than replacing it with a differently-shaped gap. */
+  var EXEC_WRAPPERS = [
+    ["runcon", "unconfined_u:unconfined_r:unconfined_t:s0"],
+    ["setarch", "x86_64"],
+    ["taskset", "0x1"],
+    ["numactl", "--physcpubind=0"],
+    ["capsh", "--"],
+    ["aa-exec", "-p"],
+    ["chrt", "0"],
+    ["eatmydata", "--"],
+    ["proot", "-0"],
+    ["firejail", "--quiet"],
+    ["bwrap", "--dev-bind"],
+    ["systemd-inhibit", "--no-pager"],
+    ["at", "now"],
+    ["env", "LANG=C"],                 /* was refused: WRAPPER_TOOLS */
+    ["su", "-"],                       /* was refused: WRAPPER_TOOLS */
+    ["sudo", "-u"],                    /* was refused: WRAPPER_TOOLS */
+    ["timeout", "5"],                  /* was refused: WRAPPER_TOOLS */
+    ["chroot", "/mnt"],                /* was refused: WRAPPER_TOOLS */
+    ["unshare", "--pid"]               /* was refused: WRAPPER_TOOLS */
+  ];
+  function wrapperSpec(bin, ctx) {
+    return { id: "pipe-wrap-" + bin, tool: bin, blast: "green", fields: [],
+             template: [{ lit: bin }, { lit: ctx }, { lit: "bash" }] };
+  }
+  for (var ew = 0; ew < EXEC_WRAPPERS.length; ew++) {
+    for (var ewv = 0; ewv < VERSIONS.length; ewv++) {
+      pipeToolChecks++;
+      var wspec = wrapperSpec(EXEC_WRAPPERS[ew][0], EXEC_WRAPPERS[ew][1]);
+      var wres = A.assemblePipeline([HEAD, { op: "pipe", spec: wspec, values: {} }],
+                                    VERSIONS[ewv], realOpts());
+      if (wres !== null) {
+        stats.failures.push("PIPE-001 / RHEL " + VERSIONS[ewv] + " / " + EXEC_WRAPPERS[ew][0] +
+                            ": composed " + JSON.stringify(wres.command) + ". An exec wrapper " +
+                            "followed by a shell is `| bash` with one word in front of it, and " +
+                            "word-one name lists cannot see it");
+      }
+      pipeToolChecks++;
+      /* the same wrapper as the FIRST stage: a class that only held for later
+         stages would be a rule about pipes, not about stages */
+      var wfirst = A.assemblePipeline([{ spec: wspec, values: {} },
+                                       { op: "pipe", spec: WC_SPEC, values: {} }],
+                                      VERSIONS[ewv], realOpts());
+      if (wfirst !== null) {
+        stats.failures.push("PIPE-001 / RHEL " + VERSIONS[ewv] + " / " + EXEC_WRAPPERS[ew][0] +
+                            " as the FIRST stage: composed " + JSON.stringify(wfirst.command));
+      }
+    }
+  }
+  /* the finding under the finding: a stage binary nobody ever declared */
+  var GHOST_SPEC = { id: "pipe-ghost", tool: "definitely-not-a-real-tool", blast: "green",
+                     fields: [],
+                     template: [{ lit: "definitely-not-a-real-tool" }, { lit: "--go" }] };
+  /* and its quieter sibling: a REAL declared tool id whose template invokes a
+     different binary. The tool table is consulted for the id AND for the word
+     the command actually runs, or the allow-list is a spelling check. */
+  var LIAR_SPEC = { id: "pipe-liar", tool: "grep", blast: "green", fields: [],
+                    template: [{ lit: "runcon" }, { lit: "bash" }] };
+  var undeclared = [["a stage binary that is in no tool table at all", GHOST_SPEC],
+                    ["a declared tool id whose command invokes a different binary", LIAR_SPEC]];
+  for (var ud = 0; ud < undeclared.length; ud++) {
+    for (var udv = 0; udv < VERSIONS.length; udv++) {
+      pipeToolChecks++;
+      var udres = A.assemblePipeline([HEAD, { op: "pipe", spec: undeclared[ud][1], values: {} }],
+                                     VERSIONS[udv], realOpts());
+      if (udres !== null) {
+        stats.failures.push("PIPE-001 / RHEL " + VERSIONS[udv] + " / " + undeclared[ud][0] +
+                            ": composed " + JSON.stringify(udres.command) + ". A stage binary is " +
+                            "allow-listed against the tool table or it is not a stage");
+      }
+      pipeToolChecks++;
+      /* the same shape behind xargs: the child is the command that runs */
+      var udx = A.assemblePipeline([{ spec: FIND_PLAIN, values: { p: "/var/log" } },
+                                    { op: "pipe", kind: "xargs", spec: undeclared[ud][1], values: {} }],
+                                   VERSIONS[udv], realOpts());
+      if (udx !== null) {
+        stats.failures.push("PIPE-001 / RHEL " + VERSIONS[udv] + " / " + undeclared[ud][0] +
+                            " behind xargs: composed " + JSON.stringify(udx.command));
+      }
+    }
+  }
+  /* FAIL CLOSED. The allow-list arrives through opts; a caller that supplies no
+     tool table gets no command stage, not every command stage. */
+  for (var fcv = 0; fcv < VERSIONS.length; fcv++) {
+    pipeToolChecks++;
+    var noTools = A.assemblePipeline([HEAD, { op: "pipe", spec: WC_SPEC, values: {} }],
+                                     VERSIONS[fcv], { patterns: realPatterns });
+    if (noTools !== null) {
+      stats.failures.push("PIPE-001 fail-closed / RHEL " + VERSIONS[fcv] + ": a pipeline composed " +
+                          "with NO tool table supplied -- " + JSON.stringify(noTools.command) +
+                          ". An allow-list that is skipped when the caller forgets it is not an " +
+                          "allow-list");
+    }
+    pipeToolChecks++;
+    var emptyTools = A.assemblePipeline([HEAD, { op: "pipe", spec: WC_SPEC, values: {} }],
+                                        VERSIONS[fcv], { patterns: realPatterns, tools: [] });
+    if (emptyTools !== null) {
+      stats.failures.push("PIPE-001 fail-closed / RHEL " + VERSIONS[fcv] + ": a pipeline composed " +
+                          "against an EMPTY tool table -- " + JSON.stringify(emptyTools.command));
+    }
+  }
+  /* CONTROLS. "Refuse everything" passes every row above, so the legal
+     neighbours run here: a declared binary composes, and the UI's reason names
+     the rule rather than saying nothing. */
+  var DECLARED_SPEC = { id: "pipe-declared", tool: "grep", blast: "green",
+                        fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                        template: [{ lit: "grep" }, { lit: "-r" }, { field: "p" }] };
+  var DECLARED_TAIL = { id: "pipe-declared-tail", tool: "wc", blast: "green", fields: [],
+                        template: [{ lit: "wc" }, { lit: "-l" }] };
+  for (var dcv = 0; dcv < VERSIONS.length; dcv++) {
+    pipeToolChecks++;
+    var dcStages = [{ spec: DECLARED_SPEC, values: { p: "/etc/ssh" } },
+                    { op: "pipe", spec: DECLARED_TAIL, values: {} }];
+    var dcres = A.assemblePipeline(dcStages, VERSIONS[dcv], realOpts());
+    if (dcres === null) {
+      stats.failures.push("PIPE-001 control / RHEL " + VERSIONS[dcv] + ": two DECLARED tools " +
+                          "(grep, wc -- both in content/tools.json) would not compose. The " +
+                          "allow-list has become refuse-everything, and every refusal above " +
+                          "passes for the wrong reason");
+      continue;
+    }
+    var dcMsg = pipelineOracle(dcres.command, dcStages, VERSIONS[dcv]);
+    if (dcMsg) {
+      stats.failures.push("PIPE-001 control / RHEL " + VERSIONS[dcv] + ": PIPELINE ORACLE -- " + dcMsg);
+      continue;
+    }
+    pipeOracles++;
+    pipeToolChecks++;
+    var wvp = A.validatePipeline([HEAD, { op: "pipe", spec: wrapperSpec("runcon", "--"), values: {} }],
+                                 VERSIONS[dcv], realOpts());
+    if (wvp.ok) {
+      stats.failures.push("PIPE-001 / RHEL " + VERSIONS[dcv] + ": validatePipeline() calls a " +
+                          "wrapper stage ok while assemblePipeline() refuses it -- the panel and " +
+                          "the assembler disagree about the same pipeline");
+    } else if (!/\btool\b/.test(String(wvp.reason || "")) &&
+               !/declared/.test(String(wvp.reason || ""))) {
+      stats.failures.push("PIPE-001 / RHEL " + VERSIONS[dcv] + ": the panel's reason for refusing " +
+                          "a wrapper stage is " + JSON.stringify(wvp.reason) + ", which does not " +
+                          "name the rule. PL6: a gate the operator cannot read gets worked around");
+    }
+  }
+
   /* (9) NEGATIVE CONTROLS FOR THE ORACLE ITSELF. Each of these is a pipeline
          string that is WRONG in a specific way, handed to the oracle with the
          composition it claims to be. Every one must be reported. An oracle that
@@ -3341,6 +3517,7 @@ function main() {
     pipeline_table_checks: tableChecks,
     pipeline_blast_checks: blastChecks,
     pipeline_refusal_checks: refusalChecks,
+    pipeline_stage_allowlist_checks: pipeToolChecks,
     pipeline_negative_controls: pipeNegatives,
     pipeline_stig_shape_checks: stigShapeChecks,
     pipeline_interpreter_class_checks: interpreterChecks,
@@ -3421,6 +3598,11 @@ function main() {
                 "an operator on the de-quoted WHOLE pipeline) and " +
                 report.pipeline_refusal_checks + " refusal checks, each with its legal neighbour " +
                 "as a control");
+    console.log("  " + report.pipeline_stage_allowlist_checks + " stage ALLOW-LIST checks " +
+                "(PIPE-001: a stage's command must invoke the binary its declared tool resolves " +
+                "to in the tool table -- 19 exec wrappers as `<wrapper> <ctx> bash`, an " +
+                "undeclared binary, a declared id whose command runs something else, the same " +
+                "shapes behind xargs, fail-closed with no table, and the declared-tool controls)");
     console.log("  " + report.pipeline_interpreter_class_checks + " interpreter-class checks " +
                 "(PL2: rule 4 as a CLASS -- a pipe into an interpreter, an xargs child that is " +
                 "one, and an execution sink reached by REDIRECT -- plus TM2-F8's wrapper refusals " +
