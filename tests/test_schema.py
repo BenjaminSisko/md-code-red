@@ -145,7 +145,11 @@ class SchemaModuleShape(unittest.TestCase):
     def test_enums(self):
         self.assertEqual(("7", "8", "9", "10"), schema.VERSIONS)
         self.assertEqual(("green", "yellow", "red"), schema.BLASTS)
-        self.assertEqual(("verbatim-ok", "paraphrase-only"), schema.LICENSE_CLASSES)
+        # "cc-by-sa-3.0" is the third class, for the Red Hat product-documentation
+        # command lines (licensing ruling v1 Ruling 2). It is pinned here, not
+        # merely allowed: a class silently appearing is a class nobody ruled on.
+        self.assertEqual(("verbatim-ok", "paraphrase-only", "cc-by-sa-3.0"),
+                         schema.LICENSE_CLASSES)
         self.assertEqual(("title", "url_or_man", "version", "retrieved_on", "license_class"),
                          schema.PROVENANCE_FIELDS)
 

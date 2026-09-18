@@ -249,7 +249,8 @@ code,pre{font-family:var(--font-mono);}
   <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
   <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
   <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
-  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
+  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference Commands" title="Reference Commands (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">?</span><span class="lbl">Reference</span></button>
+  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
 </nav>
 
 <!-- SIDEBAR — context panel for the active rail tool -->
@@ -344,6 +345,38 @@ var DEFAULT_VERSION="__DEFAULT_VERSION__";
    unchanged from that ruling; the source em dashes are written here as a
    plain hyphen so this file never carries a hand-typed non-ASCII glyph
    (Q21 scans every tracked file for exactly that class of character). */
+/* Licensing ruling v1 Ruling 2 (Alex Okafor, 2026-09-18), condition 4: a full
+   CC BY-SA notice ships in the About panel alongside the existing attribution
+   block, and per-command attribution ships on each reference record's own panel.
+   The last paragraph is not hedging for its own sake -- the ruling says in terms
+   that attribution alone may not discharge share-alike if counsel later
+   disagrees, and a product that wrote this up as settled would be overclaiming
+   on a legal question in exactly the way it refuses to overclaim on a technical
+   one. */
+var CCBYSA_NOTICE=[
+"Command lines mined from Red Hat Enterprise Linux product documentation are",
+"(c) Red Hat, Inc., and are licensed under the Creative Commons",
+"Attribution-Share Alike 3.0 Unported licence (CC BY-SA 3.0).",
+"",
+"    https://creativecommons.org/licenses/by-sa/3.0/",
+"",
+"Each such command carries its own attribution on its panel: the guide title,",
+"the URL of the original version, and this copyright line. No prose from those",
+"guides is reproduced anywhere in this artifact -- only command lines, which are",
+"the invocation syntax a program's own argument parser defines.",
+"",
+"Red Hat, as the licensor of that documentation, waives the right to enforce,",
+"and agrees not to assert, Section 4d of CC-BY-SA to the fullest extent",
+"permitted by applicable law.",
+"",
+"This reproduction rests on a judgment call recorded in SALM Content Licensing",
+"Ruling v1, Ruling 2, dated 2026-09-18: that a bare command line is a functional",
+"fact rather than expressive prose. That ruling states plainly that attribution",
+"alone may not discharge share-alike if counsel later disagrees. It is therefore",
+"necessary and not sufficient, and nothing here should be read as settling the",
+"question."
+].join("\n");
+
 var ATTRIBUTION_BLOCK=[
   "Content Sources & Licensing:",
   "",
@@ -455,6 +488,7 @@ var STORE=(function(){
 /* The version-gating sentence lives inside the block so the block is entirely
    self-contained: the harness runs it with no other scope in sight. */
 var GATED_COPY="Not available in RHEL ";
+
 
 /* POSIX single-quote quoting, applied UNIFORMLY to every user-supplied value.
    There is deliberately no "this value looks harmless, leave it bare" branch:
@@ -1429,6 +1463,21 @@ function buildIndex(datasets){
                           (r.n||[]).join(" ")).toLowerCase()});
     }
   }
+  /* The REFERENCE tier. Its own `kind`, so the palette can never present a
+     mined line in the same group as a curated entry -- the grouping IS the
+     honesty here. The haystack carries the command text, the tool and every
+     STIG id the record cites, which is what "searchable by tool, by STIG id,
+     by text" means for this family. */
+  var refs=(datasets.REFCMDS&&datasets.REFCMDS.commands)||[];
+  for(i=0;i<refs.length;i++){
+    var rf=refs[i];
+    if(!rf||!rf.id) continue;
+    var stigids="",oc=rf.o||[],oi;
+    for(oi=0;oi<oc.length;oi++){ if(oc[oi].s) stigids+=" "+oc[oi].s; }
+    idx.push({kind:"Reference",id:rf.id,tool:rf.t||null,version:(rf.v&&rf.v[0])||null,cat:null,
+              label:rf.c,
+              hay:String(rf.c+" "+(rf.t||"")+stigids).toLowerCase()});
+  }
   var cciMap=(datasets.CCI_NIST&&datasets.CCI_NIST.cci)||{};
   var cciIds=[],cck;
   for(cck in cciMap){ if(Object.prototype.hasOwnProperty.call(cciMap,cck)) cciIds.push(cck); }
@@ -1452,7 +1501,10 @@ function buildIndex(datasets){
    paletteMatches() this replaces. Grouped by kind, kept in a stable kind
    order, each group capped so one huge family (Flag, STIG) cannot crowd every
    other kind off the palette. */
-var INDEX_KIND_ORDER=["Tool","Command","STIG","Flag","CCI","NIST"];
+/* Curated kinds first, always. "Reference" sits below Command so a mined
+   line can never be the first thing a search offers when a curated entry
+   matches the same words. */
+var INDEX_KIND_ORDER=["Tool","Command","STIG","Reference","Flag","CCI","NIST"];
 var INDEX_GROUP_CAP=8;
 function queryIndex(index,q){
   var out={groups:[],total:0,terms:0};
@@ -1634,6 +1686,100 @@ function formatEvidenceText(opts){
 }
 /* ===== MCR-EVIDENCE-END ===================================================== */
 
+/* ===== MCR-REFERENCE-BEGIN ==================================================
+   The REFERENCE tier (extract/mine_commands.py). Vendor command text mined out
+   of the DISA STIG check/fix prose, the staged man/--help captures and the
+   staged Red Hat product documentation.
+
+   THESE ARE NOT CURATED ENTRIES, and this block exists so that the difference
+   is enforced by code rather than remembered by a reader. A reference record
+   has no verify text, no undo text, no reviewed blast rating and no capture
+   receipt -- extract/schema.py REFUSES those keys on it -- and it never touches
+   the assembler: assembleCommand(), computeResult() and currentResult() read
+   DATASETS.COMMANDS and nothing else, there is no id here that entryById() can
+   resolve (every one is 'ref-' prefixed), and qa.py's reference gate proves
+   both by reading the shipped script.
+
+   Pure, like MCR-ASSEMBLER and MCR-EVIDENCE: everything below is a function of
+   its arguments, so the tests can lift it out of the SHIPPED artifact.
+   ========================================================================== */
+
+/* Blast for a mined command. UNRATED, never green (ADR-002).
+
+   Green in this product is a human claim: a content reviewer looked at the
+   command, decided what it does, and signed for it. Nobody has done that for a
+   mined line, so the absence of a destructive-pattern match is not a safety
+   finding and must not be painted as one. blastFor() is reused rather than
+   re-implemented -- the same table, the same unquoted projection, the same
+   scan -- and only the floor changes. */
+function referenceBlast(command,patterns){
+  var b=blastFor(command,"green",patterns);
+  return {blast:(b.blast==="green"?"unrated":b.blast),reasons:b.reasons};
+}
+
+/* TM2-F5. What does `unrated` do to the COPY control?
+
+   As shipped before this answer, a mined `rm` variant matching no pattern would
+   have copied with LESS friction than a curated green command -- the curated one
+   at least carries a reviewer's undo text on screen. That is backwards. An
+   unrated command is one nobody rated, so copy is held behind an acknowledgement
+   for EVERY reference record regardless of blast: unrated, yellow and red alike.
+   A red match adds the destructive banner on top of it; it does not replace it.
+   The friction is deliberately the same shape as the red-blast acknowledgement
+   the operator already knows. */
+function referenceCopyBlocked(acked){ return !acked; }
+
+/* Per-command attribution (licensing ruling v1 Ruling 2, condition 4). */
+function refGuideUrl(tpl,version,slug){
+  if(!tpl||!version||!slug) return "";
+  return String(tpl).replace("%s",String(version)).replace("%s",String(slug));
+}
+
+/* The citation block, as plain text lines, for ONE occurrence. Pure: every
+   value is passed in. Never carries a sentence from the source -- a mined
+   record holds a command line and a citation, and nothing else exists to
+   carry. */
+function refCitationLine(occ,meta){
+  meta=meta||{};
+  if(!occ) return "";
+  if(occ.s) return "DISA RHEL "+occ.v+" STIG, "+occ.s+" ("+(occ.f||"")+" text, line "+occ.l+")";
+  if(occ.g){
+    var g=(meta.guides&&meta.guides[occ.g])||{};
+    return "Red Hat Enterprise Linux "+occ.v+", "+(g.title||occ.g)+
+           " -- "+refGuideUrl(meta.guide_url_template,occ.v,occ.g)+
+           " -- "+(meta.guide_attribution||"");
+  }
+  return (occ.p||"")+" line "+occ.l+(occ.x?(" ("+occ.x+" section)"):"");
+}
+
+/* What reaches the clipboard for a reference command. Runs through the SAME
+   control-character stripping the evidence export uses (evidenceLineSafe, which
+   shares MCR-ASSEMBLER's one range table) -- a mined line is vendor text this
+   product did not write, so it gets the strongest line-safety the codebase has,
+   not the weakest. Every comment line is '# '-prefixed exactly like
+   commentPayload() does for a curated entry (MCR-SEC-003). */
+function refCopyPayload(rec,meta,withComment){
+  if(!rec) return null;
+  var cmd=evidenceLineSafe(rec.c);
+  if(!withComment) return cmd;
+  var lines=["# MD CODE RED -- VENDOR REFERENCE, NOT HOST-VERIFIED",
+             "# This command was mined from vendor documentation. It was not",
+             "# curated, not run on a host by this shop, and not assembled by",
+             "# this tool. No verify step, no undo step and no blast rating.",
+             "# tier: "+rec.tier+"   authority: "+rec.authority+
+             "   licence: "+rec.license_class];
+  if(rec.trunc){
+    lines.push("# INCOMPLETE: the vendor's own page wrapped and cut this line.");
+  }
+  var occ=(rec.o||[]);
+  for(var i=0;i<occ.length;i++){ lines.push("# source: "+refCitationLine(occ[i],meta)); }
+  var out=[],j;
+  for(j=0;j<lines.length;j++){ out.push(evidenceLineSafe(headerSafe(lines[j]))); }
+  out.push(cmd);
+  return out.join("\n");
+}
+/* ===== MCR-REFERENCE-END ==================================================== */
+
 /* ===== MCR-FAVORITES-BEGIN ==================================================
    CR-T-30. sanitizeIdList() is the one place a value coming back out of
    localStorage is allowed to become a list of favorite/recent IDs. Pure, so
@@ -1675,6 +1821,7 @@ try{
     FLAGS:DATA.flags,
     CCI_NIST:DATA.cci_nist,
     EXPECTED:DATA.expected_output,
+    REFCMDS:DATA.reference_commands,
     INDEX_SEED:DATA.index_seed
   };
 }catch(e){
@@ -1710,7 +1857,12 @@ var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
            stigRuleId:null,stigRuleVersion:null,
            /* CR-T-28 */ evidenceOpen:false,
            /* CR-T-30 — resolved to real entry/tool IDs at boot, IDs only, never raw text. */
-           favorites:[],recent:[]};
+           favorites:[],recent:[],
+           /* The mined REFERENCE tier. refId is a 'ref-' id and is deliberately a
+              SEPARATE slot from entryId: nothing that reads entryId can ever be
+              handed one of these, which is half of why the assembler cannot see
+              them. refAck is the copy friction unrated requires (TM2-F5). */
+           refId:null,refToolId:null,refAck:false,refPage:0};
 (function(){
   var saved=STORE.getSession("version",null);
   if(saved && RHEL_VERSIONS.indexOf(saved)>=0) STATE.version=saved;
@@ -1770,6 +1922,44 @@ function entryById(id){
   for(var i=0;i<entries.length;i++){ if(entries[i].id===id) return entries[i]; }
   return null;
 }
+/* ============ reference-tier lookups ============
+   A lazily built {tool: [record, ...]} index. 14,558 records is too many to scan
+   per render, and too many to index at boot: this is built on first use and kept
+   for the life of the page, the same shape as SEARCH_INDEX. */
+var REF_BY_TOOL=null,REF_BY_ID=null;
+function refDataset(){ return (DATASETS.REFCMDS&&DATASETS.REFCMDS.commands)||[]; }
+function refMeta(){ return (DATASETS.REFCMDS&&DATASETS.REFCMDS._meta)||{}; }
+function buildRefIndexes(){
+  if(REF_BY_TOOL) return;
+  REF_BY_TOOL={}; REF_BY_ID={};
+  var recs=refDataset(),i;
+  for(i=0;i<recs.length;i++){
+    var r=recs[i];
+    if(!r||!r.id) continue;
+    REF_BY_ID[r.id]=r;
+    if(!Object.prototype.hasOwnProperty.call(REF_BY_TOOL,r.t)) REF_BY_TOOL[r.t]=[];
+    REF_BY_TOOL[r.t].push(r);
+  }
+}
+function refCommandById(id){
+  if(typeof id!=="string"||id.indexOf("ref-")!==0) return null;
+  buildRefIndexes();
+  return Object.prototype.hasOwnProperty.call(REF_BY_ID,id)?REF_BY_ID[id]:null;
+}
+function refCommandsForTool(toolId){
+  buildRefIndexes();
+  return (toolId&&Object.prototype.hasOwnProperty.call(REF_BY_TOOL,toolId))?REF_BY_TOOL[toolId]:[];
+}
+function refToolNames(){
+  buildRefIndexes();
+  var out=[],k;
+  for(k in REF_BY_TOOL){ if(Object.prototype.hasOwnProperty.call(REF_BY_TOOL,k)) out.push(k); }
+  out.sort();
+  return out;
+}
+/* Is this record offered on the selected release? Gated, never hidden -- the
+   same law the tool list follows. */
+function refOnVersion(rec){ return !!(rec&&rec.v&&inList(rec.v,STATE.version)); }
 function entriesForTool(id){
   var entries=(DATASETS.COMMANDS&&DATASETS.COMMANDS.entries)||[],out=[];
   for(var i=0;i<entries.length;i++){ if(entries[i].tool===id) out.push(entries[i]); }
@@ -2358,6 +2548,7 @@ function renderToolList(){
   var all=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
   if(STATE.rail==="favorites"){ renderFavoritesSidebar(); return; }
+  if(STATE.rail==="reference"){ renderReferenceSidebar(); return; }
   if(STATE.rail==="about"){
     html+="<p class=\"region-label\">About</p>";
     html+="<p class=\"muted\">Tool identity, content fingerprint, STIG versions and the required "+
@@ -2437,6 +2628,83 @@ function renderToolList(){
               (isGeneratorEntry(e)?"<span class=\"why\">guided form</span>":"")+"</button></li>";
       }
     }
+    var refs=refCommandsForTool(t.id);
+    if(refs.length){
+      html+="<li><p class=\"region-label reftier\">Reference commands ("+
+            esc(String(refs.length))+") &mdash; vendor text, not host-verified</p>";
+      html+="<ul class=\"list reflist\" data-listnav=\"refs\">";
+      var shown=0,r2;
+      for(r2=0;r2<refs.length&&shown<REF_SIDEBAR_CAP;r2++){
+        var rr=refs[r2];
+        if(!refOnVersion(rr)) continue;
+        shown++;
+        html+="<li><button type=\"button\" class=\"row ref\" data-ref=\""+escapeAttr(rr.id)+
+              "\" aria-current=\""+(rr.id===STATE.refId?"true":"false")+"\">"+esc(rr.c)+
+              "<span class=\"why\">"+esc(rr.authority==="governing"?"DISA reference":"vendor doc")+
+              (rr.trunc?esc(" \u00b7 incomplete line"):"")+"</span></button></li>";
+      }
+      if(!shown){
+        html+="<li><p class=\"muted\">No reference command for this tool on RHEL "+
+              esc(STATE.version)+".</p></li>";
+      }else if(refs.length>shown){
+        html+="<li><p class=\"muted\">Showing "+esc(String(shown))+" of "+esc(String(refs.length))+
+              ". Press / and search to reach the rest.</p></li>";
+      }
+      html+="</ul></li>";
+    }
+    html+="</ul></li>";
+  }
+  html+="</ul>";
+  el("sidebar-body").innerHTML=html;
+}
+
+/* How many reference commands one tool shows in the sidebar before the palette
+   takes over. A tool with 500 mined lines is a scroll nobody reads; the search
+   index is the way through that, and the count above the list says how many are
+   there so the cap is never a silent truncation. */
+var REF_SIDEBAR_CAP=40;
+
+/* The Reference rail: every tool the mined tier knows, including the 800-odd
+   this product does not catalogue and therefore does not list in the builder.
+   Without it those records would be reachable only by search. */
+function renderReferenceSidebar(){
+  var html="<p class=\"region-label\">Reference commands</p>";
+  html+="<p class=\"muted reftier\">Vendor reference text, mined from the DISA STIG check and fix "+
+        "text, the staged man pages and the Red Hat product documentation. Not curated, not "+
+        "host-verified, not assembled by this tool. No verify step, no undo step, no blast "+
+        "rating.</p>";
+  var tools=refToolNames(),i;
+  if(!tools.length){
+    html+="<p class=\"muted\">This build embeds no reference commands.</p>";
+    el("sidebar-body").innerHTML=html;
+    return;
+  }
+  html+="<ul class=\"list\" data-listnav=\"reftools\">";
+  for(i=0;i<tools.length;i++){
+    var tid=tools[i];
+    var recs=refCommandsForTool(tid);
+    var open=(tid===STATE.refToolId);
+    html+="<li><button type=\"button\" class=\"row\" data-reftool=\""+escapeAttr(tid)+
+          "\" aria-current=\""+(open?"true":"false")+"\">"+esc(tid)+
+          "<span class=\"why\">"+esc(String(recs.length))+"</span></button></li>";
+    if(!open) continue;
+    html+="<li><ul class=\"list reflist\" data-listnav=\"refs\">";
+    var shown=0,j;
+    for(j=0;j<recs.length&&shown<REF_SIDEBAR_CAP;j++){
+      var rr=recs[j];
+      if(!refOnVersion(rr)) continue;
+      shown++;
+      html+="<li><button type=\"button\" class=\"row ref\" data-ref=\""+escapeAttr(rr.id)+
+            "\" aria-current=\""+(rr.id===STATE.refId?"true":"false")+"\">"+esc(rr.c)+
+            "<span class=\"why\">"+esc(rr.authority==="governing"?"DISA reference":"vendor doc")+
+            (rr.trunc?esc(" \u00b7 incomplete line"):"")+"</span></button></li>";
+    }
+    if(!shown){
+      html+="<li><p class=\"muted\">Nothing for RHEL "+esc(STATE.version)+" under this tool.</p></li>";
+    }else if(recs.length>shown){
+      html+="<li><p class=\"muted\">Showing "+esc(String(shown))+" of "+esc(String(recs.length))+
+            ". Press / and search to reach the rest.</p></li>";
+    }
     html+="</ul></li>";
   }
   html+="</ul>";
@@ -2495,15 +2763,114 @@ function renderAbout(){
   html+="<li>Command intent, notes and \"changed in RHEL X\" text — paraphrase-only, from Red Hat "+
         "product documentation and the man pages/--help output of the installed binaries</li>";
   html+="</ul>";
+  var rmeta=refMeta();
+  html+="<p class=\"region-label\">Reference tier (mined vendor command text)</p>";
+  html+="<p class=\"muted\">This build embeds "+esc(String(rmeta.record_count||0))+
+        " reference commands across "+esc(String(rmeta.distinct_tools||0))+
+        " tools, mined by "+esc(rmeta.generator||"")+". They are NOT curated and NOT "+
+        "host-verified: no verify step, no undo step, no reviewed blast rating and no capture "+
+        "receipt. Nothing in this tier was checked against a running binary.</p>";
+  html+="<ul class=\"list\">";
+  html+="<li>DISA STIG check and fix text \u2014 verbatim-ok, authority governing</li>";
+  html+="<li>man pages and --help captures \u2014 paraphrase-only, authority documentary "+
+        "(the command line only; no surrounding prose is reproduced)</li>";
+  html+="<li>Red Hat product documentation \u2014 cc-by-sa-3.0, authority documentary</li>";
+  html+="</ul>";
+  html+="<p class=\"region-label\">Red Hat documentation \u2014 CC BY-SA 3.0 Unported notice</p>";
+  html+="<pre class=\"aboutblock\">"+esc(CCBYSA_NOTICE)+"</pre>";
   html+="<p class=\"region-label\">Attribution (SALM Content Licensing Ruling v1, verbatim)</p>";
   html+="<pre class=\"aboutblock\">"+esc(ATTRIBUTION_BLOCK)+"</pre>";
   el("editor-card").innerHTML=html;
 }
+/* The reference-tier editor pane. READ ONLY, by construction rather than by
+   discipline: there is no form, no field, no template, no assembler call and no
+   `res` object anywhere below. What is rendered is rec.c, escaped, and its
+   citation. The one control is Copy, and it is held behind an acknowledgement
+   (TM2-F5 -- see referenceCopyBlocked).
+
+   The label is deliberately unmissable and deliberately repeated: this panel
+   looks like the curated command panel, and the whole risk of the reference tier
+   is an operator reading a mined line as though a human signed for it. */
+function renderReferenceEditor(rec){
+  var meta=refMeta();
+  var rb=referenceBlast(rec.c,PATTERNS);
+  var html="<div class=\"reftier-banner\" role=\"note\">";
+  html+="<h2>Vendor reference &mdash; not host-verified, not assembled by this tool</h2>";
+  html+="<p>This command was mined from vendor documentation. Nobody in this shop ran it, rated "+
+        "it, wrote a verify step for it or wrote an undo step for it. It is shown because the "+
+        "vendor published it, and for no other reason.</p>";
+  html+="</div>";
+  html+="<h2>"+esc(rec.t)+"</h2>";
+  html+="<p class=\"muted\">tier "+esc(rec.tier)+" \u00b7 authority "+esc(rec.authority)+
+        " \u00b7 licence "+esc(rec.license_class)+" \u00b7 blast "+esc(rb.blast)+
+        " \u00b7 RHEL "+esc((rec.v||[]).join(", "))+"</p>";
+  if(rb.blast==="unrated"){
+    html+="<p class=\"muted\">Blast <strong>unrated</strong>: this command matches no pattern in "+
+          "the destructive table, and that is not a finding that it is safe. Nobody rated it. A "+
+          "curated entry says green only when a reviewer signed for it.</p>";
+  }
+  if(rec.trunc){
+    html+="<p class=\"warn\">INCOMPLETE LINE. The vendor's own page wrapped and cut this "+
+          "command, and this tool will not guess the rest. What is below is the beginning of a "+
+          "command, not a command.</p>";
+  }
+  var lines=String(rec.c).split("\n");
+  html+="<div class=\"codeblock reftier\" aria-label=\"Vendor reference command, read only\">";
+  for(var i=0;i<lines.length;i++){
+    html+="<div class=\"codeline\"><span class=\"ln\">"+esc(String(i+1))+
+          "</span><span class=\"lc\">"+esc(lines[i])+"</span></div>";
+  }
+  html+="</div>";
+  html+="<div class=\"blast\" role=\"alert\"><label><input type=\"checkbox\" data-action=\"ref-ack\""+
+        (STATE.refAck?" checked":"")+"> I understand this is unverified vendor reference text</label>";
+  var reasons=rb.reasons||[];
+  for(var k=0;k<reasons.length;k++){
+    html+="<p><strong>"+esc(reasons[k].label||reasons[k].id)+"</strong> &mdash; "+
+          esc(reasons[k].why||"")+"</p>";
+  }
+  html+="</div>";
+  var blocked=referenceCopyBlocked(STATE.refAck);
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"ref-copy\""+
+        (blocked?" aria-disabled=\"true\" disabled title=\"Tick the box to unlock copy\"":"")+
+        ">Copy</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"ref-copy-comment\""+
+        (blocked?" aria-disabled=\"true\" disabled title=\"Tick the box to unlock copy\"":"")+
+        ">Copy with citation</button>";
+  html+="</div>";
+  html+="<p class=\"region-label\">Source</p><ul class=\"list\">";
+  var occ=rec.o||[],m;
+  for(m=0;m<occ.length;m++){
+    html+="<li><p class=\"muted\">"+esc(refCitationLine(occ[m],meta))+"</p></li>";
+  }
+  html+="</ul>";
+  if(rec.n&&rec.n>occ.length){
+    html+="<p class=\"muted\">Cited "+esc(String(rec.n))+" times across the sources; the "+
+          esc(String(occ.length))+" citations above are the ones this build carries.</p>";
+  }
+  if(rec.license_class==="cc-by-sa-3.0"){
+    html+="<p class=\"muted\">"+esc(meta.guide_attribution||"")+". Reproduced under the Creative "+
+          "Commons Attribution-Share Alike 3.0 Unported licence. See the About panel for the full "+
+          "notice.</p>";
+  }
+  html+="<p class=\"muted\">Nothing on this panel is assembled. There is no verify step, no undo "+
+        "step and no capture receipt, because this tier has none to give.</p>";
+  el("editor-card").innerHTML=html;
+}
+
 function renderEditor(){
   var html="";
   if(STATE.rail==="about"){
     renderAbout();
     return;
+  }
+  if(STATE.refId){
+    var refrec=refCommandById(STATE.refId);
+    if(refrec){
+      renderBlastBanner(null);
+      renderReferenceEditor(refrec);
+      return;
+    }
   }
   renderBlastBanner(currentResult());
   if(!STATE.entryId){
@@ -2931,7 +3298,8 @@ function activateCrosswalkHit(id,field){
 function activateHit(i){
   var h=STATE.paletteHits[i];
   if(!h) return;
-  if(h.kind==="Tool"){ selectTool(h.id); }
+  if(h.kind==="Reference"){ selectRefCommand(h.id); }
+  else if(h.kind==="Tool"){ selectTool(h.id); }
   else if(h.kind==="STIG"){ selectStigRule(h.id,h.version||STATE.version); }
   else if(h.kind==="CCI"){ activateCrosswalkHit(h.id,"cci"); }
   else if(h.kind==="NIST"){ activateCrosswalkHit(h.id,"nist"); }
@@ -2955,11 +3323,41 @@ function selectTool(id,toggle){
   STORE.set("lasttool",STATE.toolId);
   renderAll();
 }
+/* Selecting a reference record CLEARS entryId, and selecting an entry clears
+   refId. The two slots are never both set, so no renderer has to decide which
+   one wins and no code path can carry a 'ref-' id into an entry slot. */
+function selectRefCommand(id){
+  var rec=refCommandById(id);
+  if(!rec) return;
+  STATE.refId=id;
+  STATE.refAck=false;
+  STATE.entryId=null;
+  STATE.stigRuleId=null;
+  STATE.line=0;
+  renderAll();
+}
+function selectRefTool(id,toggle){
+  STATE.refToolId=(toggle&&STATE.refToolId===id)?null:id;
+  renderAll();
+}
+function doRefCopy(withComment){
+  var rec=STATE.refId?refCommandById(STATE.refId):null;
+  if(!rec){ toast("Nothing to copy."); return; }
+  if(referenceCopyBlocked(STATE.refAck)){
+    toast("Unrated vendor text \u2014 tick the acknowledgement box first.");
+    return;
+  }
+  var payload=refCopyPayload(rec,refMeta(),withComment);
+  if(payload===null||payload===undefined){ toast("Copy refused."); return; }
+  var ok=copyText(payload);
+  toast(ok?"Copied \u2014 vendor reference text, not host-verified":"Copy failed \u2014 select the text and use your browser's copy.");
+}
 function selectEntry(id){
   var entry=entryById(id);
   if(!entry) return;
   if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
   STATE.entryId=id;
+  STATE.refId=null;                                 /* an entry selection replaces a reference record */
   STATE.stigRuleId=null;                            /* an entry selection replaces a standalone rule */
   STATE.line=0;
   STATE.acked=false;
@@ -3029,6 +3427,10 @@ document.addEventListener("click",function(ev){
   if(tool){ selectTool(tool.getAttribute("data-tool"),true); return; }
   var entry=t.closest("[data-entry]");
   if(entry){ selectEntry(entry.getAttribute("data-entry")); return; }
+  var refrow=t.closest("[data-ref]");
+  if(refrow){ selectRefCommand(refrow.getAttribute("data-ref")); return; }
+  var reftool=t.closest("[data-reftool]");
+  if(reftool){ selectRefTool(reftool.getAttribute("data-reftool"),true); return; }
   var hit=t.closest("[data-hit]");
   if(hit){ activateHit(parseInt(hit.getAttribute("data-hit"),10)); return; }
   var line=t.closest("[data-line]");
@@ -3044,6 +3446,9 @@ document.addEventListener("click",function(ev){
   var action=a.getAttribute("data-action");
   if(action==="theme"){ THEME.toggle(); return; }
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
+  if(action==="ref-ack"){ STATE.refAck=!!a.checked; renderEditor(); return; }
+  if(action==="ref-copy"){ doRefCopy(false); return; }
+  if(action==="ref-copy-comment"){ doRefCopy(true); return; }
   if(action==="copy"){ doCopy(false); return; }
   if(action==="copy-comment"){ doCopy(true); return; }
   if(action==="copy-doc"){ doCopyDoc(); return; }

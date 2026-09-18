@@ -45,7 +45,7 @@
   "verbatim_span_count": 13041,
   "truncated_count": 1186,
   "evidence_eligible_count": 1628,
-  "unrated_count": 14377,
+  "unrated_count": 14367,
   "disa_overlap": {
    "count": 38,
    "note": "commands appearing in BOTH the Red Hat guides and the DISA STIG text. Licensing ruling v1 Ruling 2 condition 2: DISA wins on overlap, so these are attributed to DISA (public domain) and their license_class is verbatim-ok, not cc-by-sa-3.0. This nets the Red Hat count down."
