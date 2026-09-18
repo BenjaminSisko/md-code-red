@@ -1415,6 +1415,57 @@ function main() {
   var goldenRows = golden.generators || {};
   var realPatterns = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "dangerous.json"),
                                                  "utf8")).patterns) || [];
+  var realTools = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "tools.json"),
+                                              "utf8")).tools) || [];
+  /* PIPE-001. Every pipeline check below hands the composer a TOOL TABLE,
+     because a stage binary is now allow-listed against one and a composer with
+     no table composes nothing (that fail-closed behaviour is itself asserted,
+     with no table and with an empty one, in section (8b)).
+
+     This table is the HARNESS's own declared tool set, not content/tools.json:
+     the sweeps above fuzz SYNTHETIC specs whose binary is `probe`, and the
+     allow-list's contract is "the binary this spec's declared tool resolves
+     to", not "a binary MD CODE RED happens to ship". Section (8b) is the one
+     that drives the REAL content/tools.json, which is where the wrapper class
+     has to be refused.
+
+     The interpreters and wrappers are IN this table on purpose. If `sh`, `bash`
+     and `sudo` were simply absent, every PL2/TM2-F8 refusal check below would
+     pass because the binary was undeclared -- proving the new rule twice and
+     the old rule never. Declared here, they are refused by the rule that is
+     supposed to refuse them. */
+  var HARNESS_TOOLS = [
+    { id: "harness", binary: "probe" }, { id: "probe", binary: "probe" },
+    { id: "grep", binary: "grep" }, { id: "wc", binary: "wc" },
+    { id: "find", binary: "find" }, { id: "rm", binary: "rm" },
+    { id: "kill", binary: "kill" }, { id: "sed", binary: "sed" },
+    { id: "awk", binary: "awk" }, { id: "sort", binary: "sort" },
+    { id: "cut", binary: "cut" }, { id: "tr", binary: "tr" },
+    { id: "head", binary: "head" }, { id: "tail", binary: "tail" },
+    { id: "uniq", binary: "uniq" }, { id: "cat", binary: "cat" },
+    { id: "systemctl", binary: "systemctl" }, { id: "firewall-cmd", binary: "firewall-cmd" },
+    /* the destructive pair the blast-composition rows use as their red stage:
+       declared here so those rows exercise the BLAST rule, not the allow-list */
+    { id: "wipefs", binary: "wipefs" }, { id: "shred", binary: "shred" },
+    /* declared so the deny lists, not the allow-list, do the refusing */
+    { id: "sh", binary: "sh" }, { id: "bash", binary: "bash" },
+    { id: "python3", binary: "python3" }, { id: "perl", binary: "perl" },
+    { id: "su", binary: "su" }, { id: "sudo", binary: "sudo" },
+    { id: "env", binary: "env" }, { id: "xargs", binary: "xargs" }
+  ];
+  /* The table the general sweeps run against is the harness's own synthetic
+     tools UNION the real content/tools.json, because those sweeps drive both
+     kinds of spec -- synthetic ones invoking `probe`, and all 27 REAL generator
+     entries, whose binaries are curated in tools.json and nowhere else. Section
+     (8b) deliberately does NOT use this union: the wrapper class must be
+     refused against the real table alone, with nothing of the harness's own
+     making in it. */
+  var SWEEP_TOOLS = HARNESS_TOOLS.concat(realTools);
+  function pipeOpts(o) {
+    o = o || {};
+    if (o.tools === undefined) o.tools = SWEEP_TOOLS;
+    return o;
+  }
   var goldenChecks = 0, syntaxChecks = 0, inspectorChecks = 0;
   for (var gs = 0; gs < specEntries.length; gs++) {
     var gentry = specEntries[gs];
@@ -1974,7 +2025,7 @@ function main() {
     pipeChecks++; stats.checks++;
     var res;
     try {
-      res = A.assemblePipeline(stages, version, { patterns: [] });
+      res = A.assemblePipeline(stages, version, pipeOpts({ patterns: [] }));
     } catch (e) {
       stats.failures.push("pipeline " + label + ": assemblePipeline threw " + e.message);
       return;
@@ -2010,7 +2061,7 @@ function main() {
       return;
     }
     if (benignStages) {
-      var ref = A.assemblePipeline(benignStages, version, { patterns: [] });
+      var ref = A.assemblePipeline(benignStages, version, pipeOpts({ patterns: [] }));
       if (ref === null) {
         stats.failures.push("pipeline " + label + ": the benign control composition was itself refused");
         return;
@@ -2113,7 +2164,7 @@ function main() {
       var seamRes = A.assemblePipeline(
         [{ spec: seamBase, values: { v: "public" } },
          { op: opSeamValues[os2], spec: argSpec("zone", fx.field_types.zone), values: { v: "public" } }],
-        VERSIONS[or2], { patterns: [] });
+        VERSIONS[or2], pipeOpts({ patterns: [] }));
       if (seamRes !== null) {
         stats.failures.push("pipeline operator seam / RHEL " + VERSIONS[or2] + ": op=" +
                             JSON.stringify(opSeamValues[os2]) + " composed " +
@@ -2137,7 +2188,7 @@ function main() {
       if (okOp.takes === "stage") { okStage.spec = argSpec("zone", fx.field_types.zone); okStage.values = { v: "public" }; }
       if (okOp.takes === "path") { okStage.target = "/tmp/mcr-out.txt"; }
       var okStages = [{ spec: seamBase, values: { v: "public" } }, okStage];
-      var okRes = A.assemblePipeline(okStages, VERSIONS[okr], { patterns: [] });
+      var okRes = A.assemblePipeline(okStages, VERSIONS[okr], pipeOpts({ patterns: [] }));
       if (okRes === null) {
         stats.failures.push("pipeline operator control / RHEL " + VERSIONS[okr] + ": the closed-set " +
                             "key " + JSON.stringify(okey) + " did not compose -- the seam sweep " +
@@ -2204,7 +2255,7 @@ function main() {
       var osVer = VERSIONS[osv];
       var direct = A.assembleCommand(osEntry, osVer, osRow.values || {}, { patterns: realPatterns });
       var piped = A.assemblePipeline([{ spec: osEntry, values: osRow.values || {} }], osVer,
-                                     { patterns: realPatterns });
+                                     pipeOpts({ patterns: realPatterns }));
       if (direct === null) {
         if (piped !== null) {
           stats.failures.push("one-stage invariant " + osEntry.id + " / RHEL " + osVer +
@@ -2363,7 +2414,7 @@ function main() {
   for (var bc2 = 0; bc2 < blastCases.length; bc2++) {
     for (var bv2 = 0; bv2 < VERSIONS.length; bv2++) {
       blastChecks++;
-      var bres2 = A.assemblePipeline(blastCases[bc2][1], VERSIONS[bv2], { patterns: realPatterns });
+      var bres2 = A.assemblePipeline(blastCases[bc2][1], VERSIONS[bv2], pipeOpts({ patterns: realPatterns }));
       if (bres2 === null) {
         stats.failures.push("blast composition / RHEL " + VERSIONS[bv2] + " / " + blastCases[bc2][0] +
                             ": the composition was refused, so the rule it demonstrates was never " +
@@ -2411,7 +2462,7 @@ function main() {
   for (var ur2 = 0; ur2 < VERSIONS.length; ur2++) {
     blastChecks++;
     var urStages = [HEAD, { op: "redirect", target: "/srv/shares/out.txt" }];
-    var urRes = A.assemblePipeline(urStages, VERSIONS[ur2], { patterns: realPatterns });
+    var urRes = A.assemblePipeline(urStages, VERSIONS[ur2], pipeOpts({ patterns: realPatterns }));
     if (urRes === null || urRes.stages.length !== 2) {
       stats.failures.push("unrated target / RHEL " + VERSIONS[ur2] + ": the composition was refused");
       continue;
@@ -2423,7 +2474,7 @@ function main() {
     }
     blastChecks++;
     var scStages = [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }];
-    var scRes = A.assemblePipeline(scStages, VERSIONS[ur2], { patterns: realPatterns });
+    var scRes = A.assemblePipeline(scStages, VERSIONS[ur2], pipeOpts({ patterns: realPatterns }));
     if (scRes === null || scRes.stages[1].blast !== "green") {
       stats.failures.push("unrated target control / RHEL " + VERSIONS[ur2] + ": a scratch target " +
                           "rendered '" + (scRes ? scRes.stages[1].blast : "null") + "' -- if every " +
@@ -2442,7 +2493,7 @@ function main() {
   for (var pj2 = 0; pj2 < VERSIONS.length; pj2++) {
     blastChecks++;
     var pjRes = A.assemblePipeline([{ spec: PROJ_SPEC, values: { c: "note > /etc/passwd" } }],
-                                   VERSIONS[pj2], { patterns: [] });
+                                   VERSIONS[pj2], pipeOpts({ patterns: [] }));
     if (pjRes === null) {
       stats.failures.push("projected redirect / RHEL " + VERSIONS[pj2] + ": the composition was refused");
       continue;
@@ -2456,7 +2507,7 @@ function main() {
     }
     blastChecks++;
     var pjOk = A.assemblePipeline([{ spec: PROJ_SPEC, values: { c: "an ordinary note" } }],
-                                  VERSIONS[pj2], { patterns: [] });
+                                  VERSIONS[pj2], pipeOpts({ patterns: [] }));
     if (pjOk === null || pjOk.blast !== "green") {
       stats.failures.push("projected redirect control / RHEL " + VERSIONS[pj2] + ": an ordinary " +
                           "comment rated '" + (pjOk ? pjOk.blast : "null") + "' -- the projection " +
@@ -2522,7 +2573,7 @@ function main() {
   for (var ic2 = 0; ic2 < interpreterClass.length; ic2++) {
     for (var icv = 0; icv < VERSIONS.length; icv++) {
       interpreterChecks++;
-      var icRes = A.assemblePipeline(interpreterClass[ic2][1], VERSIONS[icv], { patterns: realPatterns });
+      var icRes = A.assemblePipeline(interpreterClass[ic2][1], VERSIONS[icv], pipeOpts({ patterns: realPatterns }));
       if (icRes !== null) {
         stats.failures.push("interpreter class / RHEL " + VERSIONS[icv] + " / " +
                             interpreterClass[ic2][0] + ": composed " + JSON.stringify(icRes.command) +
@@ -2546,7 +2597,7 @@ function main() {
     for (var ccv = 0; ccv < VERSIONS.length; ccv++) {
       interpreterChecks++;
       var ccRes = A.assemblePipeline([HEAD, { op: "pipe", spec: CLASS_CONTROLS[cc2][1], values: {} }],
-                                     VERSIONS[ccv], { patterns: realPatterns });
+                                     VERSIONS[ccv], pipeOpts({ patterns: realPatterns }));
       if (ccRes === null) {
         stats.failures.push("interpreter class control / RHEL " + VERSIONS[ccv] + ": " +
                             CLASS_CONTROLS[cc2][0] + " was refused as a stage. The class is " +
@@ -2584,12 +2635,12 @@ function main() {
     for (var ncv = 0; ncv < VERSIONS.length; ncv++) {
       namingChecks++;
       var ncStages = namingCases[nc2][1], ncBad = namingCases[nc2][2];
-      if (A.assemblePipeline(ncStages, VERSIONS[ncv], { patterns: realPatterns }) !== null) {
+      if (A.assemblePipeline(ncStages, VERSIONS[ncv], pipeOpts({ patterns: realPatterns })) !== null) {
         stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
                             ": the pipeline assembled, which it must not");
         continue;
       }
-      var vp = A.validatePipeline(ncStages, VERSIONS[ncv], { patterns: realPatterns });
+      var vp = A.validatePipeline(ncStages, VERSIONS[ncv], pipeOpts({ patterns: realPatterns }));
       if (vp.ok) {
         stats.failures.push("stage naming / RHEL " + VERSIONS[ncv] + " / " + namingCases[nc2][0] +
                             ": validatePipeline() says ok while assemblePipeline() refused -- the " +
@@ -2616,7 +2667,7 @@ function main() {
   for (var ncc = 0; ncc < VERSIONS.length; ncc++) {
     namingChecks++;
     var goodVp = A.validatePipeline([HEAD, { op: "pipe", spec: WC_SPEC, values: {} }],
-                                    VERSIONS[ncc], { patterns: realPatterns });
+                                    VERSIONS[ncc], pipeOpts({ patterns: realPatterns }));
     if (!goodVp.ok || goodVp.reason !== null) {
       stats.failures.push("stage naming control / RHEL " + VERSIONS[ncc] + ": a complete pipeline " +
                           "was reported as not ok (" + goodVp.reason + ")");
@@ -2660,13 +2711,13 @@ function main() {
       pl4Checks++;
       var p4t = PL4_TARGETS[p4][0], p4want = PL4_TARGETS[p4][1];
       var p4stages = [HEAD, { op: "redirect", target: p4t }];
-      var p4res = A.assemblePipeline(p4stages, VERSIONS[p4v], { patterns: realPatterns });
+      var p4res = A.assemblePipeline(p4stages, VERSIONS[p4v], pipeOpts({ patterns: realPatterns }));
       if (p4res === null) {
         stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": a redirect to an " +
                             "ordinary file was refused, so the rating cannot be shown at all");
         continue;
       }
-      var p4vp = A.validatePipeline(p4stages, VERSIONS[p4v], { patterns: realPatterns });
+      var p4vp = A.validatePipeline(p4stages, VERSIONS[p4v], pipeOpts({ patterns: realPatterns }));
       var shown = p4vp.stages[1] && p4vp.stages[1].blast;
       var rated = p4res.stages[1] && p4res.stages[1].blast;
       if (rated !== p4want) {
@@ -2695,9 +2746,9 @@ function main() {
   for (var p4c = 0; p4c < VERSIONS.length; p4c++) {
     pl4Checks++;
     var ctlRes = A.assemblePipeline([HEAD, { op: "redirect", target: "/srv/audit/report.log" }],
-                                    VERSIONS[p4c], { patterns: realPatterns });
+                                    VERSIONS[p4c], pipeOpts({ patterns: realPatterns }));
     var ctlGreen = A.assemblePipeline([HEAD, { op: "redirect", target: "/tmp/report.log" }],
-                                      VERSIONS[p4c], { patterns: realPatterns });
+                                      VERSIONS[p4c], pipeOpts({ patterns: realPatterns }));
     if (ctlRes === null || ctlGreen === null) {
       stats.failures.push("PL4 control / RHEL " + VERSIONS[p4c] + ": a plain redirect was refused");
       continue;
@@ -2728,7 +2779,7 @@ function main() {
        quoted value. */
     var spanStages = [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
                       { op: "pipe", kind: "xargs", spec: RM_RF, values: {} }];
-    var spanned = A.assemblePipeline(spanStages, VERSIONS[sp2], { patterns: spanPatterns });
+    var spanned = A.assemblePipeline(spanStages, VERSIONS[sp2], pipeOpts({ patterns: spanPatterns }));
     if (spanned === null) {
       stats.failures.push("whole-pipeline pattern / RHEL " + VERSIONS[sp2] +
                           ": the spanning composition was refused");
@@ -2753,7 +2804,7 @@ function main() {
     /* control: a pipeline that genuinely does not carry the pattern stays green */
     var quietStages = [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
                        { op: "pipe", spec: WC_SPEC, values: {} }];
-    var quietPipe = A.assemblePipeline(quietStages, VERSIONS[sp2], { patterns: spanPatterns });
+    var quietPipe = A.assemblePipeline(quietStages, VERSIONS[sp2], pipeOpts({ patterns: spanPatterns }));
     if (quietPipe === null || quietPipe.blast !== "green") {
       stats.failures.push("whole-pipeline pattern control / RHEL " + VERSIONS[sp2] +
                           ": an unrelated pipeline was rated " +
@@ -2838,7 +2889,7 @@ function main() {
   for (var rf2 = 0; rf2 < refusals.length; rf2++) {
     for (var rvr = 0; rvr < VERSIONS.length; rvr++) {
       refusalChecks++;
-      var refRes = A.assemblePipeline(refusals[rf2][1], VERSIONS[rvr], { patterns: realPatterns });
+      var refRes = A.assemblePipeline(refusals[rf2][1], VERSIONS[rvr], pipeOpts({ patterns: realPatterns }));
       if (refRes !== null) {
         stats.failures.push("pipeline refusal / RHEL " + VERSIONS[rvr] + " / " + refusals[rf2][0] +
                             ": composed " + JSON.stringify(refRes.command) +
@@ -2868,7 +2919,7 @@ function main() {
   for (var rc2 = 0; rc2 < refusalControls.length; rc2++) {
     for (var rcv = 0; rcv < VERSIONS.length; rcv++) {
       refusalChecks++;
-      var rcRes = A.assemblePipeline(refusalControls[rc2][1], VERSIONS[rcv], { patterns: realPatterns });
+      var rcRes = A.assemblePipeline(refusalControls[rc2][1], VERSIONS[rcv], pipeOpts({ patterns: realPatterns }));
       if (rcRes === null) {
         stats.failures.push("pipeline refusal control / RHEL " + VERSIONS[rcv] + " / " +
                             refusalControls[rc2][0] + ": the LEGAL neighbour of a refused shape was " +
@@ -2908,8 +2959,6 @@ function main() {
    * allow-list is the allow-list not existing. That is the last check here.
    */
   var pipeToolChecks = 0;
-  var realTools = (JSON.parse(fs.readFileSync(path.join(REPO, "content", "tools.json"),
-                                              "utf8")).tools) || [];
   if (!realTools.length) {
     stats.failures.push("content/tools.json carries no tools, so the stage allow-list under test " +
                         "here is empty and every row below would pass for the wrong reason");
