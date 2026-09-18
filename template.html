@@ -1786,8 +1786,57 @@ var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/et
                          "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
                          "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
                          "/usr/libexec","/etc/xdg/autostart"];
-function underDir(target,dir){
+/* ---- PIPE-002: normalise LEXICALLY, then classify (Marcus Reed, D4) -------
+   underDir() is a prefix match, and a prefix match answers a question about a
+   SPELLING. Three spellings of one file got three ratings in review:
+   `/tmp/../etc/passwd` green (it starts with /tmp), `/./etc/passwd` and
+   `//etc/passwd` unrated (they start with neither). All three are /etc/passwd.
+
+   So every target is collapsed before anything is asked about it: repeated
+   slashes become one, `.` components are dropped, and `..` is resolved against
+   what precedes it. LEXICALLY -- this touches no filesystem, reads no symlink
+   and calls nothing. It cannot: this code runs in a browser on an air-gapped
+   workstation with no access to the host the command will run on, and a rule
+   that needs the target host to answer is a rule this product cannot have.
+
+   A leading `//` is implementation-defined in POSIX (4.13); collapsing it to a
+   single slash is the direction that cannot be used to escape a rule, which is
+   the only direction available to a classifier that must not under-rate.
+
+   Where lexical and kernel resolution can differ is a symlinked component:
+   `/tmp/../etc` is /etc lexically, and if /tmp were a symlink the kernel would
+   walk somewhere else. That asymmetry is handled by REFUSING TO GRANT GREEN to
+   a path that needed a `..` to become scratch -- normalisation may RAISE a
+   rating and may never hand one out. `/tmp/../tmp/x` is /tmp/x and is still not
+   green: green is a human claim about a curated path (PL4), and a path computed
+   by traversal is not one somebody curated. */
+function lexicalPath(target){
   var t=String(target);
+  if(t==="") return "";
+  var absolute=(t.charAt(0)==="/");
+  var parts=t.split("/"),out=[],i,p;
+  for(i=0;i<parts.length;i++){
+    p=parts[i];
+    if(p===""||p===".") continue;               /* // and /./ carry no meaning */
+    if(p===".."){
+      if(out.length&&out[out.length-1]!==".."){ out.pop(); continue; }
+      if(absolute) continue;                    /* `..` above / is / (POSIX 4.13) */
+      out.push("..");                           /* a relative path may keep a leading .. */
+      continue;
+    }
+    out.push(p);
+  }
+  var joined=out.join("/");
+  if(absolute) return "/"+joined;
+  return joined===""?".":joined;
+}
+function pathTraverses(target){
+  var parts=String(target).split("/"),i;
+  for(i=0;i<parts.length;i++){ if(parts[i]==="..") return true; }
+  return false;
+}
+function underDir(target,dir){
+  var t=lexicalPath(target);
   return t===dir || t.indexOf(dir+"/")===0;
 }
 /* PL2 rule-4 class, redirect half: is this target somewhere the system executes? */
@@ -1803,9 +1852,14 @@ function isExecutionSink(target){
    target ever arrives by some other road -- which is exactly what the de-quoted
    whole-pipeline projection below feeds it. */
 function redirectTargetBlast(target){
-  var t=String(target),i;
+  var t=lexicalPath(target),i;                  /* PIPE-002: collapse first, classify after */
   for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
-  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){ if(underDir(t,PIPE_SCRATCH_DIRS[i])) return "green"; }
+  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){
+    if(!underDir(t,PIPE_SCRATCH_DIRS[i])) continue;
+    /* PIPE-002 + PL4: scratch REACHED BY TRAVERSAL is not a curated path, and
+       green is a claim somebody made about a path, not an arithmetic result. */
+    return pathTraverses(target)?"unrated":"green";
+  }
   return "unrated";                             /* PL4: never green by default */
 }
 /* `unrated` is not a fourth blast colour: it is a rating the product declines to

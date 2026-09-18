@@ -109,6 +109,7 @@ function extractAssembler(file) {
     "MAX_PIPELINE_STAGES:MAX_PIPELINE_STAGES,commandWords:commandWords," +
     "isComposableSpec:isComposableSpec,validatePipeline:validatePipeline," +
     "redirectTargetBlast:redirectTargetBlast,isExecutionSink:isExecutionSink," +
+    "lexicalPath:lexicalPath,producesNulDelimited:producesNulDelimited," +
     "stageRefused:stageRefused};");
   return { api: factory(), bytes: block.length };
 }
