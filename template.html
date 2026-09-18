@@ -3435,13 +3435,25 @@ function pipelineAdd(){
 function pipelineRemove(i){
   if(i<0||i>=STATE.pipeline.length) return;
   STATE.pipeline.splice(i,1);
-  if(STATE.pipeline.length&&STATE.pipeline[0].op!==null&&STATE.pipeline[0].op!==undefined){
-    /* the new first stage joins nothing, so it cannot keep an operator */
-    if(STATE.pipeline[0].kind!=="command"&&STATE.pipeline[0].kind!=="xargs"){
-      STATE.pipeline.shift();                   /* a bare redirect cannot lead a pipeline */
-    }else{
-      STATE.pipeline[0].op=null;
-    }
+  /* The new first stage joins nothing, so it cannot keep an operator -- and a
+     redirect or a standalone operator cannot LEAD a pipeline at all, because
+     there is nothing in front of it to redirect. Removing the one command in
+     front of `> /tmp/a >> /tmp/b` leaves TWO such rows, so this drops them
+     until the head is a command, rather than once: a single shift left the
+     head row carrying a stale operator, which assemblePipeline() then refused
+     with "only a guided form composes into a pipeline" -- a true refusal
+     naming the wrong reason, which PL6 calls a gate that gets worked around. */
+  while(STATE.pipeline.length&&STATE.pipeline[0].kind!=="command"&&
+        STATE.pipeline[0].kind!=="xargs"){
+    STATE.pipeline.shift();
+  }
+  if(STATE.pipeline.length){
+    STATE.pipeline[0].op=null;
+    /* xargs reads what the stage in front of it produced, so it cannot lead
+       either. It carries an entry and its values, though, so it is DEMOTED to
+       an ordinary command stage rather than discarded: the operator keeps the
+       form they filled in and the pipeline composes. */
+    if(STATE.pipeline[0].kind==="xargs") STATE.pipeline[0].kind="command";
   }
   STATE.pipelineEditing=null;
   STATE.formValues={};
@@ -3458,6 +3470,16 @@ function pipelineClear(){
 function pipelineMove(i,delta){
   var j=i+delta;
   if(i<0||i>=STATE.pipeline.length||j<0||j>=STATE.pipeline.length) return;
+  /* Only a command can stand first: a redirect has nothing in front of it to
+     redirect, and xargs has nothing in front of it to read. Refused HERE, with
+     a reason, rather than allowed and then refused by assemblePipeline() under
+     a reason about something else (PL6). */
+  if(j===0&&STATE.pipeline[i].kind!=="command"){
+    toast(STATE.pipeline[i].kind==="xargs"
+          ?"xargs reads what the stage in front of it produced, so it cannot be the first stage."
+          :"Only a command can be the first stage: there is nothing in front of this one to redirect.");
+    return;
+  }
   var a=STATE.pipeline[i],b=STATE.pipeline[j];
   /* the OPERATORS stay with their positions, not with their stages: stage 1
      never carries one and every later stage always does, so reordering can
@@ -3511,6 +3533,19 @@ function pipelineSetOp(i,key){
   var row=pipelineRowFor(key,was.entryId,was.values);
   if(row.kind==="command"&&(was.kind==="command"||was.kind==="xargs")){
     row.kind=was.kind; row.xargs=was.xargs;     /* keep an xargs stage an xargs stage */
+  }else{
+    /* Switching a command stage to `>` makes it a redirect, and the entry and
+       the values the operator filled in are carried along UNUSED so that
+       switching back restores them instead of silently discarding a filled-in
+       form. pipelineStages() reads entryId/values for command and xargs rows
+       ONLY, and assemblePipeline() refuses a path stage that carries a spec or
+       values at all, so nothing here can reach an assembled command. */
+    row.entryId=was.entryId;
+    row.values=was.values;
+    row.target=was.target||"";
+    row.xargs=was.xargs||{nul:false,replace:false,maxArgs:""};
+    /* a redirect has no form, so it cannot be the stage the form is editing */
+    if(STATE.pipelineEditing===i){ STATE.pipelineEditing=null; STATE.formValues={}; }
   }
   STATE.pipeline[i]=row;
   bumpPipeline();
@@ -3550,6 +3585,22 @@ function renderPipelinePanel(){
         "no field anywhere that accepts a pipe or a redirection as text.</p>"+
         "<div class=\"toolbar\"><button type=\"button\" class=\"btn\" data-pipe-action=\"add\">"+
         "Add to pipeline</button></div></div>";
+      return;
+    }
+    if(cur){
+      /* ADR-002, said out loud rather than by offering nothing. A reference or
+         static entry carries a command as a STRING the vendor published; a
+         stage must carry a TEMPLATE this assembler emits word by word, which is
+         why isComposableSpec() refuses one STRUCTURALLY rather than a picker
+         filtering it out. An operator who sees no button and no reason
+         concludes the feature is broken and assembles the line by hand, which
+         is the outcome the whole composer exists to prevent (PL6). */
+      target.innerHTML="<div class=\"card\"><p class=\"region-label\">Pipeline</p>"+
+        "<p class=\"muted\">This entry cannot be a pipeline stage. Its command is a quoted "+
+        "vendor string, and joining two of those would produce a command the vendor never "+
+        "published while the citation still said they did -- so the composer refuses it by "+
+        "construction, not by hiding the button. Pick a guided form (a generator entry) to "+
+        "build a pipeline.</p></div>";
       return;
     }
     target.innerHTML="";

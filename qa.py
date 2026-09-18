@@ -168,6 +168,11 @@ MARKERS = [
     ("redirect-target blast rule (independent of the field type)", "function redirectTargetBlast(", None),
     ("execution-sink refusal", "function isExecutionSink(", None),
     ("nested-quoting-domain refusal", "function reparsesItsArgument(", None),
+    # The UI half of the same claim: the panel is where an operator would become
+    # typeable if it ever did. Its option VALUES are the closed table's keys and
+    # its only free-text inputs are a validated path and a validated integer --
+    # asserted mechanically by tests/test_pipeline_ui_wiring.py.
+    ("pipeline panel (operator picker emits keys, never text)", "function renderPipelinePanel(", None),
     # later tranches — reported PENDING, never PASS, until their task lands
     ("generator registry", "var GENERATORS=", "CR-T-17..25"),
     ("flag decoder", "function decodeCmd(", "CR-T-17"),
