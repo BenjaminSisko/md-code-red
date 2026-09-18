@@ -2353,6 +2353,41 @@ function formatEvidenceText(opts){
     }
     push("");
   }
+  /* CR-T-31. A pipeline's export names EVERY stage and EVERY stage's source
+     citation, not the first one standing in for the line. This text crosses
+     trust boundary 5 into an SCTM/ATO package: an export that cites one vendor
+     manual for a command composed from three is a false attribution, and it
+     is false in the direction that matters -- it claims provenance the composed
+     line does not have. opts.stages is built by the caller from the SAME
+     rendered-state object the screen reads (MCR-SEC-012); nothing is
+     reassembled in here. */
+  var pstages=opts.stages||null,si,sj;
+  if(pstages&&pstages.length){
+    push("Pipeline: "+pstages.length+" stages, composed in this tool. The operators between "+
+         "stages are emitted by the tool from a fixed set; they are not values anyone typed.");
+    push("");
+    for(si=0;si<pstages.length;si++){
+      var ps=pstages[si];
+      push("  Stage "+(si+1)+(ps.operator?"  (joined by: "+ps.operator+")":"")+
+           "  [blast "+(ps.blast||"not rated")+"]");
+      if(ps.intent) push("    Intent: "+ps.intent);
+      if(ps.command) push("    Command: "+ps.command);
+      if(ps.target) push("    File written: "+ps.target);
+      if(ps.source){
+        push("    Source citation: "+(ps.source.title||"")+" — "+
+             (ps.source.url_or_man||ps.source.version||"")+" (version "+(ps.source.version||"?")+
+             ", retrieved "+(ps.source.retrieved_on||"?")+")");
+      }else{
+        push("    Source citation: not recorded on this stage.");
+      }
+      var pstig=ps.stig||[];
+      for(sj=0;sj<pstig.length;sj++){
+        push("    STIG: "+(pstig[sj].stig_id||"")+"  NIST: "+
+             ((pstig[sj].nist||[]).join(", ")||"none mapped"));
+      }
+    }
+    push("");
+  }
   if(res){
     push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
     push(res.command||"");
@@ -2639,7 +2674,15 @@ var RESULT={key:null,value:null};
    computed once and reused by the gutter, the banner, the inspector and the
    clipboard, exactly like a static entry's key never needing formValues at
    all (a plain string concatenation is a no-op when the object is empty). */
-function resultKey(){ return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey(); }
+/* CR-T-31: a pipeline is part of the state assembly reads, so it is part of the
+   cache key. pipelineRev is bumped by every mutation (add, remove, reorder,
+   operator change, target change) rather than serialising the array, so a stage
+   whose VALUES are edited in place -- STATE.formValues IS that stage's values
+   object -- is still caught by formValuesKey() below. */
+function resultKey(){
+  return STATE.version+"|"+String(STATE.entryId)+"|"+formValuesKey()+
+         "|p"+STATE.pipeline.length+":"+STATE.pipelineRev;
+}
 function formValuesKey(){
   var keys=[],k,out=[];
   for(k in STATE.formValues){ if(Object.prototype.hasOwnProperty.call(STATE.formValues,k)) keys.push(k); }
@@ -2650,6 +2693,16 @@ function formValuesKey(){
   return out.join("&");
 }
 function computeResult(){
+  /* CR-T-31. When a pipeline exists it IS the result: the gutter, the banner,
+     the inspector, Copy, Copy with comment and Export as Evidence all read
+     currentResult(), so routing the pipeline through this one function is what
+     makes every one of them operate on the WHOLE pipeline without a second
+     code path to keep in step (MCR-SEC-012's rule, applied to the composer). */
+  if(STATE.pipeline.length){
+    var pres=assemblePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+    if(!pres) return null;
+    return withCopyPayloads(pres,null);
+  }
   if(!STATE.entryId) return null;
   var entry=entryById(STATE.entryId);
   if(!entry) return null;
@@ -2672,10 +2725,38 @@ function currentResult(){
    "# "-prefixed here: commentPayload() owns the prefix so that exactly one
    place in this file decides what a clipboard line looks like (MCR-SEC-003). */
 function commentHeaderLines(res,entry,blast){
-  var lines=[APP_NAME+" "+APP_VERSION+" — RHEL "+res.version];
+  var lines=[APP_NAME+" "+APP_VERSION+" — RHEL "+res.version],i,j;
+  /* CR-T-31: a pipeline's header names EVERY stage, with the entry each stage
+     came from and that entry's STIG rows -- not the first stage's intent
+     standing in for the whole line. A clipboard comment that describes one
+     third of what is about to run is the Explainer row of threat-model §4. */
+  if(res.stages){
+    for(i=0;i<res.stages.length;i++){
+      var st=res.stages[i];
+      var stEntry=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+      var opLabel=st.op?(PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit+" ":""):"";
+      if(st.kind==="redirect"){
+        lines.push("stage "+(i+1)+": "+opLabel+st.target+"  ["+st.blast+"]");
+        continue;
+      }
+      if(st.kind==="operator"){
+        lines.push("stage "+(i+1)+": "+opLabel);
+        continue;
+      }
+      lines.push("stage "+(i+1)+": "+opLabel+((stEntry&&stEntry.intent)||st.command||"")+
+                 "  ["+st.blast+"]");
+      var srows=stEntry?stigRowsFor(stEntry):[];
+      for(j=0;j<srows.length;j++){
+        lines.push("  STIG: "+srows[j].stig_id+" (CAT "+catFor(srows[j])+")  NIST: "+
+                   ((srows[j].nist||[]).join(", ")||"n/a"));
+      }
+    }
+    lines.push("blast: "+blast);
+    return lines;
+  }
   if(entry&&entry.intent) lines.push("intent: "+entry.intent);
   var stig=entry?stigRowsFor(entry):[];
-  for(var i=0;i<stig.length;i++){
+  for(i=0;i<stig.length;i++){
     lines.push("STIG: "+stig[i].stig_id+" (CAT "+catFor(stig[i])+")  NIST: "+((stig[i].nist||[]).join(", ")||"n/a"));
   }
   lines.push("blast: "+blast);
@@ -2796,6 +2877,23 @@ function doCopyDoc(){
    STATE._evidenceText so the Copy button on the modal copies precisely what
    is shown — the same rule doCopy() already applies to the clipboard preview
    (threat-model-v1 §9, MCR-SEC-003). */
+/* CR-T-31: the per-stage evidence rows. Built from STATE.pipeline (for the
+   entry each stage came from and its citation) alongside res.stages (for what
+   the assembler actually emitted), by index -- never by re-assembling. */
+function evidenceStageRows(res){
+  if(!res||!res.stages||!res.stages.length) return null;
+  var rows=[],i;
+  for(i=0;i<res.stages.length;i++){
+    var st=res.stages[i];
+    var stEntry=(st.spec&&st.spec.id)?entryById(st.spec.id):null;
+    rows.push({operator:st.op&&PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit:null,
+               intent:stEntry?(stEntry.intent||stEntry.id):null,
+               command:st.command||null,target:st.target||null,blast:st.blast||null,
+               source:stEntry?(stEntry.source||null):null,
+               stig:stEntry?stigRowsFor(stEntry):[]});
+  }
+  return rows;
+}
 function evidenceContext(){
   var res=currentResult();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
@@ -2841,7 +2939,8 @@ function renderEvidenceModal(){
     res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,version:ctx.version,
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
     stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
-    source:src,operatorDate:operatorDate,vstatus:vstatus
+    source:src,operatorDate:operatorDate,vstatus:vstatus,
+    stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
   var html="<p class=\"region-label\">Export as Evidence — SCTM-ready, plain text</p>";
@@ -3255,6 +3354,304 @@ function renderAbout(){
   html+="<pre class=\"aboutblock\">"+esc(ATTRIBUTION_BLOCK)+"</pre>";
   el("editor-card").innerHTML=html;
 }
+/* ============ CR-T-31: the pipeline composer's UI ==========================
+   The doctrine this whole panel exists to keep: A PIPELINE IS STRUCTURE THE
+   TOOL OWNS, NEVER A VALUE THE USER SUPPLIES. There is therefore no text input
+   anywhere in this panel that accepts an operator. The operator picker is a
+   <select> whose OPTION VALUES are the assembler's own closed-table KEYS --
+   "pipe", "and", "redirect" -- and whose option LABELS render the emitted text
+   for the operator to read. `|` appears on screen, escaped, as a label. It
+   never appears in a value, never reaches STATE, and never reaches a command
+   except from PIPE_OPERATORS' own string literal.
+
+   A stage's values object IS STATE.formValues while that stage is being edited
+   (by reference), so a keystroke in the generator form edits the stage in place
+   with no second copy to keep in step. Selecting a different entry leaves stage
+   editing, which is why pipelineEdit() and selectEntry() are the only two
+   places STATE.pipelineEditing changes.
+
+   Only a GENERATOR entry can become a stage. That is not a filter this panel
+   applies for tidiness -- assemblePipeline() refuses a spec that carries a
+   handed command string outright (isComposableSpec), so a static entry and a
+   mined reference record are structurally incapable of being stages. The panel
+   says WHY rather than silently offering nothing (ADR-002, and PL6's rule that
+   a refusal nobody can read gets worked around in a text editor). */
+function cloneValues(v){
+  var out={},k;
+  for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
+  return out;
+}
+function bumpPipeline(){ STATE.pipelineRev++; }
+/* The assembler's stage array, built fresh from STATE. Every command stage
+   hands over the ENTRY as its spec -- the same object assembleCommand() is
+   given for a single command -- so a stage is assembled by exactly the code a
+   one-command build uses, which is what makes the one-stage invariant hold by
+   construction rather than by care. */
+function pipelineStages(){
+  var out=[],i;
+  for(i=0;i<STATE.pipeline.length;i++){
+    var row=STATE.pipeline[i];
+    var stage={};
+    if(i>0) stage.op=row.op;
+    if(row.kind==="redirect"){ stage.target=row.target||""; out.push(stage); continue; }
+    if(row.kind==="operator"){ out.push(stage); continue; }
+    stage.spec=entryById(row.entryId);
+    stage.values=row.values;
+    if(row.kind==="xargs"){
+      stage.kind="xargs";
+      stage.xargs={nul:row.xargs.nul===true,replace:row.xargs.replace===true,
+                   maxArgs:row.xargs.maxArgs||""};
+    }
+    out.push(stage);
+  }
+  return out;
+}
+/* The shape of a stage row in STATE, derived from the operator's `takes`: a
+   path operator carries a target and no command, a standalone operator carries
+   neither. Deriving it here means the click router never has to decide what
+   kind of stage an operator implies, and the two can never disagree. */
+function pipelineRowFor(opKey,entryId,values){
+  var op=opKey?PIPE_OPERATORS[opKey]:null;
+  var takes=op?op.takes:"stage";
+  if(takes==="path") return {kind:"redirect",op:opKey,target:"",entryId:null,values:{},xargs:{}};
+  if(takes==="none") return {kind:"operator",op:opKey,target:"",entryId:null,values:{},xargs:{}};
+  return {kind:"command",op:opKey,target:"",entryId:entryId,values:values,
+          xargs:{nul:false,replace:false,maxArgs:""}};
+}
+function pipelineAdd(){
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(!entry||!isGeneratorEntry(entry)){
+    toast("Only a guided form composes into a pipeline. Pick a generator entry first.");
+    return;
+  }
+  var first=STATE.pipeline.length===0;
+  var row=pipelineRowFor(first?null:"pipe",entry.id,cloneValues(STATE.formValues));
+  STATE.pipeline.push(row);
+  STATE.pipelineEditing=STATE.pipeline.length-1;
+  STATE.formValues=row.values;                  /* by reference: a keystroke edits the stage */
+  bumpPipeline();
+  renderAll();
+}
+function pipelineRemove(i){
+  if(i<0||i>=STATE.pipeline.length) return;
+  STATE.pipeline.splice(i,1);
+  if(STATE.pipeline.length&&STATE.pipeline[0].op!==null&&STATE.pipeline[0].op!==undefined){
+    /* the new first stage joins nothing, so it cannot keep an operator */
+    if(STATE.pipeline[0].kind!=="command"&&STATE.pipeline[0].kind!=="xargs"){
+      STATE.pipeline.shift();                   /* a bare redirect cannot lead a pipeline */
+    }else{
+      STATE.pipeline[0].op=null;
+    }
+  }
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineClear(){
+  STATE.pipeline=[];
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineMove(i,delta){
+  var j=i+delta;
+  if(i<0||i>=STATE.pipeline.length||j<0||j>=STATE.pipeline.length) return;
+  var a=STATE.pipeline[i],b=STATE.pipeline[j];
+  /* the OPERATORS stay with their positions, not with their stages: stage 1
+     never carries one and every later stage always does, so reordering can
+     never produce a pipeline whose first stage is joined to something. */
+  var aop=a.op,bop=b.op;
+  STATE.pipeline[i]=b; STATE.pipeline[j]=a;
+  STATE.pipeline[i].op=aop; STATE.pipeline[j].op=bop;
+  if(STATE.pipeline[0]) STATE.pipeline[0].op=null;
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+/* A redirection is a stage with no command: an operator and a validated file.
+   It is added with `redirect` selected and an empty target, which is an
+   INCOMPLETE stage -- the pipeline refuses to assemble and the panel names it,
+   which is the behaviour PL6 asks for and not a state to be avoided. */
+function pipelineAddRedirect(){
+  if(!STATE.pipeline.length){
+    toast("A redirection needs a command in front of it. Add a command stage first.");
+    return;
+  }
+  if(STATE.pipeline.length>=MAX_PIPELINE_STAGES){
+    toast("A pipeline is capped at "+MAX_PIPELINE_STAGES+" stages so it stays reviewable.");
+    return;
+  }
+  STATE.pipeline.push(pipelineRowFor("redirect",null,{}));
+  STATE.pipelineEditing=null;
+  STATE.formValues={};
+  bumpPipeline();
+  renderAll();
+}
+function pipelineEdit(i){
+  var row=STATE.pipeline[i];
+  if(!row||(row.kind!=="command"&&row.kind!=="xargs")) return;
+  STATE.pipelineEditing=i;
+  STATE.entryId=row.entryId;
+  STATE.formValues=row.values;                  /* by reference, as above */
+  bumpPipeline();
+  renderAll();
+}
+/* The operator picker. `key` arrives from a <select> whose option values are
+   the closed table's keys; anything that is not an own key of that table is
+   discarded here and again inside the assembler. Two refusals, and the second
+   one is the one that counts: even if this function were wrong, assembler-side
+   pipeOperator() would still return null and the pipeline would not compose. */
+function pipelineSetOp(i,key){
+  if(i<=0||i>=STATE.pipeline.length) return;
+  if(!Object.prototype.hasOwnProperty.call(PIPE_OPERATORS,key)) return;
+  var was=STATE.pipeline[i];
+  var row=pipelineRowFor(key,was.entryId,was.values);
+  if(row.kind==="command"&&(was.kind==="command"||was.kind==="xargs")){
+    row.kind=was.kind; row.xargs=was.xargs;     /* keep an xargs stage an xargs stage */
+  }
+  STATE.pipeline[i]=row;
+  bumpPipeline();
+  renderAll();
+}
+function pipelineSetKind(i,kind){
+  var row=STATE.pipeline[i];
+  if(!row||(row.kind!=="command"&&row.kind!=="xargs")) return;
+  row.kind=(kind==="xargs")?"xargs":"command";
+  bumpPipeline();
+  renderAll();
+}
+function pipelineSetField(i,field,value){
+  var row=STATE.pipeline[i];
+  if(!row) return;
+  if(field==="target"){ row.target=value; }
+  else if(field==="maxargs"){ row.xargs.maxArgs=value; }
+  else if(field==="nul"){ row.xargs.nul=(value==="1"); }
+  else if(field==="replace"){ row.xargs.replace=(value==="1"); }
+  else return;
+  bumpPipeline();
+  reRenderEditorAndInspector();
+  renderPipelinePanel();
+}
+/* PL6: the panel names the stage that is incomplete, and only that stage.
+   validatePipeline() is the assembler's own decision, per stage, so what this
+   renders can never disagree with what assemblePipeline() did. */
+function renderPipelinePanel(){
+  var target=el("pipeline-panel");
+  if(!target) return;
+  if(!STATE.pipeline.length){
+    var cur=STATE.entryId?entryById(STATE.entryId):null;
+    if(cur&&isGeneratorEntry(cur)){
+      target.innerHTML="<div class=\"card\"><p class=\"region-label\">Pipeline</p>"+
+        "<p class=\"muted\">Add this command as the first stage, then pick an operator and add "+
+        "the next one. The operator is chosen from a fixed list this tool emits itself; there is "+
+        "no field anywhere that accepts a pipe or a redirection as text.</p>"+
+        "<div class=\"toolbar\"><button type=\"button\" class=\"btn\" data-pipe-action=\"add\">"+
+        "Add to pipeline</button></div></div>";
+      return;
+    }
+    target.innerHTML="";
+    return;
+  }
+  var v=validatePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+  var html="<div class=\"card\"><p class=\"region-label\">Pipeline — "+
+           esc(String(STATE.pipeline.length))+" of "+esc(String(MAX_PIPELINE_STAGES))+" stages</p>";
+  html+="<div class=\"stagelist\">";
+  for(var i=0;i<STATE.pipeline.length;i++){
+    var row=STATE.pipeline[i];
+    var d=v.stages[i]||{ok:true,reason:null};
+    var rowEntry=row.entryId?entryById(row.entryId):null;
+    html+="<div class=\""+(d.ok?"stagerow":"stagerow bad")+"\">";
+    html+="<div class=\"stagehead\"><span class=\"stageno\">Stage "+esc(String(i+1))+
+          (i===STATE.pipelineEditing?" — editing":"")+"</span>";
+    if(d.blast){
+      html+="<span class=\"sbadge b-"+escapeAttr(d.blast)+"\">"+esc(d.blast)+"</span>";
+    }
+    html+="</div>";
+    if(i>0){
+      html+="<div class=\"stageops\"><label for=\"pipeop-"+escapeAttr(String(i))+"\">joined by</label>";
+      html+="<select id=\"pipeop-"+escapeAttr(String(i))+"\" data-pipe-field=\"op\" data-pipe-index=\""+
+            escapeAttr(String(i))+"\" aria-label=\"Operator joining stage "+escapeAttr(String(i+1))+
+            " to the stage before it\">";
+      for(var k=0;k<PIPE_OPERATOR_KEYS.length;k++){
+        var key=PIPE_OPERATOR_KEYS[k];
+        html+="<option value=\""+escapeAttr(key)+"\""+(row.op===key?" selected":"")+">"+
+              esc(PIPE_OPERATORS[key].emit)+"  —  "+esc(PIPE_OPERATORS[key].label)+"</option>";
+      }
+      html+="</select></div>";
+    }
+    if(row.kind==="redirect"){
+      html+="<div class=\"stageops\"><label for=\"pipetgt-"+escapeAttr(String(i))+"\">file</label>";
+      html+="<input type=\"text\" id=\"pipetgt-"+escapeAttr(String(i))+"\" data-pipe-field=\"target\" "+
+            "data-pipe-index=\""+escapeAttr(String(i))+"\" maxlength=\"255\" "+
+            "placeholder=\"absolute path\" value=\""+escapeAttr(row.target||"")+"\"></div>";
+    }else if(row.kind==="operator"){
+      html+="<span class=\"stagecmd\">"+esc(PIPE_OPERATORS[row.op]?PIPE_OPERATORS[row.op].emit:"")+
+            "</span>";
+    }else{
+      html+="<span class=\"stagecmd\">"+esc(d.command||((rowEntry&&rowEntry.intent)||row.entryId||""))+
+            "</span>";
+      html+="<div class=\"stageops\">";
+      if(i>0){
+        html+="<label for=\"pipekind-"+escapeAttr(String(i))+"\">run</label>";
+        html+="<select id=\"pipekind-"+escapeAttr(String(i))+"\" data-pipe-field=\"kind\" "+
+              "data-pipe-index=\""+escapeAttr(String(i))+"\">";
+        html+="<option value=\"command\""+(row.kind==="command"?" selected":"")+">directly</option>";
+        html+="<option value=\"xargs\""+(row.kind==="xargs"?" selected":"")+">once per input line (xargs)</option>";
+        html+="</select>";
+      }
+      if(row.kind==="xargs"){
+        html+="<label><input type=\"checkbox\" data-pipe-field=\"nul\" data-pipe-index=\""+
+              escapeAttr(String(i))+"\""+(row.xargs.nul?" checked":"")+"> -0 (NUL-delimited input)</label>";
+        html+="<label><input type=\"checkbox\" data-pipe-field=\"replace\" data-pipe-index=\""+
+              escapeAttr(String(i))+"\""+(row.xargs.replace?" checked":"")+"> -I (one at a time)</label>";
+        html+="<label for=\"pipen-"+escapeAttr(String(i))+"\">-n</label>";
+        html+="<input type=\"text\" id=\"pipen-"+escapeAttr(String(i))+"\" data-pipe-field=\"maxargs\" "+
+              "data-pipe-index=\""+escapeAttr(String(i))+"\" maxlength=\"10\" placeholder=\"per run\" "+
+              "value=\""+escapeAttr(row.xargs.maxArgs||"")+"\">";
+      }
+      html+="</div>";
+    }
+    if(!d.ok&&d.reason){
+      html+="<p class=\"stagewhy\">Stage "+esc(String(i+1))+": "+esc(d.reason)+"</p>";
+    }
+    html+="<div class=\"stageops\">";
+    if(row.kind==="command"||row.kind==="xargs"){
+      html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"edit\" data-pipe-index=\""+
+            escapeAttr(String(i))+"\">Edit fields</button>";
+    }
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"up\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\""+(i===0?" disabled aria-disabled=\"true\"":"")+
+          " aria-label=\"Move stage "+escapeAttr(String(i+1))+" earlier\">Move up</button>";
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"down\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\""+(i===STATE.pipeline.length-1?" disabled aria-disabled=\"true\"":"")+
+          " aria-label=\"Move stage "+escapeAttr(String(i+1))+" later\">Move down</button>";
+    html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"remove\" data-pipe-index=\""+
+          escapeAttr(String(i))+"\" aria-label=\"Remove stage "+escapeAttr(String(i+1))+
+          "\">Remove</button>";
+    html+="</div></div>";
+  }
+  html+="</div>";
+  if(!v.ok&&v.reason){
+    html+="<p class=\"stagewhy\">"+esc(v.reason)+"</p>";
+    html+="<p class=\"muted\">Nothing is assembled while a stage is incomplete. A half-formed "+
+          "pipeline is worse than a blocked button, and this panel names the stage rather than "+
+          "leaving you to find it.</p>";
+  }
+  html+="<div class=\"toolbar\">";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"add\""+
+        (STATE.pipeline.length>=MAX_PIPELINE_STAGES?" disabled aria-disabled=\"true\" title=\"A pipeline is capped so it stays reviewable\"":"")+
+        ">Add current command as a stage</button>";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"redirect\""+
+        (STATE.pipeline.length>=MAX_PIPELINE_STAGES?" disabled aria-disabled=\"true\"":"")+
+        ">Add a redirection</button>";
+  html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"clear\">Clear pipeline</button>";
+  html+="</div></div>";
+  target.innerHTML=html;
+}
+
 function renderEditor(){
   var html="";
   if(STATE.rail==="about"){
@@ -3712,6 +4109,11 @@ function selectTool(id,toggle){
   renderAll();
 }
 function selectEntry(id){
+  /* CR-T-31: picking a different entry leaves stage editing. The
+     STATE.formValues={} below then replaces the stage's own values object
+     rather than emptying it -- which is exactly the distinction that matters,
+     because while editing they are the same object. */
+  STATE.pipelineEditing=null;
   var entry=entryById(id);
   if(!entry) return;
   if(entryGateInfo(entry).gated) return;            /* gated: cannot be selected at all */
@@ -3768,6 +4170,7 @@ function renderAll(){
   renderVersionSelector();
   renderToolList();
   renderEditor();
+  renderPipelinePanel();       /* CR-T-31: its own sink, its own statement (Q17) */
   renderInspector();
   renderStatusBar();
   renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
@@ -3795,6 +4198,21 @@ document.addEventListener("click",function(ev){
   }
   if(t===el("palette")){ closePalette(); return; }
   if(t===el("evidence-modal")){ closeEvidenceModal(); return; }
+  /* CR-T-31: the pipeline's own controls. An index and a verb, nothing else —
+     no control in this panel carries operator TEXT, only a closed-table key. */
+  var pa=t.closest("[data-pipe-action]");
+  if(pa){
+    var pidx=parseInt(pa.getAttribute("data-pipe-index"),10);
+    var pact=pa.getAttribute("data-pipe-action");
+    if(pact==="add"){ pipelineAdd(); return; }
+    if(pact==="clear"){ pipelineClear(); return; }
+    if(pact==="redirect"){ pipelineAddRedirect(); return; }
+    if(pact==="edit"){ pipelineEdit(pidx); return; }
+    if(pact==="remove"){ pipelineRemove(pidx); return; }
+    if(pact==="up"){ pipelineMove(pidx,-1); return; }
+    if(pact==="down"){ pipelineMove(pidx,1); return; }
+    return;
+  }
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
@@ -3835,12 +4253,29 @@ function reRenderEditorAndInspector(){
    event for <select>/checkbox on older engines) route through the same
    handler; re-running it twice for one edit is idempotent. */
 function onFieldChange(ev){
+  /* CR-T-31 first: a pipeline control is never a generator field, and routing
+     it here keeps one input listener in this file rather than two. */
+  var pf=ev.target&&ev.target.closest?ev.target.closest("[data-pipe-field]"):null;
+  if(pf){
+    var pi=parseInt(pf.getAttribute("data-pipe-index"),10);
+    var pname=pf.getAttribute("data-pipe-field");
+    if(pname==="op"){ pipelineSetOp(pi,pf.value); return; }
+    if(pname==="kind"){ pipelineSetKind(pi,pf.value); return; }
+    if(pname==="nul"||pname==="replace"){ pipelineSetField(pi,pname,pf.checked?"1":"0"); return; }
+    pipelineSetField(pi,pname,pf.value);
+    return;
+  }
   var f=ev.target&&ev.target.closest?ev.target.closest("[data-field]"):null;
   if(!f) return;
   var name=f.getAttribute("data-field");
   var val=f.value;
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
+  /* When a stage is being edited, STATE.formValues IS that stage's values
+     object, so the line above has already changed the pipeline: bump the
+     result cache key and redraw the stage list along with everything else. */
+  if(STATE.pipelineEditing!==null) bumpPipeline();
   renderGeneratorResult();
+  renderPipelinePanel();
   renderInspector();
 }
 document.addEventListener("input",function(ev){
@@ -3894,6 +4329,16 @@ var KEYMAP=[
    doc:"Copy the command with its comment header",run:function(){ doCopy(true); }},
   {id:"export-evidence",keys:["e","E"],mods:"ctrl",whenTyping:false,
    doc:"Export as Evidence",run:function(){ exportEvidence(); }},
+  /* CR-T-31. Ctrl+Shift+P adds the command on screen as the next stage;
+     Ctrl+Shift+Backspace clears the pipeline. Both are listed in KEYMAP like
+     every other binding, so docs/USER_GUIDE.md stays checkable against one
+     array (UI spec section 5) and nothing in this file attaches a second
+     keydown listener. */
+  {id:"pipeline-add",keys:["p","P"],mods:"ctrlShift",whenTyping:true,
+   doc:"Add the command on screen to the pipeline as the next stage",
+   run:function(){ pipelineAdd(); }},
+  {id:"pipeline-clear",keys:["Backspace"],mods:"ctrlShift",whenTyping:false,
+   doc:"Clear the pipeline",run:function(){ pipelineClear(); }},
   {id:"rail-jump",keys:["1","2","3","4","5"],mods:"ctrlAlt",whenTyping:true,
    doc:"Jump to rail 1-5",run:function(ev){ railAt(parseInt(ev.key,10)); }}
 ];
