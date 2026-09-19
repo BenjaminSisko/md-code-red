@@ -61,7 +61,7 @@
    "status": "extracted from rhel9-stig-test (RHEL 9) \u2014 22 tools"
   }
  },
- "git_commit": "TAG_COMMIT_PLACEHOLDER",
+ "git_commit": "5ace5ea8d88bcb5e57664c6d9618f10f36f38d3b",
  "receipt_count": 18,
  "review_lineage": {
   "adr": "ADR-001-engine-and-content -- ACCEPTED, section 9 signed by Avery Quinn, 2026-09-18",
