@@ -1629,6 +1629,69 @@ function stageRefused(tool,command){
   return false;
 }
 
+/* ---- PIPE-001: the stage binary ALLOW-LIST (Marcus Reed, D4) --------------
+   The two predicates above are DENY lists keyed on word one, and a deny list
+   keyed on word one is a list wearing a class's clothes: `runcon <ctx> bash`,
+   `setarch x86_64 bash`, `systemd-inhibit --no-pager bash` -- thirteen of the
+   nineteen exec wrappers tried in review composed, because the wrapper is the
+   word that gets checked and the shell is the word that runs. Worse, a stage
+   binary was not required to be a DECLARED TOOL at all: a spec naming a binary
+   that exists in no tool table composed today.
+
+   Enumerating wrappers loses that race for ever; there is always one more
+   binary that execs its argument. So this is closed the way MCR-SEC-001 closed
+   the token grammar -- by ALLOW-LIST:
+
+       A STAGE'S COMMAND MUST INVOKE THE BINARY THAT ITS DECLARED TOOL
+       RESOLVES TO IN THE TOOL TABLE.
+
+   What that makes UNEXPRESSIBLE, rather than merely caught: any stage whose
+   first word is not a curated tool's binary. Every exec wrapper, every
+   interpreter this product does not ship as a tool, every misspelling, and
+   every future wrapper nobody has heard of yet -- all one refusal, none of them
+   named anywhere. The deny lists above stay: they refuse `sh`, `env` and `sudo`
+   even though those ARE declared tools, and one of them being reachable through
+   a curated entry is exactly the case an allow-list alone would wave through.
+   Two rules, both applied, neither standing in for the other.
+
+   The tool table arrives through opts, the way the destructive-pattern table
+   already does -- this block is PURE and reads no dataset (the harness lifts it
+   verbatim and would either crash or test a stub otherwise). NO TABLE MEANS
+   NOTHING COMPOSES. A composer that falls back to "allow" when the caller
+   forgets to hand it the allow-list does not have one. */
+function toolBinaryIndex(tools){
+  if(!tools||typeof tools.length!=="number"||!tools.length) return null;
+  var out={},i,rec,id,bin;
+  for(i=0;i<tools.length;i++){
+    rec=tools[i];
+    if(!rec||typeof rec!=="object") continue;
+    id=(rec.id===undefined||rec.id===null)?"":String(rec.id);
+    bin=(rec.binary===undefined||rec.binary===null)?"":String(rec.binary);
+    if(id===""||bin==="") continue;
+    /* first row wins: a duplicate id cannot redefine a binary out from under a
+       curated entry, and hasOwnProperty is why "constructor" is not a tool */
+    if(!Object.prototype.hasOwnProperty.call(out,id)) out[id]=bin;
+  }
+  for(var k in out){ if(Object.prototype.hasOwnProperty.call(out,k)) return out; }
+  return null;                                  /* a table of nothing usable is no table */
+}
+function stageBinaryDeclared(spec,command,index){
+  if(index===null) return false;                /* fail closed: no table, no stage */
+  var declared=(spec&&spec.explain_tool)||(spec&&spec.tool);
+  if(declared===undefined||declared===null) return false;
+  declared=String(declared);
+  if(!Object.prototype.hasOwnProperty.call(index,declared)) return false;
+  var base=invokedBinary(command);
+  if(base===null) return false;                 /* unreadable first word: refuse, never guess */
+  /* Both halves, and both matter. The id must be curated, AND the word that
+     actually runs must be that id's binary -- otherwise the allow-list is a
+     spelling check on a field nobody executes, and `tool:"grep"` with a
+     template that emits `runcon bash` sails through it. */
+  return base===index[declared];
+}
+var STAGE_BINARY_COPY="every stage runs a binary this build curates, and the first word of this "+
+                      "one is not the binary its declared tool names";
+
 /* Rule 2 for the stage text itself (see the block comment). Every word of an
    assembleCommand() output is a LIT_TOKEN_RE/FLAG_TOKEN_RE token or a
    shQuote'd value, so no bare operator and no unquoted metacharacter can occur
@@ -1723,8 +1786,57 @@ var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/et
                          "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
                          "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
                          "/usr/libexec","/etc/xdg/autostart"];
-function underDir(target,dir){
+/* ---- PIPE-002: normalise LEXICALLY, then classify (Marcus Reed, D4) -------
+   underDir() is a prefix match, and a prefix match answers a question about a
+   SPELLING. Three spellings of one file got three ratings in review:
+   `/tmp/../etc/passwd` green (it starts with /tmp), `/./etc/passwd` and
+   `//etc/passwd` unrated (they start with neither). All three are /etc/passwd.
+
+   So every target is collapsed before anything is asked about it: repeated
+   slashes become one, `.` components are dropped, and `..` is resolved against
+   what precedes it. LEXICALLY -- this touches no filesystem, reads no symlink
+   and calls nothing. It cannot: this code runs in a browser on an air-gapped
+   workstation with no access to the host the command will run on, and a rule
+   that needs the target host to answer is a rule this product cannot have.
+
+   A leading `//` is implementation-defined in POSIX (4.13); collapsing it to a
+   single slash is the direction that cannot be used to escape a rule, which is
+   the only direction available to a classifier that must not under-rate.
+
+   Where lexical and kernel resolution can differ is a symlinked component:
+   `/tmp/../etc` is /etc lexically, and if /tmp were a symlink the kernel would
+   walk somewhere else. That asymmetry is handled by REFUSING TO GRANT GREEN to
+   a path that needed a `..` to become scratch -- normalisation may RAISE a
+   rating and may never hand one out. `/tmp/../tmp/x` is /tmp/x and is still not
+   green: green is a human claim about a curated path (PL4), and a path computed
+   by traversal is not one somebody curated. */
+function lexicalPath(target){
   var t=String(target);
+  if(t==="") return "";
+  var absolute=(t.charAt(0)==="/");
+  var parts=t.split("/"),out=[],i,p;
+  for(i=0;i<parts.length;i++){
+    p=parts[i];
+    if(p===""||p===".") continue;               /* // and /./ carry no meaning */
+    if(p===".."){
+      if(out.length&&out[out.length-1]!==".."){ out.pop(); continue; }
+      if(absolute) continue;                    /* `..` above / is / (POSIX 4.13) */
+      out.push("..");                           /* a relative path may keep a leading .. */
+      continue;
+    }
+    out.push(p);
+  }
+  var joined=out.join("/");
+  if(absolute) return "/"+joined;
+  return joined===""?".":joined;
+}
+function pathTraverses(target){
+  var parts=String(target).split("/"),i;
+  for(i=0;i<parts.length;i++){ if(parts[i]==="..") return true; }
+  return false;
+}
+function underDir(target,dir){
+  var t=lexicalPath(target);
   return t===dir || t.indexOf(dir+"/")===0;
 }
 /* PL2 rule-4 class, redirect half: is this target somewhere the system executes? */
@@ -1740,9 +1852,14 @@ function isExecutionSink(target){
    target ever arrives by some other road -- which is exactly what the de-quoted
    whole-pipeline projection below feeds it. */
 function redirectTargetBlast(target){
-  var t=String(target),i;
+  var t=lexicalPath(target),i;                  /* PIPE-002: collapse first, classify after */
   for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
-  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){ if(underDir(t,PIPE_SCRATCH_DIRS[i])) return "green"; }
+  for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){
+    if(!underDir(t,PIPE_SCRATCH_DIRS[i])) continue;
+    /* PIPE-002 + PL4: scratch REACHED BY TRAVERSAL is not a curated path, and
+       green is a claim somebody made about a path, not an arithmetic result. */
+    return pathTraverses(target)?"unrated":"green";
+  }
   return "unrated";                             /* PL4: never green by default */
 }
 /* `unrated` is not a fourth blast colour: it is a rating the product declines to
@@ -1799,6 +1916,7 @@ function projectedRedirectTargets(dequoted){
 function assemblePipeline(stages,version,opts){
   opts=opts||{};
   var patterns=opts.patterns||[];
+  var toolIndex=toolBinaryIndex(opts.tools);    /* PIPE-001: null means nothing composes */
   if(!stages||typeof stages.length!=="number"||!stages.length) return null;
   if(stages.length>MAX_PIPELINE_STAGES) return null;
   if(!inList(["7","8","9","10"],version)) return null;
@@ -1865,6 +1983,7 @@ function assemblePipeline(stages,version,opts){
       var res=assembleCommand(st.spec,version,st.values||{},{patterns:patterns});
       if(res===null) return null;               /* incomplete, invalid, or gated off */
       if(stageRefused(st.spec&&st.spec.tool,res.command)) return null;   /* PL2 / TM2-F8 */
+      if(!stageBinaryDeclared(st.spec,res.command,toolIndex)) return null;   /* PIPE-001 */
       if(!stageCommandClean(res.command)) return null;
       words.push(res.command);
       for(j=0;j<(res.flags||[]).length;j++) flags.push(res.flags[j]);
@@ -1913,6 +2032,9 @@ function assemblePipeline(stages,version,opts){
          with or without -0. The class predicate is asked of the CHILD, which is
          the command that actually runs. */
       if(stageRefused(st.spec&&st.spec.tool,child.command)) return null;
+      /* PIPE-001, the same question of the CHILD: xargs runs it, so it is the
+         stage binary whatever the word in front of the pipe says. */
+      if(!stageBinaryDeclared(st.spec,child.command,toolIndex)) return null;
       if(!stageCommandClean(child.command)) return null;
       xw.push(child.command);
       if(replace===true) xw.push(shQuote("{}"));
@@ -1979,7 +2101,8 @@ function assemblePipeline(stages,version,opts){
    command, partial or otherwise -- the only producer of a command string is
    assemblePipeline(), and `ok` here is assemblePipeline()'s own answer rather
    than a second opinion that could drift from it. */
-function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey){
+function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey,toolIndex){
+  toolIndex=(toolIndex===undefined)?null:toolIndex;
   var out={index:index,kind:"command",ok:true,reason:null,missing:[],invalid:[]};
   if(!st||typeof st!=="object"){ out.ok=false; out.reason="this stage is not a stage"; return out; }
   var opKey=(st.op===undefined||st.op===null)?null:st.op;
@@ -2078,6 +2201,14 @@ function pipelineStageReason(st,index,version,prevKind,prevCommand,prevOpKey){
                "a second quoting domain this tool does not compose into";
     return out;
   }
+  /* PIPE-001 in the panel. The assembler refuses an undeclared stage binary
+     structurally; without this line the panel would refuse with no reason at
+     all, which is the worked-around gate PL6 is about. */
+  if(!stageBinaryDeclared(st.spec,res.command,toolIndex)){
+    out.ok=false;
+    out.reason=STAGE_BINARY_COPY;
+    return out;
+  }
   out.command=res.command;
   out.blast=res.blast;
   return out;
@@ -2093,8 +2224,9 @@ function validatePipeline(stages,version,opts){
     return out;
   }
   var prevKind=null,prevCommand=null,prevOpKey=null,i;
+  var toolIndex=toolBinaryIndex((opts||{}).tools);   /* PIPE-001, the same table */
   for(i=0;i<stages.length;i++){
-    var d=pipelineStageReason(stages[i],i,version,prevKind,prevCommand,prevOpKey);
+    var d=pipelineStageReason(stages[i],i,version,prevKind,prevCommand,prevOpKey,toolIndex);
     out.stages.push(d);
     prevKind=d.kind;
     prevOpKey=(stages[i]&&stages[i].op!==undefined&&stages[i].op!==null)?stages[i].op:null;
@@ -2475,6 +2607,12 @@ try{
   return;
 }
 var PATTERNS=(DATASETS.DANGEROUS&&DATASETS.DANGEROUS.patterns)||[];
+/* PIPE-001. The stage allow-list the composer is handed: the curated tool
+   table, as data, exactly like PATTERNS above. The assembler reads no dataset
+   of its own -- it is lifted verbatim by the harness -- so the one place that
+   knows what this build curates hands it over at the call site. */
+var TOOL_TABLE=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
+function pipelineOpts(){ return {patterns:PATTERNS,tools:TOOL_TABLE}; }
 
 /* ============ generator registry (CR-T-17..25, ADR-001 §8 module 4) ============
    A generator is not authored as a second list: it IS a commands.json entry
@@ -2707,7 +2845,7 @@ function computeResult(){
      makes every one of them operate on the WHOLE pipeline without a second
      code path to keep in step (MCR-SEC-012's rule, applied to the composer). */
   if(STATE.pipeline.length){
-    var pres=assemblePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+    var pres=assemblePipeline(pipelineStages(),STATE.version,pipelineOpts());
     if(!pres) return null;
     return withCopyPayloads(pres,null);
   }
@@ -3642,7 +3780,7 @@ function renderPipelinePanel(){
     target.innerHTML="";
     return;
   }
-  var v=validatePipeline(pipelineStages(),STATE.version,{patterns:PATTERNS});
+  var v=validatePipeline(pipelineStages(),STATE.version,pipelineOpts());
   var html="<div class=\"card\"><p class=\"region-label\">Pipeline — "+
            esc(String(STATE.pipeline.length))+" of "+esc(String(MAX_PIPELINE_STAGES))+" stages</p>";
   html+="<div class=\"stagelist\">";
