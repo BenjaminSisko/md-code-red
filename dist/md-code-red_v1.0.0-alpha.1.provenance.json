@@ -1,8 +1,8 @@
 {
  "artifact": {
-  "bytes": 3157302,
+  "bytes": 3313109,
   "filename": "md-code-red_v1.0.0-alpha.1.html",
-  "sha256": "8f67b9afc45e365fea14e13111bb05b5ddfb8d249cff306ba2bd17e41b8896a8"
+  "sha256": "65de40be58477d3bb1b781d7e2188b2d78329616732971a8bf37fbc7e7b2c665"
  },
  "build_date": "2026-09-18",
  "capture_count": 5,
@@ -15,7 +15,7 @@
   "zip_sha256": "077cbb6d2ae5f8fdbaaf416d87a34a8621767cdba490f3283feb0c5c35892700",
   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CCI_List.zip"
  },
- "content_fingerprint": "e28dc256a3a91bf6dcf95ec806d31b0202f2910141f6684b5ae42b46e60ca8ad",
+ "content_fingerprint": "bb878a8fbe792ef10ddc5f5364054203eb404c1c2df1c123bdcc49f2c63179b1",
  "flag_coverage_baseline": {
   "accepted_by": "Milo Vance, Toolkit Systems Engineer \u2014 under condition E5 of Marcus Reed's D4 review",
   "accepted_on": "2026-09-17",
@@ -53,12 +53,12 @@
   },
   "9": {
    "container_image_digest": null,
-   "extractor_version": null,
+   "extractor_version": "1.0.0",
    "generator": "extract/extract_flags.py",
-   "host": null,
-   "kernel": null,
-   "redhat_release": null,
-   "status": "pending \u2014 no RHEL 9 host read yet (CR-T-09/10/11/12)"
+   "host": "rhel9-stig-test",
+   "kernel": "5.14.0-687.5.3.el9_8.x86_64",
+   "redhat_release": "Red Hat Enterprise Linux release 9.8 (Plow)",
+   "status": "extracted from rhel9-stig-test (RHEL 9) \u2014 22 tools"
   }
  },
  "git_commit": "TAG_COMMIT_PLACEHOLDER",

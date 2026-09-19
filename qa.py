@@ -2587,22 +2587,24 @@ def gate_q15(ctx):
     FLAGS special case (CR-T-09/10, extended by CR-T-12). extract/make_pending_
     skeletons.py still emits the placeholder EMPTY flags_rhel<N>.json for every
     version — that was fine before any of CR-T-09/10/12 had run, but
-    flags_rhel7.json, flags_rhel8.json and flags_rhel10.json are now real data
-    from extract/extract_flags.py (a UBI7 container on saratoga standing in for
-    the RHEL 7 host the lab doesn't have, and Defiant/Saratoga directly for RHEL
-    8/10), so a diff against the placeholder script's empty output would always
-    "drift". Re-running the live extractor here would mean this gate re-opens an
-    SSH session to lab hosts (and a container) on every CI run — slow, and a
-    hard dependency on lab hosts being reachable from the runner. Instead: (a)
-    the three flags_rhel{7,8,10}.json lines are filtered out of make_pending_
-    skeletons.py's drift report below — that script is still the right
-    authority for flags_rhel9, which remains genuinely empty pending CR-T-11 —
-    and (b) extract_flags.py's own --check mode re-parses the raw man/--help
-    dumps already committed under content-src/raw/ (no SSH, no live host, no
-    container) and diffs that against content/flags_rhel{7,8,10}.json instead.
+    flags_rhel7.json, flags_rhel8.json, flags_rhel9.json and flags_rhel10.json
+    are now real data from extract/extract_flags.py (a UBI7 container on
+    saratoga standing in for the RHEL 7 host the lab doesn't have, Defiant/
+    Saratoga directly for RHEL 8/10, and rhel9-stig-test directly for RHEL 9 —
+    all captured 2026-09-19), so a diff against the placeholder script's empty
+    output would always "drift". Re-running the live extractor here would mean
+    this gate re-opens an SSH session to lab hosts (and a container) on every
+    CI run — slow, and a hard dependency on lab hosts being reachable from the
+    runner. Instead: (a) the four flags_rhel{7,8,9,10}.json lines are filtered
+    out of make_pending_skeletons.py's drift report below — that script is the
+    right authority only for a genuinely empty skeleton, and none of the four
+    is that anymore — and (b) extract_flags.py's own --check mode re-parses the
+    raw man/--help dumps already committed under content-src/raw/ (no SSH, no
+    live host, no container) and diffs that against content/flags_rhel{7,8,9,10}
+    .json instead.
     """
     f, d = [], []
-    flags_reextracted = {"flags_rhel7.json", "flags_rhel8.json", "flags_rhel10.json"}
+    flags_reextracted = {"flags_rhel7.json", "flags_rhel8.json", "flags_rhel9.json", "flags_rhel10.json"}
     for script in GENERATORS:
         path = os.path.join(REPO, script)
         if not os.path.exists(path):
@@ -2616,8 +2618,8 @@ def gate_q15(ctx):
             real_drift = [ln for ln in lines
                           if ln.strip().split(":", 1)[0].strip() not in flags_reextracted]
             if any(ln.startswith("GENERATED-FILE DRIFT") for ln in lines) and len(real_drift) <= 1:
-                d.append("%s: only flags_rhel8.json/flags_rhel10.json drifted from the empty "
-                         "placeholder skeleton — expected now that CR-T-09/10 populated them; "
+                d.append("%s: only the four flags_rhel{7,8,9,10}.json files drifted from the empty "
+                         "placeholder skeleton — expected now that CR-T-09/10/11/12 populated them; "
                          "checked separately below" % script)
             elif proc.returncode != 0:
                 f.append("generated content does not match a fresh run of %s (hand-edited?):\n      %s"
@@ -2633,9 +2635,9 @@ def gate_q15(ctx):
 
     flags_script = os.path.join(REPO, "extract", "extract_flags.py")
     if not os.path.exists(flags_script):
-        f.append("extract/extract_flags.py missing — flags_rhel7/8/10.json cannot be re-derived")
+        f.append("extract/extract_flags.py missing — flags_rhel7/8/9/10.json cannot be re-derived")
     else:
-        for v in ("7", "8", "10"):
+        for v in ("7", "8", "9", "10"):
             proc = subprocess.run([sys.executable, flags_script, "--check", "--rhel", v], cwd=REPO,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             out = proc.stdout.decode("utf-8", "replace").strip()
@@ -3323,8 +3325,10 @@ LONG_OPTION_RE = re.compile(r"--[a-z0-9][a-z0-9-]*")
 COVERAGE_BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
 # AL-GATE3-010: "7" was absent, so content-src/flag_coverage_baseline.json's six
 # coverage["7"] rows (chage, journalctl, systemctl, useradd, usermod, yum) were
-# read by nothing.
-RAW_DIR_FOR = {"7": "rhel7", "8": "rhel8", "10": "rhel10"}
+# read by nothing. "9" joined in 2026-09-19: rhel9-stig-test is a real host in
+# the lab (HL-20260915-002), and content-src/raw/rhel9/ carries committed
+# captures for every installed, extractable CLI on it.
+RAW_DIR_FOR = {"7": "rhel7", "8": "rhel8", "9": "rhel9", "10": "rhel10"}
 
 
 def _long_options_in_raw(raw_dir, cli):

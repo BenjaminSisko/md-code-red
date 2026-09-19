@@ -3294,7 +3294,307 @@
     },
     {
      "names": [
-      "--permanent"
+      "--list-services"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-service"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-service"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-service"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-ports"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-protocols"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-protocol"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-protocol"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-protocol"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-source-ports"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-source-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-source-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-source-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-icmp-blocks"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-icmp-block"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-icmp-block"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-icmp-block"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-forward-ports"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-forward-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-forward-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-forward-port"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-masquerade"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-masquerade"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-masquerade"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--list-rich-rules"
+     ],
+     "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--add-rich-rule"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--remove-rich-rule"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-rich-rule"
      ],
      "takes_arg": true,
      "explain": null,
@@ -3356,6 +3656,16 @@
      "names": [
       "--permanent"
      ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--permanent"
+     ],
      "takes_arg": false,
      "explain": null,
      "page": "firewall-cmd",
@@ -3367,6 +3677,16 @@
       "--permanent"
      ],
      "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "--query-source"
+     ],
+     "takes_arg": true,
      "explain": null,
      "page": "firewall-cmd",
      "section": "1",
@@ -4087,6 +4407,36 @@
       "--permanent"
      ],
      "takes_arg": false,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "priority"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "priority"
+     ],
+     "takes_arg": true,
+     "explain": null,
+     "page": "firewall-cmd",
+     "section": "1",
+     "raw_ref": "content-src/raw/rhel10/firewall-cmd.man.txt"
+    },
+    {
+     "names": [
+      "priority"
+     ],
+     "takes_arg": true,
      "explain": null,
      "page": "firewall-cmd",
      "section": "1",

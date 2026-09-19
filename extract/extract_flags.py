@@ -60,6 +60,7 @@ GENERATOR = "extract/extract_flags.py"
 HOSTS = {
     "defiant": {"rhel_version": "8"},
     "saratoga": {"rhel_version": "10"},
+    "rhel9-stig-test": {"rhel_version": "9"},
 }
 
 # CR-T-12: there is no RHEL 7 host in the lab. The read-only commands this
@@ -149,10 +150,25 @@ def host_facts(host):
 
 
 def command_path(host, name):
-    """`command -v <name>` on the host, or None."""
+    """`command -v <name>` on the host, or None.
+
+    Falls back to the standard sbin locations when command -v can't see the
+    binary: on a STIG-hardened RHEL host under the confined staff_t role
+    (+ fapolicyd), `command -v` and even stat() on /usr/sbin/<tool> are
+    denied for the evaluator account even though RPM metadata proves the
+    package is installed. rpm -qf and man -P cat remain readable there, so a
+    package that owns the canonical sbin path is a real installation. A tool
+    that is genuinely not installed (no owning package) still returns None.
+    """
     rc, out, _ = ssh_run(host, "command -v %s 2>/dev/null" % _shquote(name))
     out = out.strip()
-    return out if rc == 0 and out else None
+    if rc == 0 and out:
+        return out
+    for cand in ("/usr/sbin/%s" % name, "/sbin/%s" % name):
+        rc, out, _ = ssh_run(host, "rpm -qf --qf '%%{NVRA}\\n' %s 2>/dev/null" % _shquote(cand))
+        if rc == 0 and (out or "").strip():
+            return cand
+    return None
 
 
 def man_path(host, page):
@@ -246,13 +262,27 @@ def _term_candidates(lines):
     for i, line in enumerate(lines):
         if not line.strip():
             continue
-        prev_blank = (i == 0) or (not lines[i - 1].strip())
-        if not prev_blank:
-            continue
         indent = _indent(line)
         if indent == 0:
             continue
         stripped = line.strip()
+        prev_blank = (i == 0) or (not lines[i - 1].strip())
+        if not prev_blank:
+            # Wrapped spec: a man page can put a modifier fragment on its own
+            # line at the term indent ('[--permanent] [--zone=zone]') and the
+            # real flag term on the NEXT line, with no blank between them
+            # (firewall-cmd(1), the --add-rich-rule family). The modifier
+            # line starts with '[' and is rejected as a term itself; accept
+            # the following flag line as the term. Description prose lives at
+            # a deeper indent, so requiring the previous non-blank line to be
+            # at the SAME indent AND start with '[--' keeps prose out.
+            j = i - 1
+            while j >= 0 and not lines[j].strip():
+                j -= 1
+            prev_line = lines[j].strip() if j >= 0 else ""
+            wrapped = (prev_line.startswith("[--") and _indent(lines[j]) == indent)
+            if not wrapped:
+                continue
         first_char = stripped[0]
         if not (first_char == "-" or first_char.isalpha()):
             continue
