@@ -298,7 +298,7 @@ in the file's own header comment and in the About panel. It exists because the t
 is air-gapped: there is nowhere to look the content up to compare it against. What
 it actually proves is narrower than "this content is correct" -- it proves **this
 evidence export came from this exact file**. To check it: open the same file's
-**About** panel (`Ctrl+Alt+5`) and compare its "Content fingerprint" line,
+**About** panel (`Ctrl+Alt+6`) and compare its "Content fingerprint" line,
 character for character, against the one printed at the top of the evidence export.
 They are read from one constant (`CONTENT_FINGERPRINT`), so inside one file they can
 never disagree. **If they do not match**, the evidence text did not come from the
@@ -321,7 +321,12 @@ the tool does cannot drift apart without the table changing.
 | Toggle the sidebar | `Ctrl+B` | |
 | Toggle the inspector | `Ctrl+I` | |
 | Toggle dark / light theme | `Ctrl+Shift+L` | Also the **Theme** button at the right of the status bar. The choice is kept for the browser session only (`sessionStorage`), not across a fresh open of the file. |
-| Jump to a rail section | `Ctrl+Alt+1` ... `Ctrl+Alt+5` | Command Builder, STIG Search, Ansible, Favorites, About, in rail order top to bottom. Focus moves to the rail button. (STIG Search and Ansible are placeholders -- see Journey 3.) |
+| Command Builder | `Ctrl+Alt+1` | Opens the guided command builder and focuses its rail button. |
+| STIG and Evidence Search | `Ctrl+Alt+2` | Opens STIG and evidence search and focuses its rail button. |
+| Ansible Generator | `Ctrl+Alt+3` | Opens the Ansible generator and focuses its rail button. |
+| Favorites and Recent | `Ctrl+Alt+4` | Opens saved and recently used entries and focuses its rail button. |
+| Reference Commands | `Ctrl+Alt+5` | Opens the mined reference-command catalog and focuses its rail button. |
+| About | `Ctrl+Alt+6` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
 | Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |
 | Export as Evidence | `Ctrl+E` | Opens the evidence preview modal. |
 | Move through palette results, or within any list (tools, commands, palette rows) | Arrow Up / Arrow Down | Wraps at both ends inside the palette. |
@@ -376,7 +381,7 @@ browser restarted) starts from the system preference again.
 
 ### About Panel
 
-The **About** rail (`Ctrl+Alt+5`) shows the tool's version and build date, the
+The **About** rail (`Ctrl+Alt+6`) shows the tool's version and build date, the
 content fingerprint, every embedded STIG release with its version, benchmark date
 and rule count (and a sunset marker for RHEL 7), the embedded source families with
 their license classes, and the required attribution block from SALM's Content

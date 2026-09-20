@@ -602,7 +602,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 ## Attribution
 
 Reproduced verbatim from SALM's Content Licensing Ruling v1, the same text shown
-in the running tool's About panel (`Ctrl+Alt+5`, `ATTRIBUTION_BLOCK` in
+in the running tool's About panel (`Ctrl+Alt+6`, `ATTRIBUTION_BLOCK` in
 `template.html`):
 
 ```
