@@ -54,7 +54,7 @@ sys.path.insert(0, REPO)
 
 import qa  # noqa: E402
 
-APP_VERSION = "v1.0.0-alpha.1"
+APP_VERSION = "v1.0.0-alpha.2"
 
 BUILD_PY_STUB = (
     'APP_NAME = "MD CODE RED"\n'

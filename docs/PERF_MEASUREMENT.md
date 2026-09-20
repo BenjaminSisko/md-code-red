@@ -6,7 +6,7 @@ Ruling this answers: Al Kowalski — "lazy per-family, per-tier hydration become
 mandatory at 5,000 corpus records, and the inverted search index must be in
 place before the second family lands."
 
-This tranche is **14,488 mined records across three families**, so both clocks
+This tranche is **14,439 mined records across three families**, so both clocks
 had already expired when the corpus was written. The measurement below is what
 decided *how* to obey the ruling, not *whether*.
 

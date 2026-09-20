@@ -2,7 +2,24 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased
+## v1.0.0-alpha.2 - 2026-09-20
+
+Recovery release built from the current main line. It preserves alpha.1 under
+`releases/v1.0.0-alpha.1/`, closes the four remaining pipeline findings, retires
+the dated Q20 waiver with evidence and authority, refreshes the three-family
+reference corpus to 14,439 distinct commands, and makes Q21-Q25 continuous
+release gates. The mined reference tier remains separate from the 183-entry
+curated catalog and cannot enter the assembler.
+
+### Added -- reference evidence and continuous corpus gates
+
+- Q23 measures closure and independently samples classifier accuracy across all
+  12 family/release cells.
+- Q24 enforces reference/curated shape separation and exports governing-source
+  quotations only from byte-exact, evidence-eligible spans.
+- Q25 re-resolves all 23,447 citations and rejects source, anchor, text, or digest
+  drift.
+- Provenance now fingerprints all five JSON islands in declaration order.
 
 ### Added -- the pipeline composer (CR-T-31, branch `salm/milo/pipeline-finish`)
 
@@ -78,12 +95,10 @@ over in every other field of this product.
   `content/rules_rhel*.json`; `tests/test_pipeline_ui_wiring.py` (15 tests, 9
   audits, 14 negative controls) gates the panel. Harness 81,577 -> 101,297
   checks; unit tests 251 -> 293.
-- **Finding PIPE-F1, reported not carved out:** `/dev/null` is 26 of the 31
-  absolute redirect targets in the STIG corpus, and the rule as specified rates
-  `/dev/**` RED. Implemented as specified -- `/dev` holds both the most harmless
-  target and the most catastrophic, so a blanket RED errs safe. A carve-out is a
-  Founder/Marcus decision, and adding one quietly would be the
-  declared-discriminator mistake MCR-SEC-022 names.
+- **PIPE-F1 closed:** exact descriptor sinks `/dev/null`, `/dev/stdout`,
+  `/dev/stderr`, `/dev/fd/1`, and `/dev/fd/2` rate green; other `/dev/**` paths,
+  including `/dev/zero`, remain red. The allow-list is exact and is exercised by
+  the hostile harness.
 
 ### Fixed
 

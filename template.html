@@ -336,7 +336,7 @@ code,pre{font-family:var(--font-mono);}
 <!-- THE REFERENCE CORPUS. Four more JSON islands, and NOT ONE of them is parsed
      at boot (Al Kowalski's ruling: lazy per-family, per-tier hydration is
      mandatory past 5,000 corpus records, and the inverted index lands before the
-     second family does; this tranche is 14,488 records across three families).
+     second family does; this tranche is 14,439 records across three families).
 
      mcr-ref-index is the build-time inverted index: token -> posting list. The
      palette parses it on the first keystroke and uses it to decide which
@@ -2411,7 +2411,7 @@ function buildIndex(datasets){
   }
   /* The REFERENCE tier is NOT built here, and its absence is the design.
      This function walks whole datasets to build lower-cased haystacks; doing
-     that for 14,488 mined records would hydrate all three family islands on
+     that for 14,439 mined records would hydrate all three family islands on
      the first keystroke and hand back a 19,000-entry array -- eager loading
      wearing a lazy function's name. The corpus is searched through the
      build-time inverted index instead (queryReference(), MCR-HYDRATE), which
@@ -2934,7 +2934,7 @@ function entryById(id){
 
    THE RULE BEING OBEYED. Al Kowalski: lazy per-family, per-tier hydration is
    mandatory at 5,000 corpus records, and the inverted search index has to be in
-   place before the second family lands. This tranche is 14,488 records across
+   place before the second family lands. This tranche is 14,439 records across
    three families, so both clocks had already expired when it was written.
 
    WHAT "PER-TIER" MEANS HERE. The CURATED tier -- DATASETS.COMMANDS and
@@ -3085,7 +3085,7 @@ function refResolvePostings(idx,postings,cap){
    `terms` is split the same way queryIndex() splits it. A term shorter than the
    index's own min_token is not in the dictionary at all, so it is dropped from
    the reference search rather than silently matching everything -- and if EVERY
-   term is dropped, the group is empty rather than 14,488 records long. */
+   term is dropped, the group is empty rather than 14,439 records long. */
 function queryReference(idx,q,cap){
   var raw=String(q||"").toLowerCase().split(/\s+/),terms=[],ti;
   var min=idx.min_token||2;
@@ -3103,7 +3103,7 @@ function queryReference(idx,q,cap){
 /* ===== MCR-HYDRATE-END ====================================================== */
 
 /* refDataset() is every record of every HYDRATED family, and it is deliberately
-   NOT "every record". Nothing in the app is allowed to want all 14,488 at once:
+   NOT "every record". Nothing in the app is allowed to want all 14,439 at once:
    a caller that does would undo the hydration boundary by accident, which is
    exactly how a lazy loader becomes an eager one six months later. The one
    consumer is the tool index below, which spans what has been loaded. */

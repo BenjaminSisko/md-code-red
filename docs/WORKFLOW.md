@@ -151,7 +151,7 @@ rows), then substitute the JSON payload and five identity tokens
 
 ## 5. QA Gate
 
-`python3 qa.py` runs 22 independent gates plus an optional `node --check`
+`python3 qa.py` runs 25 independent gates plus an optional `node --check`
 against the **shipped artifact** (not `content/` -- that is `build.py`'s own
 `validate()`, a separate check). Every gate, what it proves, how it has been
 watched fail, and what it explicitly does not prove is `docs/QA_GATES.md`, not

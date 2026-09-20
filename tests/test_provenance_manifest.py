@@ -3,13 +3,14 @@
 
 extract/make_provenance.py emits dist/md-code-red_<version>.provenance.json
 claiming, among other things, the built artifact's own sha256 and content
-fingerprint. A provenance manifest whose own headline claims do not match the
-artifact it describes is worse than no manifest -- it would be trusted and
-wrong. This test runs the real script against the real built artifact (same
+fingerprint across every declared JSON data island. A provenance manifest whose
+own headline claims do not match the artifact it describes is worse than no
+manifest -- it would be trusted and wrong. This test runs the real script against
+the real built artifact (same
 idiom as test_evidence_export_real.py: shell out to the real tool over real
 committed content, never re-implement it) and checks the two claims that
 matter most independently, the same way qa.py's build_ctx() would: re-hash
-the artifact file and the bytes inside its own <script id="mcr-data"> island,
+the artifact file and the bytes inside all five declared JSON islands in order,
 and compare both to what the manifest says.
 
 Artifact lookup is qa.find_artifact() itself, not a second copy of it. This
@@ -49,10 +50,14 @@ def sha256_file(path):
 def content_fingerprint(artifact_path):
     with open(artifact_path, encoding="utf-8") as f:
         html = f.read()
-    m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
-    if not m:
-        raise AssertionError("no mcr-data island found in %s" % artifact_path)
-    return hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()
+    islands = re.findall(
+        r'<script id="([^"]+)" type="application/json">(.*?)</script>', html, re.S)
+    ids = tuple(island_id for island_id, _payload in islands)
+    if ids != qa.EXPECTED_ISLANDS:
+        raise AssertionError("JSON island order is %r, expected %r"
+                             % (ids, qa.EXPECTED_ISLANDS))
+    payload = "\n".join(value for _island_id, value in islands)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 class ProvenanceManifestTests(unittest.TestCase):
