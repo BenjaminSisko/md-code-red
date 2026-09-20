@@ -1,16 +1,20 @@
 ---
-type: release-readiness-packet
-status: candidate
+type: release-report
+status: released
 last_verified: 2026-09-20
 ---
 
-# Release Readiness Packet -- v1.0.0-alpha.3
+# Release Report -- v1.0.0-alpha.3
 
-This is the correction candidate for `MCR-A2-KEY-001`. It is prepared for
-Jordan's integration/release action after exact-head regression review. It is
-not a release, deployment, publication, or pilot-acceptance receipt.
+**Reviewed source revision:** `3f68ac1da3dac3bbb29fab6a07363ee0da1d5015`
 
-| Required field | Candidate state |
+**Tagged merge revision:** `e72c235fbb8e58c72c7ebf861696efeef5e4a27b`
+
+This is the published correction release for `MCR-A2-KEY-001`. The release is
+separate from deployment and pilot acceptance; neither is claimed by this
+report.
+
+| Required field | Released state |
 |---|---|
 | Original task base | `46507926500ea92aa8904c6a9d69698e2d3ba705` |
 | Reconciled current-main base | `f5a29549a7b68b11ccdf20ac39bde834954c112f`; contains required receipt-history merge `b9906e460625fa7b63406854646e4666459e9450` |
@@ -20,13 +24,13 @@ not a release, deployment, publication, or pilot-acceptance receipt.
 | SHA-256 sidecar | `dist/md-code-red_v1.0.0-alpha.3.html.sha256`; check passes |
 | Five-island content fingerprint | `9829c043fb20ef8e2cdf1476a9769f605db19a2161e8fbff7903a226ed6361ea` |
 | Fingerprint explanation | Expected metadata-only movement from alpha.2 because `meta.version` is hashed; after normalizing that one field, the first island is equal and the other four islands are byte-identical |
-| Provenance | `dist/md-code-red_v1.0.0-alpha.3.provenance.json`; intentionally contains `TAG_COMMIT_PLACEHOLDER` until Jordan integrates and knows the tag target |
-| Proposed tag | `v1.0.0-alpha.3` -- proposal only; not created or pushed |
+| Provenance | `dist/md-code-red_v1.0.0-alpha.3.provenance.json`; records tag target `e72c235fbb8e58c72c7ebf861696efeef5e4a27b` |
+| Release tag | `v1.0.0-alpha.3`, targeting reviewed merge `e72c235fbb8e58c72c7ebf861696efeef5e4a27b` |
 | Verification | Q1-Q25+JS PASS; 336/336 unit tests PASS; 101,297 hostile checks PASS; targeted source+artifact rail-keyboard contract PASS; deterministic double-build PASS; source/lineage review PASS; Gitleaks 8.30.1 full-tree scan PASS |
-| Reviewer state | Riley Park exact-head regression review required on the PR. The PR review is authoritative so the reviewed commit does not change merely to record the verdict |
+| Reviewer state | Riley Park APPROVE at exact candidate head `3f68ac1da3dac3bbb29fab6a07363ee0da1d5015`; no blocker, high, medium, or low findings |
 | Deployment state | NOT DEPLOYED. No host, service, package, account, listener, firewall, DNS, route, or exposure change was made |
 | Browser/pilot state | NOT EXECUTED / NOT ACCEPTED. No About-panel visual readback, live network observation, named operator use, or pilot witness is claimed |
-| Forecast impact | Low implementation risk and no corpus change; alpha.3 removes the known keyboard blocker. Release timing depends on Riley's exact-head review and Jordan's integration/tag/publish action, followed by the existing human browser/pilot gates |
+| Forecast impact | Low implementation risk and no corpus change; alpha.3 removes the known keyboard blocker. Remaining timing depends on deployment and the existing named-human browser/pilot gates |
 
 ## Lineage and rollback
 
@@ -44,15 +48,15 @@ not a release, deployment, publication, or pilot-acceptance receipt.
   tabs, verify the alpha.2 sidecar, and open the alpha.2 file. No daemon or
   service needs stopping because MD CODE RED is a static local HTML artifact.
 
-## Jordan integration/release actions
+## Release operation record
 
-1. Confirm the PR head is the exact commit Riley reviewed and that required CI
-   remains green.
-2. Merge without modifying candidate files. If the head changes, require a fresh
-   Riley exact-head review.
-3. Rebuild cleanly and compare the artifact SHA-256 and content fingerprint to
-   this packet.
-4. Re-run `extract/make_provenance.py --commit <tag-target-full-sha>` and commit
-   the stamped provenance through the normal release process.
-5. Only then create/push the proposed annotated tag and publish the release
-   assets. Deployment and browser/pilot acceptance remain separate actions.
+1. PR #6 merged the exact Riley-reviewed candidate without changing candidate
+   files.
+2. A clean rebuild at the merge revision reproduced the recorded artifact
+   SHA-256 and content fingerprint.
+3. Q1-Q25 plus JavaScript and all 336 unit tests passed at the merge revision.
+4. Provenance was stamped with the selected tag target through the normal
+   post-merge release commit.
+5. The annotated tag and release assets were published without changing the
+   historical alpha.2 tag or assets. Deployment and browser/pilot acceptance
+   remain separate actions.
