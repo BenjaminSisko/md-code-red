@@ -8,7 +8,7 @@ last_verified: 2026-09-20
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the shipped build (`dist/md-code-red_v1.0.0-alpha.2.html`, 183 curated
+describes what the shipped build (`dist/md-code-red_v1.0.0-alpha.3.html`, 183 curated
 command entries, 100 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
@@ -251,7 +251,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-alpha.2 -- RHEL 8
+# MD CODE RED v1.0.0-alpha.3 -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -391,7 +391,7 @@ the same text.
 ## Known Limitations
 
 This is the honest state of the shipped build, not a roadmap. Numbers below are
-read directly off `dist/md-code-red_v1.0.0-alpha.2.html` and its build content, not
+read directly off `dist/md-code-red_v1.0.0-alpha.3.html` and its build content, not
 estimated.
 
 - **183 curated command entries across 100 tools.** 27 are guided-form generators

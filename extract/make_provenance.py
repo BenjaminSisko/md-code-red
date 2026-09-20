@@ -275,6 +275,10 @@ def node_version():
 
 def review_lineage():
     return {
+        "alpha3_correction": "MCR-A2-KEY-001 -- six-rail keyboard navigation correction; historical v1.0.0-alpha.2 tag and assets remain immutable",
+        "alpha3_original_task_base": "46507926500ea92aa8904c6a9d69698e2d3ba705",
+        "alpha3_reconciled_main_base": "f5a29549a7b68b11ccdf20ac39bde834954c112f (contains required receipt-history merge b9906e460625fa7b63406854646e4666459e9450)",
+        "alpha3_regression_review": "Riley Park exact-head review is required on the candidate PR; it is not browser or pilot acceptance",
         "readiness_assessment": "REL-2026-09-18-001",
         "sar": "SAR-v1.0.0-alpha-candidate-01abbc3-2026-09-18 (Marcus Reed -- APPROVE WITH CONDITIONS, lab-only unsigned)",
         "ter": "TER-v1.0.0-alpha-candidate-01abbc3-2026-09-18 (Riley Park -- RELEASE WITH KNOWN ISSUES; SME joint sign-off Caleb Stone)",
