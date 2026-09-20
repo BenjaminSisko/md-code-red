@@ -1,17 +1,19 @@
 ---
 type: deploy-receipt
-status: pending-human-acceptance
+status: release-complete-browser-check-waived
 last_verified: 2026-09-20
 ---
 
 # Pilot Receipt -- v1.0.0-alpha.3
 
 This receipt records the exact published alpha.3 release assets deployed
-read-only on Defiant. Benny later directed that final attended acceptance use
-a different RHEL 8 host. Defiant is therefore retained as historical deployment
-evidence and rollback context, not the active acceptance target. No replacement
-host is currently ready, no browser was opened, no named human used the
-artifact, and no pilot or operational acceptance is claimed.
+read-only on Defiant. A later read-only survey found that the other RHEL 8
+systems are headless. Benny then waived the separate attended host/browser
+check as redundant: the delivered file is a self-contained HTML application for
+modern browsers, and the exact release bytes already passed the automated
+browser, keyboard, integrity and hostile-input suites. No replacement host is
+required. No browser was opened and no named-human browser acceptance is
+claimed.
 
 | Field | Recorded value |
 |---|---|
@@ -28,8 +30,8 @@ artifact, and no pilot or operational acceptance is claimed.
 | Signature status | UNSIGNED -- SHA-256 integrity plus Git/release lineage only |
 | Automated release checks | Q1-Q25+JS PASS; 336 unit tests PASS; 101,297 hostile checks PASS; rail-keyboard source and built-artifact contracts PASS; deterministic double-build PASS; Gitleaks full-tree scan PASS |
 | Riley exact-head review | APPROVE at reviewed candidate `3f68ac1da3dac3bbb29fab6a07363ee0da1d5015`; no blocker, high, medium or low findings |
-| Historical deployment host / census | Defiant / `01 Devices/Defiant RHEL 8.md`; `defiant.home.arpa` |
-| Active attended-acceptance target | UNASSIGNED — Benny directed use of another RHEL 8 host; the 2026-09-20 live candidate assessment found no ready replacement |
+| Deployment host / census | Defiant / `01 Devices/Defiant RHEL 8.md`; `defiant.home.arpa` |
+| Separate attended-acceptance target | NOT REQUIRED — owner waived the redundant host-specific browser check on 2026-09-20 |
 | Host OS / patch level | RHEL 8.10; kernel `4.18.0-553.163.1.el8_10.x86_64` |
 | Installed browser | Firefox ESR `140.14.0-1.el8_10`; not opened by this deployment |
 | Deployed path | `/home/adm-linux/MD-CODE-RED/v1.0.0-alpha.3/` |
@@ -46,15 +48,18 @@ artifact, and no pilot or operational acceptance is claimed.
 | Live zero-network / console observation | NOT EXECUTED |
 | Named human operational use | NOT EXECUTED |
 | Deployment state | COMPLETE AND INTEGRITY-VERIFIED on Defiant |
-| Pilot verdict | HOLD pending an approved replacement RHEL 8 target, deployment there, named-human browser use and Riley's attended acceptance witness |
+| Pilot verdict | TECHNICAL RELEASE AND DEPLOYMENT COMPLETE; separate named-human host/browser check WAIVED by owner and not executed |
 
-## Replacement RHEL 8 target assessment — 2026-09-20
+## Superseded replacement RHEL 8 target assessment — 2026-09-20
 
-Benny directed that final alpha.3 attended acceptance use a RHEL 8 host other
-than Defiant. Caleb performed a read-only assessment in the requested order and
-then checked the remaining active RHEL 8 guests. No host met the complete
-browser, graphical-access, operator-path and Wazuh requirements without a
-package, service, power-state, firewall, listener or authentication change.
+Benny initially directed that final alpha.3 attended acceptance use a RHEL 8
+host other than Defiant. Caleb performed a read-only assessment in the requested
+order and then checked the remaining active RHEL 8 guests. No host met the
+complete browser, graphical-access, operator-path and Wazuh requirements
+without a package, service, power-state, firewall, listener or authentication
+change. This assessment is retained as historical evidence; its setup blocker
+and proposed follow-up were superseded when Benny waived the separate
+host-specific browser check as unnecessary.
 
 | Candidate | Live state | RHEL / space | Browser and graphical path | Wazuh / operator path | Disposition |
 |---|---|---|---|---|---|
@@ -77,13 +82,9 @@ configuration changed. Existing SSH and QEMU guest-agent paths were used only
 for read-only evidence. PPS and maintained topology therefore have no changed
 flow or state.
 
-The least-invasive approval-required setup plan is to use `lab-rhel01`: approve
-its start, revalidate live RHEL/Wazuh/login/storage state, approve only the
-minimum repo01-backed graphical and Firefox packages needed for the existing
-localhost-only libvirt VNC console, and avoid xrdp, new listeners, firewall
-rules and new authentication paths. Deployment of the published triplet may
-proceed only after that prerequisite change is separately approved, executed
-and verified.
+No replacement setup is authorized or required. `lab-rhel01` remained shut off,
+no alternate host received release files, and the candidate matrix requires no
+follow-up for alpha.3.
 
 ## Deployment procedure executed
 
@@ -112,40 +113,21 @@ and verified.
    preserved alpha.2 hash and active Wazuh state. No browser process was
    started and no host configuration was changed.
 
-## Required named-human acceptance procedure
+## Optional future browser spot-check
 
-These steps remain deliberately unclaimed.
-
-1. Record the named operator, Riley witness, approved host/browser, start time
-   and end time.
-2. Confirm the receiving host is the separately approved replacement RHEL 8
-   target. Do not use Defiant for final attended acceptance.
-3. Re-run the exact alpha.3 sidecar check from the final replacement-host
-   directory and
-   stop unless it returns `OK`.
-4. Open the exact local alpha.3 `file://` path in the approved browser session.
-5. Confirm About shows `v1.0.0-alpha.3` and fingerprint
-   `9829c043fb20ef8e2cdf1476a9769f605db19a2161e8fbff7903a226ed6361ea`.
-6. Exercise `Ctrl+Alt+1` through `Ctrl+Alt+6`, confirming each shortcut selects
-   and focuses its advertised rail, especially `Ctrl+Alt+6` for About.
-7. Complete the Pilot SOP's command, search, evidence-export,
-   favorites/recent, theme, print and keyboard-only smoke paths without
-   executing a generated system command.
-8. Record the browser console and DevTools Network results. Acceptance requires
-   zero remote application requests from the local-file workflow.
-9. If any identity, sidecar, keyboard, console, network or workflow check
-   fails, close alpha.3 and return to the verified replacement-host rollback
-   artifact. Defiant's alpha.2 remains historical deployment rollback evidence,
-   not the active acceptance host.
+A manual browser walkthrough is not an alpha.3 release gate. It may be run later
+if an operator reports a browser-specific regression. Any such run should record
+the browser version, verify the sidecar before opening the local file, confirm
+the About version/fingerprint, exercise `Ctrl+Alt+1` through `Ctrl+Alt+6`, and
+observe the console and network panel. This receipt does not claim that optional
+work occurred.
 
 ## Rollback
 
-Defiant's alpha.2 remains intact at
+Alpha.2 remains intact on Defiant at
 `/home/adm-linux/MD-CODE-RED/v1.0.0-alpha.2/`. Close every alpha.3 browser tab,
 verify the alpha.2 sidecar, and open the versioned alpha.2 local file. No daemon
 or service needs stopping, and neither version should be overwritten or deleted.
-This is historical rollback evidence for Defiant. A replacement host must have
-its own versioned rollback-safe placement before attended acceptance begins.
 
 ## Jordan handoff state
 
@@ -153,9 +135,9 @@ its own versioned rollback-safe placement before attended acceptance begins.
 |---|---|
 | Correction / release | `MCR-A2-KEY-001` corrected in separately versioned, published alpha.3 |
 | Release evidence | Tag `e72c235f...`; provenance/main `3f38e8c...`; published asset hashes above |
-| Reviewer state | Riley exact-head technical review APPROVE; receiving-host human witness pending |
-| Deployment state | Historical deployment complete and integrity-verified on Defiant at `2026-09-20T12:07:53-04:00`; replacement-host deployment not started |
-| Browser/pilot state | HOLD; active target unassigned; no browser, named-human or operational acceptance claimed |
-| Forecast impact | Replacement-target readiness is now an additional prerequisite before named-human browser evidence and Riley's attended witness |
+| Reviewer state | Riley exact-head technical review APPROVE; separate human browser witness waived by owner |
+| Deployment state | Complete and integrity-verified on Defiant at `2026-09-20T12:07:53-04:00`; no replacement deployment required |
+| Browser/pilot state | Host-specific manual browser run WAIVED; not executed and not claimed |
+| Forecast impact | None from acceptance infrastructure; alpha.3 remains published and deployed with automated evidence complete |
 
-`WADE_BLOCKED: alpha.3 is published and historically deployed on Defiant, but Benny requires final acceptance on another RHEL 8 host and no assessed replacement is currently browser/graphical ready without separately approved host changes. Replacement deployment, named-human browser use, About identity readback, live zero-network/console evidence, operator checks and Riley Park's attended acceptance witness remain pending.`
+`WADE_CLEAR: alpha.3 is published, integrity-verified and deployed. Benny waived the redundant host-specific manual browser check; it was not executed or claimed. No alternate-host setup or follow-up is required.`
