@@ -1,6 +1,6 @@
 MD CODE RED — Evidence Export
 Tool version: v1.0.0-alpha.1  built 2026-09-18
-Content fingerprint (sha256 of the embedded data island): bb878a8fbe792ef10ddc5f5364054203eb404c1c2df1c123bdcc49f2c63179b1
+Content fingerprint (sha256 of every embedded data island): 0a3100d404da6a2e843d89bc93d694ecc11c32b2e49239e4e000e18b447e376e
 
 STIG ID: RHEL-09-251015
 STIG version: V2R9  benchmark date: 01 Jul 2026
@@ -34,4 +34,4 @@ Flags:
 
 Source citation: DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md) — stig-src/SOURCES.md (version RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2, retrieved 2026-09-17)
 
-Operator date: 2026-09-19
+Operator date: 2026-09-17

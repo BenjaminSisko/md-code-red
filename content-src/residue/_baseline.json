@@ -1,0 +1,92 @@
+{
+ "_meta": {
+  "generator": "extract/mine_commands.py",
+  "pinned_on": "2026-09-17",
+  "unparseable_cap": 2273,
+  "what_this_is": "the ratchet qa.py's coverage gate reads. Residue may SHRINK (a better parser classifies more) and may never GROW, and the unparseable count may never exceed its cap -- ADR-002: residue is the real metric, so it is published and held."
+ },
+ "by_family": {
+  "raw_captures": {
+   "10": {
+    "config-fragment": 9,
+    "output-fragment": 147,
+    "prose": 161,
+    "unparseable": 15
+   },
+   "8": {
+    "config-fragment": 9,
+    "output-fragment": 142,
+    "prose": 158,
+    "unparseable": 17
+   },
+   "9": {
+    "config-fragment": 9,
+    "output-fragment": 141,
+    "prose": 160,
+    "unparseable": 16
+   }
+  },
+  "redhat_guides": {
+   "10": {
+    "config-fragment": 106,
+    "output-fragment": 93,
+    "prose": 788,
+    "unparseable": 240
+   },
+   "7": {
+    "config-fragment": 198,
+    "output-fragment": 157,
+    "prose": 1851,
+    "unparseable": 240
+   },
+   "8": {
+    "config-fragment": 126,
+    "output-fragment": 101,
+    "prose": 766,
+    "unparseable": 260
+   },
+   "9": {
+    "config-fragment": 133,
+    "output-fragment": 108,
+    "prose": 872,
+    "unparseable": 249
+   }
+  },
+  "stig_rules": {
+   "10": {
+    "config-fragment": 478,
+    "interactive-tui": 1,
+    "output-fragment": 255,
+    "prose": 2273,
+    "unparseable": 345
+   },
+   "7": {
+    "config-fragment": 342,
+    "interactive-tui": 1,
+    "output-fragment": 185,
+    "prose": 1633,
+    "unparseable": 199
+   },
+   "8": {
+    "config-fragment": 407,
+    "interactive-tui": 1,
+    "output-fragment": 418,
+    "prose": 2041,
+    "unparseable": 343
+   },
+   "9": {
+    "config-fragment": 479,
+    "interactive-tui": 1,
+    "output-fragment": 219,
+    "prose": 2171,
+    "unparseable": 349
+   }
+  }
+ },
+ "classified_total": 45281,
+ "records_total": 14439,
+ "residue_total": 19413,
+ "unparseable_total": 2273,
+ "unrated_fraction_max": 0.9868,
+ "unrated_total": 14248
+}

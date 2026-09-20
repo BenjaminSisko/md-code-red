@@ -17,6 +17,7 @@ see escape_island(), MCR-SEC-007); the CONTENT map and validate() are MD CODE RE
 import hashlib
 import json
 import os
+import re
 import sys
 
 REPO = os.path.dirname(os.path.abspath(__file__))
@@ -70,6 +71,12 @@ CONTENT = {
     "flags_10": "flags_rhel10.json",
     "cci_nist": "cci_nist.json",
     "expected_output": "expected_output.json",
+    # generated — extract/mine_commands.py. A DIFFERENT TIER from `commands`
+    # above: vendor reference text mined out of the STIG check/fix prose, the
+    # staged man/--help captures and the staged Red Hat product documentation.
+    # It carries no verify/undo/blast/receipt and extract/schema.py refuses
+    # those keys on it, so it can never be mistaken for the curated catalog.
+    "reference_commands": "reference_commands.json",
 }
 
 CONTENT_SRC_SOURCES = os.path.join(REPO, "content-src", "SOURCES.json")
@@ -217,6 +224,152 @@ def escape_island(payload):
     return payload.replace("<", "\\u003c").replace(">", "\\u003e")
 
 
+# --------------------------------------------------------------------------
+# The reference corpus: lazy per-family hydration and a build-time inverted
+# index (Al Kowalski's standing ruling, restated on this tranche).
+#
+# THE RULING. "Lazy per-family, per-tier hydration becomes mandatory at 5,000
+# corpus records, and the inverted search index must be in place before the
+# second family lands." This tranche is 14,488 records across three families,
+# so both clocks expired before it was written, and the measurement (see
+# docs/PERF_MEASUREMENT.md) is what decides HOW to obey rather than WHETHER.
+#
+# WHAT WAS MEASURED, on the real built artifact over a local HTTP server. The
+# eager 8.08 MB build parsed its island in 10.7 ms against the 2.46 MB build's
+# 4.2 ms, reached DOMContentLoaded in ~70 ms against ~31 ms, first contentful
+# paint in ~204 ms against ~176 ms, and settled at ~20 MB of JS heap against
+# ~7 MB. Worst-case palette latency was 9.5 ms for a single-letter query that
+# matched 16,061 of 19,137 index records. Nothing there fails to open, even
+# derated an order of magnitude for a jump box. So the whole corpus ships --
+# and it ships in the shape the ruling names, because the ruling is not "ship
+# if it measures fine": it is an architecture the next family has to land into.
+#
+# THE SHAPE.
+#   mcr-data              everything except the reference RECORDS. Parsed at
+#                         boot, and it is the only island that is.
+#   mcr-ref-index         the inverted index: token -> posting list. Parsed on
+#                         the first palette keystroke, never at boot.
+#   mcr-ref-<family>      one island per source family, each the records of
+#                         that family alone. Parsed when that family is first
+#                         needed and never again.
+#
+# Boot therefore parses 2.3 MB, which is what the pre-corpus alpha parsed. A
+# palette keystroke parses the 0.7 MB index. Only a search that actually HITS
+# the Red Hat family pays for the Red Hat family.
+#
+# WHY SEPARATE ISLANDS rather than one island holding pre-serialised strings.
+# The string-in-string shape keeps `exactly two <script> elements` true and was
+# measured first: it costs 32.8% -- 1.6 MB -- to JSON-escape the inner
+# documents, and it hides the families from every tool that reads the shipped
+# file (qa.py, the test harnesses, a human with a text editor). Separate
+# islands cost nothing, and Q1's structure check gets STRONGER rather than
+# weaker: it goes from counting to two, to naming the exact set of islands that
+# may exist and proving each one parses.
+# --------------------------------------------------------------------------
+
+# Declaration order. It fixes the island order in the file, the fingerprint
+# input order, and the family index used by the posting encoding, so all three
+# are one statement rather than three that can drift. Smallest and highest
+# authority first: a jump box that only ever opens the DISA family never pays
+# for the other two.
+REFERENCE_FAMILIES = ("stig_rules", "raw_captures", "redhat_guides")
+# Which occurrence key identifies which family. `s` is a STIG rule id, `g` a
+# Red Hat guide slug, `p` a staged capture path -- extract/schema.py already
+# refuses an occurrence that names anything other than exactly one of them.
+FAMILY_BY_OCC_KEY = {"s": "stig_rules", "g": "redhat_guides", "p": "raw_captures"}
+# A posting is one integer: family index * FAMILY_STRIDE + ordinal within that
+# family. One number per posting rather than a two-element array cuts the index
+# island roughly in half, and the stride is asserted against the real family
+# sizes at build time so it can never silently wrap.
+FAMILY_STRIDE = 1000000
+# Tokens shorter than this are not worth a posting list: every one of them
+# matches most of the corpus, so the list costs bytes and saves no work. The
+# app's own term handling knows this number and falls back to scanning the
+# token DICTIONARY for a short term, which is 13k short strings rather than
+# 14k records.
+REF_INDEX_MIN_TOKEN = 2
+REF_TOKEN_RE = re.compile(r"[a-z0-9_.+-]+")
+
+
+def reference_family_of(rec):
+    """The source family one mined record belongs to, read off its FIRST
+    occurrence. Deterministic: extract/mine_commands.py emits the occurrence
+    list in a fixed order, and a record is never mined from two families --
+    the DISA-overlap rule reattributes such a record to DISA whole, it does not
+    split it (licensing ruling v1 Ruling 2 condition 2)."""
+    occ = (rec.get("o") or [{}])[0]
+    for key, family in sorted(FAMILY_BY_OCC_KEY.items()):
+        if occ.get(key):
+            return family
+    return "raw_captures"
+
+
+def split_reference_families(records):
+    """{family: [record, ...]} in REFERENCE_FAMILIES order, records in the order
+    the extractor emitted them. Order is load-bearing twice over: it is the
+    ordinal a posting resolves against, and Q15 re-runs this and diffs."""
+    out = dict((f, []) for f in REFERENCE_FAMILIES)
+    for rec in records:
+        out[reference_family_of(rec)].append(rec)
+    return out
+
+
+def reference_haystack(rec):
+    """The text one record is searchable by: the command itself, the tool it is
+    filed under, and every STIG id it cites. Exactly what the flat index built
+    at runtime used to lower-case per record per keystroke -- computed once,
+    here, and shipped."""
+    stigs = " ".join(o.get("s") or "" for o in (rec.get("o") or []))
+    return ("%s %s %s" % (rec.get("c") or "", rec.get("t") or "", stigs)).lower()
+
+
+def build_reference_index(families):
+    """The inverted index: {token: [posting, ...]} plus the family order it
+    encodes against.
+
+    Sorted everywhere -- the token map by key, each posting list ascending --
+    because this is generated content and Q15 re-runs the build and diffs the
+    bytes. A dict iteration order accident here is a reproducibility failure.
+    """
+    postings = {}
+    for fi, family in enumerate(REFERENCE_FAMILIES):
+        records = families[family]
+        if len(records) >= FAMILY_STRIDE:
+            sys.exit("FATAL: family %s holds %d records and the posting stride is %d -- "
+                     "the encoding would wrap and postings would resolve to the wrong record"
+                     % (family, len(records), FAMILY_STRIDE))
+        for i, rec in enumerate(records):
+            posting = fi * FAMILY_STRIDE + i
+            for token in set(REF_TOKEN_RE.findall(reference_haystack(rec))):
+                if len(token) < REF_INDEX_MIN_TOKEN:
+                    continue
+                postings.setdefault(token, []).append(posting)
+    # Posting lists are DELTA-encoded: [first, d1, d2, ...], each element the gap
+    # from the previous. The values are large (a Red Hat posting is 2,0xx,xxx)
+    # and the gaps are small, so this is the difference between ~8 characters per
+    # posting and ~3. Measured over this corpus: 0.78 MB of index island becomes
+    # 0.34 MB, on 80,905 postings. Decoding is a running sum, four lines in the
+    # app, and the encoding is declared in the island itself ("enc") rather than
+    # being a convention both sides have to remember.
+    encoded = {}
+    for tok, ps in postings.items():
+        ps.sort()
+        out, prev = [], 0
+        for p in ps:
+            out.append(p - prev)
+            prev = p
+        encoded[tok] = out
+    return {
+        "f": list(REFERENCE_FAMILIES),
+        "enc": "delta",
+        "stride": FAMILY_STRIDE,
+        "min_token": REF_INDEX_MIN_TOKEN,
+        "counts": dict((f, len(families[f])) for f in REFERENCE_FAMILIES),
+        "postings": sum(len(ps) for ps in postings.values()),
+        "t": dict(sorted(encoded.items())),
+    }
+
+
 def compute_default_version(data):
     """Which RHEL version the version selector should open on, derived from the
     content instead of a hard-coded literal (Founder alpha feedback, 2026-09-17:
@@ -256,25 +409,58 @@ def build():
     tpl_path = os.path.join(REPO, "template.html")
     with open(tpl_path, encoding="utf-8") as f:
         tpl = f.read()
-    if "/*__DATA__*/" not in tpl:
-        sys.exit("FATAL: template.html has no /*__DATA__*/ placeholder")
 
-    payload = escape_island(json.dumps(data, ensure_ascii=False, separators=(",", ":"), sort_keys=True))
+    # The reference RECORDS leave the main island and become one island per
+    # family; the family's _meta stays in the main island, because the About
+    # panel and the tier banners have to be able to say what the build holds
+    # without hydrating a megabyte to find out.
+    ref = data["reference_commands"]
+    ref_records = ref.get("commands") or []
+    ref_families = split_reference_families(ref_records)
+    ref_index = build_reference_index(ref_families)
+    data["reference_commands"] = {"_meta": ref["_meta"], "_lazy": {
+        "index_island": "mcr-ref-index",
+        "families": [{"name": f, "island": "mcr-ref-" + f, "count": len(ref_families[f])}
+                     for f in REFERENCE_FAMILIES],
+        "note": ("the reference RECORDS are not in this island. Each family sits in its own "
+                 "<script type=\"application/json\"> element and is parsed on first use, never "
+                 "at boot; mcr-ref-index is the build-time inverted index the palette reads "
+                 "before deciding which families to hydrate."),
+    }}
+
+    islands = [("mcr-data", "/*__DATA__*/", data),
+               ("mcr-ref-index", "/*__REF_INDEX__*/", ref_index)]
+    for family in REFERENCE_FAMILIES:
+        islands.append(("mcr-ref-" + family,
+                        "/*__REF_%s__*/" % family.upper(),
+                        ref_families[family]))
+    for _id, placeholder, _payload in islands:
+        if placeholder not in tpl:
+            sys.exit("FATAL: template.html has no %s placeholder" % placeholder)
+
+    payloads = []
+    for _id, _placeholder, obj in islands:
+        payloads.append(escape_island(
+            json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True)))
 
     # CR-T-28. The evidence exporter and the About panel (CR-T-30) both print a
     # content fingerprint OFFLINE, on a jump box with no way to hash the file
-    # against anything else. It is defined as the sha256 of exactly the bytes
-    # that sit inside <script id="mcr-data">...</script> in the SHIPPED file —
-    # the same bytes qa.py's build_ctx() extracts as `island` — computed here,
-    # before the payload is substituted into the template, so the fingerprint
-    # is never a hash of a string that contains itself. It is embedded as a
-    # plain constant (CONTENT_FINGERPRINT, alongside APP_VERSION and friends),
-    # NOT inside the JSON data island: a hash inside the thing it hashes is
-    # circular, and qa.py Q1 checks the two independently — re-hash ctx["island"]
-    # and compare it to the constant it finds in the shell.
-    content_fingerprint = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    # against anything else. It was defined as the sha256 of exactly the bytes
+    # inside <script id="mcr-data">...</script>; now that the corpus ships as
+    # its own islands, it is the sha256 of EVERY island's bytes joined by a
+    # newline in ISLAND DECLARATION ORDER — so a change to a mined record still
+    # moves the fingerprint, which is the entire point of having one. Computed
+    # here, before substitution, so the fingerprint is never a hash of a string
+    # that contains itself, and embedded as a plain constant
+    # (CONTENT_FINGERPRINT) rather than inside any island, because a hash inside
+    # the thing it hashes is circular. qa.py Q1 checks the two independently:
+    # it re-extracts every island from the shipped file, joins them the same
+    # way, and compares.
+    content_fingerprint = hashlib.sha256("\n".join(payloads).encode("utf-8")).hexdigest()
 
-    out = tpl.replace("/*__DATA__*/", payload)
+    out = tpl
+    for (_id, placeholder, _obj), payload in zip(islands, payloads):
+        out = out.replace(placeholder, payload)
     out = (out.replace("__APP_NAME__", APP_NAME)
               .replace("__VERSION__", APP_VERSION)
               .replace("__BUILT_DATE__", APP_BUILD_DATE)
@@ -299,10 +485,24 @@ def build():
     print("  size: %.2f MB (%d bytes) — REPORT ONLY, no ceiling (Founder ruling 2026-09-17)"
           % (size / 1024.0 / 1024.0, size))
     print("  sha256: %s" % digest)
-    print("  content fingerprint (data island sha256): %s" % content_fingerprint)
+    print("  content fingerprint (sha256 of every island, in declaration order): %s"
+          % content_fingerprint)
     print("  default version selector: RHEL %s (verified-receipt counts by version: %s)"
           % (default_version,
              ", ".join("RHEL %s=%d" % (v, version_verified_counts[v]) for v in VERSIONS)))
+    ref_meta = ref.get("_meta") or {}
+    print("  %d REFERENCE commands (tier: reference, not curated, not host-verified) "
+          "across %d tools, %d of them evidence-eligible verbatim spans"
+          % (len(ref_records), ref_meta.get("distinct_tools", 0),
+             ref_meta.get("evidence_eligible_count", 0)))
+    boot = len(payloads[0])
+    print("  islands: %s"
+          % ", ".join("%s %.2f MB" % (iid, len(p) / 1024.0 / 1024.0)
+                      for (iid, _ph, _o), p in zip(islands, payloads)))
+    print("  boot parses %.2f MB of %.2f MB (%.0f%%); the reference corpus is hydrated per family "
+          "on first use, and %d index tokens decide which family that is"
+          % (boot / 1024.0 / 1024.0, sum(len(p) for p in payloads) / 1024.0 / 1024.0,
+             100.0 * boot / max(1, sum(len(p) for p in payloads)), len(ref_index["t"])))
     print("  %d command entries, %d tools, %d embedded STIG rules (%s), %d CCI mappings"
           % (len(data["commands"]["entries"]),
              len(data["tools"].get("tools", [])),
