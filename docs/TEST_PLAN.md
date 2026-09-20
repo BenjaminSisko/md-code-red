@@ -127,8 +127,10 @@ Three senior admins + one ISSO in one enclave, 4 weeks. Success criteria:
 - Pilot users adopt toolkit for 3+ daily tasks
 - ISSO confirms STIG evidence quality meets body-of-evidence standard
 
-**Status: alpha.2 acceptance is in progress.** RHEL 9 now has captured flag
-sources and a release-specific dictionary. The remaining sparse flag explanations
-and evidence captures are disclosed findings for the pilot rather than hidden
-assumptions. A pilot receipt must identify the exact artifact SHA-256 and must not
-claim human operational acceptance until a named operator has actually used it.
+**Status: alpha.3 is published, deployed, and integrity-verified on Defiant;
+pilot acceptance remains on hold pending named-human browser use and Riley's
+attended witness.** RHEL 9 has captured flag sources and a release-specific
+dictionary. The remaining sparse flag explanations and evidence captures are
+disclosed findings for the pilot rather than hidden assumptions. The alpha.3
+pilot receipt identifies the exact artifact SHA-256 and does not claim human
+operational acceptance before a named operator has actually used it.
