@@ -1,0 +1,560 @@
+{
+ "_meta": {
+  "what_this_is": "a deterministic sample of ACCEPTED mined records, read and judged one by one by a human. Threat model v2, M5: sampling only the residue cannot find a false POSITIVE, and TM2-F1 is that a false positive counts as classified AND recorded, so the residue ledger balances while a config line sits in the product under a citation. This file is the only measurement of the positive side.",
+  "sample_rule": "sorted(record ids), random.Random(20260917).sample(ids, 60), then sorted. qa.py re-draws exactly this sample and fails if the drawn ids differ from the ids reviewed here -- a review of a sample nobody can redraw is an assertion, not a measurement.",
+  "reviewer": "Milo Vance, Toolkit Systems Engineer",
+  "reviewed_on": "2026-09-17",
+  "method": "each command was read against its source family and judged on two questions. is_command: is this a runnable command invocation as the source presents it, rather than prose, output, or configuration file content. complete: is the text a whole command, rather than a line the vendor's PDF wrapped and cut mid-token or mid-quote.",
+  "sample_size": 60,
+  "seed": 20260917,
+  "is_command_true": 60,
+  "complete_true": 53,
+  "finding": "60/60 are genuine command invocations. 7/60 are truncated by the vendor's own line wrapping; all seven are flagged `trunc` by looks_truncated() and are barred from evidence. One of the seven (n=8, an ansible line cut inside a single-quoted -a argument) was marked complete on the first read and the detector caught it -- recorded here rather than quietly corrected, because a review that only ever agrees with the code is not a review. The product must render a truncated record as visibly incomplete: it is still the real beginning of a real command and worth showing, but it is not runnable as printed.",
+  "thresholds": {
+   "min_is_command_rate": 0.95,
+   "every_incomplete_must_carry_trunc": true
+  }
+ },
+ "records": [
+  {
+   "n": 1,
+   "id": "ref-0045c7f5883495d3",
+   "tool": "dnf",
+   "command": "sudo dnf -y install opensc",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 2,
+   "id": "ref-012cf1d0d830381b",
+   "tool": "yum",
+   "command": "yum install python3-pip",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 3,
+   "id": "ref-05fdf259f0501499",
+   "tool": "mkfs.ext3",
+   "command": "mkfs.ext3 /dev/block_device",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 4,
+   "id": "ref-06f5d5a6c1e0b745",
+   "tool": "ipa",
+   "command": "ipa service-mod service/host_name --auth-ind=indicator",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 5,
+   "id": "ref-0bca090f5a032e91",
+   "tool": "stratis",
+   "command": "stratis pool start --name my-pool",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 6,
+   "id": "ref-242578752a62e14f",
+   "tool": "brctl",
+   "command": "brctl show",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 7,
+   "id": "ref-26637287e2e40266",
+   "tool": "pcs",
+   "command": "pcs resource create elastic awseip elastic_ip=_Elastic-IP-Address_allocation_id=_Elastic-",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 8,
+   "id": "ref-29f3a6542f5a73a4",
+   "tool": "ansible",
+   "command": "ansible managed-node-01.example.com -m shell -a 'semanage port --list | grep",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 9,
+   "id": "ref-2c32c2b087ff4f42",
+   "tool": "perl",
+   "command": "perl /usr/src/kernels/$(uname -r)/scripts/sign-file sha256 my_signing_key.priv my_signing_key_pub.der my_module.ko",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 10,
+   "id": "ref-2fe1637980adf18e",
+   "tool": "pcs",
+   "command": "pcs stonith level add 2 rh7-2 my_apc",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 11,
+   "id": "ref-3aea8f95b54fc5d5",
+   "tool": "mount",
+   "command": "mount -o remount,rw /sysroot",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 12,
+   "id": "ref-3cef501ab4164ffa",
+   "tool": "virsh",
+   "command": "virsh pool-info guest_images_glusterfs",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 13,
+   "id": "ref-3e3ac4dc34b7fbe6",
+   "tool": "echo",
+   "command": "echo \"+cpu +cpuset\" >> /sys/fs/cgroup/Example/cgroup.subtree_control",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 14,
+   "id": "ref-403e08e3010d9318",
+   "tool": "ip",
+   "command": "ip mptcp endpoint",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 15,
+   "id": "ref-44c7fd4c5db92c63",
+   "tool": "certtool",
+   "command": "certtool --generate-request --load-privkey <example_server.key> --template",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 16,
+   "id": "ref-4a5bb2ddd50d34bf",
+   "tool": "useradd",
+   "command": "useradd -u 5000 sarah",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 17,
+   "id": "ref-4c138d17b22211c6",
+   "tool": "systemctl",
+   "command": "systemctl is-active virtqemud.service",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 18,
+   "id": "ref-54c08316af867de8",
+   "tool": "curl",
+   "command": "curl http://localhost:5000/v2/_catalog",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 19,
+   "id": "ref-5abe4c5526fb9197",
+   "tool": "podman",
+   "command": "podman run -d --name=mysysd_run -p 80:80 mysysd",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 20,
+   "id": "ref-5fba7e1c7f128a1a",
+   "tool": "mkfs",
+   "command": "mkfs -t ext4 /dev/mapper/nvme0n1p1_encrypted",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 21,
+   "id": "ref-645dd933bbdfb8e2",
+   "tool": "grep",
+   "command": "sudo grep dir /etc/security/faillock.conf",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 22,
+   "id": "ref-6d6106de74f80950",
+   "tool": "pcs",
+   "command": "pcs resource disable --wait=timeoutvalue resource_id",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 23,
+   "id": "ref-6d8999ca965ac814",
+   "tool": "groupadd",
+   "command": "groupadd cups-admins",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 24,
+   "id": "ref-73f7651b96020b54",
+   "tool": "parted",
+   "command": "parted /dev/sdb",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 25,
+   "id": "ref-791bf5a2a18f4e77",
+   "tool": "mount",
+   "command": "mount -o quota_quantum=secs,remount BlockDevice MountPoint",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 26,
+   "id": "ref-87d1ff08b6cdab72",
+   "tool": "find",
+   "command": "sudo find / -type d \\( -perm -0002 -a ! -perm -1000 \\) -print 2>/dev/null",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 27,
+   "id": "ref-8b97853cacf10de2",
+   "tool": "yum",
+   "command": "yum install mlocate",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 28,
+   "id": "ref-8fb5c1cc46e040d4",
+   "tool": "virsh",
+   "command": "virsh dumpxml guest_name |grep \"cpu mode\"",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 29,
+   "id": "ref-900959eccfdeae3e",
+   "tool": "ulimit",
+   "command": "ulimit -c unlimited",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 30,
+   "id": "ref-96f0229eeb40d04d",
+   "tool": "ansible-vault",
+   "command": "ansible-vault view vault.yml",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 31,
+   "id": "ref-99500948f85a98c2",
+   "tool": "skopeo",
+   "command": "skopeo copy --preserve-digests --all oci://mnt/usb containers-storage:rhel-update:latest",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 32,
+   "id": "ref-9e028ebc7eb4aa7c",
+   "tool": "podman",
+   "command": "podman pull registry.redhat.io/rhel9/rsyslog",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 33,
+   "id": "ref-9fb26106a19c63b6",
+   "tool": "ipa",
+   "command": "ipa role-add-privilege 'my-app role' --privilege 'my-app password change privilege'",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 34,
+   "id": "ref-a13b8a536198ffd4",
+   "tool": "ssh",
+   "command": "ssh root@host1",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 35,
+   "id": "ref-a71e418f45c1df97",
+   "tool": "vgcreate",
+   "command": "vgcreate vg1 /dev/sdd1 /dev/sde1",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 36,
+   "id": "ref-b01a365de220d0af",
+   "tool": "grep",
+   "command": "grep -r net.ipv4.conf.default.send_redirects /run/sysctl.d/* /etc/sysctl.d/* /usr/local/lib/sysctl.d/* /usr/lib/sysctl.d/* /lib/sysctl.d/* /etc/sysctl.conf 2> /dev/null",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 37,
+   "id": "ref-b1bda75d55a8c5db",
+   "tool": "firewall-cmd",
+   "command": "firewall-cmd --permanent --zone=public --add-source=ipset:allowlist",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 38,
+   "id": "ref-b3d8ff60628aea0e",
+   "tool": "aws",
+   "command": "aws ec2 create-volume --availability-zone <us_east_1a> --no-encrypted --size <1024> --",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 39,
+   "id": "ref-bb9de8147b14bec5",
+   "tool": "hammer",
+   "command": "hammer repository list --search 'content_label ~ rhel-8' --content-view",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 40,
+   "id": "ref-bd0eb243c92451b6",
+   "tool": "ansible-playbook",
+   "command": "ansible-playbook --syntax-check path/custom-playbook.yml",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 41,
+   "id": "ref-c0ce5935c629becd",
+   "tool": "firewall-cmd",
+   "command": "firewall-cmd --permanent --add-service={freeipa-4,dns}",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 42,
+   "id": "ref-cfe9dc9217c28aaa",
+   "tool": "rpm",
+   "command": "rpm -q --queryformat \"[%{FILENAMES} %{FILESIGNATURES}\\n]",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 43,
+   "id": "ref-d1e63b0b5ea13936",
+   "tool": "systemctl",
+   "command": "systemctl enable php-fpm httpd",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 44,
+   "id": "ref-d33b72ebaa7cb65d",
+   "tool": "strace",
+   "command": "strace ... |& tee your_log_file.log",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 45,
+   "id": "ref-d86a3236b1f24dbc",
+   "tool": "composer-cli",
+   "command": "composer-cli compose start BLUEPRINT-NAME image-installer",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 46,
+   "id": "ref-d9b4790f7fca8ab3",
+   "tool": "seinfo",
+   "command": "seinfo -u",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 47,
+   "id": "ref-db2d63ff289bc8d5",
+   "tool": "mkdir",
+   "command": "mkdir /mnt/sda1",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 48,
+   "id": "ref-dd94ea89b837a654",
+   "tool": "pcs",
+   "command": "pcs node attribute node1 rack=1",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 49,
+   "id": "ref-e361250d40bb7d32",
+   "tool": "ipa-getkeytab",
+   "command": "ipa-getkeytab -s example.com -p \"activator\" -k /etc/krb5.ipa-activation.keytab",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 50,
+   "id": "ref-e44383930abf3d89",
+   "tool": "sssctl",
+   "command": "sssctl cert-eval-rule $CERT --match='<ISSUER>CN=adcs19-WIN1-",
+   "is_command": true,
+   "complete": false,
+   "extractor_trunc_flag": true
+  },
+  {
+   "n": 51,
+   "id": "ref-e6cde241c977f908",
+   "tool": "cat",
+   "command": "cat /sys/bus/ccwgroup/drivers/qeth/0.0.f500/online",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 52,
+   "id": "ref-e880ba4cda982f60",
+   "tool": "podman",
+   "command": "podman run --name=\"log_test\" -v /dev/log:/dev/log --rm registry.redhat.io/ubi9/ubi logger \"Testing logging to the host\"",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 53,
+   "id": "ref-ed0082eab5749a01",
+   "tool": "grep",
+   "command": "sudo grep -w space_left /etc/audit/auditd.conf",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 54,
+   "id": "ref-ee4b4e7ad7b14a53",
+   "tool": "cd",
+   "command": "cd /var/lib/pcp/pmdas/openmetrics/",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 55,
+   "id": "ref-f30ee87ec24f6ba4",
+   "tool": "virsh",
+   "command": "virsh domiftune guest1 eth0 outbound --live",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 56,
+   "id": "ref-f4de7605d36ccdb3",
+   "tool": "ostree",
+   "command": "sudo ostree remote add \\ --no-gpg-verify rhel9 http://192.168.122.1/repo/",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 57,
+   "id": "ref-fa3535e4c9e917b8",
+   "tool": "systemctl",
+   "command": "sudo systemctl status usbguard.service",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 58,
+   "id": "ref-fa5b0dcdef0aaff6",
+   "tool": "yum",
+   "command": "sudo yum remove abrt*",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 59,
+   "id": "ref-faa7e092fcb29fdf",
+   "tool": "pcs",
+   "command": "pcs stonith level verify",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  },
+  {
+   "n": 60,
+   "id": "ref-ff3b821ea2f6d6a0",
+   "tool": "pcs",
+   "command": "pcs host auth z1.example.com z2.example.com",
+   "is_command": true,
+   "complete": true,
+   "extractor_trunc_flag": false
+  }
+ ]
+}

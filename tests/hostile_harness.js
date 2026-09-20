@@ -2318,6 +2318,10 @@ function main() {
   var FIND_PLAIN = { id: "pipe-find", tool: "find", blast: "green",
                      fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
                      template: [{ lit: "find" }, { field: "p" }] };
+  var FIND_MIXED = { id: "pipe-find-mixed", tool: "find", blast: "green",
+                     fields: [{ name: "p", type: "path", required: true, versions: VERSIONS }],
+                     template: [{ lit: "find" }, { field: "p" }, { lit: "-print" },
+                                { lit: "-o" }, { lit: "-print0" }] };
   var RM_SPEC = { id: "pipe-rm", tool: "rm", blast: "yellow", fields: [],
                   template: [{ lit: "rm" }, { lit: "-f" }] };
   var KILL_SPEC = { id: "pipe-kill", tool: "kill", blast: "yellow", fields: [],
@@ -2378,6 +2382,10 @@ function main() {
      [HEAD, { op: "redirect", target: "/boot/grub2/grub.cfg" }], "red", "R-SYSTEM", true],
     ["a redirect into /dev is RED",
      [HEAD, { op: "redirect", target: "/dev/sda" }], "red", "R-SYSTEM", true],
+    ["a redirect into the approved sink /dev/null stays GREEN",
+     [HEAD, { op: "redirect", target: "/dev/null" }], "green", "R-MAX", false],
+    ["a redirect into /dev/zero remains RED",
+     [HEAD, { op: "redirect", target: "/dev/zero" }], "red", "R-SYSTEM", true],
     ["a redirect into /usr is RED",
      [HEAD, { op: "append", target: "/usr/share/applications/x.desktop" }], "red", "R-SYSTEM", true],
     ["a redirect into /var/lib is RED",
@@ -2705,7 +2713,13 @@ function main() {
     ["/etc/passwd", "red"],
     ["/usr/share/x", "red"],
     ["/var/lib/misc/x", "red"],
-    ["/boot/grub.cfg", "red"]
+    ["/boot/grub.cfg", "red"],
+    ["/dev/null", "green"],
+    ["/dev/stdout", "green"],
+    ["/dev/stderr", "green"],
+    ["/dev/fd/1", "green"],
+    ["/dev/fd/2", "green"],
+    ["/dev/zero", "red"]
   ];
   for (var p4 = 0; p4 < PL4_TARGETS.length; p4++) {
     for (var p4v = 0; p4v < VERSIONS.length; p4v++) {
@@ -2843,6 +2857,9 @@ function main() {
     ["xargs -0 behind a producer that does not emit NUL records",
      [{ spec: FIND_PLAIN, values: { p: "/var/log" } },
       { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: RM_SPEC, values: {} }]],
+    ["PIPE-003: xargs -0 behind mixed find -print -o -print0 output",
+     [{ spec: FIND_MIXED, values: { p: "/var/log" } },
+      { op: "pipe", kind: "xargs", xargs: { nul: true }, spec: RM_SPEC, values: {} }]],
     ["xargs as the first stage",
      [{ kind: "xargs", spec: RM_SPEC, values: {} }]],
     ["xargs joined by an operator other than a pipe",
@@ -2935,6 +2952,21 @@ function main() {
         continue;
       }
       pipeOracles++;
+    }
+  }
+
+  /* PIPE-004: replacement is structure owned by the assembler. The panel says
+     where it goes; this proves the generated structure contains one fixed
+     marker and appends exactly one substitution argument to the child. */
+  for (var riv = 0; riv < VERSIONS.length; riv++) {
+    var ri = A.assemblePipeline(refusalControls[1][1], VERSIONS[riv],
+                                pipeOpts({ patterns: realPatterns }));
+    refusalChecks++;
+    if (ri === null || !/ xargs -I '\{\}' wc -l '\{\}'$/.test(ri.command) ||
+        (ri.command.match(/'\{\}'/g) || []).length !== 2) {
+      stats.failures.push("PIPE-004 / RHEL " + VERSIONS[riv] +
+                          ": -I must emit one fixed marker and append exactly one substitution " +
+                          "argument to the child: " + JSON.stringify(ri && ri.command));
     }
   }
 

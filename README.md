@@ -10,11 +10,19 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.1 (first internal alpha, lab-only, unsigned -- runtime shell + command assembler + 24 guided-form generators (CR-T-17..25) + full STIG datasets, 1,492 rules + STIG panel, evidence exporter, typed search, favorites/recent, print view, About panel (CR-T-26/28/29/30))  
+**Current version:** v1.0.0-alpha.2 (recovery alpha, lab-only, unsigned -- hardened pipeline composer, refreshed three-family reference corpus, continuous Q1-Q25 gates, and evidence quote export)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-18
+**Last built:** 2026-09-20
 
 ## Recent changes
+
+- **2026-09-20** -- **v1.0.0-alpha.2 recovery candidate.** Closes PIPE-003,
+  PIPE-004, PIPE-F1, and PF6; retires the time-bounded MCR-SEC-020/Q20 waiver
+  with authority and evidence while retaining the coverage regression gate;
+  refreshes the mined reference tier to **14,439 distinct commands** across
+  command, option, and workflow families; and promotes Q21-Q25 to continuous
+  release gates. Q24 adds byte-exact governing-source quote export while
+  keeping normalized discovery text separate from evidentiary source text.
 
 - **2026-09-17** -- **The pipeline composer (CR-T-31)**, branch
   `salm/milo/pipeline-finish` (Milo Vance). `assemblePipeline()` joins several
@@ -91,7 +99,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   in review: a per-tool syntax oracle, a `qa.py` module split, an ELS host to
   stand in for RHEL 7, and a second RHEL SME. No file under `content/`,
   `extract/`, `tests/`, or `template.html` itself is touched by this branch;
-  `python3 qa.py` (Q1-Q22 + JS) passes on the unmodified artifact, and the
+  `python3 qa.py` (Q1-Q25 + JS) passes on the unmodified artifact, and the
   unit test and hostile-harness counts are unchanged because no code changed.
 - **2026-09-18** — Q16 closes J1/J2/J3 (VER-001/002/003), branch `salm/milo/receipt-guards`
   (Milo Vance). Marcus Reed's Verified-per-version review approved the per-version receipt
@@ -164,7 +172,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   for RHEL 8/10 a third time — not a host-abstraction change, but required the moment RHEL 7 stopped
   being empty. `tests/fixtures/evidence/firewalld-service-active.rhel9.txt`'s committed content
   fingerprint updated to match the new data island (confirmed byte-diff: only that one line moved).
-  Gates: `build.py` reproducible / `qa.py` (Q1-Q22, JS: PASS) / `python3 -m unittest discover -s
+  Gates: `build.py` reproducible / `qa.py` (Q1-Q25, JS: PASS) / `python3 -m unittest discover -s
   tests` (176 OK) / `node tests/hostile_harness.js` (81577 checks, 0 FAILED) all green.
 
 - **2026-09-17** — H1/H2/H3, branch `salm/milo/panels-conditions` (Milo Vance), Marcus Reed's
@@ -630,7 +638,7 @@ family's raw source is staged for a licensing audit).
 - [docs/POAM.md](docs/POAM.md) -- Open findings and remediation plans
 
 **Status:** Build stage, Phase 1 engineering scope on `main`. `python3 qa.py`
-passes all 22 gates plus the JS syntax check; see `docs/QA_GATES.md` for what
+passes all 25 gates plus the JS syntax check; see `docs/QA_GATES.md` for what
 each gate proves and does not prove, and `docs/POAM.md` for open findings.
 Known content gaps (RHEL 9 flags, RHEL 7 host coverage, uncurated flag
 explanations) are listed in `docs/USER_GUIDE.md`'s Known Limitations section,

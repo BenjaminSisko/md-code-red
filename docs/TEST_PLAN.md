@@ -18,19 +18,20 @@ test plan and charter, and is the QA role checked against
 ## Automated Gate Suite
 
 This is the part of the two-tier model this repo actually runs and can prove:
-`python3 qa.py` -- 22 gates plus an optional Node syntax check, against the
+`python3 qa.py` -- 25 gates plus an optional Node syntax check, against the
 **shipped artifact**. `docs/QA_GATES.md` is the full authority -- what each
 gate proves, how it has been watched fail, and its stated residual -- and is not
-duplicated here. On this build: all 22 gates plus `JS` PASS, 293 unit tests OK
+duplicated here. On this build: all 25 gates plus `JS` PASS; the unit suite and
+hostile harness must also pass with zero failures
 (`python3 -m unittest discover -s tests`), and 101,297 hostile-input checks with
 0 failures (`node tests/hostile_harness.js`).
 
 **The pipeline composer (CR-T-31)** is gated by the same suite and is documented
 in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
 what runs on every build: 17,092 hostile-vector checks into every field of every
-stage; 589 pipeline-oracle comparisons with 11 negative controls that FAIL if
+stage; at least 593 pipeline-oracle comparisons with negative controls that FAIL if
 the oracle agrees with a line it should reject; 332 operator-seam refusals; 100
-interpreter-class checks; 44 redirect-target rating checks; 108 one-stage
+interpreter-class checks; at least 68 redirect-target rating checks; 108 one-stage
 invariants (a pipeline of one stage equals `assembleCommand()` byte for byte);
 and `tests/test_pipeline_ui_wiring.py` (15 tests, 9 audits, 14 negative
 controls) on the panel the harness cannot see. Q18 fails closed on a zero in any
@@ -126,9 +127,8 @@ Three senior admins + one ISSO in one enclave, 4 weeks. Success criteria:
 - Pilot users adopt toolkit for 3+ daily tasks
 - ISSO confirms STIG evidence quality meets body-of-evidence standard
 
-**Status: not yet run.** No pilot report exists in this repo or in the records
-this document has visibility into. Given `docs/USER_GUIDE.md`'s Known
-Limitations (RHEL 9's flag dictionary is empty, most flags are uncurated, only
-5 STIG rows carry a captured expected output), a pilot run today would surface
-those gaps as findings rather than validate a feature-complete build -- worth
-weighing before scheduling it.
+**Status: alpha.2 acceptance is in progress.** RHEL 9 now has captured flag
+sources and a release-specific dictionary. The remaining sparse flag explanations
+and evidence captures are disclosed findings for the pilot rather than hidden
+assumptions. A pilot receipt must identify the exact artifact SHA-256 and must not
+claim human operational acceptance until a named operator has actually used it.

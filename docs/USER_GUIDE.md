@@ -1,15 +1,16 @@
 ---
 type: user-guide
 status: current
-last_verified: 2026-09-17
+last_verified: 2026-09-20
 ---
 
 # MD CODE RED User Guide
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the shipped build (`dist/md-code-red_v1.0.0-dev.html`, 27 command
-entries, 19 tools) actually does, verified against the running artifact and the QA
+describes what the shipped build (`dist/md-code-red_v1.0.0-alpha.2.html`, 183 curated
+command entries, 100 tools, and 14,439 mined reference commands) actually does,
+verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
 this build does not yet do, that is called out plainly rather than described as if
 it worked.
@@ -18,7 +19,7 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-Most of the catalog (24 of 27 entries) is a **guided form generator** -- you fill in
+The catalog includes 27 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
@@ -48,10 +49,10 @@ using the real `journalctl` entry:
    English reason under **Fill in the required fields**; nothing partial is ever
    rendered as if it were complete.
 
-A handful of entries (3 of 27 -- `firewalld-service-active`,
-`ctrl-alt-del-target-masked`, `journald-service-active`) are **static** STIG-sourced
-checks with no form: pick the tool, pick the one command, and the version-specific
-command renders directly.
+A further 156 entries are **static** checks, including
+`firewalld-service-active`, `ctrl-alt-del-target-masked`, and
+`journald-service-active`. Static checks have no form: pick the tool, pick the
+command, and the version-specific command renders directly.
 
 ### Journey 1b: Build a pipeline
 
@@ -250,7 +251,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-dev -- RHEL 8
+# MD CODE RED v1.0.0-alpha.2 -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -385,31 +386,31 @@ the same text.
 ## Known Limitations
 
 This is the honest state of the shipped build, not a roadmap. Numbers below are
-read directly off `dist/md-code-red_v1.0.0-dev.html` and its build content, not
+read directly off `dist/md-code-red_v1.0.0-alpha.2.html` and its build content, not
 estimated.
 
-- **27 command entries across 19 tools.** 24 are guided-form generators; 3 are
-  static STIG-sourced checks. This is a first-phase catalog, not full coverage of
-  RHEL administration.
+- **183 curated command entries across 100 tools.** 27 are guided-form generators
+  and 156 are static checks. The separate mined reference tier contains 14,439
+  distinct commands with 45,281 source citations; reference rows are discovery
+  material and are never silently promoted into the curated catalog.
 - **RHEL 7 flags are extracted from a UBI7 container, not a real RHEL 7 host** --
   the lab has none. Of the tools probed, only 6 have a parsed flag dictionary on
   RHEL 7 (`systemctl`, `journalctl`, `yum`, `useradd`, `usermod`, `chage`), because
   UBI7's public repos ship neither `man`/`man-db` (every tool is `--help`-only) nor
   most of the other packages at all. The remaining tools are honestly marked
   `available: false` for RHEL 7 rather than guessed at.
-- **RHEL 9 has no flag dictionary and no captures yet.** `content/flags_rhel9.json`
-  is an empty, pending skeleton (blocked on a RHEL 9 host to read), so every RHEL 9
-  command's flags panel reads `unverified -- see man page` regardless of whether a
-  curated explanation exists for the same flag on RHEL 8 or 10 -- the dictionary is
-  never borrowed across releases.
+- **RHEL 9 now has a release-specific flag dictionary and raw captures.** All four
+  release dictionaries currently cover 22 command-line tools. A flag is still
+  shown as unverified when its own release dictionary lacks that option; the UI
+  never borrows a definition from another RHEL release.
 - **Only 5 STIG ID/RHEL-version pairs carry a captured expected output**, out of
   the 10 STIG rows the 3 static entries declare across all four releases:
   `firewalld-service-active` (RHEL 8, RHEL 10), `ctrl-alt-del-target-masked`
   (RHEL 8, RHEL 10), and `journald-service-active` (RHEL 10 only -- it has no RHEL
   8 STIG mapping at all). Every other STIG panel in the build honestly shows "No
   capture yet."
-- **Flag explanations are almost entirely uncurated.** Across the RHEL 7/8/10 flag
-  dictionaries (2,009 flags total; RHEL 9 has none), zero carry a curated
+- **Flag explanations are almost entirely uncurated.** Across the four release flag
+  dictionaries, most entries do not carry a curated
   `explain` -- the extractor writes `explain: null` by design and a human SME
   curates prose in a separate step that has not run yet. Only 4 flags anywhere in
   the build (on the 3 static entries' own hand-curated `flags[]`) carry a curated

@@ -27,17 +27,21 @@ import qa  # noqa: E402
 BASELINE = os.path.join(REPO, "content-src", "flag_coverage_baseline.json")
 
 
-class TheRatchetExpires(unittest.TestCase):
+class TheRatchetRetirementIsProved(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         with open(BASELINE, encoding="utf-8") as fh:
             cls.baseline = json.load(fh)
 
-    def test_the_shipped_baseline_names_an_owner_and_a_date(self):
+    def test_the_shipped_baseline_names_owner_date_and_retirement_authority(self):
         self.assertEqual("Caleb Stone (extractor, CR-T-09 follow-up)",
                          self.baseline.get("_retire_owner"))
         self.assertEqual("2026-09-25", self.baseline.get("_retire_by"))
+        self.assertEqual("retired", self.baseline.get("_status"))
+        self.assertEqual("2026-09-20", self.baseline.get("_retired_on"))
+        self.assertIn("Jordan Patel", self.baseline.get("_retired_by", ""))
+        self.assertIn("--add-rich-rule", self.baseline.get("_retirement_evidence", ""))
 
     def test_it_is_not_expired_today(self):
         """Positive control: the gate is green for the right reason, not because it never fires."""
@@ -48,13 +52,15 @@ class TheRatchetExpires(unittest.TestCase):
         self.assertEqual([], qa.coverage_baseline_expiry_failures(
             self.baseline, today=datetime.date(2026, 9, 25)))
 
-    def test_it_expires_the_day_after(self):
-        """The negative control this file exists for."""
-        failures = qa.coverage_baseline_expiry_failures(
-            self.baseline, today=datetime.date(2026, 9, 26))
-        self.assertEqual(1, len(failures), failures)
-        self.assertIn("expired on 2026-09-25", failures[0])
-        self.assertIn("Caleb Stone", failures[0])
+    def test_retirement_survives_the_old_expiry_date_for_the_right_reason(self):
+        """Post-expiry proof: retirement, rather than an extended date, keeps Q20 green."""
+        self.assertEqual([], qa.coverage_baseline_expiry_failures(
+            self.baseline, today=datetime.date(2027, 9, 26)))
+
+    def test_a_retired_baseline_without_evidence_is_refused(self):
+        failures = qa.coverage_baseline_expiry_failures({"_status": "retired"})
+        self.assertTrue(failures)
+        self.assertIn("missing", failures[0])
 
     def test_a_baseline_with_no_retirement_plan_is_refused(self):
         for missing in ({"_retire_by": "2026-09-25"}, {"_retire_owner": "somebody"}, {}):

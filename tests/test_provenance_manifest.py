@@ -3,13 +3,14 @@
 
 extract/make_provenance.py emits dist/md-code-red_<version>.provenance.json
 claiming, among other things, the built artifact's own sha256 and content
-fingerprint. A provenance manifest whose own headline claims do not match the
-artifact it describes is worse than no manifest -- it would be trusted and
-wrong. This test runs the real script against the real built artifact (same
+fingerprint across every declared JSON data island. A provenance manifest whose
+own headline claims do not match the artifact it describes is worse than no
+manifest -- it would be trusted and wrong. This test runs the real script against
+the real built artifact (same
 idiom as test_evidence_export_real.py: shell out to the real tool over real
 committed content, never re-implement it) and checks the two claims that
 matter most independently, the same way qa.py's build_ctx() would: re-hash
-the artifact file and the bytes inside its own <script id="mcr-data"> island,
+the artifact file and the bytes inside all five declared JSON islands in order,
 and compare both to what the manifest says.
 
 Artifact lookup is qa.find_artifact() itself, not a second copy of it. This
@@ -49,10 +50,14 @@ def sha256_file(path):
 def content_fingerprint(artifact_path):
     with open(artifact_path, encoding="utf-8") as f:
         html = f.read()
-    m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
-    if not m:
-        raise AssertionError("no mcr-data island found in %s" % artifact_path)
-    return hashlib.sha256(m.group(1).encode("utf-8")).hexdigest()
+    islands = re.findall(
+        r'<script id="([^"]+)" type="application/json">(.*?)</script>', html, re.S)
+    ids = tuple(island_id for island_id, _payload in islands)
+    if ids != qa.EXPECTED_ISLANDS:
+        raise AssertionError("JSON island order is %r, expected %r"
+                             % (ids, qa.EXPECTED_ISLANDS))
+    payload = "\n".join(value for _island_id, value in islands)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 class ProvenanceManifestTests(unittest.TestCase):
@@ -69,16 +74,30 @@ class ProvenanceManifestTests(unittest.TestCase):
 
         manifest_path = os.path.join(
             DIST, os.path.basename(artifact).replace(".html", ".provenance.json"))
-        proc = subprocess.run([sys.executable, SCRIPT],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
-        cls.rc = proc.returncode
-        cls.stderr = proc.stderr.decode("utf-8", "replace")
         cls.manifest_path = manifest_path
+        original_bytes = None
         if os.path.exists(manifest_path):
-            with open(manifest_path, encoding="utf-8") as f:
-                cls.manifest = json.load(f)
-        else:
-            cls.manifest = None
+            with open(manifest_path, "rb") as f:
+                original_bytes = f.read()
+        try:
+            proc = subprocess.run([sys.executable, SCRIPT],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
+            cls.rc = proc.returncode
+            cls.stderr = proc.stderr.decode("utf-8", "replace")
+            if os.path.exists(manifest_path):
+                with open(manifest_path, encoding="utf-8") as f:
+                    cls.manifest = json.load(f)
+            else:
+                cls.manifest = None
+        finally:
+            # Running verification must never replace a release manifest's real
+            # commit with TAG_COMMIT_PLACEHOLDER. Preserve the candidate bytes
+            # exactly, including when an assertion later fails.
+            if original_bytes is not None:
+                with open(manifest_path, "wb") as f:
+                    f.write(original_bytes)
+            elif os.path.exists(manifest_path):
+                os.unlink(manifest_path)
 
     def test_script_succeeds_and_writes_the_manifest(self):
         self.assertEqual(self.rc, 0, self.stderr)

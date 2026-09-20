@@ -61,6 +61,20 @@ NS = {"x": "http://checklists.nist.gov/xccdf/1.1"}
 CCI_NS = {"c": "http://iase.disa.mil/cci"}
 VERSIONS = ("7", "8", "9", "10")
 
+# The JSON data islands the shipped artifact may contain, in the order it states
+# them. build.py's ISLANDS is the producer of this list and this is the gate's
+# independent statement of it: Q1 fails on a mismatch either way, so a new island
+# has to be declared in two places by two different hands, and an UNdeclared one
+# fails the build rather than adding itself.
+#
+# The order is load-bearing three times over: it is the order the file is written
+# in, the input order of the content fingerprint, and the family index the
+# reference index's posting encoding resolves against.
+EXPECTED_ISLANDS = ("mcr-data", "mcr-ref-index", "mcr-ref-stig_rules",
+                    "mcr-ref-raw_captures", "mcr-ref-redhat_guides")
+ISLAND_PLACEHOLDERS = ("/*__DATA__*/", "/*__REF_INDEX__*/", "/*__REF_STIG_RULES__*/",
+                       "/*__REF_RAW_CAPTURES__*/", "/*__REF_REDHAT_GUIDES__*/")
+
 XCCDF = {
     "7": "U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
     "8": "U_RHEL_8_STIG_V2R8_Manual-xccdf.xml",
@@ -201,6 +215,9 @@ MARKERS = [
 # ---------------------------------------------------------------------------
 INNERHTML_ALLOWLIST = {
     'parts.join("")': "renderStatusBar(): every parts.push() argument is audited by this same gate",
+    'pipelineBlastBadge(d.blast)': "renderPipelinePanel(): the pure helper accepts only four closed "
+                                    "rating names and escapes both attribute and text; PF6 executes "
+                                    "every state plus an unknown-state negative control",
 }
 AUDITED_PUSH_TARGETS = ["parts"]         # <name>.push(<expr>)
 
@@ -296,17 +313,49 @@ SPLICED_SINK_RE = re.compile(r"(innerHTML|outerHTML|srcdoc|insertAdjacentHTML|cr
 # describe. The ranges are assembled from code points rather than typed, because
 # typing them is the mistake this gate exists to catch.
 # ---------------------------------------------------------------------------
-TROJAN_RANGES = [
-    (0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x1F), (0x7F, 0x9F),   # C0 and C1, keeping \t \n \r
-    (0xAD, 0xAD), (0x34F, 0x34F), (0x61C, 0x61C),             # soft hyphen, CGJ, Arabic letter mark
-    (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180E),
-    (0x200B, 0x200F), (0x2028, 0x2029), (0x202A, 0x202E),     # zero-width, line/paragraph
-                                                              #   separators, bidi overrides
-    (0x2060, 0x206F),                                         # word joiner, invisible format
-                                                              #   and bidi isolates, 2065
-                                                              #   included (MCR-SEC-009)
-    (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0),
-]
+# M8 (threat model v2): ONE trojan range table, never a second copy.
+#
+# There were two. extract/schema.py declared the table for the content side
+# (escape_trojan() writes residue against it, the field validators refuse
+# against it) and qa.py declared an identical one for the gate side. Identical
+# TODAY -- that is the whole problem with a second copy, and this codebase has
+# already watched a copied range table drift once: the evidence exporter's
+# hand-rolled duplicate was missing U+061C, U+00AD, U+206A-U+206F and U+FE0F by
+# the time condition H2 caught it, and the fix was the same fix as this one.
+#
+# So qa.py no longer STATES the table; it READS extract/schema.py's, the same
+# way parse_schema_tuple() reads PROVENANCE_FIELDS and load_build_constants()
+# reads APP_VERSION -- out of the file's text, with no import and no code path
+# in common, so the constant is shared while the check stays independent.
+# schema.py is now the single declaration, and Q17's scan, Q21's tracked-file
+# scan and the miner's residue escaping are provably the same set rather than
+# three sets that happen to agree.
+#
+# The THIRD statement -- template.html's INVISIBLE_RE plus HEADER_UNSAFE_G,
+# which are JavaScript and cannot read a Python file -- is CHECKED rather than
+# removed: Q25 lifts both regexes out of the SHIPPED artifact and proves their
+# union is exactly this table, code point for code point.
+def parse_schema_ranges(src, name):
+    """A module-level list of (lo, hi) hex pairs out of extract/schema.py's TEXT.
+
+    Raises rather than defaulting, for parse_schema_tuple()'s reason: a gate
+    that invents its own table when it cannot read the source of truth is the
+    weaker-copy problem again, with extra steps.
+    """
+    m = re.search(r"^%s\s*=\s*\[(.*?)^\]" % re.escape(name), src, re.M | re.S)
+    if not m:
+        raise ValueError("extract/schema.py declares no module-level %s list that qa.py can read "
+                         "— the one trojan range table has no source of truth (M8)" % name)
+    pairs = [(int(a, 16), int(b, 16))
+             for a, b in re.findall(r"\(\s*(0x[0-9A-Fa-f]+)\s*,\s*(0x[0-9A-Fa-f]+)\s*\)", m.group(1))]
+    if not pairs:
+        raise ValueError("extract/schema.py's %s parsed to an empty list — an empty trojan table "
+                         "is a scanner that refuses nothing (M8)" % name)
+    return pairs
+
+
+with open(os.path.join(REPO, "extract", "schema.py"), encoding="utf-8") as _fh:
+    TROJAN_RANGES = parse_schema_ranges(_fh.read(), "TROJAN_RANGES")
 TROJAN_RE = re.compile("[" + "".join("%s-%s" % (chr(a), chr(b)) for a, b in TROJAN_RANGES) + "]")
 
 results = []   # (gate_id, name, status, details)  status in PASS/FAIL/PENDING
@@ -1443,20 +1492,35 @@ def gate_q1(ctx):
             f.append("missing %s" % label)
     if not f:
         d.append("DOCTYPE/html/head/body present")
+    # The island set is NAMED, not counted. It used to be "exactly 2 <script>
+    # elements" -- fine while there was one island, and the wrong shape the
+    # moment the reference corpus moved into per-family islands for Al's lazy
+    # hydration ruling, because a count cannot tell a deliberate new island from
+    # a stray one. So this asserts the exact declared set: build.py's ISLANDS is
+    # the one place the list lives, qa.py names the same ids here, and anything
+    # else in the file is a failure rather than an increment.
     scripts = re.findall(r"<script\b[^>]*>", html)
-    if len(scripts) != 2:
-        f.append("expected exactly 2 <script> elements, found %d" % len(scripts))
-    else:
-        if 'type="application/json"' not in scripts[0] or 'id="mcr-data"' not in scripts[0]:
-            f.append("first <script> is not the id=mcr-data application/json data island")
-        if "src=" in scripts[1] or "type=" in scripts[1]:
-            f.append("second <script> is not a plain inline application script")
-        d.append("exactly two <script> elements: one JSON data island, one app script "
-                 "(BQP Gate 2 #2, declared deviation per ADR-001 §7.4)")
+    json_scripts = [s for s in scripts if 'type="application/json"' in s]
+    app_scripts = [s for s in scripts if s not in json_scripts]
+    found_ids = [(re.search(r'id="([^"]+)"', s) or [None, None])[1] for s in json_scripts]
+    if found_ids != list(EXPECTED_ISLANDS):
+        f.append("the JSON data islands in the shipped file are %r, and the declared set is %r "
+                 "(build.py ISLANDS). An island this gate does not name is either a new family "
+                 "nobody declared or a stray <script> in the template"
+                 % (found_ids, list(EXPECTED_ISLANDS)))
+    if len(app_scripts) != 1:
+        f.append("expected exactly 1 inline application script, found %d" % len(app_scripts))
+    elif "src=" in app_scripts[0] or "type=" in app_scripts[0]:
+        f.append("the application script is not a plain inline <script>")
+    if found_ids == list(EXPECTED_ISLANDS) and len(app_scripts) == 1:
+        d.append("exactly %d JSON data islands (%s) and one app script "
+                 "(BQP Gate 2 #2, declared deviation per ADR-001 §7.4)"
+                 % (len(EXPECTED_ISLANDS), ", ".join(EXPECTED_ISLANDS)))
     if html.count("<script") != html.count("</script>"):
         f.append("unbalanced <script> open/close counts")
-    if "/*__DATA__*/" in html:
-        f.append("template placeholder /*__DATA__*/ was not replaced")
+    for placeholder in ISLAND_PLACEHOLDERS:
+        if placeholder in html:
+            f.append("template placeholder %s was not replaced" % placeholder)
     for token in ("__VERSION__", "__BUILT_DATE__", "__APP_NAME__", "__CLASSIFICATION__",
                   "__DEFAULT_VERSION__"):
         if token in html:
@@ -1466,11 +1530,26 @@ def gate_q1(ctx):
         f.append("data island does not parse as JSON")
     else:
         d.append("data island parses (%.2f MB of JSON)" % (ctx["island_len"] / 1024.0 / 1024.0))
-    esc_f = island_escape_failures(ctx["island"])
+    # EVERY island, not just mcr-data. The reference corpus is the largest body
+    # of vendor-controlled text this artifact carries and is exactly the payload
+    # MCR-SEC-007 was written about; checking only the island it no longer lives
+    # in would have quietly retired the gate.
+    esc_f = []
+    parsed_islands = 0
+    for iid, text in ctx["islands"]:
+        esc_f.extend("%s: %s" % (iid, msg) for msg in island_escape_failures(text))
+        try:
+            json.loads(text)
+            parsed_islands += 1
+        except (ValueError, TypeError):
+            f.append("island %s does not parse as JSON" % iid)
     f.extend(esc_f)
     if not esc_f:
-        d.append("no raw '<' or '>' anywhere in the data island — '</script', '<!--', '-->' and "
-                 "'<script' are all closed by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)")
+        d.append("no raw '<' or '>' anywhere in any of the %d data islands (%.2f MB of JSON in "
+                 "total, all %d parsing) — '</script', '<!--', '-->' and '<script' are all closed "
+                 "by build.py's \\u003c/\\u003e escaping (MCR-SEC-007)"
+                 % (len(ctx["islands"]),
+                    sum(len(t) for _i, t in ctx["islands"]) / 1024.0 / 1024.0, parsed_islands))
     consts = ctx["build_consts"]
     version = consts.get("APP_VERSION")
     checks = [
@@ -1507,31 +1586,36 @@ def gate_q1(ctx):
         else:
             d.append("sha256 sidecar matches: %s" % got[:32])
 
-    # CR-T-28/CR-T-30. The content fingerprint is defined as the sha256 of
-    # exactly the bytes inside <script id="mcr-data">...</script> — the same
-    # bytes this file already extracted as ctx["island"] — computed by
-    # build.py BEFORE that payload was substituted into the template and
-    # embedded as the CONTENT_FINGERPRINT constant, never inside the JSON
-    # island itself (a hash inside the thing it hashes is circular). This is
-    # the independent re-check: re-hash the shipped island and compare it to
-    # the constant the shell actually carries, so the evidence exporter and
-    # the About panel cannot print a fingerprint that does not match what
-    # shipped.
+    # CR-T-28/CR-T-30. The content fingerprint is the sha256 of EVERY island's
+    # bytes, joined by a newline in build.py's ISLANDS declaration order, and
+    # computed there BEFORE the payloads were substituted into the template. It
+    # is embedded as the CONTENT_FINGERPRINT constant, never inside any island
+    # (a hash inside the thing it hashes is circular).
+    #
+    # It covered only mcr-data while mcr-data was the whole content. Now that
+    # the reference corpus ships as its own islands, hashing mcr-data alone
+    # would mean an operator could re-mine 14,488 records, change every one of
+    # them, and export evidence carrying an UNCHANGED fingerprint -- a
+    # fingerprint that stops covering most of the content is worse than no
+    # fingerprint, because it still reads as a guarantee. This is the
+    # independent re-check: re-join every shipped island the same way and
+    # compare.
     fp_m = re.search(r'var CONTENT_FINGERPRINT="([^"]*)"', html)
     if not fp_m or not fp_m.group(1) or fp_m.group(1) == "__CONTENT_FINGERPRINT__":
         f.append("CONTENT_FINGERPRINT constant is missing or unsubstituted in the shipped shell")
-    elif not ctx["island"]:
-        f.append("content fingerprint cannot be checked — the data island did not extract")
+    elif not ctx["islands"]:
+        f.append("content fingerprint cannot be checked — no data island extracted")
     else:
         want_fp = fp_m.group(1)
-        got_fp = hashlib.sha256(ctx["island"].encode("utf-8")).hexdigest()
+        got_fp = hashlib.sha256(
+            "\n".join(text for _iid, text in ctx["islands"]).encode("utf-8")).hexdigest()
         if want_fp != got_fp:
-            f.append("content fingerprint %s does not match a fresh sha256 of the shipped data "
-                     "island %s — the embedded constant and the island have drifted"
+            f.append("content fingerprint %s does not match a fresh sha256 of the shipped islands "
+                     "%s — the embedded constant and the content have drifted"
                      % (want_fp[:16], got_fp[:16]))
         else:
-            d.append("content fingerprint matches a fresh sha256 of the shipped data island: %s"
-                     % got_fp[:32])
+            d.append("content fingerprint matches a fresh sha256 of all %d shipped islands: %s"
+                     % (len(ctx["islands"]), got_fp[:32]))
 
     # Milo Vance, daily-commands tranche (2026-09-17), problem 3: the version
     # selector used to open on a hard-coded "9" -- the one RHEL release with no
@@ -3365,6 +3449,14 @@ def coverage_baseline_expiry_failures(baseline, today=None):
     decided, in writing, to extend it.
     """
     import datetime
+    if baseline.get("_status") == "retired":
+        missing = [key for key in ("_retired_on", "_retired_by", "_retirement_evidence")
+                   if not baseline.get(key)]
+        if missing:
+            return ["the retired flag-coverage baseline is missing %s; retirement without named "
+                    "authority and evidence is a silent extension (MCR-SEC-020)"
+                    % ", ".join(missing)]
+        return []
     owner = baseline.get("_retire_owner")
     by = baseline.get("_retire_by")
     if not owner or not by:
@@ -3475,10 +3567,13 @@ def gate_q20(ctx):
     if measured == 0:
         f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
     else:
+        lifecycle = ("ratchet retired %s by %s" % (baseline.get("_retired_on"),
+                     baseline.get("_retired_by"))) if baseline.get("_status") == "retired" else (
+                     "ratchet retires %s, owner %s" % (baseline.get("_retire_by"),
+                     baseline.get("_retire_owner")))
         d.append("flag-dictionary coverage measured for %d tool/release pairs against the baseline "
-                 "accepted on %s (%s); ratchet retires %s, owner %s"
-                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"),
-                    baseline.get("_retire_by"), baseline.get("_retire_owner")))
+                 "accepted on %s (%s); %s"
+                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"), lifecycle))
     for line in stale:
         d.append("coverage IMPROVED beyond the baseline — tighten it: " + line)
 
@@ -3832,8 +3927,13 @@ def build_ctx():
         sys.exit(1)
     with open(artifact, encoding="utf-8") as fh:
         html = fh.read()
-    m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
-    island = m.group(1) if m else ""
+    # EVERY JSON island, in the order the file states them -- build.py's ISLANDS
+    # order, which is also the fingerprint input order and the family index the
+    # posting encoding resolves against.
+    islands = [(m.group(1), m.group(2)) for m in re.finditer(
+        r'<script id="([^"]+)" type="application/json">(.*?)</script>', html, re.S)]
+    by_id = dict(islands)
+    island = by_id.get("mcr-data", "")
     data = None
     if island:
         try:
@@ -3844,12 +3944,23 @@ def build_ctx():
         except json.JSONDecodeError:
             data = None
     app = re.findall(r"<script>(.*?)</script>", html, re.S)
+    # `shell` is "the artifact minus its vendor-controlled payload", and it has
+    # to lose ALL the islands now, not just mcr-data: the leak scan, the marker
+    # scan and the air-gap scan all read it, and a 4.3 MB corpus of Red Hat
+    # documentation left inside it would have them scanning vendor prose for
+    # hand-written mistakes.
+    shell = html
+    for _iid, text in islands:
+        if text:
+            shell = shell.replace(text, "")
     ctx = {
         "artifact": artifact,
         "html": html,
         "island": island,
         "island_len": len(island),
-        "shell": html.replace(island, "") if island else html,
+        "islands": islands,
+        "islands_by_id": by_id,
+        "shell": shell,
         "app_script": app[-1] if app else "",
         "data": data,
         "build_consts": load_build_constants(),
@@ -3867,6 +3978,860 @@ def load_sources(ctx):
     else:
         for v in VERSIONS:
             ctx["source_rules"][v] = ({}, 0)
+
+
+
+# ---------------------------------------------------------------------------
+# Q24 — reference/curated shape separation and governing evidence export (M3/M7)
+# ---------------------------------------------------------------------------
+
+REFERENCE_FORBIDDEN_KEYS_Q24 = {
+    "verified", "receipt", "capture", "expected_output", "blast", "blast_floor",
+    "rhel_versions", "template", "fields", "stig", "flags", "verify", "undo",
+    "intent", "category", "privilege", "same_as",
+}
+
+
+def gate_q24(ctx):
+    """A mined record stays a reference, and only an exact governing span may export."""
+    f, d = [], []
+    path = os.path.join(REPO, "content", "reference_commands.json")
+    if not os.path.exists(path):
+        return (["content/reference_commands.json is missing"], [])
+    with open(path, encoding="utf-8") as fh:
+        ds = json.load(fh)
+    records = ds.get("commands") or []
+    curated = set()
+    for entry in (((ctx.get("data") or {}).get("commands") or {}).get("entries") or []):
+        if entry.get("id"):
+            curated.add(entry["id"])
+    eligible = 0
+    for rec in records:
+        rid = rec.get("id")
+        if not isinstance(rid, str) or not rid.startswith("ref-") or rid in curated:
+            f.append("reference id %r is not isolated from the curated id space" % rid)
+        bad = sorted(REFERENCE_FORBIDDEN_KEYS_Q24 & set(rec))
+        if bad:
+            f.append("reference %s carries curated-only key(s): %s" % (rid, ", ".join(bad)))
+        if rec.get("tier") != "reference":
+            f.append("reference %s has tier %r" % (rid, rec.get("tier")))
+        if rec.get("authority") == "governing" and rec.get("verbatim_span") is True \
+                and not rec.get("trunc"):
+            eligible += 1
+    expected = (ds.get("_meta") or {}).get("evidence_eligible_count")
+    if expected != eligible or eligible == 0:
+        f.append("evidence-eligible reference count is %d, metadata says %r; both must be non-zero "
+                 "and exact" % (eligible, expected))
+
+    shell = ctx.get("shell") or ""
+    quote, err = extract_js_function(shell, "referenceEvidenceQuote")
+    if err:
+        f.append("referenceEvidenceQuote(): %s" % err)
+    else:
+        required = ('rec.authority!=="governing"', 'rec.verbatim_span!==true', 'rec.trunc',
+                    'if(quoted!==rec.c) return null', 'if(!sources.length) return null')
+        for marker in required:
+            if marker not in quote:
+                f.append("referenceEvidenceQuote() lost its fail-closed rule: %s" % marker)
+        if "assembleCommand(" in quote or "computeResult(" in quote:
+            f.append("referenceEvidenceQuote() calls the command assembler; a quotation is not "
+                     "an assembled command")
+    entry_body, entry_err = extract_js_function(shell, "entryById")
+    if entry_err:
+        f.append("entryById(): %s" % entry_err)
+    elif "REFCMDS" in entry_body or "reference" in entry_body.lower():
+        f.append("entryById() can see the reference tier; a ref- id could enter a curated slot")
+    if not f:
+        d.append("%d reference records are shape-separated from %d curated ids: ref- prefix, "
+                 "reference tier, and zero curated-only keys" % (len(records), len(curated)))
+        d.append("%d governing byte-exact spans are evidence-eligible; the shipped exporter "
+                 "refuses documentary, truncated, non-verbatim, changed-byte and uncited records "
+                 "before producing a source quotation (M3/M7)" % eligible)
+        d.append("entryById() cannot see REFCMDS, and the reference evidence path never calls the "
+                 "assembler")
+    return f, d
+
+
+# Q25 — anchor re-resolution (threat model v2, M2)
+#
+# THE FINDING THIS ANSWERS. Nothing anywhere asserted that a mined record's
+# `file@sha256#anchor` actually contains the text the record claims. Every other
+# gate took the citation on trust: Q3 checks that a citation EXISTS, Q13 checks
+# that its ids RESOLVE, and neither one opens the source and reads the line. A
+# record can therefore carry a perfectly well-formed DISA citation attached to
+# text DISA never wrote, and every gate stays green. That is MCR-SEC-019 --
+# where exactly this happened once, to one citation, and was caught by a human
+# reading it -- multiplied by 14,488 records and 23,410 stored citations.
+#
+# WHAT IS CHECKED, and it is ALL of it, with no sampling and no tolerance:
+#
+#   1. THE DIGEST. Every file in _meta.source_files is re-hashed and compared.
+#      Without this, "the anchor re-resolves" means only "some file at that path
+#      today happens to contain that text", which is not a claim about the bytes
+#      the extractor read.
+#   2. THE ANCHOR. Every stored occurrence of every record is resolved to its
+#      source line and the record's command text is compared against it. Not a
+#      sample: 23,410 citations is a few seconds of work, and a gate that
+#      samples here would leave the un-sampled citations exactly as unchecked as
+#      they were before this gate existed.
+#   3. THE SPAN CLAIM. A record flagged verbatim_span must be a byte-exact
+#      CONTIGUOUS span of ONE source line -- no embedded newline, and for a Red
+#      Hat guide row, no backslash continuation joined by the stager. M3 lets
+#      exactly this class of record cross into the evidence export as a
+#      quotation attributed to DISA, so the flag has to be earned rather than
+#      asserted.
+#
+# It also carries M8's third statement: template.html's INVISIBLE_RE and
+# HEADER_UNSAFE_G are JavaScript and cannot read extract/schema.py, so their
+# union is lifted out of the SHIPPED artifact and proved equal to the one table,
+# code point for code point.
+# ---------------------------------------------------------------------------
+
+ANCHOR_SOURCE_CACHE = {}
+
+
+def _anchor_file_for(occ):
+    """Where one occurrence's anchor points. Mirrors mine_commands.anchor_file_of()
+    and is deliberately a SECOND statement of it: this gate is an independent
+    re-check of the extractor, and sharing the resolver would make the gate agree
+    with the extractor's bug. The two are held together by the digest check --
+    a path this function gets wrong will not be in _meta.source_files."""
+    if occ.get("s"):
+        return "content/rules_rhel%s.json" % occ.get("v")
+    if occ.get("g"):
+        return "content-src/raw/redhat/rhel%s.candidates.jsonl" % occ.get("v")
+    return occ.get("p")
+
+
+def _stig_rule_index(version):
+    key = ("stig", version)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, "content", "rules_rhel%s.json" % version)
+        with open(path, encoding="utf-8") as fh:
+            ds = json.load(fh)
+        ANCHOR_SOURCE_CACHE[key] = {r.get("i"): r for r in ds.get("rules", [])}
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def _guide_candidate_index(version):
+    key = ("guide", version)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, "content-src", "raw", "redhat", "rhel%s.candidates.jsonl" % version)
+        rows = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                for i, line in enumerate(fh):
+                    line = line.strip()
+                    if not line or i == 0:
+                        continue
+                    obj = json.loads(line)
+                    rows[(obj.get("f"), obj.get("l"))] = obj
+        ANCHOR_SOURCE_CACHE[key] = rows
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def _capture_lines(rel):
+    key = ("raw", rel)
+    if key not in ANCHOR_SOURCE_CACHE:
+        path = os.path.join(REPO, rel)
+        if not os.path.exists(path):
+            ANCHOR_SOURCE_CACHE[key] = None
+        else:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                ANCHOR_SOURCE_CACHE[key] = fh.read().split("\n")
+    return ANCHOR_SOURCE_CACHE[key]
+
+
+def resolve_anchor(rec, occ):
+    """(ok, detail). `ok` is True when the anchor resolves AND carries this
+    record's text. `detail` names the failure, or the span kind on success."""
+    version = occ.get("v")
+    line_no = occ.get("l")
+    text = rec.get("c") or ""
+    if occ.get("s"):
+        rule = _stig_rule_index(version).get(occ.get("s"))
+        if rule is None:
+            return False, "STIG rule %s is not in content/rules_rhel%s.json" % (occ.get("s"), version)
+        field = occ.get("f")
+        if field not in ("chk", "fix"):
+            return False, "occurrence names the field %r, and a STIG anchor is chk or fix" % field
+        lines = (rule.get(field) or "").split("\n")
+        if not isinstance(line_no, int) or line_no < 1 or line_no > len(lines):
+            return False, "line %r is outside %s/%s, which has %d lines" % (
+                line_no, occ.get("s"), field, len(lines))
+        source = lines[line_no - 1]
+        if text not in source:
+            return False, ("the text is not in %s/%s line %d. claimed %r, the line reads %r"
+                           % (occ.get("s"), field, line_no, text[:80], source[:80]))
+        return True, "span"
+    if occ.get("g"):
+        rows = _guide_candidate_index(version)
+        row = rows.get(((occ.get("g") or "") + ".txt", line_no))
+        if row is None:
+            return False, "no staged candidate at %s.txt line %r for RHEL %s" % (
+                occ.get("g"), line_no, version)
+        if (row.get("c") or "") != text:
+            return False, ("the text is not what was staged from %s.txt line %s. claimed %r, "
+                           "staged %r" % (occ.get("g"), line_no, text[:80], (row.get("c") or "")[:80]))
+        return True, ("joined" if row.get("j") else "span")
+    rel = occ.get("p")
+    lines = _capture_lines(rel) if rel else None
+    if lines is None:
+        return False, "staged capture %r does not exist" % rel
+    if not isinstance(line_no, int) or line_no < 1 or line_no > len(lines):
+        return False, "line %r is outside %s, which has %d lines" % (line_no, rel, len(lines))
+    if text not in lines[line_no - 1]:
+        return False, ("the text is not in %s line %d. claimed %r, the line reads %r"
+                       % (rel, line_no, text[:80], lines[line_no - 1][:80]))
+    return True, "span"
+
+
+def anchor_digest_failures(meta):
+    """Every file the anchors point into, re-hashed against what the extractor
+    recorded reading."""
+    failures, checked = [], 0
+    pinned = (meta or {}).get("source_files") or {}
+    if not pinned:
+        return (["reference_commands._meta carries no source_files manifest — without the digest, "
+                 "`file@sha256#anchor` is only `file#anchor`, and an anchor into a file that has "
+                 "changed under it re-resolves against the wrong bytes (M2)"], 0)
+    for rel in sorted(pinned):
+        full = os.path.join(REPO, rel)
+        if not os.path.exists(full):
+            failures.append("pinned source %s does not exist" % rel)
+            continue
+        got = sha256_file(full)
+        want = (pinned[rel] or {}).get("sha256")
+        if got != want:
+            failures.append("pinned source %s hashes to %s, and the extractor recorded reading %s "
+                            "— every anchor into this file resolves against different bytes than "
+                            "the ones it was mined from" % (rel, got[:16], str(want)[:16]))
+        else:
+            checked += 1
+    return failures, checked
+
+
+def anchor_resolution_failures(records, limit=25):
+    """Every stored occurrence of every record, re-resolved. Returns
+    (failures, counts)."""
+    failures = []
+    counts = {"occurrences": 0, "records": 0, "spans": 0, "joined": 0, "verbatim_records": 0}
+    for rec in records:
+        counts["records"] += 1
+        verbatim = bool(rec.get("verbatim_span"))
+        if verbatim:
+            counts["verbatim_records"] += 1
+            if "\n" in (rec.get("c") or ""):
+                failures.append("%s claims verbatim_span and its text carries a newline — that is "
+                                "not a contiguous span of one line" % rec.get("id"))
+        for occ in rec.get("o") or []:
+            counts["occurrences"] += 1
+            ok, detail = resolve_anchor(rec, occ)
+            if not ok:
+                if len(failures) < limit:
+                    failures.append("%s: %s" % (rec.get("id"), detail))
+                continue
+            counts["spans" if detail == "span" else "joined"] += 1
+            if verbatim and detail == "joined":
+                if len(failures) < limit:
+                    failures.append("%s claims verbatim_span, and the staged row it cites was "
+                                    "JOINED from a backslash continuation — the text is this "
+                                    "parser's reconstruction, not a span of any single source "
+                                    "line (M3)" % rec.get("id"))
+    return failures, counts
+
+
+def _js_ranges(pattern):
+    """The code points one JavaScript character class covers, from its source."""
+    body = pattern[pattern.index("[") + 1:pattern.rindex("]")]
+    items = re.findall(r"\\u([0-9A-Fa-f]{4})(?:-\\u([0-9A-Fa-f]{4}))?", body)
+    out = set()
+    for lo, hi in items:
+        a = int(lo, 16)
+        b = int(hi, 16) if hi else a
+        out.update(range(a, b + 1))
+    return out
+
+
+def trojan_table_agreement_failures(app_script):
+    """M8's third statement. template.html's INVISIBLE_RE and HEADER_UNSAFE_G are
+    JavaScript; they cannot read extract/schema.py, so they are LIFTED OUT OF THE
+    SHIPPED ARTIFACT and their union compared to the one table, code point for
+    code point. A drifted copy is what condition H2 already caught once."""
+    failures = []
+    inv = re.search(r"var INVISIBLE_RE=(/\[[^\n]*?\]/);", app_script)
+    hdr = re.search(r"var HEADER_UNSAFE_G=(/\[[^\n]*?\]/g);", app_script)
+    if not inv or not hdr:
+        return ["INVISIBLE_RE and/or HEADER_UNSAFE_G could not be lifted out of the shipped app "
+                "script — M8's third statement of the trojan table cannot be checked, so it is "
+                "not being checked"]
+    got = _js_ranges(inv.group(1)) | _js_ranges(hdr.group(1))
+    want = set()
+    for lo, hi in TROJAN_RANGES:
+        want.update(range(lo, hi + 1))
+    # The ONE declared difference, named here rather than tolerated by a looser
+    # comparison. TROJAN_RANGES deliberately KEEPS tab, LF and CR -- a source
+    # file is allowed to contain them and Q21 would be unusable if it were not.
+    # HEADER_UNSAFE_G deliberately STRIPS them, because the string it guards is
+    # a single clipboard comment line and a newline in it is MCR-SEC-003: the
+    # screen collapses it to one title and the paste is two lines into a root
+    # shell. Both are right for their own job. Stating the exception is what
+    # keeps this a comparison of two tables rather than an agreement to differ.
+    HEADER_ONLY = {0x09, 0x0A, 0x0D}
+    missing = sorted(want - got)
+    extra = sorted(got - want - HEADER_ONLY)
+    if not (HEADER_ONLY <= got):
+        failures.append("the shipped HEADER_UNSAFE_G no longer strips tab/LF/CR (%s) — a newline "
+                        "in a clipboard comment header is MCR-SEC-003, and the header rule is the "
+                        "one place the runtime is SUPPOSED to be stricter than the file rule"
+                        % ", ".join("U+%04X" % c for c in sorted(HEADER_ONLY - got)))
+    if missing:
+        failures.append("the shipped JavaScript range table is MISSING %d code point(s) the one "
+                        "table refuses, first %s — a runtime that strips less than the build "
+                        "refuses is a hole, not a difference of opinion"
+                        % (len(missing), ", ".join("U+%04X" % c for c in missing[:8])))
+    if extra:
+        failures.append("the shipped JavaScript range table covers %d code point(s) the one table "
+                        "does not, first %s — the two have drifted"
+                        % (len(extra), ", ".join("U+%04X" % c for c in extra[:8])))
+    return failures
+
+
+def gate_q25(ctx):
+    f, d = [], []
+    path = os.path.join(REPO, "content", "reference_commands.json")
+    if not os.path.exists(path):
+        return (["content/reference_commands.json is missing — this gate has nothing to resolve"], [])
+    with open(path, encoding="utf-8") as fh:
+        corpus = json.load(fh)
+    meta = corpus.get("_meta") or {}
+    records = corpus.get("commands") or []
+
+    dig_f, dig_n = anchor_digest_failures(meta)
+    f.extend(dig_f)
+    if not dig_f:
+        d.append("%d pinned source file(s) re-hashed and unchanged since the extractor read them "
+                 "— this is the sha256 in file@sha256#anchor" % dig_n)
+
+    res_f, counts = anchor_resolution_failures(records)
+    f.extend(res_f)
+    if not res_f:
+        d.append("%d of %d stored citations across %d records re-resolved to their source and "
+                 "carry exactly the text the record claims — every one, no sampling: %d resolve "
+                 "to a contiguous span of one line, %d to a staged row joined from a backslash "
+                 "continuation"
+                 % (counts["spans"] + counts["joined"], counts["occurrences"], counts["records"],
+                    counts["spans"], counts["joined"]))
+        d.append("%d record(s) claim verbatim_span, and every one of them is a byte-exact "
+                 "contiguous span of ONE source line with no newline and nothing joined — the "
+                 "flag M3 reads before letting a record cross into the evidence export"
+                 % counts["verbatim_records"])
+
+    # NEGATIVE CONTROL. A resolver that has only ever been pointed at correct
+    # anchors has not been shown to resolve anything (AL-GATE3-001). Four
+    # mutations, one per failure mode, all of which MUST be caught.
+    controls = []
+    probe = None
+    for rec in records:
+        if rec.get("o") and (rec["o"][0].get("s")):
+            probe = rec
+            break
+    if probe is None:
+        f.append("no DISA-anchored record to run the negative control against — this gate is "
+                 "reporting a pass it has not earned")
+    else:
+        mutants = [
+            ("wrong text", dict(probe, c=(probe.get("c") or "") + " --definitely-not-in-the-source"),
+             probe["o"][0]),
+            ("wrong line", probe, dict(probe["o"][0], l=99999)),
+            ("wrong rule", probe, dict(probe["o"][0], s="RHEL-00-000000")),
+            ("wrong field", probe, dict(probe["o"][0], f="notafield")),
+        ]
+        for label, mrec, mocc in mutants:
+            ok, _why = resolve_anchor(mrec, mocc)
+            if ok:
+                f.append("the anchor resolver accepted a mutated anchor (%s) — it is not "
+                         "checking what it claims to check" % label)
+            else:
+                controls.append(label)
+        if len(controls) == 4:
+            d.append("4 negative controls ran first and all fired: %s" % ", ".join(controls))
+
+    m8 = trojan_table_agreement_failures(ctx["app_script"])
+    f.extend(m8)
+    if not m8:
+        d.append("M8: one trojan range table. qa.py reads extract/schema.py's TROJAN_RANGES out of "
+                 "its text (no import, no shared code path) and the shipped JavaScript's "
+                 "INVISIBLE_RE + HEADER_UNSAFE_G union, lifted out of the built artifact, covers "
+                 "exactly the same %d code points -- plus tab/LF/CR, the one declared difference, "
+                 "which the file rule keeps and the clipboard-header rule strips (MCR-SEC-003)"
+                 % sum(hi - lo + 1 for lo, hi in TROJAN_RANGES))
+
+    return f, d
+
+
+# ---------------------------------------------------------------------------
+# Q23 — closure coverage, and classifier accuracy on POSITIVE output
+#
+# Al Kowalski's coverage gate, plus threat model v2 M5 and M6.
+#
+# M5 IS THE IMPORTANT HALF, and it is important because of what it says about
+# the OTHER half: "Q23 as specified is structurally blind to a misclassification,
+# because a false positive counts as `classified` AND `recorded` and the ledger
+# balances while a PAM line or a fragment of `ls -l` output sits in the product
+# under a DISA citation."
+#
+# That is exactly right, and it was not hypothetical. Running the accuracy
+# component for the first time on this corpus found 56 records that balanced the
+# ledger perfectly and were not commands:
+#
+#     tool `and`     "and an 'archive' contains old metadata configurations. They are"
+#     tool `by`      "by 'r' to reject the path. The first regex in the list to match"
+#     tool `device`  "device {"
+#     tool `for`     "for f in $(ls); do tar xvf $f; done"
+#
+# The first three are wrapped documentation sentences whose first word happened
+# to be lowercase. The fourth is a real shell construct whose head is not a
+# binary, so filing it under the tool `for` states something false about it.
+# extract/mine_commands.py now refuses all four shapes; this gate is what keeps
+# them refused.
+#
+# THE RE-ASSERTION IS INDEPENDENT. It does not call classify(), does not import
+# the miner, and does not share its tokenizer: it re-reads the pinned source
+# line at the anchor and asks four questions of its own, each of which is a FACT
+# about the document rather than a judgment about language:
+#
+#   1. Did the SOURCE mark this as a command? A shell prompt in the STIG or
+#      guide text, or a SYNOPSIS/EXAMPLES/USAGE section in a man page. Evidence
+#      from the vendor, not from this project's parser.
+#   2. Does this gate's OWN tokenizer resolve the same stage-one binary the
+#      record declares? A separate 15-line implementation, so a bug in the
+#      miner's wrapper chain cannot be agreed with.
+#   3. Is the head a real head? Not an English function word, not a shell
+#      keyword. Precise rather than probabilistic: no distribution ships a
+#      binary called `and` or `has`.
+#   4. Is the line a command rather than two sentences or a config block opener?
+#
+# The sample is Q10's proven shape: FIXED STRIDE, no RNG, at least 20 per
+# (family, release), so a failure is reproducible by re-running the same
+# command rather than by getting unlucky twice.
+# ---------------------------------------------------------------------------
+
+CLOSURE_BASELINE = os.path.join(REPO, "content-src", "closure_baseline.json")
+Q23_MIN_SAMPLE = 20
+
+# Heads that are not binaries. Restated here rather than imported from the
+# extractor for the reason every re-check in this file is restated: a gate that
+# shares the extractor's list agrees with the extractor's mistakes. Q23 asserts
+# the two lists AGREE, which catches drift without creating a shared code path.
+Q23_FUNCTION_WORD_HEADS = frozenset("""
+a an and are as at be been being but by can could did do does done else
+for from had has have how however if in into is it its may might must no not
+of on or other our over should so such than that the their them then there
+these they this those to was we were what when where while whom
+whose why will with would you your
+case done elif esac fi then while until do
+""".split())
+Q23_SENTENCE_RE = re.compile(r"(?<![.\w])[A-Za-z]{2,}\.\s+[A-Z]")
+Q23_QUOTED_RE = re.compile("\"[^\"]*\"|'[^']*'|“[^”]*”")
+Q23_BLOCK_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*\s*[{}]$")
+Q23_PROMPT_RE = re.compile(r"^\s*([$#])\s")
+Q23_TIGHT_PROMPT_RE = re.compile(r"^\s*([$#])\S")
+Q23_COMMAND_SECTIONS = ("SYNOPSIS", "EXAMPLES", "USAGE")
+# Wrappers this gate walks through on its way to the program name. Its own
+# short table; schema.py's TRANSPARENT_WRAPPERS is richer, and Q23 asserting the
+# head with a SIMPLER table is the point -- it will disagree loudly rather than
+# quietly agree.
+# Each maps to the options of THAT wrapper which consume the following token.
+# Without them `sudo -u root auditctl -s` resolves to the program `root`, which
+# is the bug this gate's own test caught on its first run.
+Q23_WRAPPERS = {
+    "sudo": ("-u", "-g", "-U", "-C", "-p", "-r", "-t", "-T", "-h", "-D", "-R",
+             "--user", "--group", "--other-user", "--prompt", "--role", "--type",
+             "--chdir", "--close-from", "--host", "--command-timeout"),
+    "runuser": ("-u", "-g", "-G", "-s", "--user", "--group", "--supp-group", "--shell"),
+    "nohup": (),
+    "time": ("-f", "-o", "--format", "--output"),
+    "command": (),
+    "doas": ("-u", "-C"),
+    "setsid": (),
+    "stdbuf": ("-i", "-o", "-e", "--input", "--output", "--error"),
+    "ionice": ("-c", "-n", "-p", "-P", "-u"),
+    "nice": ("-n", "--adjustment"),
+}
+
+
+def q23_tokens(text):
+    """Whitespace tokens honouring quotes. Written out rather than reused: this
+    gate must be able to disagree with the extractor's tokenizer."""
+    out, buf, quote = [], "", None
+    for ch in str(text):
+        if quote:
+            buf += ch
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "\"'":
+            quote = ch
+            buf += ch
+            continue
+        if ch.isspace():
+            if buf:
+                out.append(buf)
+                buf = ""
+            continue
+        buf += ch
+    if buf:
+        out.append(buf)
+    return out
+
+
+def q23_head(text):
+    """The program name this gate believes the line invokes."""
+    toks = q23_tokens(text)
+    i = 0
+    while i < len(toks):
+        name = toks[i].rsplit("/", 1)[-1]
+        if name not in Q23_WRAPPERS:
+            return name
+        takes_arg = Q23_WRAPPERS[name]
+        i += 1
+        while i < len(toks) and toks[i].startswith("-") and toks[i] != "-":
+            opt = toks[i]
+            if opt == "--":
+                i += 1
+                break
+            i += 1
+            if opt in takes_arg:
+                i += 1
+            elif "=" in opt:
+                pass                       # --user=root carries its own argument
+    return None
+
+
+def q23_sentence_like(text):
+    return bool(Q23_SENTENCE_RE.search(Q23_QUOTED_RE.sub(" ", str(text))))
+
+
+def q23_source_marks_a_command(occ, source_line):
+    """Did the DOCUMENT say this was a command? The one piece of evidence in the
+    whole re-assertion that does not come from this project at all."""
+    if occ.get("p"):
+        return (occ.get("x") or "") in Q23_COMMAND_SECTIONS
+    if occ.get("g"):
+        rows = _guide_candidate_index(occ.get("v"))
+        row = rows.get(((occ.get("g") or "") + ".txt", occ.get("l")))
+        return bool(row) and (row.get("pr") in ("$", "#"))
+    stripped = (source_line or "").strip()
+    return bool(Q23_PROMPT_RE.match(stripped) or Q23_TIGHT_PROMPT_RE.match(stripped))
+
+
+def q23_source_line(rec, occ):
+    """The pinned line at this anchor, re-read. None when it does not resolve --
+    which Q25 has already failed on, so Q23 does not fail twice for it."""
+    if occ.get("s"):
+        rule = _stig_rule_index(occ.get("v")).get(occ.get("s"))
+        if rule is None:
+            return None
+        lines = (rule.get(occ.get("f")) or "").split("\n")
+    elif occ.get("g"):
+        rows = _guide_candidate_index(occ.get("v"))
+        row = rows.get(((occ.get("g") or "") + ".txt", occ.get("l")))
+        return row.get("c") if row else None
+    else:
+        lines = _capture_lines(occ.get("p")) if occ.get("p") else None
+        if lines is None:
+            return None
+    n = occ.get("l")
+    if not isinstance(n, int) or n < 1 or n > len(lines):
+        return None
+    return lines[n - 1]
+
+
+def q23_reassert(rec, occ):
+    """(ok, why). The independent re-assertion. `why` names the disagreement."""
+    text = rec.get("c") or ""
+    # The shape tests first, because they are properties of the RECORD and hold
+    # whether or not the anchor resolves. Running them after the source lookup
+    # meant an unresolvable anchor skipped them entirely -- caught by this
+    # gate's own test, which handed it a record with a path that does not exist
+    # and watched it come back clean.
+    raw_head = (q23_tokens(text) or [""])[0].rsplit("/", 1)[-1]
+    if raw_head.lower() in Q23_FUNCTION_WORD_HEADS:
+        return False, ("the head %r is an English function word or a shell keyword, not a binary"
+                       % raw_head)
+    if Q23_BLOCK_RE.match(text.strip()):
+        return False, "the line is a configuration block opener, not an invocation"
+    if q23_sentence_like(text):
+        return False, "the line reads as two sentences of documentation prose"
+    line = q23_source_line(rec, occ)
+    if line is not None and not q23_source_marks_a_command(occ, line):
+        return False, ("the source does not mark this as a command -- no shell prompt, and not in "
+                       "a SYNOPSIS/EXAMPLES/USAGE section")
+    head = q23_head(text)
+    if head is None:
+        return False, "this gate resolves no program name on the line"
+    if head != rec.get("t"):
+        return False, ("the record declares the tool %r and this gate resolves %r"
+                       % (rec.get("t"), head))
+    return True, None
+
+
+def q23_accuracy_sample(records, stride_min=Q23_MIN_SAMPLE):
+    """(failures, counts). Fixed stride, no RNG, at least stride_min per
+    (family, release)."""
+    cells = {}
+    for rec in records:
+        for occ in rec.get("o") or []:
+            fam = ("stig_rules" if occ.get("s") else
+                   "redhat_guides" if occ.get("g") else "raw_captures")
+            cells.setdefault((fam, str(occ.get("v"))), []).append((rec, occ))
+    failures, sampled, thin = [], 0, []
+    for key in sorted(cells):
+        pairs = cells[key]
+        want = min(len(pairs), max(stride_min, len(pairs) // 100))
+        if len(pairs) < stride_min:
+            thin.append("%s/RHEL %s has only %d citation(s)" % (key[0], key[1], len(pairs)))
+        step = max(1, len(pairs) // want)
+        for i in range(0, len(pairs), step):
+            rec, occ = pairs[i]
+            sampled += 1
+            ok, why = q23_reassert(rec, occ)
+            if not ok and len(failures) < 25:
+                failures.append("%s (%s/RHEL %s, tool %r): %s -- %r"
+                                % (rec.get("id"), key[0], key[1], rec.get("t"), why,
+                                   (rec.get("c") or "")[:70]))
+    return failures, {"sampled": sampled, "cells": len(cells), "thin": thin}
+
+
+def q23_recount_residue():
+    """Residue counted from content-src/residue/*.jsonl, INDEPENDENTLY of the
+    numbers _meta reports. A ledger that checks itself against its own summary
+    is an assertion that addition works."""
+    out = {}
+    root = os.path.join(REPO, "content-src", "residue")
+    if not os.path.isdir(root):
+        return out
+    for name in sorted(os.listdir(root)):
+        if not name.endswith(".jsonl"):
+            continue
+        family, _sep, rel = name[:-6].rpartition("_rhel")
+        cell = out.setdefault(family, {}).setdefault(rel, {"residue": 0, "unclassified_residue": 0})
+        with open(os.path.join(root, name), encoding="utf-8") as fh:
+            for i, line in enumerate(fh):
+                line = line.strip()
+                if not line or i == 0:
+                    continue
+                row = json.loads(line)
+                cell["residue"] += 1
+                if row.get("r") == "unparseable":
+                    cell["unclassified_residue"] += 1
+    return out
+
+
+def gate_q23(ctx):
+    import datetime
+    f, d = [], []
+    corpus_path = os.path.join(REPO, "content", "reference_commands.json")
+    if not os.path.exists(corpus_path):
+        return (["content/reference_commands.json is missing"], [])
+    with open(corpus_path, encoding="utf-8") as fh:
+        corpus = json.load(fh)
+    meta = corpus.get("_meta") or {}
+    records = corpus.get("commands") or []
+    ledger = meta.get("closure_ledger") or {}
+    if not ledger:
+        return (["reference_commands._meta carries no closure_ledger — this gate has no per-family "
+                 "coverage to check, and a coverage gate with nothing to count passes silently"], [])
+
+    if not os.path.exists(CLOSURE_BASELINE):
+        return (["content-src/closure_baseline.json is missing — Q23's ratchet has no baseline, and "
+                 "a ratchet with no baseline accepts anything"], [])
+    with open(CLOSURE_BASELINE, encoding="utf-8") as fh:
+        baseline = json.load(fh)
+    owner, retire_by = baseline.get("_retire_owner"), baseline.get("_retire_by")
+    pinned_by = baseline.get("_pinned_by")
+    if not owner or not retire_by or not pinned_by:
+        f.append("the closure baseline names no _pinned_by/_retire_owner/_retire_by. An accepted "
+                 "residual nobody owns and nobody has to revisit is not a countdown, it is the "
+                 "plan (MCR-SEC-020, condition F3)")
+    else:
+        try:
+            deadline = datetime.date(*[int(x) for x in retire_by.split("-")])
+        except (ValueError, TypeError):
+            deadline = None
+            f.append("the closure baseline's _retire_by %r is not an ISO date" % retire_by)
+        if deadline and datetime.date.today() > deadline:
+            f.append("the closure baseline expired on %s and has not been re-dated. Owner: %s. The "
+                     "residue mix stops being accepted by default" % (retire_by, owner))
+        elif deadline:
+            d.append("closure baseline pinned %s by %s, retires %s, owner %s"
+                     % (baseline.get("_pinned_on"), str(pinned_by).split(" -- ")[0],
+                        retire_by, owner))
+
+    # --- the ledger balances, twice, in every cell -------------------------
+    counted = q23_recount_residue()
+    bal_f, cells = [], 0
+    for family in sorted(ledger):
+        for rel in sorted(ledger[family], key=lambda x: int(x)):
+            cell = ledger[family][rel]
+            cells += 1
+            if cell["classified"] + cell["residue"] != cell["candidates"]:
+                bal_f.append("%s/RHEL %s: classified %d + residue %d != candidates %d — a source "
+                             "line was neither taken nor declined, so it left no trace anywhere"
+                             % (family, rel, cell["classified"], cell["residue"], cell["candidates"]))
+            if cell["recorded"] != cell["classified"]:
+                bal_f.append("%s/RHEL %s: recorded %d != classified %d — %d citation(s) were "
+                             "accepted by the parser and are not in the product"
+                             % (family, rel, cell["recorded"], cell["classified"],
+                                cell["classified"] - cell["recorded"]))
+            if cell["classified"] == 0:
+                bal_f.append("%s/RHEL %s: classified is ZERO. A family that classifies nothing is "
+                             "not covered, it is absent" % (family, rel))
+            got = (counted.get(family) or {}).get(rel)
+            if got is None and cell["residue"]:
+                bal_f.append("%s/RHEL %s: the ledger claims %d residue lines and there is no "
+                             "content-src/residue file to count" % (family, rel, cell["residue"]))
+            elif got is None:
+                pass       # a cell that declined nothing writes no file; absence IS the count
+            elif got["residue"] != cell["residue"]:
+                bal_f.append("%s/RHEL %s: the ledger says %d residue lines, content-src/residue/ "
+                             "holds %d" % (family, rel, cell["residue"], got["residue"]))
+    f.extend(bal_f)
+    if not bal_f:
+        d.append("the closure ledger balances in all %d (family, release) cells: classified + "
+                 "residue == candidates, recorded == classified, classified > 0, and every residue "
+                 "count matches an independent line count of content-src/residue/" % cells)
+
+    # --- the ratchet: residue may shrink, never grow -----------------------
+    base_by = baseline.get("by_family") or {}
+    grew = []
+    for family in sorted(ledger):
+        for rel in sorted(ledger[family], key=lambda x: int(x)):
+            cell = ledger[family][rel]
+            want = (base_by.get(family) or {}).get(rel)
+            if want is None:
+                grew.append("%s/RHEL %s is not in the closure baseline — a new cell is pinned "
+                            "deliberately, not accepted by appearing" % (family, rel))
+                continue
+            if cell["residue"] > want["residue"]:
+                grew.append("%s/RHEL %s: residue GREW from %d to %d. Residue may shrink and may "
+                            "never grow (ADR-002)" % (family, rel, want["residue"], cell["residue"]))
+            if cell["unclassified_residue"] > want["unclassified_residue"]:
+                grew.append("%s/RHEL %s: unclassified residue %d exceeds its cap of %d"
+                            % (family, rel, cell["unclassified_residue"],
+                               want["unclassified_residue"]))
+    f.extend(grew)
+    if not grew:
+        shrunk = sum(max(0, (base_by.get(fam, {}).get(rel, {}).get("residue", 0)
+                             - ledger[fam][rel]["residue"]))
+                     for fam in ledger for rel in ledger[fam])
+        d.append("residue held or shrank in every cell against the baseline pinned %s (%d line(s) "
+                 "reclaimed since it was pinned), and no cell's unclassified residue exceeds its cap"
+                 % (baseline.get("_pinned_on"), shrunk))
+
+    # --- M6: the unrated fraction ratchets too -----------------------------
+    unrated = meta.get("unrated_count") or 0
+    total = len(records) or 1
+    frac = round(unrated / float(total), 4)
+    cap = baseline.get("_unrated_fraction_max")
+    if cap is None:
+        f.append("the closure baseline records no _unrated_fraction_max — M6 has nothing to ratchet")
+    elif frac > cap:
+        f.append("the unrated fraction GREW from %.4f to %.4f (%d of %d records). A mined record is "
+                 "never green and that is correct; the fraction getting LARGER means the tier is "
+                 "becoming less rated over time (M6)" % (cap, frac, unrated, total))
+    else:
+        d.append("M6: %d of %d records are unrated (%.4f), at or below the pinned %.4f. Never "
+                 "green, because nobody reviewed them" % (unrated, total, frac, cap))
+
+    # --- a declared family with zero records for a supported release -------
+    accepted = {}
+    for row in baseline.get("_accepted_empty_cells") or []:
+        accepted[(row.get("family"), str(row.get("release")))] = row
+    empty = []
+    declared = {}
+    for family in ledger:
+        for rel in ledger[family]:
+            declared[(family, rel)] = ledger[family][rel]["records"]
+    # The flag dictionaries are a declared content family too, and the one that
+    # is empty today. Al: "wire the failure in."
+    for v in VERSIONS:
+        path = os.path.join(CONTENT, "flags_rhel%s.json" % v)
+        clis = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                clis = (json.load(fh).get("clis") or {})
+        declared[("flags", v)] = len(clis)
+    for family in sorted(set(k[0] for k in declared)):
+        for v in VERSIONS:
+            key = (family, v)
+            count = declared.get(key, 0)
+            if count:
+                continue
+            row = accepted.get(key)
+            if not row:
+                empty.append("the declared family %r has ZERO records for the supported release "
+                             "RHEL %s, and the closure baseline does not accept that cell by name. "
+                             "A family that ships empty for a release ships a silence the operator "
+                             "reads as 'nothing applies here'" % (family, v))
+            elif not row.get("owner") or not row.get("retire_by"):
+                empty.append("the closure baseline accepts %s/RHEL %s as empty with no owner or "
+                             "retire_by" % (family, v))
+    f.extend(empty)
+    if not empty:
+        names = ", ".join("%s/RHEL %s" % k for k in sorted(accepted))
+        d.append("every declared family has records for every supported release, except %d cell(s) "
+                 "the baseline accepts BY NAME with an owner and a date: %s"
+                 % (len(accepted), names or "none"))
+
+    # --- M5: accuracy on POSITIVE output -----------------------------------
+    acc_f, acc = q23_accuracy_sample(records)
+    f.extend(acc_f)
+    if not acc_f:
+        d.append("M5: %d sampled citations across %d (family, release) cells, fixed stride and no "
+                 "RNG, at least %d per cell. Each one re-resolved to its anchor, its pinned source "
+                 "line re-read, and its classification re-asserted INDEPENDENTLY — the source's own "
+                 "prompt or man section, this gate's own tokenizer and wrapper table, its own head "
+                 "and prose tests. No disagreement" % (acc["sampled"], acc["cells"], Q23_MIN_SAMPLE))
+    for note in acc["thin"]:
+        d.append("M5 note: %s, so the whole cell was sampled rather than a stride of it" % note)
+
+    # The two head lists must AGREE without sharing a code path.
+    try:
+        with open(os.path.join(REPO, "extract", "mine_commands.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        m = re.search(r'FUNCTION_WORD_HEADS = frozenset\("""(.*?)"""', src, re.S)
+        theirs = frozenset(m.group(1).split()) if m else frozenset()
+        if theirs != Q23_FUNCTION_WORD_HEADS:
+            f.append("the extractor's FUNCTION_WORD_HEADS and this gate's copy have drifted: "
+                     "extractor-only %s, gate-only %s"
+                     % (sorted(theirs - Q23_FUNCTION_WORD_HEADS)[:6],
+                        sorted(Q23_FUNCTION_WORD_HEADS - theirs)[:6]))
+        else:
+            d.append("the extractor's non-binary head list and this gate's independent copy name "
+                     "the same %d words" % len(theirs))
+    except (IOError, OSError):
+        f.append("extract/mine_commands.py could not be read to compare head lists")
+
+    # No name on that list may be a real binary this product knows.
+    known = set()
+    with open(os.path.join(CONTENT, "tools.json"), encoding="utf-8") as fh:
+        known |= set(t.get("id") for t in json.load(fh).get("tools", []))
+    for v in VERSIONS:
+        path = os.path.join(CONTENT, "flags_rhel%s.json" % v)
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                known |= set((json.load(fh).get("clis") or {}).keys())
+    collide = sorted(Q23_FUNCTION_WORD_HEADS & known)
+    if collide:
+        f.append("the non-binary head list names %s, which this product catalogues as real "
+                 "tool(s) — the list has grown into refusing something real" % ", ".join(collide))
+    else:
+        d.append("no name on the non-binary head list is a tool in content/tools.json or a CLI in "
+                 "any flag dictionary, so the list cannot be refusing a real binary")
+
+    return f, d
 
 
 GATES = [
@@ -3892,6 +4857,9 @@ GATES = [
     ("Q20", "Flag-dictionary coverage against the raw captures, and citations that show the flag", gate_q20),
     ("Q21", "No raw control, bidi or zero-width character in any tracked source file", gate_q21),
     ("Q22", "Declared tool is the invoked binary, and every flag resolves, is curated, or is honestly marked (G1)", gate_q22),
+    ("Q23", "Closure coverage per family and release, and classifier accuracy on positive output (M5/M6)", gate_q23),
+    ("Q24", "Reference/curated shape separation and byte-exact governing evidence export (M3/M7)", gate_q24),
+    ("Q25", "Anchor re-resolution: every citation contains the text it claims (M2)", gate_q25),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 

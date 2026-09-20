@@ -26,19 +26,17 @@ enforces that at the browser level (`connect-src 'none'`), not just by omission.
 The file is **built, never hand-edited**: `python3 build.py` reads curated and
 generated JSON under `content/`, validates it against `extract/schema.py`, and
 substitutes it into `template.html` to produce `dist/md-code-red_<version>.html`.
-`python3 qa.py` then runs 22 independent gates (plus an optional Node syntax
+`python3 qa.py` then runs 25 independent gates (plus an optional Node syntax
 check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As shipped (this build, `v1.0.0-dev`, built 2026-09-17): 27 command entries across
-19 tools (24 guided-form generators, 3 static STIG-sourced checks), 1,492 embedded
-STIG rules across all four RHEL releases, 200 CCI-to-NIST mappings, and a content
-fingerprint identifying this exact data payload. `docs/USER_GUIDE.md`'s Known
-Limitations section states plainly what is not yet populated (RHEL 9 flags, most
-of RHEL 7's flags, most flag explanations, most captured evidence). This document
-does not repeat those numbers except where the architecture itself explains why
-the gap exists.
+As shipped (this build, `v1.0.0-alpha.2`, built 2026-09-20): 183 curated command
+entries across 100 tools (27 guided-form generators and 156 static checks), 14,439
+distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
+releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
+exact data payload. `docs/USER_GUIDE.md` states the remaining evidence and
+explanation gaps without treating mined reference material as curated content.
 
 ---
 
@@ -74,12 +72,12 @@ the gap exists.
                               |
                               v
               dist/md-code-red_<version>.html
-              (one file: static shell + one
-               JSON data island + one app script)
+              (one file: static shell + five
+               JSON data islands + one app script)
                               |
                               v
                           qa.py
-              (22 gates + JS syntax check against
+              (25 gates + JS syntax check against
                the SHIPPED artifact, independent
                of build.py's own validation)
                               |
@@ -107,15 +105,15 @@ so that a defect has to be present in both copies to reach the browser.
 |---|---|---|
 | `template.html` | The shell: static markup, inline `<style>`, an empty `<script id="mcr-data">` placeholder, and one `<script>` containing the entire app (~124 KB unminified, ES5). Never opened as the deliverable itself -- it has no data until built. | |
 | `build.py` | Loads `content/`, validates via `extract/schema.py`, resolves `same_as` chains and joins captures, injects the JSON data island and five `__TOKEN__` substitutions into `template.html`, writes `dist/md-code-red_<version>.html` and its `.sha256` sidecar. Stdlib only. | See Section 2 above and the docstring at the top of the file, which states the "never patched by hand" rule this whole pipeline exists to enforce. |
-| `qa.py` | 22 independent gates (Q1-Q22) plus an optional `node --check`, run against the **shipped artifact**, not against `content/`. Fully documented gate by gate in `docs/QA_GATES.md` -- not duplicated here. | ~56 KB. |
+| `qa.py` | 25 independent gates (Q1-Q25) plus an optional `node --check`, run against the **shipped artifact**, not against `content/`. Fully documented gate by gate in `docs/QA_GATES.md` -- not duplicated here. | |
 | `extract/schema.py` | The one statement of the content schema: `VERSIONS`, `BLASTS`, `LICENSE_CLASSES`, `PRIVILEGES`, `PROVENANCE_FIELDS`, and every `*_errors()` function `build.py`'s `validate()` and `tests/test_schema.py` both call. | No I/O; pure functions over already-loaded JSON. |
 | `extract/parse_xccdf.py` | Regenerates `content/rules_rhel{7,8,9,10}.json` and `content/cci_nist.json` from the pinned DISA XCCDF sources in `stig-src/`, after verifying `stig-src/SHA256SUMS`. Deterministic: same pins in, byte-identical files out (no wall clock). `--check` re-runs and diffs, which is what `qa.py`'s Q15 gate calls. | |
-| `extract/extract_flags.py` | Regenerates `content/flags_rhel<N>.json` by SSHing (read-only, no sudo) to a real host and parsing `man -P cat` / `--help` output, or by re-parsing already-staged raw text under `content-src/raw/rhel<N>/` in `--check` mode. Never writes prose: every flag's `explain` comes out `null` until a human curates it, and a re-run never clobbers a curated value. | See Section 24 for why RHEL 9 has none and RHEL 7 uses a container. |
+| `extract/extract_flags.py` | Regenerates `content/flags_rhel<N>.json` by SSHing (read-only, no sudo) to a real host and parsing `man -P cat` / `--help` output, or by re-parsing already-staged raw text under `content-src/raw/rhel<N>/` in `--check` mode. Never writes prose: every flag's `explain` comes out `null` until a human curates it, and a re-run never clobbers a curated value. | All four release dictionaries currently cover 22 tools; RHEL 7 uses a container. |
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |
 | `extract/import_captures.py` | Walks `tests/captures/<rhel_version>/<entry_id>.json`, validates every record against the content validation protocol's field set, verifies `command_hash_at_capture`, and folds STIG-mapped captures into `content/expected_output.json`. `--check` re-runs into a temp dir and diffs (Q15). | The canonical capture path, per Eli Cross's ruling -- see `docs/WORKFLOW.md`. |
-| `extract/make_pending_skeletons.py` | Writes the empty, honestly-`pending` skeletons for content that has no source yet (currently `content/flags_rhel9.json`). | |
-| `content/commands.json` | The 27 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | |
-| `content/tools.json` | The 19 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
+| `extract/make_pending_skeletons.py` | Writes empty, honestly-`pending` skeletons for content that has no source yet. | |
+| `content/commands.json` | The 183 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 27 generators and 156 static checks. |
+| `content/tools.json` | The 100 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
 | `content/dangerous.json` | The 11-row destructive-pattern table `blastFor()` matches against every assembled command, both quoted and unquoted. | |
 | `content/glossary.json` | Loaded into the data island (`DATASETS.GLOSSARY`) but **never read by any renderer in `template.html`**. Inherited from the Grey Beard Ansible fork; its terms (implicit localhost, delegation, pipelining) are Ansible concepts, not RHEL ones. See Section 23. | |
 | `content/rules_rhel{7,8,9,10}.json` | Generated. Every rule in the pinned benchmark for that release: STIG ID, rule ID, CAT, every CCI, verbatim check/fix text, `_meta` (benchmark version, date, sunset flag, rule count). | Never hand-edited (ADR-001 section 6.3, restated in `build.py`'s own header comment). |
@@ -788,7 +786,7 @@ not track (`docs/QA_GATES.md`'s "Clean rebuild" section says why):
 
 1. `git clean -fdx dist && python3 build.py` -- clean build, no schema errors,
    prints a sha256 and a content fingerprint.
-2. `python3 qa.py` -- all 22 gates plus `JS` PASS (Node required for Q18/Q19;
+2. `python3 qa.py` -- all 25 gates plus `JS` PASS (Node required for Q18/Q19;
    `JS` correctly downgrades to PENDING without it).
 3. `python3 -m unittest discover -s tests` -- 204 tests OK on this build.
 4. `node tests/hostile_harness.js` -- 81,577 checks, 0 FAILED.

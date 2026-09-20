@@ -56,6 +56,8 @@ CONTENT = os.path.join(REPO, "content")
 CONTENT_SRC = os.path.join(REPO, "content-src")
 STIG_SRC = os.path.join(REPO, "stig-src")
 VERSIONS = ("7", "8", "9", "10")
+EXPECTED_ISLANDS = ("mcr-data", "mcr-ref-index", "mcr-ref-stig_rules",
+                    "mcr-ref-raw_captures", "mcr-ref-redhat_guides")
 
 XCCDF = {
     "7": "U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
@@ -112,10 +114,14 @@ def find_artifact(version):
 def content_fingerprint_from_artifact(path):
     with open(path, encoding="utf-8") as f:
         html = f.read()
-    m = re.search(r'<script id="mcr-data" type="application/json">(.*?)</script>', html, re.S)
-    if not m:
-        sys.exit("FATAL: no mcr-data island found in %s" % path)
-    return sha256_bytes(m.group(1).encode("utf-8"))
+    islands = re.findall(
+        r'<script id="([^"]+)" type="application/json">(.*?)</script>',
+        html, re.S)
+    found_ids = tuple(island_id for island_id, _payload in islands)
+    if found_ids != EXPECTED_ISLANDS:
+        sys.exit("FATAL: JSON island order in %s is %r, expected %r"
+                 % (path, found_ids, EXPECTED_ISLANDS))
+    return sha256_bytes("\n".join(payload for _island_id, payload in islands).encode("utf-8"))
 
 
 def load_sha256sums():

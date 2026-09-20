@@ -1,0 +1,1228 @@
+{"_meta":{"closed_reason_set":["prose","interactive-tui","output-fragment","config-fragment","unparseable","binary-not-on-release"],"family":"redhat_guides","generator":"extract/mine_commands.py","line_count":1227,"reasons":{"config-fragment":106,"output-fragment":93,"prose":788,"unparseable":240},"rhel_version":"10","text_encoding":"every trojan character is written as a \\\\uXXXX escape, never raw -- threat model v2 M1, so Q21 keeps TROJAN_SCAN_EXCLUDE empty"}}
+{"a":{"g":"10.0_release_notes","l":3470},"r":"config-fragment","x":"WantedBy=sockets.target"}
+{"a":{"g":"accessing_identity_management_services","l":2537},"r":"config-fragment","x":"requesting: nsslapd-allow-anonymous-access"}
+{"a":{"g":"accessing_identity_management_services","l":3139},"r":"config-fragment","x":"modifiersName: ipaanchoruuid=:sid:s-1-5-21-19610888-1443184010-1631745340-"}
+{"a":{"g":"automatically_installing_rhel","l":4160},"r":"config-fragment","x":"k=$(echo /boot/vmlinuz*64k)"}
+{"a":{"g":"automatically_installing_rhel","l":4981},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":4984},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automatically_installing_rhel","l":5129},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":5132},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automatically_installing_rhel","l":5342},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"automatically_installing_rhel","l":5345},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":1802},"r":"config-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
+{"a":{"g":"building_running_and_managing_containers","l":2358},"r":"config-fragment","x":"syntax=container/containerfile:1.4"}
+{"a":{"g":"building_running_and_managing_containers","l":3529},"r":"config-fragment","x":"microcontainer=$(buildah from registry.access.redhat.com/ubi10/ubi-micro)"}
+{"a":{"g":"building_running_and_managing_containers","l":3540},"r":"config-fragment","x":"micromount=$(buildah mount $microcontainer)"}
+{"a":{"g":"building_running_and_managing_containers","l":9503},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"building_running_and_managing_containers","l":9636},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3227},"r":"config-fragment","x":"datastream = \"/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml\""}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3272},"r":"config-fragment","x":"datastream = \"/usr/share/xml/scap/ssg/content/ssg-xxxxx-ds.xml\""}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":4340},"r":"config-fragment","x":"BUCKET=<bucketname>"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6816},"r":"config-fragment","x":"raid_region_size = 2048"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6866},"r":"config-fragment","x":"raid_region_size = 4096"}
+{"a":{"g":"configuring_and_managing_networking","l":14726},"r":"config-fragment","x":"md5 {"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4902},"r":"config-fragment","x":"vers4=y"}
+{"a":{"g":"configuring_and_using_network_file_services","l":5050},"r":"config-fragment","x":"vers3=y"}
+{"a":{"g":"configuring_and_using_network_file_services","l":5051},"r":"config-fragment","x":"vers4=y"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2639},"r":"config-fragment","x":"device {"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2750},"r":"config-fragment","x":"NOTE: This file is automatically maintained by multipath and multipathd."}
+{"a":{"g":"customizing_anaconda","l":701},"r":"config-fragment","x":"FIXME: This is a temporary solution."}
+{"a":{"g":"customizing_anaconda","l":981},"r":"config-fragment","x":"FIXME: Use other identification then names of the spokes."}
+{"a":{"g":"deploying_and_managing_rhel_on_amazon_web_services","l":574},"r":"config-fragment","x":"BUCKET=<bucketname>"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1117},"r":"config-fragment","x":"CUDA_VISIBLE_DEVICES=0"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1118},"r":"config-fragment","x":"NVIDIA_DRIVER_CAPABILITIES=\"compute,utility\""}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1570},"r":"config-fragment","x":"proxies = { http = \"http://example-host:8002\", https = \"https://example-host:8002\" }"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1658},"r":"config-fragment","x":"type = \"sqlite\""}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1659},"r":"config-fragment","x":"connection_string = \"/var/lib/command-line-assistant/history.db\""}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":422},"r":"config-fragment","x":"NO_COLOR=1 c \"How to install python?\""}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7128},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7131},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7276},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7279},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7489},"r":"config-fragment","x":"machine_id=$(cat /etc/machine-id)"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7492},"r":"config-fragment","x":"kernel_version=$(uname -r)"}
+{"a":{"g":"managing_certificates_in_idm","l":4594},"r":"config-fragment","x":"CERT=$(openssl x509 -in /path/to/certificate -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":4948},"r":"config-fragment","x":"CERT=$(openssl x509 -in idm_user_cert.pem -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":5551},"r":"config-fragment","x":"CERT=$(openssl x509 -in /path/to/certificate -outform der|base64 -w0)"}
+{"a":{"g":"managing_certificates_in_idm","l":7409},"r":"config-fragment","x":"RA_CERT_BLOB=$(sed -rn '/^-----BEGIN CERTIFICATE-----$/{:1;n;/^-----END"}
+{"a":{"g":"managing_certificates_in_idm","l":7415},"r":"config-fragment","x":"RA_CERT_SERIAL=$(openssl x509 -in /tmp/ra-agent.pem -noout -serial | cut -d'='"}
+{"a":{"g":"managing_certificates_in_idm","l":7458},"r":"config-fragment","x":"PWDFILE=/etc/pki/pki-tomcat/alias/pwdfile.txt"}
+{"a":{"g":"managing_certificates_in_idm","l":7474},"r":"config-fragment","x":"SUBSYS_CERT_BLOB=$(cat /tmp/subsystem.pem | sed -rn '/^-----BEGIN"}
+{"a":{"g":"managing_certificates_in_idm","l":7478},"r":"config-fragment","x":"SUBSYS_CERT_SERIAL=$(openssl x509 -in /tmp/subsystem.pem -noout -serial | cut"}
+{"a":{"g":"managing_certificates_in_idm","l":7508},"r":"config-fragment","x":"DS_INSTANCE=$(grep ldap_uri /etc/ipa/default.conf | sed -n 's|.%2Frun%2F (slapd-\\)\\.socket.|\\1|p')*"}
+{"a":{"g":"managing_certificates_in_idm","l":7512},"r":"config-fragment","x":"LDAP_CERT_NICKNAME=$(grep nsSSLPersonalitySSL"}
+{"a":{"g":"managing_certificates_in_idm","l":7516},"r":"config-fragment","x":"HOSTNAME=$(hostname -f)"}
+{"a":{"g":"managing_certificates_in_idm","l":7519},"r":"config-fragment","x":"PWDFILE=\"/etc/dirsrv/${DS_INSTANCE}/pwdfile.txt\""}
+{"a":{"g":"managing_certificates_in_idm","l":7591},"r":"config-fragment","x":"HOSTNAME=$(hostname -f)"}
+{"a":{"g":"managing_certificates_in_idm","l":7594},"r":"config-fragment","x":"PWDFILE=\"/etc/pki/pki-tomcat/alias/pwdfile.txt\""}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3142},"r":"config-fragment","x":"timeout_style=menu + timeout=0 avoids the countdown code keypress check"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":6505},"r":"config-fragment","x":"KDUMP_COMMANDLINE_REMOVE=\"hugepages hugepagesz slub_debug quiet log_buf_len"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9666},"r":"config-fragment","x":"file: usr/sbin/ip"}
+{"a":{"g":"managing_storage_devices","l":4065},"r":"config-fragment","x":"hostkey=$(nvme gen-dhchap-key -n ${HOSTNQN})"}
+{"a":{"g":"managing_storage_devices","l":4070},"r":"config-fragment","x":"ctrlkey=$(nvme gen-dhchap-key -n ${SUBSYSTEM})"}
+{"a":{"g":"managing_storage_devices","l":4145},"r":"config-fragment","x":"HOSTNQN=$(nvme show-hostnqn)"}
+{"a":{"g":"managing_storage_devices","l":4150},"r":"config-fragment","x":"PSK=$(nvme gen-tls-key)"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":8926},"r":"config-fragment","x":"isolated_cores=${f:calc_isolated_cores:1}"}
+{"a":{"g":"planning_identity_management","l":3297},"r":"config-fragment","x":"CERT_FILE=/etc/cockpit/ws-certs.d/50-certmonger.crt"}
+{"a":{"g":"planning_identity_management","l":3302},"r":"config-fragment","x":"KEY_FILE=/etc/cockpit/ws-certs.d/50-certmonger.key"}
+{"a":{"g":"preparing_for_disaster_recovery_with_identity_management","l":1391},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"preparing_for_disaster_recovery_with_identity_management","l":1404},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":2179},"r":"config-fragment","x":"SYSLOGADDR=192.0.2.1"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":4469},"r":"config-fragment","x":"default                = all available upgrades"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":4470},"r":"config-fragment","x":"security               = only the security upgrades"}
+{"a":{"g":"security_hardening","l":2424},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
+{"a":{"g":"security_hardening","l":2507},"r":"config-fragment","x":"ANSIBLE_COLLECTIONS_PATH=/usr/share/rhc-worker-"}
+{"a":{"g":"security_hardening","l":4800},"r":"config-fragment","x":"PROC_SUPER_MAGIC = 0x9fa0"}
+{"a":{"g":"security_hardening","l":4802},"r":"config-fragment","x":"SYSFS_MAGIC = 0x62656572"}
+{"a":{"g":"security_hardening","l":4804},"r":"config-fragment","x":"DEBUGFS_MAGIC = 0x64626720"}
+{"a":{"g":"security_hardening","l":4806},"r":"config-fragment","x":"TMPFS_MAGIC = 0x01021994"}
+{"a":{"g":"security_hardening","l":4810},"r":"config-fragment","x":"DEVPTS_SUPER_MAGIC=0x1cd1"}
+{"a":{"g":"security_hardening","l":4812},"r":"config-fragment","x":"BINFMTFS_MAGIC=0x42494e4d"}
+{"a":{"g":"security_hardening","l":4814},"r":"config-fragment","x":"SECURITYFS_MAGIC=0x73636673"}
+{"a":{"g":"security_hardening","l":4816},"r":"config-fragment","x":"SELINUX_MAGIC=0xf97cff8c"}
+{"a":{"g":"security_hardening","l":4818},"r":"config-fragment","x":"SMACK_MAGIC=0x43415d53"}
+{"a":{"g":"security_hardening","l":4820},"r":"config-fragment","x":"NSFS_MAGIC=0x6e736673"}
+{"a":{"g":"security_hardening","l":4824},"r":"config-fragment","x":"CGROUP_SUPER_MAGIC=0x27e0eb"}
+{"a":{"g":"security_hardening","l":4832},"r":"config-fragment","x":"CGROUP2_SUPER_MAGIC=0x63677270"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":1447},"r":"config-fragment","x":"LEAPP_UNSUPPORTED=1 leapp upgrade --enable-experimental-feature livemode"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2329},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2334},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2556},"r":"config-fragment","x":"Title:           None"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2557},"r":"config-fragment","x":"Reason:            Confirmation"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2560},"r":"config-fragment","x":"Label:            Are all VDO devices, if any, successfully converted to LVM management?"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2561},"r":"config-fragment","x":"Description:        Enter True if no VDO devices are present on the system or all VDO devices on"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2566},"r":"config-fragment","x":"Reason:            To maximize safety all block devices on a system that meet the criteria as"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2577},"r":"config-fragment","x":"Type:             bool"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2578},"r":"config-fragment","x":"Default:          None"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2581},"r":"config-fragment","x":"confirm ="}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":3910},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":3923},"r":"config-fragment","x":"ipabackup_keep_on_server: true"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5807},"r":"config-fragment","x":"LIBMOUNT_FORCE_MOUNT2=always is required for mount command compatibility"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5808},"r":"config-fragment","x":"See: https://github.com/util-linux/util-linux/issues/3171"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6381},"r":"config-fragment","x":"now=$(date --iso-8601=seconds)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6607},"r":"config-fragment","x":"CONSOLIDATED_KARGS=\"/tmp/all-kargs.txt\""}
+{"a":{"g":"using_selinux","l":720},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"using_selinux","l":725},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"using_selinux","l":772},"r":"config-fragment","x":"SELINUX= can take one of these three values:"}
+{"a":{"g":"using_selinux","l":777},"r":"config-fragment","x":"SELINUXTYPE= can take one of these two values:"}
+{"a":{"g":"building_running_and_managing_containers","l":4356},"r":"output-fragment","x":"(cd /var/lib/containers/sigstore/; find . -type f)"}
+{"a":{"g":"building_running_and_managing_containers","l":6335},"r":"output-fragment","x":"*podman create --pod systemd-pod --name container0 registry.access.redhat.com/ubi*10"}
+{"a":{"g":"building_running_and_managing_containers","l":6337},"r":"output-fragment","x":"*podman create --pod systemd-pod --name container1 registry.access.redhat.com/ubi*10"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3447},"r":"output-fragment","x":"*image-builder build <image_type> --blueprint <blueprintProfileID> *"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":5668},"r":"output-fragment","x":"./image_check"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":2179},"r":"output-fragment","x":"- ssh"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":833},"r":"output-fragment","x":"vim:syntax=yaml"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":961},"r":"output-fragment","x":"- [ *log_base, *log_syslog ]"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":967},"r":"output-fragment","x":"- /etc/log.conf"}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":5285},"r":"output-fragment","x":"*pcs resource relations D*"}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":5320},"r":"output-fragment","x":"*pcs resource relations B*"}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":5327},"r":"output-fragment","x":"*pcs resource relations G*"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":5646},"r":"output-fragment","x":"*virsh domblklist --details <vm-name>"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":7118},"r":"output-fragment","x":"*virsh domblklist --details <vm-name>"}
+{"a":{"g":"configuring_and_managing_networking","l":14597},"r":"output-fragment","x":"*nmcli connection modify br0 stp off\""}
+{"a":{"g":"configuring_and_managing_networking","l":14955},"r":"output-fragment","x":"==========================="}
+{"a":{"g":"configuring_and_managing_networking","l":14971},"r":"output-fragment","x":"==========================="}
+{"a":{"g":"configuring_and_managing_networking","l":14980},"r":"output-fragment","x":"(01:80:c2:00:00:03) when sending EAPOL frames"}
+{"a":{"g":"configuring_and_managing_networking","l":14989},"r":"output-fragment","x":"==========================="}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":15476},"r":"output-fragment","x":"\"C:\\Program Files (x86)\\WinFsp\\bin\\fsreg.bat\" virtiofs \"<path to the binary>\\virtiofs.exe\""}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":6612},"r":"output-fragment","x":"*virsh domblklist --details <vm-name>"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":8090},"r":"output-fragment","x":"*virsh domblklist --details <vm-name>"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":1240},"r":"output-fragment","x":"*firewall-cmd --permanent --policy _mypolicy_ --set-priority _-500_*"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3110},"r":"output-fragment","x":"/etc/nftables/<example_firewall_script>.nft"}
+{"a":{"g":"customizing_anaconda","l":1033},"r":"output-fragment","x":"https://geoip.fedoraproject.org/city"}
+{"a":{"g":"customizing_anaconda","l":1034},"r":"output-fragment","x":"https://api.hostip.info/get_json.php"}
+{"a":{"g":"deduplicating_and_compressing_logical_volumes_on_rhel","l":1199},"r":"output-fragment","x":"/usr/share/doc/vdo/examples/monitor/monitor_check_vdostats_physicalSpace.pl myvg-"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":1005},"r":"output-fragment","x":"./helloworld"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":1523},"r":"output-fragment","x":"./program"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":1600},"r":"output-fragment","x":"./program"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":1620},"r":"output-fragment","x":"./program"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":1890},"r":"output-fragment","x":"./hello"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":818},"r":"output-fragment","x":"./helloworld"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":877},"r":"output-fragment","x":"./helloworld"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":942},"r":"output-fragment","x":"./helloworld"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":1246},"r":"output-fragment","x":"<!DOCTYPE html>"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":1358},"r":"output-fragment","x":"<!DOCTYPE html>"}
+{"a":{"g":"installing_identity_management","l":1500},"r":"output-fragment","x":"*umask 0022*"}
+{"a":{"g":"installing_identity_management","l":1509},"r":"output-fragment","x":"*umask 0027*"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1924},"r":"output-fragment","x":"~/.local/bin/linux-mcp-server"}
+{"a":{"g":"managing_certificates_in_idm","l":5753},"r":"output-fragment","x":"./server_certificate_script.sh /etc/ipa/ca.crt"}
+{"a":{"g":"managing_certificates_in_idm","l":5759},"r":"output-fragment","x":"./server_certificate_script.sh /tmp/ca1.pem /tmp/ca2.pem"}
+{"a":{"g":"managing_file_systems","l":7231},"r":"output-fragment","x":"auto.master, example.com"}
+{"a":{"g":"managing_file_systems","l":7240},"r":"output-fragment","x":"/home, auto.master, example.com"}
+{"a":{"g":"managing_file_systems","l":7249},"r":"output-fragment","x":"auto.home, example.com"}
+{"a":{"g":"managing_file_systems","l":7272},"r":"output-fragment","x":"/, auto.home, example.com"}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":1568},"r":"output-fragment","x":"*ipa user-del --continue user1 user2 user3*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":10140},"r":"output-fragment","x":"*echo $?*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":10182},"r":"output-fragment","x":"*cp --preserve=xattr /usr/share/ima/dracut-98-integrity.conf /etc/dracut.conf.d/98-"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":10187},"r":"output-fragment","x":"*dracut -f*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9060},"r":"output-fragment","x":"/usr/src/kernels/$(uname -r)/scripts/sign-file sha256 sb_cert.priv sb_cert.cer my_module.ko"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9239},"r":"output-fragment","x":"*fwupdmgr get-devices*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9245},"r":"output-fragment","x":"*fwupdmgr enable-remote lvfs*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9250},"r":"output-fragment","x":"*fwupdmgr refresh*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9262},"r":"output-fragment","x":"*fwupdmgr update*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9283},"r":"output-fragment","x":"*fwupdmgr get-devices*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9296},"r":"output-fragment","x":"*fwupdmgr get-devices*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9302},"r":"output-fragment","x":"*ls /usr/share/dbxtool/*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9328},"r":"output-fragment","x":"*fwupdmgr get-devices*"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9836},"r":"output-fragment","x":"# evmctl ima_verify -k /etc/keys/ima/redhatimarelease-10.der /usr/lib/systemd/systemd"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9850},"r":"output-fragment","x":"# evmctl ima_verify -k /etc/keys/ima/redhatimarelease-10.der /bin/bash"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9963},"r":"output-fragment","x":"https://www.kernel.org/doc/Documentation/ABI/testing/ima_policy"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9964},"r":"output-fragment","x":"PROC_SUPER_MAGIC"}
+{"a":{"g":"managing_storage_devices","l":6926},"r":"output-fragment","x":"<nvme_encrypted> /dev/disk/by-id/<nvme-partition-id> none header=</home/header>"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":1798},"r":"output-fragment","x":"$ udevadm info --name=/dev/device | grep -E '(WWN|SERIAL)'"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2398},"r":"output-fragment","x":"./Install"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2835},"r":"output-fragment","x":"=== LOGGER CONTROL SPECIFICATIONS ==="}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3012},"r":"output-fragment","x":"./Install"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3194},"r":"output-fragment","x":"./Install"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3850},"r":"output-fragment","x":"./Install"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3937},"r":"output-fragment","x":"./Install"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6207},"r":"output-fragment","x":"----- HITM ----- -- Store Refs --                      Data address                               ---------- cycles --"}
+{"a":{"g":"packaging_and_distributing_software","l":1106},"r":"output-fragment","x":"./cello"}
+{"a":{"g":"packaging_and_distributing_software","l":1172},"r":"output-fragment","x":"./cello"}
+{"a":{"g":"packaging_and_distributing_software","l":1290},"r":"output-fragment","x":"./bello"}
+{"a":{"g":"packaging_and_distributing_software","l":1477},"r":"output-fragment","x":"./cello"}
+{"a":{"g":"security_hardening","l":1893},"r":"output-fragment","x":"./pcsc-apps.sh"}
+{"a":{"g":"security_hardening","l":4808},"r":"output-fragment","x":"RAMFS_MAGIC"}
+{"a":{"g":"security_hardening","l":4822},"r":"output-fragment","x":"EFIVARFS_MAGIC"}
+{"a":{"g":"security_hardening","l":4834},"r":"output-fragment","x":"OVERLAYFS_MAGIC"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2054},"r":"output-fragment","x":"[ -e \"/etc/systemd/system/leapp_resume.service\" ] || ps -e | grep -q leapp && echo \"Leapp"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2558},"r":"output-fragment","x":"============================= check_vdo.confirm"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1420},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1488},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1564},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1636},"r":"output-fragment","x":"$1 is the NIS domain, $2 is the primary NIS server"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1722},"r":"output-fragment","x":"$2 is the NIS domain, $3 is the primary NIS server, $4 is the map name"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":2292},"r":"output-fragment","x":"quay.io/<namespace>/<image>:<tag>"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6948},"r":"output-fragment","x":"--- STAGE 1: Build Environment ---"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6973},"r":"output-fragment","x":"--- STAGE 2: Final Production Image ---"}
+{"a":{"g":"using_selinux","l":4497},"r":"output-fragment","x":"./mydaemon.sh"}
+{"a":{"g":"using_selinux","l":4606},"r":"output-fragment","x":"./mydaemon.sh"}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":1798},"r":"output-fragment","x":"*systemctl --no-wall rescue*"}
+{"a":{"g":"10.0_release_notes","l":10907},"r":"prose","x":"Enable the FIPS crypto policy"}
+{"a":{"g":"10.0_release_notes","l":10908},"r":"prose","x":"crypto-policies-scripts is not installed by default in RHEL-10"}
+{"a":{"g":"10.0_release_notes","l":7200},"r":"prose","x":"Enable fips=1 kernel argument:"}
+{"a":{"g":"10.0_release_notes","l":7203},"r":"prose","x":"Install and enable the FIPS crypto policy"}
+{"a":{"g":"10.1_release_notes","l":6558},"r":"prose","x":"Enable the FIPS crypto policy"}
+{"a":{"g":"10.1_release_notes","l":6559},"r":"prose","x":"crypto-policies-scripts is not installed by default in RHEL-10"}
+{"a":{"g":"10.2_release_notes","l":7448},"r":"prose","x":"Set releasever to EUS version (mandatory)"}
+{"a":{"g":"10.2_release_notes","l":8434},"r":"prose","x":"Enable the FIPS crypto policy"}
+{"a":{"g":"10.2_release_notes","l":8435},"r":"prose","x":"crypto-policies-scripts is not installed by default in RHEL-10"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":2403},"r":"prose","x":"List the keys used to configure the desktop background"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":2785},"r":"prose","x":"The following options control when the notification appears:"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3029},"r":"prose","x":"Disable user logout"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3032},"r":"prose","x":"Disable user switching"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3039},"r":"prose","x":"Lock user logout"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3042},"r":"prose","x":"Lock user switching"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3073},"r":"prose","x":"Disable printing"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3080},"r":"prose","x":"Lock printing"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3105},"r":"prose","x":"Disable saving files on disk"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3112},"r":"prose","x":"Lock file saving"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3146},"r":"prose","x":"Disable command prompt"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3153},"r":"prose","x":"Lock command prompt"}
+{"a":{"g":"administering_rhel_by_using_the_gnome_desktop_environment","l":3608},"r":"prose","x":"The GNOME Shell does not load extensions that are not listed in the"}
+{"a":{"g":"automatically_installing_rhel","l":5997},"r":"prose","x":"Start of the %post section with logging into /root/ks-post.log"}
+{"a":{"g":"automatically_installing_rhel","l":6000},"r":"prose","x":"Mount an NFS share"}
+{"a":{"g":"automatically_installing_rhel","l":6006},"r":"prose","x":"End of the %post section"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":10397},"r":"prose","x":"InfiniBand connection mlx5_ib0"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":10402},"r":"prose","x":"IPoIB device mlx5_ib0.8002 on top of mlx5_ib0"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":12836},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":12936},"r":"prose","x":"Environment variables to accept"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":12953},"r":"prose","x":"Environment variables to accept"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":13011},"r":"prose","x":"BEGIN sshd system role managed block: namespace <my_application>"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":13014},"r":"prose","x":"END sshd system role managed block: namespace <my_application>"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":13020},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":13302},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":1795},"r":"prose","x":"Fallback normal timeout code in case the timeout_style feature is"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3569},"r":"prose","x":"Set a different resource-stickiness value during"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3570},"r":"prose","x":"and outside work hours. This allows resources to"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3571},"r":"prose","x":"automatically move back to their most"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3572},"r":"prose","x":"preferred hosts, but at a time that"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3573},"r":"prose","x":"does not interfere with business activities."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3587},"r":"prose","x":"Default the timeout on all 10-second-interval"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3588},"r":"prose","x":"monitor actions on IPaddr2 resources to 8 seconds."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3744},"r":"prose","x":"Nodes have redundant power supplies, apc1 and apc2. Cluster must"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3745},"r":"prose","x":"ensure that when attempting to reboot a node, both power"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3746},"r":"prose","x":"supplies # are turned off before either power supply is turned"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3747},"r":"prose","x":"back on."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3898},"r":"prose","x":"In order to use constraints, we need resources"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3899},"r":"prose","x":"the constraints will apply to."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3926},"r":"prose","x":"location constraints"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3928},"r":"prose","x":"resource ID and node name"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3935},"r":"prose","x":"resource pattern and node name"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3942},"r":"prose","x":"resource ID and rule"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3946},"r":"prose","x":"resource pattern and rule"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3950},"r":"prose","x":"colocation constraints"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3952},"r":"prose","x":"simple constraint"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3974},"r":"prose","x":"order constraints"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":3983},"r":"prose","x":"simple constraint"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4009},"r":"prose","x":"ticket constraints"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4011},"r":"prose","x":"simple constraint"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4562},"r":"prose","x":"To use an ACL role permission reference, the reference must exist in CIB."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4566},"r":"prose","x":"ACLs must be enabled (using the enable-acl cluster property) in order to be effective."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4744},"r":"prose","x":"This variable is indirectly used by various variables of the ha_cluster RHEL system"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4746},"r":"prose","x":"Its purpose is to define SBD devices once so they do not need"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4747},"r":"prose","x":"to be repeated several times in the role variables."}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4786},"r":"prose","x":"Best practice for setting SBD timeouts:"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":5052},"r":"prose","x":"Best practice for setting SBD timeouts:"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":5064},"r":"prose","x":"taken from host_vars"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":5065},"r":"prose","x":"this only works if all nodes have the same sbd_devices"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9200},"r":"prose","x":"Bond profile"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9211},"r":"prose","x":"Port profile for the 1st Ethernet device"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9218},"r":"prose","x":"Port profile for the 2nd Ethernet device"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9331},"r":"prose","x":"Ethernet profile"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9341},"r":"prose","x":"VLAN profile"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9452},"r":"prose","x":"Bridge profile"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9461},"r":"prose","x":"Port profile for the 1st Ethernet device"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9475},"r":"prose","x":"Port profile for the 2nd Ethernet device"}
+{"a":{"g":"building_running_and_managing_containers","l":2360},"r":"prose","x":"Use a heredoc to perform a multi-line RUN command:"}
+{"a":{"g":"building_running_and_managing_containers","l":3364},"r":"prose","x":"Set the SOURCE_DATE_EPOCH for deterministic timestamps"}
+{"a":{"g":"building_running_and_managing_containers","l":3374},"r":"prose","x":"Build the image using the build-arg and rewrite-timestamp options"}
+{"a":{"g":"building_running_and_managing_containers","l":3383},"r":"prose","x":"Set a consistent timestamp using the last Git commit date"}
+{"a":{"g":"building_running_and_managing_containers","l":3828},"r":"prose","x":"Update image"}
+{"a":{"g":"building_running_and_managing_containers","l":3833},"r":"prose","x":"Add default Web page and expose port"}
+{"a":{"g":"building_running_and_managing_containers","l":3836},"r":"prose","x":"Start the service"}
+{"a":{"g":"building_running_and_managing_containers","l":5767},"r":"prose","x":"Start by default on boot"}
+{"a":{"g":"building_running_and_managing_containers","l":6100},"r":"prose","x":"autogenerated by Podman 3.3.1"}
+{"a":{"g":"building_running_and_managing_containers","l":6101},"r":"prose","x":"Wed Sep 8 20:34:46 CEST 2021"}
+{"a":{"g":"building_running_and_managing_containers","l":6198},"r":"prose","x":"autogenerated by Podman 3.3.1"}
+{"a":{"g":"building_running_and_managing_containers","l":6199},"r":"prose","x":"Wed Sep 8 20:41:44 CEST 2021"}
+{"a":{"g":"building_running_and_managing_containers","l":6373},"r":"prose","x":"autogenerated by Podman 3.3.1"}
+{"a":{"g":"building_running_and_managing_containers","l":6374},"r":"prose","x":"Wed Sep 8 20:49:17 CEST 2021"}
+{"a":{"g":"building_running_and_managing_containers","l":6417},"r":"prose","x":"autogenerated by Podman 3.3.1"}
+{"a":{"g":"building_running_and_managing_containers","l":6418},"r":"prose","x":"Wed Sep 8 20:49:17 CEST 2021"}
+{"a":{"g":"building_running_and_managing_containers","l":6734},"r":"prose","x":"Generation of Kubernetes YAML is still under development!"}
+{"a":{"g":"building_running_and_managing_containers","l":6736},"r":"prose","x":"Save the output of this file and use kubectl create -f to import"}
+{"a":{"g":"building_running_and_managing_containers","l":6737},"r":"prose","x":"it into Kubernetes."}
+{"a":{"g":"building_running_and_managing_containers","l":6746},"r":"prose","x":"Created with podman-1.6.4"}
+{"a":{"g":"building_running_and_managing_containers","l":6904},"r":"prose","x":"Port or socket location where to connect"}
+{"a":{"g":"building_running_and_managing_containers","l":6908},"r":"prose","x":"Import all .cnf files from the configuration directory"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3226},"r":"prose","x":"the 'datastream' key could be omitted."}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3250},"r":"prose","x":"Blueprint for CIS Red Hat Enterprise Linux 10.0 Benchmark for Level 2 - Server"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3252},"r":"prose","x":"Profile Description:"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3253},"r":"prose","x":"This profile defines a baseline that aligns to the \"Level 2 - Server\""}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3254},"r":"prose","x":"configuration from the Center for Internet Security® Red Hat Enterprise"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3255},"r":"prose","x":"Linux 10 Benchmark™, v3.0.0, released 2023-10-30."}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3256},"r":"prose","x":"This profile includes Center for Internet Security®"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3257},"r":"prose","x":"Red Hat Enterprise Linux 10.0 CIS Benchmarks™ content."}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3259},"r":"prose","x":"Profile ID: xccdf_org.ssgproject.content_profile_cis"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3260},"r":"prose","x":"Benchmark ID: xccdf_org.ssgproject.content_benchmark_RHEL-10.0"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3261},"r":"prose","x":"Benchmark Version: 0.1.74"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3262},"r":"prose","x":"XCCDF Version: 1.2"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3271},"r":"prose","x":"provide the absolute path to it (from the root of the image filesystem)."}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3438},"r":"prose","x":"Blueprint for CIS Red Hat Enterprise Linux 10.0 Benchmark for Level 2 - Server"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3439},"r":"prose","x":"..."}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3574},"r":"prose","x":"UUID-image-name. type: size MB"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":957},"r":"prose","x":"Array entries in this list will be joined into a string"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":958},"r":"prose","x":"that defines the configuration."}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":963},"r":"prose","x":"The default behavior is to just log to a file."}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":964},"r":"prose","x":"This mechanism that does not depend on a system service to operate."}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":966},"r":"prose","x":"A file path can also be used."}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":969},"r":"prose","x":"This tells cloud-init to redirect its stdout and stderr to"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":970},"r":"prose","x":"'tee -a /var/log/cloud-init-output.log' so the user can see output"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":971},"r":"prose","x":"there without needing to look on the console."}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":11391},"r":"prose","x":"Specify a custom port for Pacemaker Remote connections"}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":1642},"r":"prose","x":"Configuration option global/system_id_source."}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":1648},"r":"prose","x":"lvm systemid"}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":2084},"r":"prose","x":"Configuration option global/system_id_source."}
+{"a":{"g":"configuring_and_managing_high_availability_clusters","l":2096},"r":"prose","x":"lvm systemid"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":10667},"r":"prose","x":"bridge link show"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1288},"r":"prose","x":"These can be used in cases when no URI is supplied by the application"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1289},"r":"prose","x":"(@uri_default also prevents probing of the hypervisor driver)."}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":15348},"r":"prose","x":"virt-host-validate qemu"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":15598},"r":"prose","x":"virt-host-validate qemu"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4847},"r":"prose","x":"ovs-vsctl add-br <bridge_name>"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":1420},"r":"prose","x":"vgexport VolumeGroupName"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":1443},"r":"prose","x":"vgimport VolumeGroupName"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":1495},"r":"prose","x":"vgremove VolumeGroupName"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":1534},"r":"prose","x":"vgremove VolumeGroupName"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6188},"r":"prose","x":"This configuration option has an automatic default value."}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6815},"r":"prose","x":"Configuration option activation/raid_region_size."}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6865},"r":"prose","x":"Configuration option activation/raid_region_size."}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":706},"r":"prose","x":"vgremove VolumeGroupName"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":8019},"r":"prose","x":"vgdisplay myvg"}
+{"a":{"g":"configuring_and_managing_networking","l":11205},"r":"prose","x":"iw reg get"}
+{"a":{"g":"configuring_and_managing_networking","l":11234},"r":"prose","x":"iw reg get"}
+{"a":{"g":"configuring_and_managing_networking","l":11741},"r":"prose","x":"NetworkManager --print-config"}
+{"a":{"g":"configuring_and_managing_networking","l":14739},"r":"prose","x":"Auth-Type PAP {"}
+{"a":{"g":"configuring_and_managing_networking","l":14743},"r":"prose","x":"Auth-Type CHAP {"}
+{"a":{"g":"configuring_and_managing_networking","l":14747},"r":"prose","x":"Auth-Type MS-CHAP {"}
+{"a":{"g":"configuring_and_managing_networking","l":14954},"r":"prose","x":"General settings of hostapd"}
+{"a":{"g":"configuring_and_managing_networking","l":14957},"r":"prose","x":"Control interface settings"}
+{"a":{"g":"configuring_and_managing_networking","l":14961},"r":"prose","x":"Enable logging for all modules"}
+{"a":{"g":"configuring_and_managing_networking","l":14965},"r":"prose","x":"Log level"}
+{"a":{"g":"configuring_and_managing_networking","l":14970},"r":"prose","x":"Wired 802.1X authentication"}
+{"a":{"g":"configuring_and_managing_networking","l":14973},"r":"prose","x":"Driver interface type"}
+{"a":{"g":"configuring_and_managing_networking","l":14976},"r":"prose","x":"Enable IEEE 802.1X authorization"}
+{"a":{"g":"configuring_and_managing_networking","l":14979},"r":"prose","x":"Use port access entry (PAE) group address"}
+{"a":{"g":"configuring_and_managing_networking","l":14984},"r":"prose","x":"Network interface for authentication requests"}
+{"a":{"g":"configuring_and_managing_networking","l":14988},"r":"prose","x":"RADIUS client configuration"}
+{"a":{"g":"configuring_and_managing_networking","l":14991},"r":"prose","x":"Local IP address used as NAS-IP-Address"}
+{"a":{"g":"configuring_and_managing_networking","l":14994},"r":"prose","x":"Unique NAS-Identifier within scope of RADIUS server"}
+{"a":{"g":"configuring_and_managing_networking","l":14997},"r":"prose","x":"RADIUS authentication server"}
+{"a":{"g":"configuring_and_managing_networking","l":15002},"r":"prose","x":"RADIUS accounting server"}
+{"a":{"g":"configuring_and_managing_networking","l":15101},"r":"prose","x":"Anonymous identity (sent in unencrypted phase 1)"}
+{"a":{"g":"configuring_and_managing_networking","l":15102},"r":"prose","x":"Can be any string"}
+{"a":{"g":"configuring_and_managing_networking","l":15105},"r":"prose","x":"Inner authentication (sent in TLS-encrypted phase 2)"}
+{"a":{"g":"configuring_and_managing_networking","l":15110},"r":"prose","x":"CA certificate to validate the RADIUS server's identity"}
+{"a":{"g":"configuring_and_managing_networking","l":17029},"r":"prose","x":"InfiniBand connection mlx5_ib0"}
+{"a":{"g":"configuring_and_managing_networking","l":17034},"r":"prose","x":"IPoIB device mlx5_ib0.8002 on top of mlx5_ib0"}
+{"a":{"g":"configuring_and_managing_networking","l":17449},"r":"prose","x":"NFS over RDMA client support"}
+{"a":{"g":"configuring_and_managing_networking","l":17451},"r":"prose","x":"NFS over RDMA server support"}
+{"a":{"g":"configuring_and_managing_networking","l":3687},"r":"prose","x":"Bond profile"}
+{"a":{"g":"configuring_and_managing_networking","l":3698},"r":"prose","x":"Port profile for the 1st Ethernet device"}
+{"a":{"g":"configuring_and_managing_networking","l":3705},"r":"prose","x":"Port profile for the 2nd Ethernet device"}
+{"a":{"g":"configuring_and_managing_networking","l":4664},"r":"prose","x":"Ethernet profile"}
+{"a":{"g":"configuring_and_managing_networking","l":4674},"r":"prose","x":"VLAN profile"}
+{"a":{"g":"configuring_and_managing_networking","l":5244},"r":"prose","x":"bridge link show"}
+{"a":{"g":"configuring_and_managing_networking","l":5468},"r":"prose","x":"bridge link show"}
+{"a":{"g":"configuring_and_managing_networking","l":5674},"r":"prose","x":"Bridge profile"}
+{"a":{"g":"configuring_and_managing_networking","l":5683},"r":"prose","x":"Port profile for the 1st Ethernet device"}
+{"a":{"g":"configuring_and_managing_networking","l":5691},"r":"prose","x":"Port profile for the 2nd Ethernet device"}
+{"a":{"g":"configuring_and_managing_networking","l":5914},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"configuring_and_managing_networking","l":5920},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"configuring_and_managing_networking","l":5930},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"configuring_and_managing_networking","l":5934},"r":"prose","x":"Peer A"}
+{"a":{"g":"configuring_and_managing_networking","l":5945},"r":"prose","x":"Peer B"}
+{"a":{"g":"configuring_and_managing_networking","l":6130},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"configuring_and_managing_networking","l":6137},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"configuring_and_managing_networking","l":6147},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"configuring_and_managing_networking","l":6151},"r":"prose","x":"Site A"}
+{"a":{"g":"configuring_and_managing_networking","l":6157},"r":"prose","x":"Site B"}
+{"a":{"g":"configuring_and_managing_networking","l":6418},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"configuring_and_managing_networking","l":6423},"r":"prose","x":"VPN gateway settings"}
+{"a":{"g":"configuring_and_managing_networking","l":6440},"r":"prose","x":"Client-related settings"}
+{"a":{"g":"configuring_and_managing_networking","l":6450},"r":"prose","x":"Dead Peer Detection"}
+{"a":{"g":"configuring_and_managing_networking","l":6864},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"configuring_and_managing_networking","l":6868},"r":"prose","x":"Local settings settings"}
+{"a":{"g":"configuring_and_managing_networking","l":6883},"r":"prose","x":"Settings related to other peers in the mesh"}
+{"a":{"g":"configuring_and_managing_networking","l":8136},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"configuring_and_managing_networking","l":8142},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"configuring_and_managing_networking","l":8329},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"configuring_and_managing_networking","l":8336},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":1104},"r":"prose","x":"These can be used in cases when no URI is supplied by the application"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":1105},"r":"prose","x":"(@uri_default also prevents probing of the hypervisor driver)."}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":11379},"r":"prose","x":"bridge link show"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":15452},"r":"prose","x":"sc start VirtioFsSvc"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":15471},"r":"prose","x":"sc stop VirtioFsSvc"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":15472},"r":"prose","x":"sc config VirtioFsSvc start=demand"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":1707},"r":"prose","x":"osinfo-query os"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":2838},"r":"prose","x":"virt-host-validate | grep IOMMU"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5823},"r":"prose","x":"ovs-vsctl add-br <bridge_name>"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":9255},"r":"prose","x":"Get-PnpDevice -PresentOnly | % { $loc=(Get-PnpDeviceProperty -InstanceId $.InstanceId"}
+{"a":{"g":"configuring_and_using_a_cups_printing_server","l":823},"r":"prose","x":"sudo ipp-usb check"}
+{"a":{"g":"configuring_and_using_a_cups_printing_server","l":889},"r":"prose","x":"sudo ipp-usb check"}
+{"a":{"g":"configuring_and_using_database_servers","l":3095},"r":"prose","x":"TYPE DATABASE            USER      ADDRESS            METHOD"}
+{"a":{"g":"configuring_and_using_network_file_services","l":1041},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":1192},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":2242},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":2272},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":2851},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3078},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3138},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3404},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3559},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3832},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":3882},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4342},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":434},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_and_using_network_file_services","l":476},"r":"prose","x":"Global parameters"}
+{"a":{"g":"configuring_and_using_network_file_services","l":5321},"r":"prose","x":"NFS over RDMA client support"}
+{"a":{"g":"configuring_and_using_network_file_services","l":5323},"r":"prose","x":"NFS over RDMA server support"}
+{"a":{"g":"configuring_and_using_network_file_services","l":937},"r":"prose","x":"smbcontrol all reload-config"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":1231},"r":"prose","x":"When no CA certificates are specified the Shared System Certificates"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":1232},"r":"prose","x":"are in use. In order to have these available along with the ones specified"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":1233},"r":"prose","x":"by TLS_CACERTDIR one has to include them explicitly:"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":2661},"r":"prose","x":"To opt out of the system crypto-policies configuration of krb5, remove the"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":2730},"r":"prose","x":"Generated by authselect on Wed May 8 08:55:04 2019"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":721},"r":"prose","x":"You can stop authselect from managing your configuration by calling 'authselect opt-out'."}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":722},"r":"prose","x":"See authselect(8) for more details."}
+{"a":{"g":"configuring_device_mapper_multipath","l":2108},"r":"prose","x":"prio             alua"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2119},"r":"prose","x":"failback         immediate"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2749},"r":"prose","x":"Multipath wwids, Version : 1.0"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2751},"r":"prose","x":"You should not need to edit this file in normal circumstances."}
+{"a":{"g":"configuring_device_mapper_multipath","l":2753},"r":"prose","x":"Valid WWIDs:"}
+{"a":{"g":"configuring_device_mapper_multipath","l":931},"r":"prose","x":"Set default configurations for all devices managed by DM Multipath"}
+{"a":{"g":"configuring_device_mapper_multipath","l":935},"r":"prose","x":"Enable user-friendly names for devices"}
+{"a":{"g":"configuring_device_mapper_multipath","l":940},"r":"prose","x":"Define configuration for HP OPEN-V storage"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3034},"r":"prose","x":"Flush the rule set"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3039},"r":"prose","x":"Chain for incoming packets that drops all packets that"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3040},"r":"prose","x":"are not explicitly allowed by any rule in this chain"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3043},"r":"prose","x":"Accept connections to port 22 (ssh)"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3053},"r":"prose","x":"Flush the rule set"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3056},"r":"prose","x":"Create a table"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3059},"r":"prose","x":"Create a chain for incoming packets that drops all packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3060},"r":"prose","x":"that are not explicitly allowed by any rule in this chain"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3063},"r":"prose","x":"Add a rule that accepts connections to port 22 (ssh)"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3134},"r":"prose","x":"Flush the rule set"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3819},"r":"prose","x":"Remove all rules"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3823},"r":"prose","x":"Table for both IPv4 and IPv6 rules"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3826},"r":"prose","x":"Define variables for the interface name"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3832},"r":"prose","x":"Set with the IPv4 addresses of admin PCs"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3839},"r":"prose","x":"Chain for incoming traffic. Default policy: drop"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3844},"r":"prose","x":"Accept packets in established and related state, drop invalid packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3854},"r":"prose","x":"Accept incoming traffic on loopback interface"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3857},"r":"prose","x":"Allow request from LAN and DMZ to local DNS server"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3860},"r":"prose","x":"Allow admins PCs to access the router using SSH"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3863},"r":"prose","x":"Last action: Log blocked packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3864},"r":"prose","x":"(packets that were not accepted in previous rules in this chain)"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3869},"r":"prose","x":"Chain for outgoing traffic. Default policy: drop"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3874},"r":"prose","x":"Accept packets in established and related state, drop invalid packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3877},"r":"prose","x":"Accept outgoing traffic on loopback interface"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3880},"r":"prose","x":"Allow local DNS server to recursively resolve queries"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3883},"r":"prose","x":"Last action: Log blocked packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3888},"r":"prose","x":"Chain for forwarding traffic. Default policy: drop"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3893},"r":"prose","x":"Accept packets in established and related state, drop invalid packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3896},"r":"prose","x":"IPv4 access from LAN and internet to the HTTPS server in the DMZ"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3900},"r":"prose","x":"IPv6 access from internet to the HTTPS server in the DMZ"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3903},"r":"prose","x":"Access from LAN and DMZ to HTTPS servers on the internet"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3906},"r":"prose","x":"Last action: Log blocked packets"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3918},"r":"prose","x":"Postrouting chain to handle SNAT"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":3922},"r":"prose","x":"SNAT for IPv4 traffic from LAN to internet"}
+{"a":{"g":"customizing_anaconda","l":1005},"r":"prose","x":"Should kernel options be shown in the software selection spoke?"}
+{"a":{"g":"customizing_anaconda","l":1016},"r":"prose","x":"A path to EULA (if any)"}
+{"a":{"g":"customizing_anaconda","l":1019},"r":"prose","x":"tell the user about it fill in this variable by a path"}
+{"a":{"g":"customizing_anaconda","l":1020},"r":"prose","x":"pointing to a file with the EULA on the installed system."}
+{"a":{"g":"customizing_anaconda","l":1022},"r":"prose","x":"This is currently used just to show the path to the file to"}
+{"a":{"g":"customizing_anaconda","l":1023},"r":"prose","x":"the user at the end of the installation."}
+{"a":{"g":"customizing_anaconda","l":1028},"r":"prose","x":"URL for geolocation data provider."}
+{"a":{"g":"customizing_anaconda","l":1029},"r":"prose","x":"This is used for automatic language and timezone detection."}
+{"a":{"g":"customizing_anaconda","l":1031},"r":"prose","x":"Known valid providers:"}
+{"a":{"g":"customizing_anaconda","l":1041},"r":"prose","x":"Should geolocation be used when setting the language ?"}
+{"a":{"g":"customizing_anaconda","l":1051},"r":"prose","x":"Anaconda configuration file for My Distribution"}
+{"a":{"g":"customizing_anaconda","l":1473},"r":"prose","x":"Start the org.fedoraproject.Anaconda.Addons.HelloWorld service."}
+{"a":{"g":"customizing_anaconda","l":1474},"r":"prose","x":"Runs org_fedora_hello_world/service/main.py"}
+{"a":{"g":"customizing_anaconda","l":1541},"r":"prose","x":"will never be translated"}
+{"a":{"g":"customizing_anaconda","l":1545},"r":"prose","x":"the path to addons is in sys.path so we can import things from org_fedora_hello_world"}
+{"a":{"g":"customizing_anaconda","l":1549},"r":"prose","x":"export only the spoke, no helper functions, classes or constants"}
+{"a":{"g":"customizing_anaconda","l":1575},"r":"prose","x":"class attributes defined by API #"}
+{"a":{"g":"customizing_anaconda","l":1577},"r":"prose","x":"list all top-level objects from the .glade file that should be exposed"}
+{"a":{"g":"customizing_anaconda","l":1578},"r":"prose","x":"to the spoke or leave empty to extract everything"}
+{"a":{"g":"customizing_anaconda","l":1581},"r":"prose","x":"the name of the main window widget"}
+{"a":{"g":"customizing_anaconda","l":1584},"r":"prose","x":"name of the .glade file in the same directory as this source"}
+{"a":{"g":"customizing_anaconda","l":1587},"r":"prose","x":"category this spoke belongs to"}
+{"a":{"g":"customizing_anaconda","l":1590},"r":"prose","x":"spoke icon (will be displayed on the hub)"}
+{"a":{"g":"customizing_anaconda","l":1594},"r":"prose","x":"title of the spoke (will be displayed on the hub)"}
+{"a":{"g":"customizing_anaconda","l":1737},"r":"prose","x":"nothing to do here"}
+{"a":{"g":"customizing_anaconda","l":1772},"r":"prose","x":"this spoke is always ready"}
+{"a":{"g":"customizing_anaconda","l":1786},"r":"prose","x":"this is an optional spoke that is not mandatory to be completed"}
+{"a":{"g":"customizing_anaconda","l":1855},"r":"prose","x":"every GUIObject gets ksdata in init"}
+{"a":{"g":"customizing_anaconda","l":1858},"r":"prose","x":"show dialog above the lightbox"}
+{"a":{"g":"customizing_anaconda","l":1950},"r":"prose","x":"category this spoke belongs to"}
+{"a":{"g":"customizing_anaconda","l":1969},"r":"prose","x":"nothing to do here"}
+{"a":{"g":"customizing_anaconda","l":2083},"r":"prose","x":"nothing to do here"}
+{"a":{"g":"customizing_anaconda","l":2177},"r":"prose","x":"values for user to set"}
+{"a":{"g":"customizing_anaconda","l":2202},"r":"prose","x":"this will automatically add numbering and will call callbacks when required"}
+{"a":{"g":"customizing_anaconda","l":2212},"r":"prose","x":"show conditional input only if the checkbox is checked"}
+{"a":{"g":"customizing_anaconda","l":2297},"r":"prose","x":"completed if user entered something non-empty to the Conditioned input"}
+{"a":{"g":"customizing_anaconda","l":2306},"r":"prose","x":"nothing needed here, values are set in the self.args tree"}
+{"a":{"g":"customizing_anaconda","l":672},"r":"prose","x":"Anaconda configuration file."}
+{"a":{"g":"customizing_anaconda","l":675},"r":"prose","x":"Run Anaconda in the debugging mode."}
+{"a":{"g":"customizing_anaconda","l":678},"r":"prose","x":"List of Anaconda DBus modules that can be activated."}
+{"a":{"g":"customizing_anaconda","l":679},"r":"prose","x":"Supported patterns: MODULE.PREFIX., MODULE.NAME activatable_modules ="}
+{"a":{"g":"customizing_anaconda","l":683},"r":"prose","x":"List of Anaconda DBus modules that are not allowed to run."}
+{"a":{"g":"customizing_anaconda","l":684},"r":"prose","x":"Supported patterns: MODULE.PREFIX., MODULE.NAME forbidden_modules = # List of"}
+{"a":{"g":"customizing_anaconda","l":700},"r":"prose","x":"Type of the installation system."}
+{"a":{"g":"customizing_anaconda","l":704},"r":"prose","x":"Should the installer show a warning about enabled SMT?"}
+{"a":{"g":"customizing_anaconda","l":709},"r":"prose","x":"Type of the installation target."}
+{"a":{"g":"customizing_anaconda","l":712},"r":"prose","x":"A path to the physical root of the target."}
+{"a":{"g":"customizing_anaconda","l":715},"r":"prose","x":"A path to the system root of the target."}
+{"a":{"g":"customizing_anaconda","l":718},"r":"prose","x":"Should we install the network configuration?"}
+{"a":{"g":"customizing_anaconda","l":721},"r":"prose","x":"Should we copy input kickstart to target system?"}
+{"a":{"g":"customizing_anaconda","l":724},"r":"prose","x":"Should we save kickstart equivalent to installation settings to the new system?"}
+{"a":{"g":"customizing_anaconda","l":727},"r":"prose","x":"Should we save logs from the installation to the new system?"}
+{"a":{"g":"customizing_anaconda","l":732},"r":"prose","x":"Network device to be activated on boot if none was configured so."}
+{"a":{"g":"customizing_anaconda","l":733},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":735},"r":"prose","x":"NONE               No device"}
+{"a":{"g":"customizing_anaconda","l":736},"r":"prose","x":"DEFAULT_ROUTE_DEVICE A default route device"}
+{"a":{"g":"customizing_anaconda","l":737},"r":"prose","x":"FIRST_WIRED_WITH_LINK The first wired device with link"}
+{"a":{"g":"customizing_anaconda","l":743},"r":"prose","x":"Default package environment."}
+{"a":{"g":"customizing_anaconda","l":746},"r":"prose","x":"List of ignored packages."}
+{"a":{"g":"customizing_anaconda","l":749},"r":"prose","x":"Names of repositories that provide latest updates."}
+{"a":{"g":"customizing_anaconda","l":752},"r":"prose","x":"Names of repositories disabled by default."}
+{"a":{"g":"customizing_anaconda","l":753},"r":"prose","x":"Supported patterns: REPO-NAME, PREFIX*, SUFFIX, *INFIX"}
+{"a":{"g":"customizing_anaconda","l":767},"r":"prose","x":"List of .treeinfo variant types to enable."}
+{"a":{"g":"customizing_anaconda","l":768},"r":"prose","x":"Valid items:"}
+{"a":{"g":"customizing_anaconda","l":776},"r":"prose","x":"Enable installation from the closest mirror."}
+{"a":{"g":"customizing_anaconda","l":779},"r":"prose","x":"Default installation source."}
+{"a":{"g":"customizing_anaconda","l":780},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":782},"r":"prose","x":"CLOSEST_MIRROR Use closest public repository mirror."}
+{"a":{"g":"customizing_anaconda","l":783},"r":"prose","x":"CDN             Use Content Delivery Network (CDN)."}
+{"a":{"g":"customizing_anaconda","l":787},"r":"prose","x":"Enable ssl verification for all HTTP connection"}
+{"a":{"g":"customizing_anaconda","l":790},"r":"prose","x":"GPG keys to import to RPM database by default."}
+{"a":{"g":"customizing_anaconda","l":791},"r":"prose","x":"Specify paths on the installed system, each on a line."}
+{"a":{"g":"customizing_anaconda","l":792},"r":"prose","x":"Substitutions for $releasever and $basearch happen automatically."}
+{"a":{"g":"customizing_anaconda","l":796},"r":"prose","x":"Enable SELinux usage in the installed system."}
+{"a":{"g":"customizing_anaconda","l":797},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":799},"r":"prose","x":"-1 The value is not set."}
+{"a":{"g":"customizing_anaconda","l":800},"r":"prose","x":"0 SELinux is disabled."}
+{"a":{"g":"customizing_anaconda","l":801},"r":"prose","x":"1 SELinux is enabled."}
+{"a":{"g":"customizing_anaconda","l":807},"r":"prose","x":"Type of the bootloader."}
+{"a":{"g":"customizing_anaconda","l":808},"r":"prose","x":"Supported values:"}
+{"a":{"g":"customizing_anaconda","l":810},"r":"prose","x":"DEFAULT Choose the type by platform."}
+{"a":{"g":"customizing_anaconda","l":811},"r":"prose","x":"EXTLINUX Use extlinux as the bootloader."}
+{"a":{"g":"customizing_anaconda","l":812},"r":"prose","x":"SDBOOT Use systemd-boot as the bootloader."}
+{"a":{"g":"customizing_anaconda","l":816},"r":"prose","x":"Name of the EFI directory."}
+{"a":{"g":"customizing_anaconda","l":826},"r":"prose","x":"Hide the GRUB menu."}
+{"a":{"g":"customizing_anaconda","l":829},"r":"prose","x":"Are non-iBFT iSCSI disks allowed?"}
+{"a":{"g":"customizing_anaconda","l":832},"r":"prose","x":"Arguments preserved from the installation system."}
+{"a":{"g":"customizing_anaconda","l":842},"r":"prose","x":"Enable iBFT usage during the installation."}
+{"a":{"g":"customizing_anaconda","l":845},"r":"prose","x":"Tell multipathd to use user friendly names when naming devices during the installation."}
+{"a":{"g":"customizing_anaconda","l":848},"r":"prose","x":"Create GPT discoverable partition type IDs, if possible"}
+{"a":{"g":"customizing_anaconda","l":854},"r":"prose","x":"Btrfs compression algorithm and level. For example, zstd:1."}
+{"a":{"g":"customizing_anaconda","l":857},"r":"prose","x":"Default disk label type."}
+{"a":{"g":"customizing_anaconda","l":858},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":860},"r":"prose","x":"gpt Prefer creation of GPT disk labels."}
+{"a":{"g":"customizing_anaconda","l":861},"r":"prose","x":"mbr Prefer creation of MBR disk labels."}
+{"a":{"g":"customizing_anaconda","l":867},"r":"prose","x":"Default file system type. Use whatever Blivet uses by default."}
+{"a":{"g":"customizing_anaconda","l":870},"r":"prose","x":"Default partitioning."}
+{"a":{"g":"customizing_anaconda","l":871},"r":"prose","x":"Specify a mount point and its attributes on each line."}
+{"a":{"g":"customizing_anaconda","l":873},"r":"prose","x":"Valid attributes:"}
+{"a":{"g":"customizing_anaconda","l":875},"r":"prose","x":"size <SIZE> The size of the mount point."}
+{"a":{"g":"customizing_anaconda","l":877},"r":"prose","x":"max <MAX_SIZE> The max size is unlimited by default."}
+{"a":{"g":"customizing_anaconda","l":879},"r":"prose","x":"btrfs        The mount point will be created only for the Btrfs scheme"}
+{"a":{"g":"customizing_anaconda","l":892},"r":"prose","x":"Default partitioning scheme."}
+{"a":{"g":"customizing_anaconda","l":893},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":895},"r":"prose","x":"PLAIN       Create standard partitions."}
+{"a":{"g":"customizing_anaconda","l":896},"r":"prose","x":"BTRFS        Use the Btrfs scheme."}
+{"a":{"g":"customizing_anaconda","l":897},"r":"prose","x":"LVM        Use the LVM scheme."}
+{"a":{"g":"customizing_anaconda","l":898},"r":"prose","x":"LVM_THINP Use LVM Thin Provisioning."}
+{"a":{"g":"customizing_anaconda","l":902},"r":"prose","x":"Default version of LUKS."}
+{"a":{"g":"customizing_anaconda","l":903},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":905},"r":"prose","x":"luks1 Use version 1 by default."}
+{"a":{"g":"customizing_anaconda","l":906},"r":"prose","x":"luks2 Use version 2 by default."}
+{"a":{"g":"customizing_anaconda","l":913},"r":"prose","x":"Minimal size of the total memory."}
+{"a":{"g":"customizing_anaconda","l":916},"r":"prose","x":"Minimal size of the available memory for LUKS2."}
+{"a":{"g":"customizing_anaconda","l":919},"r":"prose","x":"Should we recommend to specify a swap partition?"}
+{"a":{"g":"customizing_anaconda","l":922},"r":"prose","x":"Recommended minimal sizes of partitions."}
+{"a":{"g":"customizing_anaconda","l":923},"r":"prose","x":"Specify a mount point and a size on each line."}
+{"a":{"g":"customizing_anaconda","l":932},"r":"prose","x":"Required minimal sizes of partitions."}
+{"a":{"g":"customizing_anaconda","l":933},"r":"prose","x":"Specify a mount point and a size on each line."}
+{"a":{"g":"customizing_anaconda","l":936},"r":"prose","x":"Allowed device types of the / partition if any."}
+{"a":{"g":"customizing_anaconda","l":937},"r":"prose","x":"Valid values:"}
+{"a":{"g":"customizing_anaconda","l":939},"r":"prose","x":"LVM        Allow LVM."}
+{"a":{"g":"customizing_anaconda","l":940},"r":"prose","x":"MD        Allow RAID."}
+{"a":{"g":"customizing_anaconda","l":941},"r":"prose","x":"PARTITION Allow standard partitions."}
+{"a":{"g":"customizing_anaconda","l":942},"r":"prose","x":"BTRFS       Allow Btrfs."}
+{"a":{"g":"customizing_anaconda","l":950},"r":"prose","x":"DISK      Allow disks."}
+{"a":{"g":"customizing_anaconda","l":951},"r":"prose","x":"LVM_THINP Allow LVM Thin Provisioning."}
+{"a":{"g":"customizing_anaconda","l":955},"r":"prose","x":"Mount points that must be on a linux file system."}
+{"a":{"g":"customizing_anaconda","l":956},"r":"prose","x":"Specify a list of mount points."}
+{"a":{"g":"customizing_anaconda","l":959},"r":"prose","x":"Paths that must be directories on the / file system."}
+{"a":{"g":"customizing_anaconda","l":960},"r":"prose","x":"Specify a list of paths."}
+{"a":{"g":"customizing_anaconda","l":963},"r":"prose","x":"Paths that must NOT be directories on the / file system."}
+{"a":{"g":"customizing_anaconda","l":964},"r":"prose","x":"Specify a list of paths."}
+{"a":{"g":"customizing_anaconda","l":967},"r":"prose","x":"Mount points that are recommended to be reformatted."}
+{"a":{"g":"customizing_anaconda","l":969},"r":"prose","x":"It will be recommended to create a new file system on a mount point"}
+{"a":{"g":"customizing_anaconda","l":970},"r":"prose","x":"that has an allowed prefix, but doesn't have a blocked one."}
+{"a":{"g":"customizing_anaconda","l":971},"r":"prose","x":"Specify lists of mount points."}
+{"a":{"g":"customizing_anaconda","l":977},"r":"prose","x":"The path to a custom stylesheet."}
+{"a":{"g":"customizing_anaconda","l":980},"r":"prose","x":"A list of spokes to hide in UI."}
+{"a":{"g":"customizing_anaconda","l":984},"r":"prose","x":"Should the UI allow to change the configured root account?"}
+{"a":{"g":"customizing_anaconda","l":987},"r":"prose","x":"Should the UI allow to change the configured user accounts?"}
+{"a":{"g":"customizing_anaconda","l":990},"r":"prose","x":"Define the default password policies."}
+{"a":{"g":"customizing_anaconda","l":991},"r":"prose","x":"Specify a policy name and its attributes on each line."}
+{"a":{"g":"customizing_anaconda","l":993},"r":"prose","x":"Valid attributes:"}
+{"a":{"g":"customizing_anaconda","l":996},"r":"prose","x":"length <NUMBER> The minimum length of the password."}
+{"a":{"g":"customizing_anaconda","l":997},"r":"prose","x":"empty            Allow an empty password."}
+{"a":{"g":"customizing_anaconda","l":998},"r":"prose","x":"strict         Require the minimum quality."}
+{"a":{"g":"deploying_and_managing_rhel_on_google_cloud","l":1580},"r":"prose","x":"Server times out connections after several minutes of inactivity."}
+{"a":{"g":"deploying_and_managing_rhel_on_google_cloud","l":1581},"r":"prose","x":"Keep alive ssh connections by sending a packet every 7 minutes."}
+{"a":{"g":"deploying_and_managing_rhel_on_google_cloud","l":1592},"r":"prose","x":"Compute times out connections after 10 minutes of inactivity."}
+{"a":{"g":"deploying_and_managing_rhel_on_google_cloud","l":1593},"r":"prose","x":"Keep ssh connections alive by sending a packet every 7 minutes."}
+{"a":{"g":"deploying_mail_servers","l":1484},"r":"prose","x":"doveadm replicator status"}
+{"a":{"g":"deploying_mail_servers","l":1496},"r":"prose","x":"doveadm replicator status <user_name>"}
+{"a":{"g":"deploying_mail_servers","l":1963},"r":"prose","x":"postfix check"}
+{"a":{"g":"deploying_mail_servers","l":2163},"r":"prose","x":"postfix check"}
+{"a":{"g":"deploying_web_servers_and_reverse_proxies","l":200},"r":"prose","x":"apachectl configtest"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":4098},"r":"prose","x":"gcc-toolset-N-env tool"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":4105},"r":"prose","x":"gcc-toolset-N-env bash"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":559},"r":"prose","x":"Build dependencies need to be specified manually"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":562},"r":"prose","x":"Test dependencies need to be specified manually"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":563},"r":"prose","x":"Runtime dependencies need to be BuildRequired manually to run tests during build"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":589},"r":"prose","x":"The macro only supports projects with setup.py"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":594},"r":"prose","x":"The macro only supports projects with setup.py"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":602},"r":"prose","x":"Note that there is no %%files section for python-pello"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":608},"r":"prose","x":"The library files needed to be listed manually"}
+{"a":{"g":"installing_and_using_dynamic_programming_languages","l":611},"r":"prose","x":"The metadata files needed to be listed manually"}
+{"a":{"g":"installing_identity_management","l":10438},"r":"prose","x":"unbound-control verbosity 3"}
+{"a":{"g":"installing_identity_management","l":10855},"r":"prose","x":"unbound-control verbosity 3"}
+{"a":{"g":"installing_identity_management","l":11071},"r":"prose","x":"unbound-control verbosity 3"}
+{"a":{"g":"installing_identity_management","l":5097},"r":"prose","x":"Generate SSH keys; ipa-client-install uploads them to the IdM server by default"}
+{"a":{"g":"installing_identity_management","l":5100},"r":"prose","x":"Run the client install script"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1116},"r":"prose","x":"NVIDIA-specific settings (Linux only - uncomment if needed)"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1213},"r":"prose","x":"c \"I cannot access my server with SSH. Can you give me a list of things to"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1419},"r":"prose","x":"No error"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1567},"r":"prose","x":"Backend settings for communicating with the external API."}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":2419},"r":"prose","x":"Check if the variable is set"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":2421},"r":"prose","x":"Check if the directory is writable"}
+{"a":{"g":"interactively_installing_rhel_from_installation_media","l":4417},"r":"prose","x":"timedatectl list-timezones"}
+{"a":{"g":"interactively_installing_rhel_from_installation_media","l":4430},"r":"prose","x":"timedatectl set-timezone <time_zone>"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":6887},"r":"prose","x":"timedatectl list-timezones"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":6899},"r":"prose","x":"timedatectl set-timezone <time_zone>"}
+{"a":{"g":"managing_file_systems","l":6074},"r":"prose","x":"xfs_metadump block-device metadump-file"}
+{"a":{"g":"managing_file_systems","l":7167},"r":"prose","x":"Define the LDAP schema to used for lookups"}
+{"a":{"g":"managing_file_systems","l":7170},"r":"prose","x":"below in the order given to try and locate an appropriate"}
+{"a":{"g":"managing_file_systems","l":7171},"r":"prose","x":"basdn for lookups. If you want to minimize the number of"}
+{"a":{"g":"managing_file_systems","l":7172},"r":"prose","x":"queries to the server set the values here."}
+{"a":{"g":"managing_file_systems","l":7180},"r":"prose","x":"Other common LDAP naming"}
+{"a":{"g":"managing_file_systems","l":7257},"r":"prose","x":"foo, auto.home, example.com"}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":10799},"r":"prose","x":"Allow initgroups to default to the setting for group."}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":15685},"r":"prose","x":"Allow initgroups to default to the setting for group."}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":8167},"r":"prose","x":"ipa-pkinit-manage enable"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":11162},"r":"prose","x":"Running as unit <name>.service"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":1678},"r":"prose","x":"Prevents <KERNEL-MODULE-1> from being loaded"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":1689},"r":"prose","x":"Prevents <KERNEL-MODULE-2> from being loaded"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3135},"r":"prose","x":"Fallback normal timeout code in case the timeout_style feature is"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3514},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3640},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3824},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3887},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3932},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3945},"r":"prose","x":"kpatch uninstall kpatch_6_12_0_1_0_1"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3952},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":3971},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":4020},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":4052},"r":"prose","x":"kpatch list"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5161},"r":"prose","x":"Memory hotadd request"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5470},"r":"prose","x":"cxl disable-region"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5481},"r":"prose","x":"cxl destroy-region"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5486},"r":"prose","x":"cxl disable-memdev"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8044},"r":"prose","x":"Skip directories without a vmcore or already analyzed"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8048},"r":"prose","x":"Determine the kernel version from the vmcore-dmesg.txt"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8054},"r":"prose","x":"Fall back to the currently running kernel if detection fails"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":8064},"r":"prose","x":"Run crash in batch mode with diagnostic commands"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9961},"r":"prose","x":"Skip some unsupported filesystems"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1545},"r":"prose","x":"..."}
+{"a":{"g":"managing_networking_infrastructure_services","l":1548},"r":"prose","x":"..."}
+{"a":{"g":"managing_networking_infrastructure_services","l":1550},"r":"prose","x":"end of options"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1616},"r":"prose","x":"use dnstap-read to analyze saved logs"}
+{"a":{"g":"managing_smart_card_authentication","l":2582},"r":"prose","x":"change existing value"}
+{"a":{"g":"managing_smart_card_authentication","l":2584},"r":"prose","x":"add new restriction"}
+{"a":{"g":"managing_storage_devices","l":3417},"r":"prose","x":"nvmetcli restore rdma.json"}
+{"a":{"g":"managing_storage_devices","l":3438},"r":"prose","x":"nvmetcli clear"}
+{"a":{"g":"managing_systems_in_the_rhel_web_console","l":2199},"r":"prose","x":"change existing value"}
+{"a":{"g":"managing_systems_in_the_rhel_web_console","l":2201},"r":"prose","x":"add new restriction"}
+{"a":{"g":"managing_systems_in_the_rhel_web_console","l":538},"r":"prose","x":"List of users which are not allowed to login to Cockpit root"}
+{"a":{"g":"migrating_to_identity_management_on_rhel_10","l":2464},"r":"prose","x":"ipa-compat-manage disable"}
+{"a":{"g":"migrating_to_identity_management_on_rhel_10","l":2510},"r":"prose","x":"ipa-compat-manage enable"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2552},"r":"prose","x":"It is safe to make additions from here on ..."}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2838},"r":"prose","x":"local primary logger"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3348},"r":"prose","x":"grafana-cli plugins ls | grep performancecopilot-pcp-app"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6185},"r":"prose","x":"Total        Rmt ----- LLC Load Hitm ----- ---- Store Reference ---- --- Load"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6187},"r":"prose","x":"Index              Cacheline records Hitm Total                          Lcl      Rmt Total L1Hit L1Miss"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6189},"r":"prose","x":"..... .................. ....... ....... ....... ....... ....... ....... ....... ....... ........ ........ ....... ....... ......."}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6209},"r":"prose","x":"Num              Rmt        Lcl L1 Hit L1 Miss                          Offset    Pid        Code address rmt hitm lcl"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6211},"r":"prose","x":"..... ....... ....... ....... ....... .................. ....... .................. ........ ........ ........ ........"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6377},"r":"prose","x":"Total        Rmt ----- LLC Load Hitm ----- ---- Store Reference ---- ---"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6379},"r":"prose","x":"Index              Cacheline records Hitm Total                          Lcl      Rmt Total L1Hit L1Miss"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6381},"r":"prose","x":"..... .................. ....... ....... ....... ....... ....... ....... ....... ....... ........ ........ ....... ....... ......."}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6680},"r":"prose","x":"mkfifo control ack perf.pipe"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6751},"r":"prose","x":"event sched:sched_process_fork disabled"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":8930},"r":"prose","x":"All isolated CPUs:"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":8932},"r":"prose","x":"Isolated CPUs without the kernel’s scheduler load balancing:"}
+{"a":{"g":"network_troubleshooting_and_performance_tuning","l":2209},"r":"prose","x":"Identify the first available RX queue ID"}
+{"a":{"g":"network_troubleshooting_and_performance_tuning","l":2217},"r":"prose","x":"Set the paired NAPI instance to threaded busy-poll"}
+{"a":{"g":"network_troubleshooting_and_performance_tuning","l":2220},"r":"prose","x":"Set flow steering rule: Redirect traffic to port 443 on $LOCAL_IP into the high-"}
+{"a":{"g":"packaging_and_distributing_software","l":2081},"r":"prose","x":"Package removal, not upgrade"}
+{"a":{"g":"packaging_and_distributing_software","l":3711},"r":"prose","x":"Build dependencies need to be specified manually"}
+{"a":{"g":"packaging_and_distributing_software","l":3714},"r":"prose","x":"Test dependencies need to be specified manually"}
+{"a":{"g":"packaging_and_distributing_software","l":3715},"r":"prose","x":"Runtime dependencies need to be BuildRequired manually to run tests during build"}
+{"a":{"g":"packaging_and_distributing_software","l":3741},"r":"prose","x":"The macro only supports projects with setup.py"}
+{"a":{"g":"packaging_and_distributing_software","l":3746},"r":"prose","x":"The macro only supports projects with setup.py"}
+{"a":{"g":"packaging_and_distributing_software","l":3754},"r":"prose","x":"Note that there is no %%files section for python-pello"}
+{"a":{"g":"packaging_and_distributing_software","l":3760},"r":"prose","x":"The library files needed to be listed manually"}
+{"a":{"g":"packaging_and_distributing_software","l":3763},"r":"prose","x":"The metadata files needed to be listed manually"}
+{"a":{"g":"packaging_and_distributing_software","l":4272},"r":"prose","x":"Modify the gemspec if necessary"}
+{"a":{"g":"packaging_and_distributing_software","l":4273},"r":"prose","x":"Also apply patches to code if necessary"}
+{"a":{"g":"packaging_and_distributing_software","l":4277},"r":"prose","x":"Create the gem as gem install only works on a gem file"}
+{"a":{"g":"packaging_and_distributing_software","l":4280},"r":"prose","x":"%%gem_install compiles any C extensions and installs the gem into ./%%gem_dir"}
+{"a":{"g":"packaging_and_distributing_software","l":4281},"r":"prose","x":"by default, so that we can move it into the buildroot in %%install"}
+{"a":{"g":"planning_identity_management","l":4283},"r":"prose","x":"Ensure idmuser01 can access client.idm.example.com via the sshd service"}
+{"a":{"g":"planning_identity_management","l":4292},"r":"prose","x":"Ensure allow_all rule is modified so that only admins are members"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1341},"r":"prose","x":"Define templates before the rules that use them"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1342},"r":"prose","x":"Per-Host templates for remote systems"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1359},"r":"prose","x":"Provides TCP syslog reception"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1362},"r":"prose","x":"Adding this ruleset to process remote messages"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1589},"r":"prose","x":"Set certificate files"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1596},"r":"prose","x":"TCP listener"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1605},"r":"prose","x":"Start up listener at port 514"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1676},"r":"prose","x":"Set certificate files"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1684},"r":"prose","x":"Set up the action for all messages"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1829},"r":"prose","x":"Define templates before the rules that use them"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1830},"r":"prose","x":"Per-Host templates for remote systems"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1853},"r":"prose","x":"Provides UDP syslog reception"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":1856},"r":"prose","x":"This ruleset processes remote messages"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":336},"r":"prose","x":"Backup is stored on an external drive"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":339},"r":"prose","x":"The ISO is stored on a dedicated NFS share"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":375},"r":"prose","x":"rear mkbackup"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":4468},"r":"prose","x":"What kind of upgrade to perform:"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":464},"r":"prose","x":"rear mkbackup"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":581},"r":"prose","x":"rear savelayout"}
+{"a":{"g":"risk_reduction_and_recovery_operations","l":654},"r":"prose","x":"rear savelayout"}
+{"a":{"g":"securing_networks","l":1216},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"securing_networks","l":1319},"r":"prose","x":"Environment variables to accept"}
+{"a":{"g":"securing_networks","l":1337},"r":"prose","x":"Environment variables to accept"}
+{"a":{"g":"securing_networks","l":1395},"r":"prose","x":"BEGIN sshd system role managed block: namespace <my_application>"}
+{"a":{"g":"securing_networks","l":1398},"r":"prose","x":"END sshd system role managed block: namespace <my_application>"}
+{"a":{"g":"securing_networks","l":1404},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"securing_networks","l":1678},"r":"prose","x":"Ansible managed"}
+{"a":{"g":"securing_networks","l":3324},"r":"prose","x":"unbound-control verbosity 5"}
+{"a":{"g":"securing_networks","l":3406},"r":"prose","x":"Enable network"}
+{"a":{"g":"securing_networks","l":3409},"r":"prose","x":"Set DoT DNS server"}
+{"a":{"g":"securing_networks","l":3412},"r":"prose","x":"Set to 'exclusive' to disable fallback to unencrypted DNS. Other values: 'backup', 'prefer'."}
+{"a":{"g":"securing_networks","l":3415},"r":"prose","x":"Set the dnsconfd plugin for NetworkManager"}
+{"a":{"g":"securing_networks","l":3418},"r":"prose","x":"Remove any existing ISO to prevent conflicts with the new build"}
+{"a":{"g":"securing_networks","l":3421},"r":"prose","x":"Create a new bootable ISO with the Kickstart config file and kernel arguments"}
+{"a":{"g":"securing_networks","l":3488},"r":"prose","x":"unbound-control verbosity 5"}
+{"a":{"g":"securing_networks","l":3644},"r":"prose","x":"unbound-control verbosity 5"}
+{"a":{"g":"securing_networks","l":3864},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"securing_networks","l":3871},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"securing_networks","l":3882},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"securing_networks","l":3886},"r":"prose","x":"Peer A"}
+{"a":{"g":"securing_networks","l":3897},"r":"prose","x":"Peer B"}
+{"a":{"g":"securing_networks","l":4083},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"securing_networks","l":4090},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"securing_networks","l":4101},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"securing_networks","l":4105},"r":"prose","x":"Site A"}
+{"a":{"g":"securing_networks","l":4111},"r":"prose","x":"Site B"}
+{"a":{"g":"securing_networks","l":4374},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"securing_networks","l":4379},"r":"prose","x":"VPN gateway settings"}
+{"a":{"g":"securing_networks","l":4396},"r":"prose","x":"Client-related settings"}
+{"a":{"g":"securing_networks","l":4406},"r":"prose","x":"Dead Peer Detection"}
+{"a":{"g":"securing_networks","l":4822},"r":"prose","x":"General setup and authentication type"}
+{"a":{"g":"securing_networks","l":4826},"r":"prose","x":"Local settings settings"}
+{"a":{"g":"securing_networks","l":4841},"r":"prose","x":"Settings related to other peers in the mesh"}
+{"a":{"g":"securing_networks","l":6099},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"securing_networks","l":6106},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"securing_networks","l":6291},"r":"prose","x":"rsakey AwEAAdKCx"}
+{"a":{"g":"securing_networks","l":6297},"r":"prose","x":"rsakey AwEAAcNWC"}
+{"a":{"g":"securing_networks","l":743},"r":"prose","x":"HostKey /etc/ssh/ssh_host_rsa_key"}
+{"a":{"g":"securing_networks","l":744},"r":"prose","x":"HostKey /etc/ssh/ssh_host_ecdsa_key"}
+{"a":{"g":"securing_networks","l":7873},"r":"prose","x":"Allow GET, PUT, POST; return \"405 Method Not Allowed\" for all others."}
+{"a":{"g":"security_hardening","l":1286},"r":"prose","x":"Disable the AES-128 cipher, all modes"}
+{"a":{"g":"security_hardening","l":1289},"r":"prose","x":"Disable CHACHA20-POLY1305 for the TLS protocol (OpenSSL, GnuTLS, NSS, and"}
+{"a":{"g":"security_hardening","l":1293},"r":"prose","x":"Allow using the FFDHE-1024 group with the SSH protocol (libssh and OpenSSH)"}
+{"a":{"g":"security_hardening","l":1296},"r":"prose","x":"Disable all CBC mode ciphers for the SSH protocol (libssh and OpenSSH)"}
+{"a":{"g":"security_hardening","l":1299},"r":"prose","x":"Allow the AES-256-CBC cipher in applications using libssh"}
+{"a":{"g":"security_hardening","l":4835},"r":"prose","x":"when containers are used we almost always want to ignore them"}
+{"a":{"g":"security_hardening","l":4837},"r":"prose","x":"MEASUREMENTS"}
+{"a":{"g":"security_hardening","l":600},"r":"prose","x":"Enable FIPS"}
+{"a":{"g":"security_hardening","l":613},"r":"prose","x":"Enable fips=1 kernel argument: https://bootc-dev.github.io/bootc/building/kernel-"}
+{"a":{"g":"security_hardening","l":616},"r":"prose","x":"Install and enable the FIPS crypto policy"}
+{"a":{"g":"security_hardening","l":9516},"r":"prose","x":"Deny execution for anything untrusted"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2328},"r":"prose","x":"This file controls the state of SELinux on the system."}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2330},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2332},"r":"prose","x":"disabled - No SELinux policy is loaded."}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2335},"r":"prose","x":"targeted - Targeted processes are protected,"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2336},"r":"prose","x":"mls - Multi Level Security protection."}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2579},"r":"prose","x":"Available choices: True/False"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2580},"r":"prose","x":"Unanswered question. Uncomment the following line with your answer"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2591},"r":"prose","x":"Available choices: True/False"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2592},"r":"prose","x":"Unanswered question. Uncomment the following line with your answer"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":11814},"r":"prose","x":"Ensure host-group databases is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":11909},"r":"prose","x":"Ensure host-group databases is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":12011},"r":"prose","x":"Ensure hosts and hostgroups are present in existing databases hostgroup"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":12204},"r":"prose","x":"Ensure host-group databases is absent"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":12307},"r":"prose","x":"Ensure hosts and hostgroups are absent in existing databases hostgroup"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13390},"r":"prose","x":"Ensure sudo command is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13419},"r":"prose","x":"Ensure a sudorule is present granting idm_user the permission to run /usr/sbin/reboot"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13524},"r":"prose","x":"Ensure sudo command name: /usr/sbin/dmidecode is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13529},"r":"prose","x":"Ensure sudo command /usr/sbin/reboot is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13534},"r":"prose","x":"Ensure sudo command /usr/bin/yum is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13539},"r":"prose","x":"Ensure a sudo command group is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":13674},"r":"prose","x":"Ensure idm_user can access client.idm.example.com via the sshd service"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":15501},"r":"prose","x":"Ensure service is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":15668},"r":"prose","x":"Ensure service is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":15773},"r":"prose","x":"Ensure service is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":15896},"r":"prose","x":"Ensure service certificate is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":16406},"r":"prose","x":"Ensure service is absent"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":16482},"r":"prose","x":"Generated by NetworkManager"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":16494},"r":"prose","x":"auto-generated by IPA installer"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":19275},"r":"prose","x":"Ensure A and AAAA records are present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":19384},"r":"prose","x":"Ensure that dns record is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":19497},"r":"prose","x":"Ensure that multiple dns records are present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":19737},"r":"prose","x":"Ensure a SRV record is present"}
+{"a":{"g":"using_ansible_to_install_and_manage_identity_management_in_rhel","l":4724},"r":"prose","x":"Set defaultlogin and maxusername"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1427},"r":"prose","x":"Not collecting encrypted password because we need cleartext password"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1428},"r":"prose","x":"to create kerberos key"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1435},"r":"prose","x":"Now create this entry"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1495},"r":"prose","x":"Not collecting encrypted password because we need cleartext password"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1496},"r":"prose","x":"to create kerberos key"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1500},"r":"prose","x":"Now create this entry"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1591},"r":"prose","x":"Now create this entry"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1718},"r":"prose","x":"$1 is for the automount entry in ipa"}
+{"a":{"g":"using_external_red_hat_utilities_with_identity_management","l":1740},"r":"prose","x":"$5 is the LDAP server"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":2776},"r":"prose","x":"Advanced Partitioning"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3001},"r":"prose","x":"Override using composefs for ostree (it is incompatible with the squashfs rootfs)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3008},"r":"prose","x":"Include the dmsquash-live module in the initramfs"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3015},"r":"prose","x":"Rebuild the initrd"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3019},"r":"prose","x":"Mask services that aren't compatible with running from the rootfs"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3168},"r":"prose","x":"Base image to point to your internal registry"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3171},"r":"prose","x":"Configure the local repo to use the files already present in the image"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3172},"r":"prose","x":"Assuming the repo data is located at /etc/pki/repos or similar inside the image"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3179},"r":"prose","x":"Install your required packages using the local file source"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3183},"r":"prose","x":"Ensure the kernel and bootloader are present"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3184},"r":"prose","x":"In air-gapped bootc, BIB often fails because it expects to download these."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3185},"r":"prose","x":"Pre-installing them ensures they are part of the 'bootc' transition."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3298},"r":"prose","x":"Add certificate to the input set of anchors"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3960},"r":"prose","x":"Make /run/containers/0/auth.json (a transient runtime file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3961},"r":"prose","x":"a symlink to our /usr/lib/container-auth.json (a persistent file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3974},"r":"prose","x":"This example expects a secret named \"creds\" to contain"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3975},"r":"prose","x":"the registry pull secret. To build, for example"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3978},"r":"prose","x":"Use a single pull secret for bootc and podman by symlinking both locations"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3979},"r":"prose","x":"to a common persistent file embedded in the container image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3980},"r":"prose","x":"We just make up /usr/lib/container-auth.json"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4406},"r":"prose","x":"Begin with a standard bootc base image that serves as a \"builder\" for our custom image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4408},"r":"prose","x":"Configure and override source RPM repositories, if necessary. The following step is"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4413},"r":"prose","x":"The file must be copied to the /etc/yum.repos.d/ directory."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4414},"r":"prose","x":"The mypinnedcontent.repo is your standard repository that ensures that your container"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4417},"r":"prose","x":"Build the root file system using the specified repositories and non-RPM content from the"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4422},"r":"prose","x":"Add additional repositories to apply customizations to the image. However, referencing a"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4425},"r":"prose","x":"Create a new, empty image from scratch."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4427},"r":"prose","x":"Copy the root file system built in the previous step into this image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4429},"r":"prose","x":"Apply customizations to the image. This syntax uses \"heredocs\""}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4433},"r":"prose","x":"Set pipefail to display failures within the heredoc and avoid false-positive successful builds."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4442},"r":"prose","x":"Install necessary packages, run scripts, etc."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4444},"r":"prose","x":"Remove leftover build artifacts from installing packages in the final built image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4448},"r":"prose","x":"Define required labels for this bootc image to be recognized as such."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4451},"r":"prose","x":"Optional labels that only apply when running this image as a container. These keep the"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4455},"r":"prose","x":"Run the bootc linter to avoid encountering certain bugs and maintain content quality. Place"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4489},"r":"prose","x":"Begin with a standard bootc base image that is reused as a \"builder\" for the custom image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4491},"r":"prose","x":"Configure and override source RPM repositories, if necessary. This step is not required"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4494},"r":"prose","x":"Add additional repositories to apply customizations to the image. However, referencing a"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4496},"r":"prose","x":"Build the root file system by using the specified repositories and non-RPM content from the"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4508},"r":"prose","x":"Create a new, empty image from scratch."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4510},"r":"prose","x":"Copy the root file system built in the previous step into this image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4512},"r":"prose","x":"Apply customizations to the image. This syntax uses \"heredocs\""}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4516},"r":"prose","x":"Set pipefail to display failures within the heredoc and avoid false-positive successful builds."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4518},"r":"prose","x":"Install required packages for our custom bootc image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4519},"r":"prose","x":"Note that using a minimal manifest means we need to add critical components specific to"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4522},"r":"prose","x":"Remove package caches"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4524},"r":"prose","x":"Clean up all logs and caches"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4526},"r":"prose","x":"Run the bootc linter to perform build-time verification. Keep this as the last command in"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4529},"r":"prose","x":"Close the shell command."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4531},"r":"prose","x":"Define required labels for this bootc image to be recognized as such."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4534},"r":"prose","x":"Optional labels that only apply when running this image as a container. These keep the"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4584},"r":"prose","x":"The following example reuses the default base image as a \"builder\" image. Optionally, you"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4588},"r":"prose","x":"RUN rm -rf /etc/yum.repos.d/*"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4589},"r":"prose","x":"COPY mycustom.repo /etc/yum.repos.d"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4592},"r":"prose","x":"Create a new, empty image from scratch."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4594},"r":"prose","x":"Copy the root file system built in the previous step into this image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4596},"r":"prose","x":"You can make arbitrary changes such as copying the systemd units and other tweaks from"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4601},"r":"prose","x":"Install networking support and SSH which are not in minimal"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4607},"r":"prose","x":"This label is required"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4610},"r":"prose","x":"These labels are optional but useful if you want to keep the default of running under"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5008},"r":"prose","x":"Enable FIPS"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5016},"r":"prose","x":"Enable fips=1 kernel argument: https://bootc-dev.github.io/bootc/building/kernel-"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5019},"r":"prose","x":"Install and enable the FIPS crypto policy"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5144},"r":"prose","x":"Install OpenSCAP scanner and security content to the image"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5147},"r":"prose","x":"Run scan and hardening"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5150},"r":"prose","x":"Because certain profiles prevent ssh root logins, add a separate sudo user with a password"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5151},"r":"prose","x":"Alternatively, you can add users with Kickstart, cloud-init, or other methods"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5219},"r":"prose","x":"Copy a tailoring file into the Containerfile"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5222},"r":"prose","x":"Install OpenSCAP scanner and security content to the image"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5226},"r":"prose","x":"Add sudo user 'admin' with password 'admin123'."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5227},"r":"prose","x":"The user can be used with profiles that prevent"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5233},"r":"prose","x":"Run scan and hardening including the tailoring file"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5500},"r":"prose","x":"Build your rootfs with all packages and configuration"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5504},"r":"prose","x":"Install the ukify tool"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5507},"r":"prose","x":"Generate the sealed UKI in a tools stage"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5514},"r":"prose","x":"Find the kernel version"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5517},"r":"prose","x":"Create the /out directory"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5520},"r":"prose","x":"Generate and sign the UKI with the digest embedded"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5528},"r":"prose","x":"Final image: copy the sealed UKI into place"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5819},"r":"prose","x":"Copy the systemd service unit that demonstrates dynamic mount point creation"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5820},"r":"prose","x":"The service will:"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5835},"r":"prose","x":"Enable the service to start automatically on boot"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6042},"r":"prose","x":"Clear previous timers"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6287},"r":"prose","x":"Management services determine when to upgrade the system."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6288},"r":"prose","x":"Disable bootc-fetch-apply-updates.timer if it is included in the base image."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6298},"r":"prose","x":"Install the client from dnf, or some other method that applies for your client"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6301},"r":"prose","x":"Inject the credentials for the management service into the image"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6304},"r":"prose","x":"The existence of .run_next_boot acts as a flag to determine if the"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6305},"r":"prose","x":"registration is required to run when booting"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6326},"r":"prose","x":"Link the service to run at startup"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6330},"r":"prose","x":"Store the credentials in a file to be used by the systemd service"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6334},"r":"prose","x":"Set the flag to enable the service to run one time"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6335},"r":"prose","x":"The systemd service will remove this file after the registration completes the first time"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6952},"r":"prose","x":"Install build tools and kernel development headers for the image kernel"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6963},"r":"prose","x":"Copy driver source and spec file into the builder stage"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6968},"r":"prose","x":"Build the driver RPM package inside the container context"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6977},"r":"prose","x":"Copy only the generated RPM from the builder stage"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6981},"r":"prose","x":"Install the RPM. The internal %post script automatically triggers 'depmod'."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":7574},"r":"prose","x":"Install Ignition and integration packages"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":7580},"r":"prose","x":"Configure sshd to read Ignition-provided SSH keys"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":8780},"r":"prose","x":"Make /run/containers/0/auth.json (a transient runtime file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":8781},"r":"prose","x":"a symlink to our /usr/lib/container-auth.json (a persistent file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":8926},"r":"prose","x":"Make /run/containers/0/auth.json (a transient runtime file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":8927},"r":"prose","x":"a symlink to our /usr/lib/container-auth.json (a persistent file)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":9306},"r":"prose","x":"with no other matching connections."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":990},"r":"prose","x":"In this example, the custom operating system has its own"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":991},"r":"prose","x":"version scheme."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":992},"r":"prose","x":"The operating system major version is copied"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":993},"r":"prose","x":"and a sub-version of it is added, which represents a point-in-time"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":994},"r":"prose","x":"snapshot of the base OS content."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":995},"r":"prose","x":"This just changes the output of bootc status. A deeper level"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":996},"r":"prose","x":"of customization is available by also changing the contents of /usr/lib/os-release."}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":997},"r":"prose","x":"Define the custom version and release metadata"}
+{"a":{"g":"using_selinux","l":719},"r":"prose","x":"This file controls the state of SELinux on the system."}
+{"a":{"g":"using_selinux","l":721},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
+{"a":{"g":"using_selinux","l":723},"r":"prose","x":"disabled - No SELinux policy is loaded."}
+{"a":{"g":"using_selinux","l":726},"r":"prose","x":"targeted - Targeted processes are protected,"}
+{"a":{"g":"using_selinux","l":727},"r":"prose","x":"mls - Multi Level Security protection."}
+{"a":{"g":"using_selinux","l":771},"r":"prose","x":"This file controls the state of SELinux on the system."}
+{"a":{"g":"using_selinux","l":773},"r":"prose","x":"enforcing - SELinux security policy is enforced."}
+{"a":{"g":"using_selinux","l":775},"r":"prose","x":"disabled - No SELinux policy is loaded."}
+{"a":{"g":"using_selinux","l":778},"r":"prose","x":"targeted - Targeted processes are protected,"}
+{"a":{"g":"using_selinux","l":779},"r":"prose","x":"mls - Multi Level Security protection."}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":827},"r":"prose","x":"/etc/aliases.db might be used by other MTA, make sure nothing"}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":828},"r":"prose","x":"has touched it since our last newaliases call"}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":841},"r":"prose","x":"Check that networking is up."}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":844},"r":"prose","x":"Start daemons."}
+{"a":{"g":"using_the_gnome_desktop_environment","l":1640},"r":"prose","x":"XWindow"}
+{"a":{"g":"working_with_dns_in_identity_management","l":365},"r":"prose","x":"Generated by NetworkManager"}
+{"a":{"g":"working_with_dns_in_identity_management","l":377},"r":"prose","x":"auto-generated by IPA installer"}
+{"a":{"g":"working_with_dns_in_identity_management","l":4557},"r":"prose","x":"Ensure A and AAAA records are present"}
+{"a":{"g":"working_with_dns_in_identity_management","l":4667},"r":"prose","x":"Ensure that dns record is present"}
+{"a":{"g":"working_with_dns_in_identity_management","l":4782},"r":"prose","x":"Ensure that multiple dns records are present"}
+{"a":{"g":"working_with_dns_in_identity_management","l":5025},"r":"prose","x":"Ensure a SRV record is present"}
+{"a":{"g":"10.1_release_notes","l":3298},"r":"unparseable","x":"ipa-server-upgrade"}
+{"a":{"g":"10.2_release_notes","l":1877},"r":"unparseable","x":"rdp [--username <USERNAME>] [--password <PASSWORD>]"}
+{"a":{"g":"automatically_installing_rhel","l":5317},"r":"unparseable","x":"zfcp_cio_free"}
+{"a":{"g":"automatically_installing_rhel","l":5327},"r":"unparseable","x":"zfcpconf.sh"}
+{"a":{"g":"automatically_installing_rhel","l":7081},"r":"unparseable","x":"rdp [--username USERNAME] [--password PASSWORD]"}
+{"a":{"g":"automatically_installing_rhel","l":848},"r":"unparseable","x":"su -"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4787},"r":"unparseable","x":"watchdog-timeout * 2 = msgwait-timeout (set automatically)"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":4788},"r":"unparseable","x":"msgwait-timeout * 1.2 = stonith-timeout"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":5053},"r":"unparseable","x":"watchdog-timeout * 2 = msgwait-timeout (set automatically)"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":5054},"r":"unparseable","x":"msgwait-timeout * 1.2 = stonith-timeout"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9935},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"automating_system_administration_by_using_rhel_system_roles","l":9952},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"building_running_and_managing_containers","l":3971},"r":"unparseable","x":"for f in $(ls); do tar xvf $f; done"}
+{"a":{"g":"building_running_and_managing_containers","l":6099},"r":"unparseable","x":"container-myubi.service"}
+{"a":{"g":"building_running_and_managing_containers","l":6197},"r":"unparseable","x":"container-httpd.service"}
+{"a":{"g":"building_running_and_managing_containers","l":6372},"r":"unparseable","x":"pod-systemd-pod.service"}
+{"a":{"g":"building_running_and_managing_containers","l":6416},"r":"unparseable","x":"container-container0.service"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3225},"r":"unparseable","x":"If you want to use the data stream from the 'scap-security-guide' package"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3270},"r":"unparseable","x":"If your hardening data stream is not part of the 'scap-security-guide' package"}
+{"a":{"g":"composing_a_customized_rhel_system_image","l":3693},"r":"unparseable","x":"cloud-config"}
+{"a":{"g":"composing_installing_and_managing_rhel_for_edge_images","l":1788},"r":"unparseable","x":"for i in \"diun\" \"manufacturer\" \"device-ca\" \"owner\"; do fdo-admin-tool generate-key-and-cert"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":2135},"r":"unparseable","x":"locale"}
+{"a":{"g":"configuring_and_managing_cloud-init_for_rhel","l":960},"r":"unparseable","x":"If you want logs to go to syslog, uncomment the following line."}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1049},"r":"unparseable","x":"for drv in qemu network nodedev nwfilter secret storage interface; do systemctl start"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1057},"r":"unparseable","x":"virt-host-validate"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1130},"r":"unparseable","x":"for drv in qemu network nodedev nwfilter secret storage interface; do systemctl start"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":1139},"r":"unparseable","x":"virt-host-validate"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":16306},"r":"unparseable","x":"gstack 22014"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":17583},"r":"unparseable","x":"pxelinux"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4836},"r":"unparseable","x":"ovs-vsctl set Open_vSwitch . other_config:hw-offload=true"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4842},"r":"unparseable","x":"ovs-vsctl set Open_vSwitch . other_config:max-idle=300000"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4857},"r":"unparseable","x":"ovs-vsctl add-port <bridge_name> enp225s0np0"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4863},"r":"unparseable","x":"ovs-vsctl add-port <bridge_name> enp225s0npf0vf0"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":4908},"r":"unparseable","x":"ifconfig"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":5132},"r":"unparseable","x":"/var/lib/libvirt/shared-images example-source-machine(rw,no_root_squash) example-"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":948},"r":"unparseable","x":"for drv in qemu network nodedev nwfilter secret storage interface; do systemctl start"}
+{"a":{"g":"configuring_and_managing_linux_virtual_machines","l":956},"r":"unparseable","x":"virt-host-validate"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":1428},"r":"unparseable","x":"pvscan"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":6436},"r":"unparseable","x":"pvscan"}
+{"a":{"g":"configuring_and_managing_logical_volumes","l":7649},"r":"unparseable","x":"lvmdump"}
+{"a":{"g":"configuring_and_managing_networking","l":10885},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":11227},"r":"unparseable","x":"setregdomain"}
+{"a":{"g":"configuring_and_managing_networking","l":12608},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":13003},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"configuring_and_managing_networking","l":13021},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"configuring_and_managing_networking","l":13238},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"configuring_and_managing_networking","l":13256},"r":"unparseable","x":"traceroute redhat.com"}
+{"a":{"g":"configuring_and_managing_networking","l":13925},"r":"unparseable","x":"resolvectl"}
+{"a":{"g":"configuring_and_managing_networking","l":14740},"r":"unparseable","x":"pap"}
+{"a":{"g":"configuring_and_managing_networking","l":14744},"r":"unparseable","x":"chap"}
+{"a":{"g":"configuring_and_managing_networking","l":14748},"r":"unparseable","x":"mschap"}
+{"a":{"g":"configuring_and_managing_networking","l":14751},"r":"unparseable","x":"mschap"}
+{"a":{"g":"configuring_and_managing_networking","l":14753},"r":"unparseable","x":"digest"}
+{"a":{"g":"configuring_and_managing_networking","l":1550},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":16692},"r":"unparseable","x":"ibv_devices"}
+{"a":{"g":"configuring_and_managing_networking","l":16722},"r":"unparseable","x":"ibstat mlx5_0"}
+{"a":{"g":"configuring_and_managing_networking","l":3423},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":4420},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":5383},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":9235},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":9710},"r":"unparseable","x":"ping6 2001:db8:1::1"}
+{"a":{"g":"configuring_and_managing_networking","l":9806},"r":"unparseable","x":"nmtui"}
+{"a":{"g":"configuring_and_managing_networking","l":9895},"r":"unparseable","x":"ping6 2001:db8:1::1"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":15822},"r":"unparseable","x":"gstack 22014"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5813},"r":"unparseable","x":"ovs-vsctl set Open_vSwitch . other_config:hw-offload=true"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5818},"r":"unparseable","x":"ovs-vsctl set Open_vSwitch . other_config:max-idle=300000"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5832},"r":"unparseable","x":"ovs-vsctl add-port <bridge_name> enp225s0np0"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5838},"r":"unparseable","x":"ovs-vsctl add-port <bridge_name> enp225s0npf0vf0"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":5883},"r":"unparseable","x":"ifconfig"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":6104},"r":"unparseable","x":"/var/lib/libvirt/shared-images example-source-machine(rw,no_root_squash) example-"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":942},"r":"unparseable","x":"for drv in qemu network nodedev nwfilter secret storage interface; do systemctl start"}
+{"a":{"g":"configuring_and_managing_windows_virtual_machines","l":950},"r":"unparseable","x":"virt-host-validate"}
+{"a":{"g":"configuring_and_using_database_servers","l":1253},"r":"unparseable","x":"galera_new_cluster"}
+{"a":{"g":"configuring_and_using_database_servers","l":1274},"r":"unparseable","x":"galera_new_cluster mariadb@node1"}
+{"a":{"g":"configuring_and_using_database_servers","l":1625},"r":"unparseable","x":"galera_new_cluster"}
+{"a":{"g":"configuring_and_using_database_servers","l":2973},"r":"unparseable","x":"su - postgres"}
+{"a":{"g":"configuring_and_using_database_servers","l":3939},"r":"unparseable","x":"su - postgres -c \"pg_dumpall > /var/lib/pgsql/pgdump_file.sql\""}
+{"a":{"g":"configuring_and_using_database_servers","l":3944},"r":"unparseable","x":"su - postgres -c 'less \"/var/lib/pgsql/pgdump_file.sql\"'"}
+{"a":{"g":"configuring_and_using_database_servers","l":3999},"r":"unparseable","x":"su - postgres -c 'psql -f /tmp/pgdump_file.sql postgres'"}
+{"a":{"g":"configuring_and_using_database_servers","l":4114},"r":"unparseable","x":"su postgres -c 'vacuumdb --all --analyze-in-stages'"}
+{"a":{"g":"configuring_and_using_database_servers","l":4243},"r":"unparseable","x":"su postgres -c 'vacuumdb --all --analyze-in-stages'"}
+{"a":{"g":"configuring_and_using_network_file_services","l":1514},"r":"unparseable","x":"samba-gpupdate"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4309},"r":"unparseable","x":"samba-regedit"}
+{"a":{"g":"configuring_and_using_network_file_services","l":4424},"r":"unparseable","x":"smbstatus"}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":2731},"r":"unparseable","x":"Do not modify this file manually."}
+{"a":{"g":"configuring_authentication_and_authorization_in_rhel","l":719},"r":"unparseable","x":"Do not modify this file manually, use authselect instead. Any user changes will be"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2104},"r":"unparseable","x":"polling_interval     10"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2105},"r":"unparseable","x":"path_selector        \"round-robin 0\""}
+{"a":{"g":"configuring_device_mapper_multipath","l":2106},"r":"unparseable","x":"path_grouping_policy multibus"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2107},"r":"unparseable","x":"uid_attribute       ID_SERIAL"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2109},"r":"unparseable","x":"path_checker          readsector0"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2116},"r":"unparseable","x":"rr_min_io         100"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2117},"r":"unparseable","x":"max_fds            8192"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2118},"r":"unparseable","x":"rr_weight         priorities"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2120},"r":"unparseable","x":"no_path_retry       fail"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2121},"r":"unparseable","x":"user_friendly_names yes"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2640},"r":"unparseable","x":"vendor \"COMPAQ \""}
+{"a":{"g":"configuring_device_mapper_multipath","l":2641},"r":"unparseable","x":"product \"MSA1000        \""}
+{"a":{"g":"configuring_device_mapper_multipath","l":2642},"r":"unparseable","x":"path_grouping_policy multibus"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2643},"r":"unparseable","x":"path_checker tur"}
+{"a":{"g":"configuring_device_mapper_multipath","l":2644},"r":"unparseable","x":"rr_weight priorities"}
+{"a":{"g":"configuring_device_mapper_multipath","l":3686},"r":"unparseable","x":"vgremove vg0"}
+{"a":{"g":"configuring_device_mapper_multipath","l":3967},"r":"unparseable","x":"eh_deadline 300"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":4425},"r":"unparseable","x":"ip6tables-save >/root/ip6tables.dump"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5066},"r":"unparseable","x":"/usr/share/bcc/tools/tcpaccept"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5093},"r":"unparseable","x":"/usr/share/bcc/tools/tcpconnect"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5126},"r":"unparseable","x":"/usr/share/bcc/tools/tcpconnlat"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5158},"r":"unparseable","x":"/usr/share/bcc/tools/tcpdrop"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5237},"r":"unparseable","x":"/usr/share/bcc/tools/tcpretrans"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5271},"r":"unparseable","x":"/usr/share/bcc/tools/tcpstates"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5332},"r":"unparseable","x":"/usr/share/bcc/tools/tcpsubnet 192.0.2.0/24,198.51.100.0/24,0.0.0.0/0"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5361},"r":"unparseable","x":"/usr/share/bcc/tools/tcptop"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5396},"r":"unparseable","x":"/usr/share/bcc/tools/tcptracer"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5423},"r":"unparseable","x":"/usr/share/bcc/tools/solisten"}
+{"a":{"g":"configuring_firewalls_and_packet_filters","l":5454},"r":"unparseable","x":"/usr/share/bcc/tools/softirqs"}
+{"a":{"g":"considerations_in_adopting_rhel_10","l":2310},"r":"unparseable","x":"rdp [--username <USERNAME>] [--password <PASSWORD>]"}
+{"a":{"g":"customizing_anaconda","l":1018},"r":"unparseable","x":"If the given distribution has an EULA & feels the need to"}
+{"a":{"g":"customizing_anaconda","l":1036},"r":"unparseable","x":"If left empty, geolocation does not run."}
+{"a":{"g":"customizing_anaconda","l":2201},"r":"unparseable","x":"add ListColumnContainer to window (main window container)"}
+{"a":{"g":"customizing_anaconda","l":2586},"r":"unparseable","x":"implantisomd5 ../NEWISO.iso"}
+{"a":{"g":"customizing_anaconda","l":770},"r":"unparseable","x":"addon"}
+{"a":{"g":"customizing_anaconda","l":771},"r":"unparseable","x":"optional"}
+{"a":{"g":"customizing_anaconda","l":772},"r":"unparseable","x":"variant"}
+{"a":{"g":"customizing_anaconda","l":851},"r":"unparseable","x":"Do you want to allow imperfect devices (for example, degraded mdraid array devices)?"}
+{"a":{"g":"customizing_anaconda","l":863},"r":"unparseable","x":"If not specified, use whatever Blivet uses by default."}
+{"a":{"g":"customizing_anaconda","l":876},"r":"unparseable","x":"min <MIN_SIZE> The size will grow from MIN_SIZE to MAX_SIZE."}
+{"a":{"g":"customizing_anaconda","l":995},"r":"unparseable","x":"quality <NUMBER> The minimum quality score (see libpwquality)."}
+{"a":{"g":"deduplicating_and_compressing_logical_volumes_on_rhel","l":1765},"r":"unparseable","x":"for pid in $(ps -eo pid,comm | awk '/vdo/ {print $1}');"}
+{"a":{"g":"deploying_and_managing_rhel_on_microsoft_azure","l":1012},"r":"unparseable","x":"sudo sh -c 'echo -e \"[azure-cli]\\nname=Azure"}
+{"a":{"g":"deploying_and_managing_rhel_on_microsoft_azure","l":1582},"r":"unparseable","x":"poweroff"}
+{"a":{"g":"deploying_and_managing_rhel_on_microsoft_azure","l":1646},"r":"unparseable","x":"sh align.sh <example_image_name>.raw"}
+{"a":{"g":"deploying_and_managing_rhel_on_microsoft_azure","l":4320},"r":"unparseable","x":"for vm in $(az vm list-instances --resource-group \"<resource_group>\" --name \"<availability_set>\" --query \"[].name\" -o tsv); do"}
+{"a":{"g":"deploying_web_servers_and_reverse_proxies","l":1872},"r":"unparseable","x":"ktutil"}
+{"a":{"g":"deploying_web_servers_and_reverse_proxies","l":2103},"r":"unparseable","x":"/usr/lib64/squid/negotiate_kerberos_auth_test proxy.ad.example.com"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":3138},"r":"unparseable","x":"sosreport"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":3454},"r":"unparseable","x":"sosreport"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":387},"r":"unparseable","x":"stap-prep"}
+{"a":{"g":"developing_c_and_cpp_applications_in_rhel_10","l":429},"r":"unparseable","x":"stap-prep"}
+{"a":{"g":"installing_identity_management","l":2171},"r":"unparseable","x":"env|grep proxy"}
+{"a":{"g":"installing_identity_management","l":2183},"r":"unparseable","x":"for i in ftp http https; do unset ${i}_proxy; done"}
+{"a":{"g":"installing_identity_management","l":5178},"r":"unparseable","x":"env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null getcert list"}
+{"a":{"g":"installing_identity_management","l":5179},"r":"unparseable","x":"env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/dev/null ipa-client-install"}
+{"a":{"g":"interacting_with_the_command-line_assistant","l":1577},"r":"unparseable","x":"For a https proxy host"}
+{"a":{"g":"interactively_installing_rhel_from_installation_media","l":4435},"r":"unparseable","x":"timedatectl set-time <YYYY-mm-dd HH:MM-SS>"}
+{"a":{"g":"interactively_installing_rhel_from_installation_media","l":4450},"r":"unparseable","x":"timedatectl"}
+{"a":{"g":"interactively_installing_rhel_from_installation_media","l":713},"r":"unparseable","x":"su -"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":6903},"r":"unparseable","x":"timedatectl set-time <YYYY-mm-dd HH:MM-SS>"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":6917},"r":"unparseable","x":"timedatectl"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7464},"r":"unparseable","x":"zfcp_cio_free"}
+{"a":{"g":"interactively_installing_rhel_over_the_network","l":7474},"r":"unparseable","x":"zfcpconf.sh"}
+{"a":{"g":"managing_certificates_in_idm","l":3921},"r":"unparseable","x":"su - <user_name>"}
+{"a":{"g":"managing_certificates_in_idm","l":6597},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":6602},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":6691},"r":"unparseable","x":"ipa-cert-fix"}
+{"a":{"g":"managing_certificates_in_idm","l":6816},"r":"unparseable","x":"ipa-cert-fix"}
+{"a":{"g":"managing_certificates_in_idm","l":6935},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":6991},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":7104},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":7682},"r":"unparseable","x":"ipa-cert-fix"}
+{"a":{"g":"managing_certificates_in_idm","l":7702},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":7735},"r":"unparseable","x":"ipa-cert-fix"}
+{"a":{"g":"managing_certificates_in_idm","l":7740},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_certificates_in_idm","l":7773},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_file_systems","l":5654},"r":"unparseable","x":"pmstore xfs.control.reset 1"}
+{"a":{"g":"managing_file_systems","l":7169},"r":"unparseable","x":"If no schema is set autofs checks each of the schemas"}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":14975},"r":"unparseable","x":"user_1234"}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":17113},"r":"unparseable","x":"ipa-server-upgrade"}
+{"a":{"g":"managing_idm_users_groups_hosts_and_access_control_rules","l":8131},"r":"unparseable","x":"ipa-certupdate"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":1079},"r":"unparseable","x":"grub2-reboot <index|title|id>"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":10896},"r":"unparseable","x":"systemd-cgtop"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":11878},"r":"unparseable","x":"/usr/share/bcc/tools/execsnoop"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":11973},"r":"unparseable","x":"/usr/share/bcc/tools/biotop 30"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":12042},"r":"unparseable","x":"/usr/share/bcc/tools/xfsslower 1"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5202},"r":"unparseable","x":"lsmem"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5397},"r":"unparseable","x":"lsmem"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":5747},"r":"unparseable","x":"grub2-pc"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9108},"r":"unparseable","x":"insmod my_module.ko"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9797},"r":"unparseable","x":"ima-appraise-file </path/to/file>"}
+{"a":{"g":"managing_monitoring_and_updating_the_kernel","l":9962},"r":"unparseable","x":"For a list of these filesystems, see"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1214},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1271},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1417},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":1709},"r":"unparseable","x":"unbound-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":2608},"r":"unparseable","x":"radvdump"}
+{"a":{"g":"managing_networking_infrastructure_services","l":260},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":399},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":493},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":664},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_networking_infrastructure_services","l":827},"r":"unparseable","x":"named-checkconf"}
+{"a":{"g":"managing_smart_card_authentication","l":1743},"r":"unparseable","x":"su - <user_name>"}
+{"a":{"g":"managing_smart_card_authentication","l":3514},"r":"unparseable","x":"eval `ssh-agent`"}
+{"a":{"g":"managing_smart_card_authentication","l":3922},"r":"unparseable","x":"su - idmuser1 -c ‘su - idmuser1 -c whoami'"}
+{"a":{"g":"managing_smart_card_authentication","l":3933},"r":"unparseable","x":"su - idmuser1 -c ‘su - idmuser1 -c whoami'"}
+{"a":{"g":"managing_storage_devices","l":2146},"r":"unparseable","x":"targetcli"}
+{"a":{"g":"managing_storage_devices","l":4419},"r":"unparseable","x":"/dev/sda4 none swap defaults 0 0"}
+{"a":{"g":"managing_storage_devices","l":8325},"r":"unparseable","x":"dmidecode"}
+{"a":{"g":"managing_storage_devices","l":8340},"r":"unparseable","x":"dmidecode"}
+{"a":{"g":"managing_storage_devices","l":8779},"r":"unparseable","x":"vgremove vg0"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2721},"r":"unparseable","x":"DO NOT REMOVE OR EDIT THE FOLLOWING LINE"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":2748},"r":"unparseable","x":"for i in /var/log/pcp/pmlogger/rhel*/*.0; do pmdumplog -L $i; done"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":3536},"r":"unparseable","x":"su valkey -s /bin/bash -c \\"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":4469},"r":"unparseable","x":"diskdevstat"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":4482},"r":"unparseable","x":"netdevstat"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":4586},"r":"unparseable","x":"turbostat"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6460},"r":"unparseable","x":"xdg-open flamegraph.html"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6508},"r":"unparseable","x":"xdg-open flamegraph.html"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":6978},"r":"unparseable","x":"/usr/share/bcc/tools/execsnoop"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":7081},"r":"unparseable","x":"/usr/share/bcc/tools/biotop 30"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":7148},"r":"unparseable","x":"/usr/share/bcc/tools/xfsslower 1"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":7372},"r":"unparseable","x":"lstopo"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":7388},"r":"unparseable","x":"lstopo-no-graphics"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":7438},"r":"unparseable","x":"for i in pgrep rcu[^c] ; do taskset -pc 0 $i ; done"}
+{"a":{"g":"monitoring_and_managing_system_status_and_performance","l":8217},"r":"unparseable","x":"stap-prep"}
+{"a":{"g":"packaging_and_distributing_software","l":4288},"r":"unparseable","x":"If there were programs installed:"}
+{"a":{"g":"packaging_and_distributing_software","l":4292},"r":"unparseable","x":"If there are C extensions, copy them to the extdir."}
+{"a":{"g":"securing_networks","l":3575},"r":"unparseable","x":"for kernel in `rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH}\\n'`; do"}
+{"a":{"g":"security_hardening","l":7269},"r":"unparseable","x":"su <username> -"}
+{"a":{"g":"security_hardening","l":7273},"r":"unparseable","x":"sudo <command>"}
+{"a":{"g":"security_hardening","l":7702},"r":"unparseable","x":"tang-show-keys 7500"}
+{"a":{"g":"security_hardening","l":7790},"r":"unparseable","x":"tang-show-keys 7500"}
+{"a":{"g":"security_hardening","l":9488},"r":"unparseable","x":"fg"}
+{"a":{"g":"security_hardening","l":9662},"r":"unparseable","x":"su example.user"}
+{"a":{"g":"upgrading_from_rhel_9_to_rhel_10","l":2864},"r":"unparseable","x":"sosreport"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3866},"r":"unparseable","x":"system-reinstall-bootc <image>"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":3927},"r":"unparseable","x":"/etc/containers/registries.conf.d/local-registry.conf"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4419},"r":"unparseable","x":"If no repositories are defined, the default build will be used. You can modify the scope of"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":4498},"r":"unparseable","x":"If no repositories are defined, the default build will be used. You can modify the scope of"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5821},"r":"unparseable","x":"1. Check for existence of /etc/afs (ConditionPathExists)"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5822},"r":"unparseable","x":"2. Use MountFlags=slave for proper mount propagation"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5823},"r":"unparseable","x":"3. Set LIBMOUNT_FORCE_MOUNT2=always for mount command compatibility"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":5824},"r":"unparseable","x":"4. Remount root as read-write and create /afs directory when triggered"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6539},"r":"unparseable","x":"/usr/lib/bootc/kargs.d/10-example.toml"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":6546},"r":"unparseable","x":"/usr/lib/bootc/kargs.d/00-console.toml"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":9305},"r":"unparseable","x":"Do not do automatic (DHCP or SLAAC) configuration on ethernet devices"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":9400},"r":"unparseable","x":"/etc/example-proxy.env"}
+{"a":{"g":"using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems","l":9418},"r":"unparseable","x":"/usr/lib/systemd/system/bootc-fetch-apply-updates.service.d/99-proxy.conf"}
+{"a":{"g":"using_selinux","l":3229},"r":"unparseable","x":"genhomedircon"}
+{"a":{"g":"using_systemd_unit_files_to_customize_and_optimize_your_system","l":1138},"r":"unparseable","x":"systemd-delta"}
+{"a":{"g":"using_the_gnome_desktop_environment","l":1308},"r":"unparseable","x":"su - <username> -c \"gsettings set org.gnome.desktop.input-sources xkb-options \\\""}
+{"a":{"g":"using_the_gnome_desktop_environment","l":1336},"r":"unparseable","x":"su - <username> -c \"gsettings get org.gnome.desktop.input-sources xkb-options\""}
