@@ -1218,8 +1218,10 @@ brought in Q19, the escaper property gate from Al Kowalski's Gate 3 review):
   and the option that counts is the one bound to a value or a rich rule, not a decoration like
   `--permanent` that half the firewall-cmd man page mentions.
 
-**MCR-SEC-020 is ACCEPTED WITH A DATE** (2026-09-17) in `docs/POAM.md` alongside the `chronyd -Q`
-note and a re-confirmed MCR-SEC-014; closing the shortfall belongs to CR-T-09/10.
+**MCR-SEC-020 was retired on 2026-09-20.** The named wrapped-term defect is closed:
+`--add-rich-rule` is present in the RHEL 8, 9 and 10 dictionaries. Q20 remains active over all
+70 captured tool/release pairs. The retirement record names its authority and evidence, and its
+test proves both the post-expiry success path and the missing-evidence failure path.
 
 #### MCR-SEC-021 — condition E6 — the harness gets a validity oracle
 

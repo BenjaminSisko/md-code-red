@@ -201,6 +201,9 @@ MARKERS = [
 # ---------------------------------------------------------------------------
 INNERHTML_ALLOWLIST = {
     'parts.join("")': "renderStatusBar(): every parts.push() argument is audited by this same gate",
+    'pipelineBlastBadge(d.blast)': "renderPipelinePanel(): the pure helper accepts only four closed "
+                                    "rating names and escapes both attribute and text; PF6 executes "
+                                    "every state plus an unknown-state negative control",
 }
 AUDITED_PUSH_TARGETS = ["parts"]         # <name>.push(<expr>)
 
@@ -3365,6 +3368,14 @@ def coverage_baseline_expiry_failures(baseline, today=None):
     decided, in writing, to extend it.
     """
     import datetime
+    if baseline.get("_status") == "retired":
+        missing = [key for key in ("_retired_on", "_retired_by", "_retirement_evidence")
+                   if not baseline.get(key)]
+        if missing:
+            return ["the retired flag-coverage baseline is missing %s; retirement without named "
+                    "authority and evidence is a silent extension (MCR-SEC-020)"
+                    % ", ".join(missing)]
+        return []
     owner = baseline.get("_retire_owner")
     by = baseline.get("_retire_by")
     if not owner or not by:
@@ -3475,10 +3486,13 @@ def gate_q20(ctx):
     if measured == 0:
         f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
     else:
+        lifecycle = ("ratchet retired %s by %s" % (baseline.get("_retired_on"),
+                     baseline.get("_retired_by"))) if baseline.get("_status") == "retired" else (
+                     "ratchet retires %s, owner %s" % (baseline.get("_retire_by"),
+                     baseline.get("_retire_owner")))
         d.append("flag-dictionary coverage measured for %d tool/release pairs against the baseline "
-                 "accepted on %s (%s); ratchet retires %s, owner %s"
-                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"),
-                    baseline.get("_retire_by"), baseline.get("_retire_owner")))
+                 "accepted on %s (%s); %s"
+                 % (measured, baseline.get("_accepted_on"), baseline.get("_ticket"), lifecycle))
     for line in stale:
         d.append("coverage IMPROVED beyond the baseline — tighten it: " + line)
 

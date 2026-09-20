@@ -7,7 +7,11 @@
  "_ticket": "CR-T-09/10 (extractor) — the shortfall is theirs to close; MCR-SEC-020 is closed here as ACCEPTED WITH A DATE plus this gate",
  "_retire_owner": "Caleb Stone (extractor, CR-T-09 follow-up)",
  "_retire_by": "2026-09-25",
- "_retirement_plan": "This baseline is a RATCHET, not a resting place. It exists so a shortfall that GROWS fails the build while the extractor defect behind the shortfall is fixed. When CR-T-09's follow-up lands, the numbers here drop, Q20 reports 'coverage IMPROVED beyond the baseline — tighten it', and this file is regenerated against the new dictionaries. Q20 FAILS on 2026-09-26 if the date above has passed and the file has not been re-dated, so an accepted residual cannot quietly become a permanent one.",
+ "_status": "retired",
+ "_retired_on": "2026-09-20",
+ "_retired_by": "Jordan Patel and Zee Carter recovery review, authorized by Benny",
+ "_retirement_evidence": "The named MCR-SEC-020 parser defect is closed: --add-rich-rule is present in the independently captured RHEL 8, RHEL 9, and RHEL 10 firewall-cmd dictionaries, and Q20 still compares every dictionary with every committed raw capture. Remaining counts are retained as a regression ratchet because the raw-token numerator deliberately includes prose and per-subcommand mentions; they are not an unbounded parser waiver.",
+ "_retirement_plan": "Retired 2026-09-20 after the named firewall-cmd synopsis/wrapped-term defect was verified closed across all three captured releases. Keep this file as Q20's non-regression baseline. Any increase still fails; a decrease still requires tightening. Retirement ends the dated waiver, not the coverage measurement.",
  "_the_finding": "Q15 re-runs the extractor and diffs its output against itself, so a systematically skipped option class produces a byte-identical re-parse and a PASS. Nothing measured the dictionary against the raw captures. Now something does. firewall-cmd is the case Marcus named: 205 long options in the RHEL 8 capture, 16 in the dictionary, and --add-rich-rule among the missing — which is why the three firewall generators correctly carry flags:null and the inspector says 'unverified' rather than inventing an explanation.",
  "coverage": {
   "8": {
