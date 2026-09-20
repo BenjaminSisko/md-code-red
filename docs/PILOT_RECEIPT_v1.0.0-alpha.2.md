@@ -25,10 +25,11 @@ fields after opening the exact artifact on the pilot host.
 | Automated post-build check | Fresh exact-tag run on 2026-09-20: Q1-Q25 + JS PASS; 333 unit tests PASS; 101,297 hostile checks PASS |
 | Content sample | PASS: deterministic 2/18 verified receipts (10%, rounded up), fresh read-only reruns on Defiant RHEL 8 and Saratoga RHEL 10; 0 red-blast receipts |
 | Known limitations | `docs/CHANGELOG.md`, v1.0.0-alpha.2; `docs/QA_REPORT_v1.0.0-alpha.2.md` |
-| Rollback artifact | `releases/v1.0.0-alpha.1/md-code-red_v1.0.0-alpha.1.html` |
-| Receiving host census ID | **Pending receiving admin** |
-| Deployed path | **Pending receiving admin** |
-| Deployed by / on | **Pending receiving admin** |
+| Rollback artifact | Repository: `releases/v1.0.0-alpha.1/md-code-red_v1.0.0-alpha.1.html`; Defiant staging: `/home/adm-linux/MD-CODE-RED/v1.0.0-alpha.1/md-code-red_v1.0.0-alpha.1.html`, SHA-256 `65de40be58477d3bb1b781d7e2188b2d78329616732971a8bf37fbc7e7b2c665` |
+| Receiving host census ID | Defiant / `01 Devices/Defiant RHEL 8.md` |
+| Deployed path | `/home/adm-linux/MD-CODE-RED/v1.0.0-alpha.2/md-code-red_v1.0.0-alpha.2.html` (read-only staging; not yet browser-opened) |
+| Deployment staging readback | PASS on 2026-09-20: file is 8,797,475 bytes, mode `0440`, owner `adm-linux:adm-linux`; sidecar check passed; provenance reports the exact tag, artifact SHA-256, and fingerprint |
+| Deployed by / on | Staged by `MCR-REC-20260920-09` task on 2026-09-20; **named human operator/time acknowledgment pending** |
 | Independent verifier | **Pending receiving admin** |
 | Browser/About/network check | **Pending: local `file://` automation was blocked by provider policy; static Q1/Q2 checks are not a visual About readback or live network receipt** |
 | Approved matrix readiness | **Blocked: Defiant has Firefox ESR 140.14.0; no Firefox/Chromium package was observed on Saratoga or `rhel9-stig-test`; no RHEL Chromium cell or approved Windows jump-box host is named** |
@@ -44,6 +45,8 @@ observed live. The browser provider rejected the local URL and explicitly barred
 alternate-surface workarounds; no bypass was attempted.
 
 **Pilot verdict: HOLD.** The tagged artifact has a blocking keyboard defect and
-the approved host/browser matrix is not ready. Leave receiving host, deployment,
-independent verifier, browser/network check, and operational acceptance fields
-pending until actual named-human evidence exists.
+the approved host/browser matrix is not ready. The exact bytes are staged
+read-only on Defiant and independently re-hashed, but the file has not been opened
+in Firefox. Leave named human operator/time, independent verifier,
+browser/network check, and operational acceptance pending until actual evidence
+exists.

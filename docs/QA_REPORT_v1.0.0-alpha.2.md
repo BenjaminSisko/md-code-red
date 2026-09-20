@@ -30,6 +30,7 @@ binds only rails 1 through 5.
 | Browser-facing structure | PASS WITH LIMITATION | JavaScript syntax plus 15 pipeline UI wiring tests and 14 negative controls; these did not catch the six-rail/five-key binding defect |
 | Interactive `file://` walkthrough | BLOCKED BY TOOL POLICY | Browser provider rejected the local URL and explicitly prohibited alternate-browser or indirect workarounds; no bypass attempted |
 | Approved host/browser matrix | NOT READY | Defiant has Firefox ESR 140.14.0; Saratoga and `rhel9-stig-test` have no Firefox/Chromium package; no RHEL Chromium cell or approved Windows jump-box host exists |
+| Defiant deployment readback | PASS WITH LIMITATION | Released artifact, sidecar, provenance, and alpha.1 rollback are staged read-only under `/home/adm-linux/MD-CODE-RED/`; independent SHA-256/provenance readback passed, but the file has not been opened in Firefox |
 | About-panel visual readback | NOT EXECUTED | Static value checks passed, but no approved-host browser displayed the panel |
 | Live zero-network observation | NOT EXECUTED | Q2 static air-gap gate passed; this is not represented as a live browser network receipt |
 | Keyboard-only acceptance | FAIL | Six rail buttons ship, but `KEYMAP` accepts only `1`-`5`; About's `Ctrl+Alt+6` tooltip has no matching binding |
@@ -76,5 +77,7 @@ or human operational-acceptance receipt.
 **Exact-revision verdict:** automated acceptance and sampled content validation
 PASS for the released bytes; browser/pilot promotion is **HOLD**. Do not claim the
 About-panel visual readback, live zero-network result, full browser matrix,
-keyboard-only acceptance, deployment, or named human operational acceptance on
-this evidence.
+keyboard-only acceptance, operational deployment acceptance, or named human
+operational acceptance on this evidence. The artifact has since been staged
+read-only on Defiant and its deployed bytes were independently re-hashed; staging
+is not browser acceptance or operational deployment acceptance.
