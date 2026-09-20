@@ -1,12 +1,14 @@
 ---
 type: release-report
-status: candidate
+status: released
 last_verified: 2026-09-20
 ---
 
 # Release Report -- v1.0.0-alpha.2
 
-**Candidate source revision:** `9d7d08a8fe50c10d3f87ca7ecbd4499aef05565a`
+**Reviewed source revision:** `9d7d08a8fe50c10d3f87ca7ecbd4499aef05565a`
+
+**Tagged merge revision:** `8186e104fdc3ebbe08a037442787ae5d2c7b01d7`
 
 **Artifact:** `dist/md-code-red_v1.0.0-alpha.2.html`
 
