@@ -90,30 +90,25 @@ fix is not browser acceptance.
 
 ## Required named-human browser procedure
 
-These steps are intentionally unclaimed. A named operator and Riley Park must
-perform and sign them in an authorized Defiant xrdp session after the blocking
-keyboard defect has an accepted disposition and the exact artifact under test is
-confirmed.
+These steps are intentionally unclaimed and are **not executable against the
+historical alpha.2 bytes while this HOLD remains**. A named operator and Riley
+Park may perform and sign them in an authorized Defiant xrdp session only after
+a separately versioned corrected release is published, integrity-verified and
+deployed. The sole alternative is an explicit, named product-authority decision
+accepting the alpha.2 keyboard deviation before use.
 
 1. Record operator name, Riley witness, start time and end time. Log in through
    the existing Defiant xrdp path; do not create a new listener or bypass.
-2. In a terminal, run:
-
-   ```bash
-   cd /home/adm-linux/MD-CODE-RED/v1.0.0-alpha.2
-   sha256sum -c md-code-red_v1.0.0-alpha.2.html.sha256
-   ```
-
-   Stop if the result is not `OK`.
-3. Open the exact local file in the installed browser:
-
-   ```bash
-   firefox --new-window 'file:///home/adm-linux/MD-CODE-RED/v1.0.0-alpha.2/md-code-red_v1.0.0-alpha.2.html'
-   ```
-
-4. Open About with the rail control and with `?`. Read back version
-   `v1.0.0-alpha.2` and fingerprint
-   `f6ea94b2256a5c4645bfef8e2d12d97d8b9b7f7ff9f9816795d3b2363a062e83`.
+2. Amend this receipt with the corrected release's exact version, deployed
+   path, sidecar, SHA-256 and About fingerprint. Do not substitute a source
+   commit, working-tree build or the historical alpha.2 path.
+3. In a terminal, change into that corrected version directory and run its
+   exact sidecar check. Stop unless `sha256sum -c` returns `OK` for the artifact
+   named by the amended receipt.
+4. Open that exact corrected local `file://` path in Firefox. Open About with
+   the sixth rail control and with `Ctrl+Alt+6`; `?` is obsolete and must not be
+   used as the acceptance shortcut. Read back the corrected release version
+   and fingerprint and compare both with the amended receipt.
 5. Open Firefox Developer Tools Network, clear it, reload the local file, and
    exercise the operator workflow. Record every request. A pass requires no
    HTTP(S), fetch/XHR, WebSocket, beacon or other remote application request;
@@ -122,8 +117,10 @@ confirmed.
    verified entry, inspect its verification/undo and STIG evidence, compose and
    copy one green command without executing it, exercise keyboard navigation,
    and test every displayed rail shortcut. Capture console errors and defects.
-7. Do not sign operational acceptance while `MCR-A2-KEY-001` remains blocking or
-   if version, fingerprint, network, console, operator or witness evidence fails.
+7. Do not sign operational acceptance for the historical alpha.2 artifact while
+   `MCR-A2-KEY-001` remains blocking. For the separately released corrected
+   artifact, do not sign if version, fingerprint, network, console, operator,
+   shortcut or witness evidence fails.
 
 ## Rollback procedure and verified rollback artifact
 
