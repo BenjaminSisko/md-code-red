@@ -74,16 +74,30 @@ class ProvenanceManifestTests(unittest.TestCase):
 
         manifest_path = os.path.join(
             DIST, os.path.basename(artifact).replace(".html", ".provenance.json"))
-        proc = subprocess.run([sys.executable, SCRIPT],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
-        cls.rc = proc.returncode
-        cls.stderr = proc.stderr.decode("utf-8", "replace")
         cls.manifest_path = manifest_path
+        original_bytes = None
         if os.path.exists(manifest_path):
-            with open(manifest_path, encoding="utf-8") as f:
-                cls.manifest = json.load(f)
-        else:
-            cls.manifest = None
+            with open(manifest_path, "rb") as f:
+                original_bytes = f.read()
+        try:
+            proc = subprocess.run([sys.executable, SCRIPT],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
+            cls.rc = proc.returncode
+            cls.stderr = proc.stderr.decode("utf-8", "replace")
+            if os.path.exists(manifest_path):
+                with open(manifest_path, encoding="utf-8") as f:
+                    cls.manifest = json.load(f)
+            else:
+                cls.manifest = None
+        finally:
+            # Running verification must never replace a release manifest's real
+            # commit with TAG_COMMIT_PLACEHOLDER. Preserve the candidate bytes
+            # exactly, including when an assertion later fails.
+            if original_bytes is not None:
+                with open(manifest_path, "wb") as f:
+                    f.write(original_bytes)
+            elif os.path.exists(manifest_path):
+                os.unlink(manifest_path)
 
     def test_script_succeeds_and_writes_the_manifest(self):
         self.assertEqual(self.rc, 0, self.stderr)
