@@ -56,6 +56,8 @@ caught MCR-SEC-008).
 """
 import os
 import re
+import json
+import subprocess
 import sys
 import unittest
 
@@ -277,9 +279,13 @@ def audit_every_rating_has_a_badge(src):
         f.append("'unrated' is not among the ratings the assembler produces. PL4 is the rule that "
                  "an unclassified write is never green; without that rating it cannot be kept")
     panel = body(src, "renderPipelinePanel")
-    if 'b-"+escapeAttr(d.blast)' not in panel.replace(" ", ""):
-        f.append("the panel does not badge a stage with the rating validatePipeline() gave it, so "
-                 "a redirect stage's rating is not shown where the operator composes it")
+    if "pipelineBlastBadge(d.blast)" not in panel.replace(" ", ""):
+        f.append("the panel does not pass the rating validatePipeline() gave it through the "
+                 "executable badge renderer")
+    badge = body(src, "pipelineBlastBadge")
+    for r in sorted(ratings):
+        if '"%s"' % r not in badge:
+            f.append("pipelineBlastBadge() cannot emit the '%s' state" % r)
     return f
 
 
@@ -324,6 +330,23 @@ class ThePanelAsShipped(unittest.TestCase):
         for name, fn in AUDITS:
             with self.subTest(audit=name):
                 self.assertEqual(fn(SRC), [], "%s: %s" % (name, fn(SRC)))
+
+    def test_every_security_badge_state_executes_and_has_css(self):
+        """PF6: execute the shipped JS renderer for every security state."""
+        program = "\n".join([
+            body(SRC, "esc"), body(SRC, "escapeAttr"), body(SRC, "inList"),
+            body(SRC, "pipelineBlastBadge"),
+            "console.log(JSON.stringify(['green','yellow','red','unrated','bogus'].map(pipelineBlastBadge)));",
+        ])
+        proc = subprocess.run(["node", "-e", program], cwd=REPO, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        rendered = json.loads(proc.stdout)
+        for rating, markup in zip(("green", "yellow", "red", "unrated"), rendered[:4]):
+            with self.subTest(rating=rating):
+                self.assertEqual('<span class="sbadge b-%s">%s</span>' % (rating, rating), markup)
+                self.assertIn(".sbadge.b-%s{" % rating, SRC.replace(" ", ""))
+        self.assertEqual("", rendered[4], "an unknown security state must fail closed")
 
 
 class TheAuditsAreShownToFail(unittest.TestCase):
@@ -418,8 +441,7 @@ class TheAuditsAreShownToFail(unittest.TestCase):
     def test_a_panel_that_drops_the_stage_badge_is_caught(self):
         panel = body(SRC, "renderPipelinePanel")
         bad = SRC.replace(panel, panel.replace(
-            'class=\\"sbadge b-"+escapeAttr(d.blast)+"\\">',
-            'class=\\"sbadge\\">', 1))
+            'pipelineBlastBadge(d.blast)', '""', 1))
         self.assertNotEqual(bad, SRC)
         self.assertCatches(audit_every_rating_has_a_badge, bad,
                            "the panel stopped badging a stage with its rating")

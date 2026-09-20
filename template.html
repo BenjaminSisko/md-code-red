@@ -1728,14 +1728,30 @@ function isComposableSpec(spec){
    named. The producer test reads BARE words only, so a user value of -print0
    (already impossible: validateField refuses a leading dash on every type)
    could not satisfy it even if it existed. */
-var NUL_PRODUCERS={find:["-print0"],grep:["-Z","--null","-z"],
-                   egrep:["-Z","--null","-z"],fgrep:["-Z","--null","-z"]};
+var NUL_PRODUCERS={grep:["--null-data","-z"],
+                   egrep:["--null-data","-z"],fgrep:["--null-data","-z"]};
+var FIND_NON_NUL_ACTIONS=["-print","-printf","-fprintf","-fprint","-fprint0","-ls","-fls",
+                          "-exec","-execdir","-ok","-okdir"];
 function producesNulDelimited(command){
   var base=invokedBinary(command);
   if(base===null) return false;
-  if(!Object.prototype.hasOwnProperty.call(NUL_PRODUCERS,base)) return false;
-  var toks=NUL_PRODUCERS[base],words=commandWords(command);
+  var words=commandWords(command);
   if(words===null) return false;
+  if(base==="find"){
+    var seen=0;
+    for(var f=1;f<words.length;f++){
+      if(words[f].quoted) continue;
+      if(words[f].text==="-print0"){ seen++; continue; }
+      /* PIPE-003: an OR/comma makes the NUL action conditional, and another
+         output/exec action can mix a second framing into stdout. Presence of
+         -print0 is therefore insufficient; the stream must be NUL-only. */
+      if(words[f].text==="-o"||words[f].text==="-or"||words[f].text===","||
+         inList(FIND_NON_NUL_ACTIONS,words[f].text)) return false;
+    }
+    return seen===1;
+  }
+  if(!Object.prototype.hasOwnProperty.call(NUL_PRODUCERS,base)) return false;
+  var toks=NUL_PRODUCERS[base];
   for(var i=1;i<words.length;i++){
     if(!words[i].quoted && inList(toks,words[i].text)) return true;
   }
@@ -1853,6 +1869,10 @@ function isExecutionSink(target){
    whole-pipeline projection below feeds it. */
 function redirectTargetBlast(target){
   var t=lexicalPath(target),i;                  /* PIPE-002: collapse first, classify after */
+  /* PIPE-F1: these exact character-device aliases are approved output sinks.
+     The exception is exact: /dev/zero, disks, descendants and look-alikes
+     continue through the protected /dev classification below. */
+  if(inList(["/dev/null","/dev/stdout","/dev/stderr","/dev/fd/1","/dev/fd/2"],t)) return "green";
   for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
   for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){
     if(!underDir(t,PIPE_SCRATCH_DIRS[i])) continue;
@@ -3747,6 +3767,12 @@ function pipelineSetField(i,field,value){
 /* PL6: the panel names the stage that is incomplete, and only that stage.
    validatePipeline() is the assembler's own decision, per stage, so what this
    renders can never disagree with what assemblePipeline() did. */
+/* PF6: a pure renderer gives every security rating one executable path.  It
+   fails closed on an unknown value instead of manufacturing an unstyled class. */
+function pipelineBlastBadge(blast){
+  if(!inList(["green","yellow","red","unrated"],blast)) return "";
+  return "<span class=\"sbadge b-"+escapeAttr(blast)+"\">"+esc(blast)+"</span>";
+}
 function renderPipelinePanel(){
   var target=el("pipeline-panel");
   if(!target) return;
@@ -3791,9 +3817,7 @@ function renderPipelinePanel(){
     html+="<div class=\""+(d.ok?"stagerow":"stagerow bad")+"\">";
     html+="<div class=\"stagehead\"><span class=\"stageno\">Stage "+esc(String(i+1))+
           (i===STATE.pipelineEditing?" — editing":"")+"</span>";
-    if(d.blast){
-      html+="<span class=\"sbadge b-"+escapeAttr(d.blast)+"\">"+esc(d.blast)+"</span>";
-    }
+    html+=pipelineBlastBadge(d.blast);
     html+="</div>";
     if(i>0){
       html+="<div class=\"stageops\"><label for=\"pipeop-"+escapeAttr(String(i))+"\">joined by</label>";
@@ -3831,7 +3855,8 @@ function renderPipelinePanel(){
         html+="<label><input type=\"checkbox\" data-pipe-field=\"nul\" data-pipe-index=\""+
               escapeAttr(String(i))+"\""+(row.xargs.nul?" checked":"")+"> -0 (NUL-delimited input)</label>";
         html+="<label><input type=\"checkbox\" data-pipe-field=\"replace\" data-pipe-index=\""+
-              escapeAttr(String(i))+"\""+(row.xargs.replace?" checked":"")+"> -I (one at a time)</label>";
+              escapeAttr(String(i))+"\""+(row.xargs.replace?" checked":"")+
+              "> -I (append one {} argument to the child command)</label>";
         html+="<label for=\"pipen-"+escapeAttr(String(i))+"\">-n</label>";
         html+="<input type=\"text\" id=\"pipen-"+escapeAttr(String(i))+"\" data-pipe-field=\"maxargs\" "+
               "data-pipe-index=\""+escapeAttr(String(i))+"\" maxlength=\"10\" placeholder=\"per run\" "+
