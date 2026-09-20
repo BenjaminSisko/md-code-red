@@ -55,6 +55,15 @@ in Firefox. Leave named human operator/time, Riley Park's human witness,
 browser/network check, and operational acceptance pending until actual evidence
 exists.
 
+Post-deployment source update, 2026-09-20 09:11 EDT: main commit
+`46507926500ea92aa8904c6a9d69698e2d3ba705` merges the six-rail keyboard source
+fix for `MCR-A2-KEY-001`. It does not retag, rebuild or replace the deployed
+alpha.2 artifact; the alpha.2 hash and defect disposition above are unchanged.
+Jordan's receipt lane records alpha.3 preparation in a separate task. The
+attended Defiant session must use separately released corrected bytes unless a
+named product authority explicitly accepts the alpha.2 deviation. A source-only
+fix is not browser acceptance.
+
 ## Exact deployment procedure executed
 
 1. Confirmed the code repository was at post-tag provenance revision
@@ -152,4 +161,5 @@ Its provenance manifest records content fingerprint
 | Reviewer state | Riley-accountable exact-revision verdict **HOLD**; deployed-byte readback complete; Riley Park human browser witness and operator signature pending |
 | Deployment state | Exact files deployed read-only on approved Defiant host; browser opening, zero-network observation and named human operational acceptance pending |
 | Defects | Blocking `MCR-A2-KEY-001`: About advertises a sixth rail shortcut that the shipped key map does not bind; approved browser matrix gaps remain |
+| Post-deployment source state | Main `46507926500ea92aa8904c6a9d69698e2d3ba705` contains the source fix, but no replacement release/tag has changed the deployed alpha.2 bytes; alpha.3 preparation is separately tracked |
 | Forecast impact | File deployment completed on 2026-09-20, ahead of the 2026-09-28 evidence target. Overall receipt remains AMBER/at risk because MCR-06 is HOLD and the keyboard defect plus human browser/witness gates are open. Pilot training/adoption cannot start from this receipt. |
