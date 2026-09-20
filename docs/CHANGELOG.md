@@ -2,6 +2,26 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased
+
+### Fixed -- MCR-A2-KEY-001 six-rail keyboard navigation
+
+- The single `KEYMAP` rail-jump binding now accepts `Ctrl+Alt+1` through
+  `Ctrl+Alt+6`, matching all six rendered rail buttons: Command Builder, STIG
+  and Evidence Search, Ansible Generator, Favorites and Recent, Reference
+  Commands, and About. `Ctrl+Alt+6` now selects and focuses About as its button
+  title advertises.
+- `docs/USER_GUIDE.md` and the README now use that same explicit six-item
+  mapping; Reference remains `Ctrl+Alt+5` and About is `Ctrl+Alt+6`.
+- `tests/test_rail_keyboard.js` executes the shipped `KEYMAP`, `railAt()` and
+  modifier matcher against every rendered rail. Its unittest wrapper also
+  requires one unique advertised/runtime binding per button and keeps the user
+  guide's mapping in lockstep with the UI.
+- Release impact: the historical `v1.0.0-alpha.2` tag and released files remain
+  unchanged as evidence of what shipped. This correction should enter a new
+  alpha candidate and receive fresh exact-revision automation plus browser
+  acceptance; it must not replace or retag alpha.2.
+
 ## v1.0.0-alpha.2 - 2026-09-20
 
 Recovery release built from the current main line. It preserves alpha.1 under

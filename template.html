@@ -5315,8 +5315,8 @@ var KEYMAP=[
    run:function(){ pipelineAdd(); }},
   {id:"pipeline-clear",keys:["Backspace"],mods:"ctrlShift",whenTyping:false,
    doc:"Clear the pipeline",run:function(){ pipelineClear(); }},
-  {id:"rail-jump",keys:["1","2","3","4","5"],mods:"ctrlAlt",whenTyping:true,
-   doc:"Jump to rail 1-5",run:function(ev){ railAt(parseInt(ev.key,10)); }}
+  {id:"rail-jump",keys:["1","2","3","4","5","6"],mods:"ctrlAlt",whenTyping:true,
+   doc:"Jump to rail 1-6",run:function(ev){ railAt(parseInt(ev.key,10)); }}
 ];
 function modsMatch(rule,ev){
   var ctrl=!!ev.ctrlKey,meta=!!ev.metaKey,shift=!!ev.shiftKey,alt=!!ev.altKey;
