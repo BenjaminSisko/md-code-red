@@ -10,11 +10,18 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.2 (recovery alpha, lab-only, unsigned -- hardened pipeline composer, refreshed three-family reference corpus, continuous Q1-Q25 gates, and evidence quote export)
+**Current version:** v1.0.0-alpha.3 (correction alpha, lab-only, unsigned -- restores the advertised six-rail keyboard contract while preserving the alpha.2 content corpus)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-20
 
 ## Recent changes
+
+- **2026-09-20** -- **v1.0.0-alpha.3 correction candidate.** Closes
+  MCR-A2-KEY-001 by binding `Ctrl+Alt+1` through `Ctrl+Alt+6` to all six
+  rendered activity rails, including About, and adds an executable
+  rail/shortcut/documentation contract. The historical alpha.2 tag and release
+  bytes remain immutable; its artifact set is archived byte-for-byte under
+  `releases/v1.0.0-alpha.2/` before this candidate is built.
 
 - **2026-09-20** -- **v1.0.0-alpha.2 recovery candidate.** Closes PIPE-003,
   PIPE-004, PIPE-F1, and PF6; retires the time-bounded MCR-SEC-020/Q20 waiver

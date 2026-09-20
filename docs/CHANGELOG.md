@@ -2,7 +2,7 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased
+## v1.0.0-alpha.3 - 2026-09-20
 
 ### Fixed -- MCR-A2-KEY-001 six-rail keyboard navigation
 
@@ -18,9 +18,11 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   requires one unique advertised/runtime binding per button and keeps the user
   guide's mapping in lockstep with the UI.
 - Release impact: the historical `v1.0.0-alpha.2` tag and released files remain
-  unchanged as evidence of what shipped. This correction should enter a new
-  alpha candidate and receive fresh exact-revision automation plus browser
-  acceptance; it must not replace or retag alpha.2.
+  unchanged as evidence of what shipped. Alpha.2's current published artifact
+  set is archived byte-for-byte under `releases/v1.0.0-alpha.2/`. This correction
+  receives fresh exact-revision automation and independent regression review;
+  browser/pilot acceptance remains a separate post-integration gate and is not
+  claimed by this candidate.
 
 ## v1.0.0-alpha.2 - 2026-09-20
 

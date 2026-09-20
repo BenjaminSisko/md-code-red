@@ -31,7 +31,7 @@ check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As shipped (this build, `v1.0.0-alpha.2`, built 2026-09-20): 183 curated command
+As shipped (this build, `v1.0.0-alpha.3`, built 2026-09-20): 183 curated command
 entries across 100 tools (27 guided-form generators and 156 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
