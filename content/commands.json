@@ -1,17 +1,17 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified \u2014 ADR-001 \u00a75.1",
+  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
   "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
   "privilege_rule": "Optional, one of extract/schema.py's PRIVILEGES (\"root\" today). Set when the entry's OWN assembled command needs elevated privilege to run on a STIG'd host that the command text itself never requests (no sudo/su in the template) -- distinct from blast, which rates what the command DOES once it runs, not what it takes to run it. The UI shows a privilege badge next to blast and the evidence exporter records a Requires: line, so the content validation protocol's safety rule (no sudo used during a capture run) can defer the entry correctly instead of silently skipping it (G4(e); gen-sshd-test-config, sshd_config not world-readable on defiant/saratoga, CR-T-34).",
   "curated": true,
-  "status": "RHEL P0 guided command set complete for all 21 non-Git administration tools: 26 shell generators plus 3 Ansible document generators. Git remains the separate P1 feature backlog.",
+  "status": "RHEL P0 guided command set complete, with the Phase 2 Git rail and eight guided Git scenarios now shipped.",
   "rhel_version_value_shapes": [
    "{command, notes, changed_in_note}",
    "{same_as: \"<other version key>\", changed_in_note?}",
    "{unavailable: {reason, alternative}}"
   ],
-  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified \u2014 see man page'. The extractor and this file never guess.",
-  "entry_count": 185
+  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
+  "entry_count": 193
  },
  "categories": [
   "firewall-cmd",
@@ -94,7 +94,7 @@
     }
    ],
    "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
-   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -162,7 +162,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -219,7 +219,7 @@
     }
    ],
    "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
-   "undo": "Nothing to undo \u2014 this command only reads unit state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -283,7 +283,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -341,7 +341,7 @@
     }
    ],
    "verify": "The command prints \"active\".",
-   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -377,7 +377,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -426,7 +426,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 firewall-cmd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -494,7 +494,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -556,7 +556,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -639,7 +639,7 @@
     "id": "src-man-nmcli-r8",
     "title": "nmcli(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 nmcli",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/nmcli.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/nmcli.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -718,13 +718,13 @@
     }
    ],
    "verify": "The command prints matching journal entries. No matches is exit status 0 with no output, not a failure.",
-   "undo": "Nothing to undo \u2014 journalctl only reads the journal and changes nothing on the host.",
+   "undo": "Nothing to undo — journalctl only reads the journal and changes nothing on the host.",
    "blast": "green",
    "source": {
     "id": "src-man-journalctl-r8",
     "title": "journalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 journalctl",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/journalctl.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/journalctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -774,7 +774,7 @@
     "id": "src-man-pvcreate-r8",
     "title": "pvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/pvcreate.man.txt",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/pvcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/pvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -822,7 +822,7 @@
     "id": "src-man-vgcreate-r8",
     "title": "vgcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/vgcreate.man.txt",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/vgcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/vgcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -872,13 +872,13 @@
     }
    ],
    "verify": "lvs <vg>/<name> shows the new logical volume at the requested size.",
-   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume \u2014 blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
+   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume — blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
    "blast": "yellow",
    "source": {
     "id": "src-man-lvcreate-r8",
     "title": "lvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvcreate",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -937,7 +937,7 @@
     "id": "src-man-lvextend-r8",
     "title": "lvextend(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvextend",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvextend.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvextend.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -974,13 +974,13 @@
     }
    ],
    "verify": "The command prints the merged, effective configuration and exits 0 with no syntax error.",
-   "undo": "Nothing to undo \u2014 test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
+   "undo": "Nothing to undo — test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
    "blast": "green",
    "source": {
     "id": "src-man-sshd-r8",
     "title": "sshd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 sshd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/sshd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/sshd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1045,13 +1045,13 @@
     }
    ],
    "verify": "getent passwd <username> shows the new account with a home directory and the requested shell.",
-   "undo": "userdel -r <username> removes the account and its home directory \u2014 blast: red, see the dangerous-pattern table (dp-userdel).",
+   "undo": "userdel -r <username> removes the account and its home directory — blast: red, see the dangerous-pattern table (dp-userdel).",
    "blast": "yellow",
    "source": {
     "id": "src-man-useradd-r8",
     "title": "useradd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 useradd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/useradd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/useradd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1095,13 +1095,13 @@
     }
    ],
    "verify": "id <username> lists the new group under supplementary groups.",
-   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it \u2014 usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
+   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it — usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
    "blast": "yellow",
    "source": {
     "id": "src-man-usermod-r8",
     "title": "usermod(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 usermod",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/usermod.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/usermod.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1147,12 +1147,12 @@
     }
    ],
    "verify": "The command's own output IS the verification: is-active/is-enabled/is-failed print one word, status prints the full unit block.",
-   "undo": "Nothing to undo \u2014 every action in this generator only reads unit state.",
+   "undo": "Nothing to undo — every action in this generator only reads unit state.",
    "blast": "green",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1215,7 +1215,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1264,7 +1264,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1318,7 +1318,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1386,7 +1386,7 @@
     "id": "src-man-setsebool-r8",
     "title": "setsebool(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 setsebool",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/setsebool.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/setsebool.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1446,9 +1446,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-semanage-port-r8",
-    "title": "semanage-port(8) manual page \u2014 a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 8 semanage-port",
-    "version": "RHEL 8/9/10 \u2014 policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1483,13 +1483,13 @@
     }
    ],
    "verify": "The command prints the account's last change, expiry and warning-day settings.",
-   "undo": "Nothing to undo \u2014 this only reads aging state.",
+   "undo": "Nothing to undo — this only reads aging state.",
    "blast": "green",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1560,14 +1560,14 @@
      "field": "username"
     }
    ],
-   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value \u2014 leave at least one filled in to get a single non-interactive command.)",
+   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value — leave at least one filled in to get a single non-interactive command.)",
    "undo": "Run this generator again with the account's previous values (read them first with chage -l).",
    "blast": "yellow",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1582,7 +1582,7 @@
    "id": "gen-auditctl-watch",
    "tool": "auditctl",
    "category": "auditctl / ausearch",
-   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot \u2014 persistent rules go in /etc/audit/rules.d/)",
+   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot — persistent rules go in /etc/audit/rules.d/)",
    "fields": [
     {
      "name": "path",
@@ -1628,13 +1628,13 @@
     }
    ],
    "verify": "auditctl -l lists the new watch rule.",
-   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule \u2014 the flags must match the rule exactly.",
+   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule — the flags must match the rule exactly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-auditctl-r8",
     "title": "auditctl(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 auditctl",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/auditctl.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/auditctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1677,13 +1677,13 @@
     }
    ],
    "verify": "The command prints matching audit events, or exits 1 with no output if none matched.",
-   "undo": "Nothing to undo \u2014 ausearch only reads the audit log.",
+   "undo": "Nothing to undo — ausearch only reads the audit log.",
    "blast": "green",
    "source": {
     "id": "src-man-ausearch-r8",
     "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 ausearch",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/ausearch.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1730,13 +1730,13 @@
     }
    ],
    "verify": "rsyslogd -N1 exits 0 and prints no error line if the configuration is valid.",
-   "undo": "Nothing to undo \u2014 -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
+   "undo": "Nothing to undo — -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
    "blast": "green",
    "source": {
     "id": "src-man-rsyslogd-r8",
     "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 rsyslogd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/rsyslogd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1785,7 +1785,7 @@
     "id": "src-man-chronyd-r8",
     "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/chronyd.man.txt#L68",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chronyd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1824,14 +1824,14 @@
      "requires": "all"
     }
    ],
-   "verify": "The command's own table output IS the verification \u2014 one row per container (running only, or every container with -a).",
-   "undo": "Nothing to undo \u2014 ps only lists container state.",
+   "verify": "The command's own table output IS the verification — one row per container (running only, or every container with -a).",
+   "undo": "Nothing to undo — ps only lists container state.",
    "blast": "green",
    "source": {
     "id": "src-man-podman-ps-r8",
-    "title": "podman-ps(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-ps(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-ps",
-    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1856,7 +1856,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "gen-podman-stop",
@@ -1886,9 +1886,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-podman-stop-r8",
-    "title": "podman-stop(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-stop(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-stop",
-    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1903,7 +1903,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "ls-listing",
@@ -7398,6 +7398,423 @@
    "undo": "Nothing further to undo -- this recovery only reads the reflog and creates a new reference; it does not remove anything.",
    "blast": "green",
    "stig": [],
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-clone",
+   "tool": "git",
+   "category": "git",
+   "intent": "Clone a repository into a new local working directory",
+   "fields": [
+    {
+     "name": "repository",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "directory",
+     "type": "service",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "clone"
+    },
+    {
+     "field": "repository"
+    },
+    {
+     "field": "directory",
+     "optional": true
+    }
+   ],
+   "verify": "In the new directory, git status identifies the checked-out branch and git remote -v shows the expected origin.",
+   "undo": "Delete the new clone directory after confirming it contains no local work you need to keep.",
+   "blast": "green",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
+   "notes": "Repository accepts HTTPS, SSH, file, and local-path forms. The value is emitted as one shell-quoted operand; Git decides whether the address is reachable."
+  },
+  {
+   "id": "gen-git-branch",
+   "tool": "git",
+   "category": "git",
+   "intent": "Create and switch to a new branch at a chosen starting revision",
+   "fields": [
+    {
+     "name": "name",
+     "type": "git_refname",
+     "required": true
+    },
+    {
+     "name": "start",
+     "type": "git_revision",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "checkout"
+    },
+    {
+     "lit": "-b"
+    },
+    {
+     "field": "name"
+    },
+    {
+     "field": "start",
+     "optional": true
+    }
+   ],
+   "verify": "git status names the new branch; git rev-parse HEAD resolves to the intended starting commit.",
+   "undo": "If the branch has no work to keep, switch away and run git branch -d <name>. Use -D only after checking that discarding its unmerged commits is intentional.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-merge",
+   "tool": "git",
+   "category": "git",
+   "intent": "Merge another revision into the current branch with an explicit merge commit",
+   "fields": [
+    {
+     "name": "source",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "merge"
+    },
+    {
+     "lit": "--no-ff"
+    },
+    {
+     "field": "source"
+    }
+   ],
+   "verify": "git status reports a clean merge, and git log --graph --oneline shows the merge commit and both parents.",
+   "undo": "Before committing a conflicted merge, git merge --abort returns to the pre-merge state. After commit, prefer git revert -m 1 <merge-commit> on shared history.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-rebase",
+   "tool": "git",
+   "category": "git",
+   "intent": "Replay a branch on top of a selected upstream revision",
+   "fields": [
+    {
+     "name": "upstream",
+     "type": "git_revision",
+     "required": true
+    },
+    {
+     "name": "branch",
+     "type": "git_revision",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "rebase"
+    },
+    {
+     "field": "upstream"
+    },
+    {
+     "field": "branch",
+     "optional": true
+    }
+   ],
+   "verify": "git status reports that no rebase is in progress, and git log --graph --oneline shows the replayed commits above the upstream.",
+   "undo": "During the operation, git rebase --abort restores the pre-rebase state. After completion, use git reflog to locate the previous tip before choosing any reset.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-tag",
+   "tool": "git",
+   "category": "git",
+   "intent": "Create an annotated tag on a selected revision",
+   "fields": [
+    {
+     "name": "tag",
+     "type": "git_refname",
+     "required": true
+    },
+    {
+     "name": "message",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "target",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "tag"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-m",
+     "field": "message"
+    },
+    {
+     "field": "tag"
+    },
+    {
+     "field": "target"
+    }
+   ],
+   "verify": "git show <tag> displays the annotation and resolves to the intended target commit.",
+   "undo": "git tag -d <tag> deletes the local tag. If already published, coordinate before deleting or replacing the remote tag.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-log",
+   "tool": "git",
+   "category": "git",
+   "intent": "Read a bounded one-line decorated history for a revision",
+   "fields": [
+    {
+     "name": "count",
+     "type": "integer",
+     "required": true
+    },
+    {
+     "name": "revision",
+     "type": "git_revision",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "log"
+    },
+    {
+     "lit": "--oneline"
+    },
+    {
+     "lit": "--decorate"
+    },
+    {
+     "flag": "-n",
+     "field": "count"
+    },
+    {
+     "field": "revision",
+     "optional": true
+    }
+   ],
+   "verify": "The command prints no more than the requested number of commits and labels reachable branch and tag names.",
+   "undo": "Nothing to undo — git log only reads repository history.",
+   "blast": "green",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-bisect",
+   "tool": "git",
+   "category": "git",
+   "intent": "Start a binary search between a known bad and known good revision",
+   "fields": [
+    {
+     "name": "bad",
+     "type": "git_revision",
+     "required": true
+    },
+    {
+     "name": "good",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "bisect"
+    },
+    {
+     "lit": "start"
+    },
+    {
+     "field": "bad"
+    },
+    {
+     "field": "good"
+    }
+   ],
+   "verify": "git bisect log shows the selected bad and good boundaries and Git checks out a candidate commit to test.",
+   "undo": "Run git bisect reset to leave bisect mode and restore the branch or commit checked out before the search.",
+   "blast": "yellow",
+   "source": {
+    "id": "src-git-htmldocs",
+    "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
+    "url_or_man": "man git",
+    "version": "git-htmldocs 2026-06-29 corpus snapshot",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-git-recovery",
+   "tool": "git",
+   "category": "git",
+   "intent": "Recover a reachable lost commit by creating a new branch at its revision",
+   "fields": [
+    {
+     "name": "recovered_branch",
+     "type": "git_refname",
+     "required": true
+    },
+    {
+     "name": "lost_revision",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "branch"
+    },
+    {
+     "field": "recovered_branch"
+    },
+    {
+     "field": "lost_revision"
+    }
+   ],
+   "verify": "git show <recovered-branch> displays the recovered commit, and git branch --contains <lost-revision> includes the new branch.",
+   "undo": "After moving or integrating the recovered work, delete the temporary branch with git branch -d <recovered-branch>.",
+   "blast": "yellow",
    "source": {
     "id": "src-git-htmldocs",
     "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",

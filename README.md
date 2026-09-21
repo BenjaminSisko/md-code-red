@@ -16,14 +16,21 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-21** -- **Git Command Generator.** Adds a dedicated Git activity
+  rail with all existing curated Git guidance plus eight guided forms: clone,
+  branch, merge, rebase, annotated tag, bounded log, bisect, and lost-commit
+  recovery. Git branch/tag names and revisions use closed validators, every
+  generated value remains shell quoted, and all 32 release-specific outputs
+  have hand-authored golden-command oracles. The catalog now contains 193
+  entries across 102 tools: 37 guided generators and 156 static entries.
+
 - **2026-09-21** -- **RHEL P0 command completion.** Adds guided `pvcreate`
   and `vgcreate` builders from the existing captured RHEL 8/10 manual corpus,
   with all-version golden-command oracles. Both operations are rated red and
   require the existing review acknowledgement because they write LVM metadata
   to a selected block device. The curated catalog now contains 185 entries
   across 102 tools, including 29 guided generators. All 21 non-Git RHEL P0
-  administration tools now have guided builders; Git remains its separately
-  tracked feature.
+  administration tools now have guided builders.
 
 - **2026-09-20** -- **v1.0.0-alpha.3 correction candidate.** Closes
   MCR-A2-KEY-001 by binding `Ctrl+Alt+1` through `Ctrl+Alt+6` to all six
@@ -618,7 +625,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 ## Attribution
 
 Reproduced verbatim from SALM's Content Licensing Ruling v1, the same text shown
-in the running tool's About panel (`Ctrl+Alt+6`, `ATTRIBUTION_BLOCK` in
+in the running tool's About panel (`Ctrl+Alt+7`, `ATTRIBUTION_BLOCK` in
 `template.html`):
 
 ```

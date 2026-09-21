@@ -31,8 +31,8 @@ check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As built (`v1.0.0-alpha.4-dev`, 2026-09-21): 185 curated command
-entries across 102 tools (29 guided-form generators and 156 static checks), 14,439
+As built (`v1.0.0-alpha.4-dev`, 2026-09-21): 193 curated command
+entries across 102 tools (37 guided-form generators and 156 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
 exact data payload. `docs/USER_GUIDE.md` states the remaining evidence and
@@ -112,7 +112,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |
 | `extract/import_captures.py` | Walks `tests/captures/<rhel_version>/<entry_id>.json`, validates every record against the content validation protocol's field set, verifies `command_hash_at_capture`, and folds STIG-mapped captures into `content/expected_output.json`. `--check` re-runs into a temp dir and diffs (Q15). | The canonical capture path, per Eli Cross's ruling -- see `docs/WORKFLOW.md`. |
 | `extract/make_pending_skeletons.py` | Writes empty, honestly-`pending` skeletons for content that has no source yet. | |
-| `content/commands.json` | The 185 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 29 generators and 156 static checks. |
+| `content/commands.json` | The 193 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 37 generators and 156 static checks. |
 | `content/tools.json` | The 102 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
 | `content/dangerous.json` | The 15-row destructive-pattern table `blastFor()` matches against every assembled command, both quoted and unquoted. | |
 | `content/glossary.json` | Loaded into the data island (`DATASETS.GLOSSARY`) but **never read by any renderer in `template.html`**. Inherited from the Grey Beard Ansible fork; its terms (implicit localhost, delegation, pipelining) are Ansible concepts, not RHEL ones. See Section 23. | |
@@ -140,7 +140,7 @@ example).
 
 **Command entry** (`content/commands.json`, one of two shapes):
 
-*Static (fixed per-RHEL-version command)* -- 156 of 185 entries:
+*Static (fixed per-RHEL-version command)* -- 156 of 193 entries:
 ```
 {
   id, tool, explain_tool?, category, intent,
@@ -157,7 +157,7 @@ A `slot` is one of: `{command, notes?, changed_in_note?}`, `{same_as: "<version>
 changed_in_note?}`, or `{unavailable: {reason, alternative?}}`. A `receipt` is
 `{by, on, host, capture}` -- see Section 6.
 
-*Generator (guided form)* -- 29 of 185 entries:
+*Generator (guided form)* -- 37 of 193 entries:
 ```
 {
   id, tool, category, intent,
@@ -221,7 +221,7 @@ data-island reference inside the fence. `tests/hostile_harness.js` and `qa.py`'s
 Q18 gate both lift the block verbatim out of the shipped artifact and run it under
 Node, so the code proved safe by CI is the exact code the browser runs.
 
-**Field types** (`FIELD_TYPES`, ~24 entries) are an allow-list, never a filter: a
+**Field types** (`FIELD_TYPES`, 27 entries) are an allow-list, never a filter: a
 value is checked with a full-string regex, a hand-written validator function
 (`isIpv4`, `isPath`, ...), or an enum, capped in length, and rejected outright
 rather than trimmed or transliterated. Every type but one (`comment`) is
@@ -454,8 +454,14 @@ structure and round-trip oracles.
 
 ## 14. Git Command Generator
 
-**Not implemented in this build**, and not represented anywhere in the current UI
-(no rail item, no placeholder). Phase 2 backlog (`docs/IDEAS.md` 260917-002).
+The activity rail's **Git** item (`Ctrl+Alt+4`) is live. It renders the existing
+static Git catalog together with eight guided forms for clone, branch, merge,
+rebase, annotated tag creation, bounded log review, bisect startup, and
+lost-commit recovery. The forms use the same declarative command assembler and
+golden-command oracle as the RHEL builders. `git_refname` rejects Git-forbidden
+branch/tag shapes such as `..`, empty path components, leading dots, and `.lock`
+suffixes; `git_revision` accepts a conservative commit-ish grammar including
+`HEAD~1`, `HEAD@{1}`, remote branches, tags, and hexadecimal commit IDs.
 
 ---
 

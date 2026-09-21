@@ -92,6 +92,12 @@
   },
   "comment": {
    "benign": "checked by the ISSO"
+  },
+  "git_refname": {
+   "benign": "feature/audit-report"
+  },
+  "git_revision": {
+   "benign": "HEAD@{1}"
   }
  },
  "vectors": [

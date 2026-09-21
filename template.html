@@ -269,9 +269,10 @@ code,pre{font-family:var(--font-mono);}
   <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Command Builder</span></button>
   <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
   <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
-  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
-  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference Commands" title="Reference Commands (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">?</span><span class="lbl">Reference</span></button>
-  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
+  <button type="button" class="railbtn" data-rail="git" aria-label="Git Command Generator" title="Git Command Generator (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">G</span><span class="lbl">Git</span></button>
+  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
+  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference Commands" title="Reference Commands (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">?</span><span class="lbl">Reference</span></button>
+  <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+7)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
 </nav>
 
 <!-- SIDEBAR — context panel for the active rail tool -->
@@ -674,6 +675,20 @@ function isPath(s){
   for(var i=0;i<segs.length;i++){ if(segs[i]==="..") return false; }  /* no traversal */
   return true;
 }
+function isGitRefName(s){
+  if(!/^[A-Za-z0-9][A-Za-z0-9_./-]*$/.test(s)) return false;
+  if(s==="@"||s.indexOf("..")>=0||s.indexOf("//")>=0||/[/.]$/.test(s)) return false;
+  var parts=s.split("/");
+  for(var i=0;i<parts.length;i++){
+    if(!parts[i]||parts[i].charAt(0)==="."||/\.lock$/.test(parts[i])) return false;
+  }
+  return true;
+}
+function isGitRevision(s){
+  if(!/^[A-Za-z0-9][A-Za-z0-9_./@{}~^:+-]*$/.test(s)) return false;
+  if(s.indexOf("..")>=0||s.indexOf("//")>=0||s.charAt(s.length-1)==="/") return false;
+  return true;
+}
 
 /* The field TYPE system (threat-model-v1 §3.1). Allow-list, full match, capped.
    'comment' is the ONLY free-text type in the product, it is the only type that
@@ -720,6 +735,8 @@ var FIELD_TYPES={
             re:/^([+-]?\d+(\.\d+)?[bBsSkKmMgGtTpPeE]?|\d+%(FREE|VG|PVS|ORIGIN))$/},
   group_list:{cap:256,label:"group, or comma-separated group list",
               re:/^[a-z_][a-z0-9_-]{0,31}(,[a-z_][a-z0-9_-]{0,31})*$/},
+  git_refname:{cap:200,label:"Git branch or tag name",fn:isGitRefName},
+  git_revision:{cap:200,label:"Git revision (branch, tag, commit or HEAD expression)",fn:isGitRevision},
   enum:{cap:64,label:"choice",optionsFromField:true},
   comment:{cap:200,label:"free-text comment",unicode:true,re:/^[^\u0000-\u001F\u007F]+$/}
 };
@@ -3820,12 +3837,12 @@ function renderToolList(){
     el("sidebar-body").innerHTML=html;
     return;
   }
-  if(STATE.rail!=="builder"&&STATE.rail!=="ansible"){
+  if(STATE.rail!=="builder"&&STATE.rail!=="ansible"&&STATE.rail!=="git"){
     html+="<p class=\"region-label\">"+esc(STATE.rail)+"</p>";
     html+="<p class=\"muted\">This rail lands with its own task: STIG search over the whole catalog "+
           "(CR-T-26 put the STIG panel and search-by-STIG-ID in the Inspector and the command "+
           "palette instead; a dedicated browse view here is still open). The Command Builder, "+
-          "Ansible, Favorites and About rails are live now.</p>";
+          "Ansible, Git, Favorites, Reference and About rails are live now.</p>";
     el("sidebar-body").innerHTML=html;
     return;
   }
@@ -3841,11 +3858,14 @@ function renderToolList(){
      invocation is governed by the control node's ansible-core version, not by
      the release of the hosts it reaches, and each tool record says so. */
   var ansibleRail=(STATE.rail==="ansible");
+  var gitRail=(STATE.rail==="git");
   var tools=[],ti;
   for(ti=0;ti<all.length;ti++){
-    if((all[ti].category==="ansible")===ansibleRail) tools.push(all[ti]);
+    if(ansibleRail && all[ti].category==="ansible") tools.push(all[ti]);
+    else if(gitRail && all[ti].category==="git") tools.push(all[ti]);
+    else if(!ansibleRail && !gitRail && all[ti].category!=="ansible" && all[ti].category!=="git") tools.push(all[ti]);
   }
-  html+="<p class=\"region-label\">"+esc(ansibleRail?"Ansible":"Tools")+"</p>";
+  html+="<p class=\"region-label\">"+esc(ansibleRail?"Ansible":gitRail?"Git":"Tools")+"</p>";
   if(!tools.length){
     html+="<p class=\"muted\">No tools in this build's content island.</p>";
     el("sidebar-body").innerHTML=html;
@@ -5021,6 +5041,9 @@ function selectTool(id,toggle){
   if(!tool) return;
   if(!toolAvailability(tool).available) return;   /* gated: cannot be selected at all */
   STATE.toolId=(toggle&&STATE.toolId===id)?null:id;
+  if(tool.category==="ansible") STATE.rail="ansible";
+  else if(tool.category==="git") STATE.rail="git";
+  else STATE.rail="builder";
   STATE.entryId=null;
   STATE.acked=false;
   STORE.set("lasttool",STATE.toolId);
@@ -5088,7 +5111,9 @@ function selectEntry(id){
   STATE.line=0;
   STATE.acked=false;
   STATE.formValues={};                              /* a new entry starts with a blank form */
-  STATE.rail="builder";
+  if(entry.tool==="git") STATE.rail="git";
+  else if((toolById(entry.tool)||{}).category==="ansible") STATE.rail="ansible";
+  else STATE.rail="builder";
   pushRecent(id);
   renderAll();
 }
@@ -5315,8 +5340,8 @@ var KEYMAP=[
    run:function(){ pipelineAdd(); }},
   {id:"pipeline-clear",keys:["Backspace"],mods:"ctrlShift",whenTyping:false,
    doc:"Clear the pipeline",run:function(){ pipelineClear(); }},
-  {id:"rail-jump",keys:["1","2","3","4","5","6"],mods:"ctrlAlt",whenTyping:true,
-   doc:"Jump to rail 1-6",run:function(ev){ railAt(parseInt(ev.key,10)); }}
+  {id:"rail-jump",keys:["1","2","3","4","5","6","7"],mods:"ctrlAlt",whenTyping:true,
+   doc:"Jump to rail 1-7",run:function(ev){ railAt(parseInt(ev.key,10)); }}
 ];
 function modsMatch(rule,ev){
   var ctrl=!!ev.ctrlKey,meta=!!ev.metaKey,shift=!!ev.shiftKey,alt=!!ev.altKey;
