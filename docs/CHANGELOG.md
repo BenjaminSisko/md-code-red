@@ -4,6 +4,22 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased -- v1.0.0-alpha.4-dev
 
+### Added -- Configuration-file generators
+
+- Completed roadmap item 260917-004 with guided builders for sshd, chrony,
+  rsyslog, sudoers, systemd service units, and cron. Each form produces a
+  reviewable file plus a validation or installation command with explicit
+  verification and recovery guidance.
+- Added a `lines` document kind for configuration formats that are neither
+  YAML nor INI. Each line is assembled only from declared literal tokens and
+  closed field grammars; free text, control characters, shell separators, and
+  undeclared fields fail closed in both the build schema and browser runtime.
+- Extended the hostile-input harness with an independent token-line parser and
+  exact round-trip oracle. All six command invocations are also pinned for
+  RHEL 7-10 in the hand-authored golden-command table.
+- The catalog now has 199 entries across 102 tools: 43 guided generators and
+  156 static entries.
+
 ### Added -- Ansible task-selection completion
 
 - Completed roadmap item 260917-003 by upgrading the existing playbook,

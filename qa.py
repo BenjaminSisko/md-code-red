@@ -3133,7 +3133,7 @@ HARNESS_REPORT_KEYS = ("checks", "field_types", "vectors", "versions", "rejected
                        # before they are believed, so a harness that stopped running
                        # the YAML oracle is a FAIL line and not a quietly missing
                        # sentence in the PASS text.
-                       "yaml_oracle_checks", "ini_oracle_checks")
+                       "yaml_oracle_checks", "ini_oracle_checks", "lines_oracle_checks")
 
 
 def harness_report_failures(rep, returncode, stderr=""):
@@ -3204,7 +3204,8 @@ def harness_report_failures(rep, returncode, stderr=""):
     # only the PROOF is missing. Both counts are read, not one: the INI kind has
     # no quoter at all, so its parser is the whole of its defence.
     if not missing and not wrong:
-        for key, what in (("yaml_oracle_checks", "YAML"), ("ini_oracle_checks", "INI")):
+        for key, what in (("yaml_oracle_checks", "YAML"), ("ini_oracle_checks", "INI"),
+                          ("lines_oracle_checks", "token-line")):
             if not rep[key]:
                 f.append("the harness reported ZERO %s-file oracle checks. The quoter and the sink "
                          "are in the build and nothing parsed what they produced, which is "
@@ -3250,11 +3251,11 @@ def harness_report_failures(rep, returncode, stderr=""):
                  "rules it asserts are policy over a target path and a child binary — a path "
                  "class nobody has written down still rates `unrated`, which is the honest answer "
                  "and not a safe one")
-        d.append("%d YAML-file and %d INI-file oracle checks: every generated playbook, inventory "
-                 "and ansible.cfg was PARSED and compared line for line to the operator's intent — "
-                 "every value back out exactly as it went in, every operator value quoted, every "
-                 "curated boolean bare, the line count unchanged (MCR-SEC-010)"
-                 % (rep["yaml_oracle_checks"], rep["ini_oracle_checks"]))
+        d.append("%d YAML-file, %d INI-file and %d token-line-file oracle checks: every generated "
+                 "document was PARSED and compared line for line to the operator's intent — every "
+                 "value back out exactly as it went in and the line count unchanged (MCR-SEC-010)"
+                 % (rep["yaml_oracle_checks"], rep["ini_oracle_checks"],
+                    rep["lines_oracle_checks"]))
         d.append("assembler extracted from the shipped artifact (%d bytes), not from template.html"
                  % rep["assembler_bytes"])
         d.append("the report was checked for shape before it was believed: every count this line "
@@ -3351,15 +3352,19 @@ def gate_q18(ctx):
         f.append("composeDoc() ships and tests/hostile_harness.js defines no parseIniSubset() "
                  "— the INI kind has no quoter by design, so its parser is the only thing "
                  "standing between a form field and an ansible.cfg entry")
+    if has_yaml_sink and "function parseLinesSubset(" not in harness_src:
+        f.append("composeDoc() ships and tests/hostile_harness.js defines no parseLinesSubset() "
+                 "— the token-line kind has no quoter by design, so its parser is the independent "
+                 "check that values and separators remained in their declared positions")
     if not f:
         d.append("no call to shQuote, yamlQuote, esc or escapeAttr is nested inside another, in "
                  "either direction — TWO quoting domains (POSIX shell words, YAML "
                  "single-quoted scalars) and the DOM escapers stay three separate jobs "
                  "(threat-model-v1 §11 gate 9)")
-        d.append("the YAML sink, its quoter and its parsing oracles are all present: composeDoc() "
-                 "and yamlQuote() in the shipped shell, parseYamlSubset() and parseIniSubset() in "
-                 "tests/hostile_harness.js. MCR-SEC-010 asked for all three in one commit, and "
-                 "this gate is where that is still true tomorrow")
+        d.append("the generated-file sink, its YAML quoter and all three parsing oracles are "
+                 "present: composeDoc() and yamlQuote() in the shipped shell; parseYamlSubset(), "
+                 "parseIniSubset() and parseLinesSubset() in tests/hostile_harness.js. "
+                 "MCR-SEC-010 asked for sink and oracle together, and this gate keeps them together")
 
     node = shutil.which("node")
     if not node:

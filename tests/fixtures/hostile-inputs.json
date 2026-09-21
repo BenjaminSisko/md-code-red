@@ -98,6 +98,12 @@
   },
   "git_revision": {
    "benign": "HEAD@{1}"
+  },
+  "cron_minute": {
+   "benign": "15"
+  },
+  "cron_hour": {
+   "benign": "2"
   }
  },
  "vectors": [

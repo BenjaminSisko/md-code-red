@@ -57,10 +57,10 @@ GOOD = {
     # states the claim, so the gate has to fail closed when nothing checked it.
     "pipeline_target_rating_checks": 44,
     # MCR-SEC-010 (CR-T-25). The generated-file oracles are part of the report
-    # contract now: Q18 reads both counts and fails on a zero, because a YAML
+    # contract now: Q18 reads every count and fails on a zero, because a YAML
     # quoter whose oracle silently stopped running is the dead-escaper finding
     # with the call site filled in and the proof still missing.
-    "yaml_oracle_checks": 316, "ini_oracle_checks": 60,
+    "yaml_oracle_checks": 316, "ini_oracle_checks": 60, "lines_oracle_checks": 120,
 }
 
 
@@ -141,11 +141,11 @@ class AMalformedReportIsACleanFail(unittest.TestCase):
         is what stopped running. A report saying zero files were parsed must fail
         here, or MCR-SEC-010 comes back one step further along and green.
 
-        Both counts, separately: the INI kind has no quoter at all by design, so
-        its parser is the entire defence and a zero there is worth more alarm,
-        not less.
+        Every count separately: the INI and token-line kinds have no quoter by
+        design, so their parsers are the entire defence and a zero there is
+        worth more alarm, not less.
         """
-        for key in ("yaml_oracle_checks", "ini_oracle_checks"):
+        for key in ("yaml_oracle_checks", "ini_oracle_checks", "lines_oracle_checks"):
             with self.subTest(key=key):
                 failures, _ = qa.harness_report_failures(dict(GOOD, **{key: 0}), 0)
                 self.assertTrue(failures,

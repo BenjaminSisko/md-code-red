@@ -104,6 +104,8 @@ class HostileInputTests(unittest.TestCase):
                            "no real generator spec was fuzzed — CR-T-17's content-spec sweep is dead")
         self.assertGreater(self.report["content_spec_entries"], 0,
                            "content/commands.json has no generator (template) entries to fuzz")
+        self.assertGreater(self.report.get("lines_oracle_checks", 0), 0,
+                           "no generated token-line document reached the independent parser oracle")
 
     def test_rich_rule_slots_refuse_every_type_that_is_not_allow_listed(self):
         """MCR-SEC-001/005: the sweep richRuleSpec's signature was written for."""
