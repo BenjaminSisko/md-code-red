@@ -111,6 +111,28 @@ class AnsibleRailTests(unittest.TestCase):
                          "the sidebar placeholder still tells the reader the Ansible generator "
                          "is pending work -- it is the sentence the Founder read")
 
+    def test_playbook_offers_task_selection_checkboxes(self):
+        playbook = next(e for e in self.entries if e.get("id") == "gen-ansible-playbook")
+        checkboxes = {
+            f["name"]: f for f in playbook.get("fields", [])
+            if f.get("control") == "checkbox"
+        }
+        self.assertEqual(set(checkboxes), {"refresh_cache", "manage_service"})
+        for name, field in checkboxes.items():
+            self.assertEqual(field.get("type"), "enum", name)
+            self.assertEqual(field.get("options"), ["yes"], name)
+            self.assertFalse(field.get("required", False), name)
+
+        lines = playbook.get("doc", {}).get("lines", [])
+        gates = {line.get("requires") for line in lines if line.get("requires")}
+        self.assertTrue(set(checkboxes).issubset(gates),
+                        "each task checkbox must gate at least one declared YAML line")
+
+    def test_checkbox_control_is_rendered_and_unchecked_means_absent(self):
+        self.assertIn('field.control==="checkbox"', self.template)
+        self.assertIn('type="checkbox"', self.template)
+        self.assertIn('!f.checked', self.template)
+
 
 if __name__ == "__main__":
     unittest.main()

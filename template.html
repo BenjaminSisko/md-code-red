@@ -214,6 +214,7 @@ code,pre{font-family:var(--font-mono);}
 .field input,.field select{font:inherit; font-size:13px; padding:4px 7px;
   border:1px solid var(--border-primary); border-radius:5px;
   background:var(--bg-app); color:var(--text-primary);}
+.field input[type="checkbox"]{align-self:flex-start; width:auto; padding:0;}
 .field input[disabled],.field select[disabled]{color:var(--text-muted); cursor:not-allowed;
   border-style:dashed;}
 .field .why{margin:0; font-size:11px; color:var(--text-muted);}
@@ -4678,7 +4679,7 @@ function renderGeneratorForm(entry){
     var val=STATE.formValues[name]!==undefined?STATE.formValues[name]:"";
     var gated=!fieldAvailable(field,STATE.version);
     var id="genf-"+entry.id+"-"+name;
-    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc(name);
+    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc(field.label||name);
     if(field.required){ html+=" <span class=\"req\">*</span> (required)"; }
     else{ html+=" (optional)"; }
     html+="</label>";
@@ -4687,6 +4688,16 @@ function renderGeneratorForm(entry){
             "\" disabled aria-disabled=\"true\" aria-describedby=\""+escapeAttr(id)+"-why\" value=\"\">";
       html+="<p class=\"why\" id=\""+escapeAttr(id)+"-why\">"+esc(GATED_COPY+STATE.version)+"</p>";
       html+="</div>";
+      continue;
+    }
+    /* A checkbox is a presentation of one existing closed enum shape: the
+       checked value is the spec's sole literal "yes" option, while unchecked
+       means the optional field is absent. No boolean or DOM value enters the
+       assembler, and content cannot choose an arbitrary checkbox payload. */
+    if(field.control==="checkbox"){
+      html+="<input type=\"checkbox\" id=\""+escapeAttr(id)+"\" data-field=\""+
+            escapeAttr(name)+"\" value=\"yes\""+(val==="yes"?" checked":"")+
+            " aria-required=\"false\"></div>";
       continue;
     }
     /* type "enum" is the author-curated closed set (field.options); a handful
@@ -5269,7 +5280,7 @@ function onFieldChange(ev){
   var f=ev.target&&ev.target.closest?ev.target.closest("[data-field]"):null;
   if(!f) return;
   var name=f.getAttribute("data-field");
-  var val=f.value;
+  var val=(f.type==="checkbox"&&!f.checked)?"":f.value;
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
   /* When a stage is being edited, STATE.formValues IS that stage's values
      object, so the line above has already changed the pipeline: bump the

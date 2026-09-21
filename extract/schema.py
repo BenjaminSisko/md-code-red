@@ -348,6 +348,13 @@ def spec_fields_errors(where, fields, names):
             if not isinstance(opts, list) or not opts:
                 errs.append("%s: field '%s' is an enum with no options — an enum with no closed set "
                             "is free text wearing a <select>" % (where, name))
+        control = f.get("control")
+        if control is not None:
+            if control != "checkbox":
+                errs.append("%s: field '%s' control %r is not 'checkbox'" % (where, name, control))
+            if f.get("type") != "enum" or f.get("options") != ["yes"] or f.get("required"):
+                errs.append("%s: checkbox field '%s' must be an optional enum whose sole option "
+                            "is 'yes' — unchecked means the field is absent" % (where, name))
     return errs
 
 

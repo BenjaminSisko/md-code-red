@@ -16,6 +16,13 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-21** -- **Ansible generator completion.** The playbook builder now
+  supports task-selection checkboxes for refreshing DNF metadata and starting
+  and enabling a service whose name matches the selected package. The generated
+  invocation remains a `--check --diff` dry run. Checkbox values are a closed
+  one-option enum, and the YAML structure oracle covers every optional-task
+  combination on all four RHEL selections.
+
 - **2026-09-21** -- **Git Command Generator.** Adds a dedicated Git activity
   rail with all existing curated Git guidance plus eight guided forms: clone,
   branch, merge, rebase, annotated tag, bounded log, bisect, and lost-commit

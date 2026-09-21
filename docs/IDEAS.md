@@ -47,11 +47,16 @@ Every idea in this file carries a timestamp, title, description, status, and con
 ## [ID: 260917-003]
 
 **Date:** 2026-09-17 | **Title:** Ansible Playbook, Inventory, and Config Generators (P1 backlog)
-**Status:** Proposed
+**Status:** Shipped
 **Iteration:** Phase 2 (Weeks 7–12) | **Effort:** High
 **Controls relevance:** CM-6, CM-7, AC-17
 **Description:** Answer-driven builders: user selects target group and tasks (checkboxes), generator produces valid YAML playbooks, inventories, and ansible.cfg files with commented options. Enables junior admins to automate without learning YAML from scratch.
-**Decision log:** None yet.
+**Decision log:**
+- 2026-09-21: The playbook, inventory, and `ansible.cfg` document generators
+  were already live; the remaining task-selection gap closed in
+  v1.0.0-alpha.4-dev with typed checkboxes for DNF metadata refresh and
+  same-named service management. All optional YAML block combinations are
+  parser-checked by the hostile harness on every RHEL selection.
 
 ---
 

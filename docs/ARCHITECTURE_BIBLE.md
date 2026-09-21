@@ -448,7 +448,12 @@ tool category. Three entries generate a playbook plus its invocation, an
 inventory plus `ansible-inventory --graph`, and an `ansible.cfg` plus
 `ansible-config dump --only-changed`. Generated YAML and INI are composed by
 `composeDoc()` from typed fields and are covered by the hostile harness's
-structure and round-trip oracles.
+structure and round-trip oracles. The playbook's optional DNF-cache and
+same-named-service tasks render as checkboxes backed by an optional enum whose
+only permitted value is `yes`; unchecked is field absence. Each checkbox gates
+an entire YAML block, and the document schema rejects an optional block header
+whose descendants do not share its gate, preventing orphaned lines from moving
+under the wrong task.
 
 ---
 

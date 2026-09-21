@@ -4,6 +4,21 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased -- v1.0.0-alpha.4-dev
 
+### Added -- Ansible task-selection completion
+
+- Completed roadmap item 260917-003 by upgrading the existing playbook,
+  inventory, and `ansible.cfg` builders with real task-selection controls.
+- The package playbook now offers checkboxes to refresh DNF metadata before the
+  package task and to start and enable a same-named service afterward. The
+  generated command remains `ansible-playbook site.yml --limit=... --check
+  --diff`, so the offered invocation is a dry run.
+- Checkbox controls are constrained to an optional enum whose sole value is
+  `yes`; unchecked means absent. Build-time schema validation rejects any
+  arbitrary checkbox payload or required checkbox.
+- Every optional YAML task is gated as a complete block. The hostile harness
+  parses and compares all optional-task combinations across RHEL 7–10, so a
+  missing block header or orphaned nested line fails the release gate.
+
 ### Added -- Git Command Generator
 
 - Added a dedicated **Git** activity rail (`Ctrl+Alt+4`) containing the full
