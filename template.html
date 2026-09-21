@@ -738,6 +738,8 @@ var FIELD_TYPES={
               re:/^[a-z_][a-z0-9_-]{0,31}(,[a-z_][a-z0-9_-]{0,31})*$/},
   git_refname:{cap:200,label:"Git branch or tag name",fn:isGitRefName},
   git_revision:{cap:200,label:"Git revision (branch, tag, commit or HEAD expression)",fn:isGitRevision},
+  cron_minute:{cap:2,label:"cron minute (0-59)",re:/^(0|[1-5]?[0-9])$/},
+  cron_hour:{cap:2,label:"cron hour (0-23)",re:/^(0|1?[0-9]|2[0-3])$/},
   enum:{cap:64,label:"choice",optionsFromField:true},
   comment:{cap:200,label:"free-text comment",unicode:true,re:/^[^\u0000-\u001F\u007F]+$/}
 };
@@ -1016,7 +1018,7 @@ function composeRichRule(map,plan,types){
    NULL is the only answer for anything that does not compose. There is no
    half-written file, for the same reason there is no half-built command
    (threat-model-v1 §3.4): a playbook missing a line still runs. */
-var DOC_KINDS=["yaml","ini"];
+var DOC_KINDS=["yaml","ini","lines"];
 /* A plain YAML key / INI key: no colon, no whitespace, no quote, no comment
    character. Curated content, checked the way template[].lit is checked. */
 var DOC_KEY_RE=/^[A-Za-z_][A-Za-z0-9_.-]*$/;
@@ -1024,12 +1026,17 @@ var DOC_KEY_RE=/^[A-Za-z_][A-Za-z0-9_.-]*$/;
    quotes it anyway — the ini kind does not, and one table for both is one
    table to get right. */
 var DOC_LIT_RE=/^[A-Za-z0-9_./:@+-]+$/;
+var DOC_LINE_LIT_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
+var DOC_LINE_VALUE_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
 /* No whitespace, no quote, no ';' or '#', no '=', no control character:
    nothing that can end an INI entry or start a comment. */
 var INI_VALUE_RE=/^[A-Za-z0-9_./:@+-]+$/;
 /* Closed grammars only, for the reason above the function. */
 var INI_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
-                     "interface","package","unit","ipv4","ipv6","ipaddr"];
+                     "interface","package","unit","service","ipv4","ipv6","ipaddr"];
+var LINE_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
+                      "interface","package","unit","service","ipv4","ipv6","ipaddr",
+                      "cron_minute","cron_hour"];
 var DOC_MAX_INDENT=8;
 var DOC_INDENT="  ";
 
@@ -1051,6 +1058,8 @@ function docLinePresent(spec,version,resolved,line){
     if(!Object.prototype.hasOwnProperty.call(resolved,line.requires)) return false;
   }
   var names=[line.field,line.keyField],i;
+  var parts=line.parts||[];
+  for(i=0;i<parts.length;i++) names.push(parts[i]&&parts[i].field);
   for(i=0;i<names.length;i++){
     if(names[i]===undefined||names[i]===null) continue;
     owner=fieldFor(spec,names[i]);
@@ -1093,7 +1102,7 @@ function composeDoc(spec,version,resolved){
   if(!doc||!inList(DOC_KINDS,doc.kind)) return null;
   var lines=doc.lines;
   if(!lines||!lines.length) return null;
-  var yaml=(doc.kind==="yaml"),out=[],i;
+  var yaml=(doc.kind==="yaml"),tokenLines=(doc.kind==="lines"),out=[],i;
   if(yaml) out.push("---");
   for(i=0;i<lines.length;i++){
     var line=lines[i];
@@ -1104,6 +1113,37 @@ function composeDoc(spec,version,resolved){
          the block underneath it. */
       if(line.optional!==true) return null;
       if(docBlockOrphans(spec,version,resolved,lines,i).length) return null;
+      continue;
+    }
+    if(tokenLines){
+      var parts=line.parts,lineOut="",p;
+      if(!parts||!parts.length) return null;
+      for(p=0;p<parts.length;p++){
+        var part=parts[p],piece=null,sep=(p===0?" ":(part&&part.sep!==undefined?part.sep:" "));
+        if(!part||(sep!==""&&sep!==" ")) return null;
+        if(part.lit!==undefined&&part.lit!==null){
+          if(part.field!==undefined&&part.field!==null) return null;
+          piece=String(part.lit);
+          if(!DOC_LINE_LIT_RE.test(piece)) return null;
+        }else if(part.field!==undefined&&part.field!==null){
+          var pf=fieldFor(spec,part.field),pv=resolved[part.field];
+          if(!pf||typeof pv!=="string"||!DOC_LINE_VALUE_RE.test(pv)) return null;
+          if(pf.type==="enum"){
+            var enumOk=false,po=pf.options||[],px;
+            for(px=0;px<po.length;px++){
+              var pov=(typeof po[px]==="string")?po[px]:po[px].value;
+              if(typeof pov!=="string"||!DOC_LINE_VALUE_RE.test(pov)) return null;
+              if(pov===pv) enumOk=true;
+            }
+            if(!enumOk) return null;
+          }else if(!inList(LINE_FIELD_TYPES,pf.type)) return null;
+          piece=pv;
+        }else return null;
+        if(p===0) sep="";
+        lineOut+=sep+piece;
+      }
+      if(!lineOut) return null;
+      out.push(lineOut);
       continue;
     }
     if(yaml){

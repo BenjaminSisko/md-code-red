@@ -170,8 +170,8 @@ you are entitled to see the difference.
 Every assembled command carries a blast rating -- **green** (read-only), **yellow**
 (a reversible state change), or **red** (destructive, confirmation required) -- shown
 in the muted line under the command's title (`tool . RHEL N . blast <level>`).
-Of the 37 guided entries, 23 are yellow (add a user, merge or rebase Git history,
-extend a logical volume, open a firewall port, and so on), 12 are green, and two
+Of the 43 guided entries, 28 are yellow (add a user, merge or rebase Git history,
+extend a logical volume, write a privileged configuration, and so on), 13 are green, and two
 are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
 block device, so the confirmation flow below is visible for real catalog content.
 
@@ -402,7 +402,7 @@ This is the honest state of the shipped build, not a roadmap. Numbers below are
 read directly off `dist/md-code-red_v1.0.0-alpha.4-dev.html` and its build content, not
 estimated.
 
-- **193 curated command entries across 102 tools.** 37 are guided-form generators
+- **199 curated command entries across 102 tools.** 43 are guided-form generators
   and 156 are static checks. The separate mined reference tier contains 14,439
   distinct commands with 45,281 source citations; reference rows are discovery
   material and are never silently promoted into the curated catalog.

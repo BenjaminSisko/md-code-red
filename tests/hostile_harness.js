@@ -297,6 +297,7 @@ function hasUnquotableChar(s) {
 
 var PARSE_YAML_ORACLE = "parseYamlSubset";
 var PARSE_INI_ORACLE = "parseIniSubset";
+var PARSE_LINES_ORACLE = "parseLinesSubset";
 
 var YAML_PLAIN_KEY_RE = /^[A-Za-z_][A-Za-z0-9_.-]*$/;
 
@@ -417,6 +418,24 @@ function parseIniSubset(text) {
   return { lines: out };
 }
 
+function parseLinesSubset(text) {
+  var raw = String(text).split("\n");
+  if (raw.length && raw[raw.length - 1] === "") raw.pop();
+  if (!raw.length) return { error: "empty file" };
+  var out = [];
+  for (var i = 0; i < raw.length; i++) {
+    var line = raw[i];
+    if (!line || /^ | $/.test(line) || /  /.test(line)) {
+      return { error: "line " + i + " is empty or has unstable outer/repeated whitespace: " + JSON.stringify(line) };
+    }
+    if (/[\u0000-\u001F\u007F-\u009F]/.test(line)) {
+      return { error: "line " + i + " contains a control character" };
+    }
+    out.push({ text: line });
+  }
+  return { lines: out };
+}
+
 /* ---- what the OPERATOR asked for ------------------------------------------
  * The intent side of the oracle, derived from the spec and the values chosen --
  * never from the emitted text. Mirrors composeDoc()'s presence rules, and is
@@ -439,11 +458,23 @@ function intendedDoc(spec, version, values) {
   var doc = spec.doc, out = [], i;
   for (i = 0; i < doc.lines.length; i++) {
     var line = doc.lines[i], live = true, names = ["requires", "field", "keyField"], n;
+    var lparts = line.parts || [], lp;
+    for (lp = 0; lp < lparts.length; lp++) if (lparts[lp] && lparts[lp].field) names.push(lparts[lp].field);
     for (n = 0; n < names.length; n++) {
       var who = line[names[n]];
       if (who !== undefined && who !== null && !docFieldLive(spec, version, values, who)) live = false;
     }
     if (!live) continue;
+    if (doc.kind === "lines") {
+      var text = "";
+      for (lp = 0; lp < lparts.length; lp++) {
+        var piece = lparts[lp].field ? String(values[lparts[lp].field]) : String(lparts[lp].lit);
+        var sep = lp === 0 ? "" : (lparts[lp].sep !== undefined ? lparts[lp].sep : " ");
+        text += sep + piece;
+      }
+      out.push({ text: text });
+      continue;
+    }
     if (line.section !== undefined && line.section !== null) { out.push({ section: line.section }); continue; }
     var key = (line.keyField !== undefined && line.keyField !== null)
       ? String(values[line.keyField]) : String(line.key);
@@ -474,7 +505,8 @@ function docOracle(res, spec, version, values) {
     return "emitted filename " + JSON.stringify(res.doc.filename) + " != " + JSON.stringify(doc.filename);
   }
   var want = intendedDoc(spec, version, values);
-  var got = (doc.kind === "yaml") ? parseYamlSubset(res.doc.text) : parseIniSubset(res.doc.text);
+  var got = doc.kind === "yaml" ? parseYamlSubset(res.doc.text) :
+            doc.kind === "ini" ? parseIniSubset(res.doc.text) : parseLinesSubset(res.doc.text);
   if (got.error) return "the emitted file does not parse as " + doc.kind + ": " + got.error;
   if (got.lines.length !== want.length) {
     return "the emitted file has " + got.lines.length + " lines, the operator's has " + want.length +
@@ -482,6 +514,11 @@ function docOracle(res, spec, version, values) {
   }
   for (var i = 0; i < want.length; i++) {
     var g = got.lines[i], w = want[i];
+    if (doc.kind === "lines") {
+      if (g.text !== w.text) return "line " + i + " text " + JSON.stringify(g.text) +
+        " != the operator's " + JSON.stringify(w.text);
+      continue;
+    }
     if (w.section !== undefined) {
       if (g.section !== w.section) return "line " + i + " is section " + JSON.stringify(g.section) +
                                           ", the operator's is " + JSON.stringify(w.section);
@@ -710,7 +747,7 @@ function main() {
   var types = Object.keys(fx.field_types);
   var vectors = fx.vectors;
 
-  var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, yamlOracles: 0, iniOracles: 0,
+  var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, yamlOracles: 0, iniOracles: 0, linesOracles: 0,
                 failures: [], byClass: {}, byType: {} };
 
   function note(cls, outcome) {
@@ -797,7 +834,9 @@ function main() {
         stats.failures.push(label + ": " + spec.doc.kind + " oracle — " + docMsg);
         return;
       }
-      if (spec.doc.kind === "yaml") stats.yamlOracles++; else stats.iniOracles++;
+      if (spec.doc.kind === "yaml") stats.yamlOracles++;
+      else if (spec.doc.kind === "ini") stats.iniOracles++;
+      else stats.linesOracles++;
     }
     stats.quoted++;
     note(cls, "quoted");
@@ -1503,7 +1542,9 @@ function main() {
         if (gdoc) {
           stats.failures.push("golden " + gentry.id + " / RHEL " + gver + ": " +
                               gentry.doc.kind + " oracle on the benign control — " + gdoc);
-        } else if (gentry.doc.kind === "yaml") { stats.yamlOracles++; } else { stats.iniOracles++; }
+        } else if (gentry.doc.kind === "yaml") { stats.yamlOracles++; }
+        else if (gentry.doc.kind === "ini") { stats.iniOracles++; }
+        else { stats.linesOracles++; }
       }
       var gotCommand = gres === null ? null : gres.command;
       if (gotCommand !== want) {
@@ -3492,7 +3533,9 @@ function main() {
                                 dc + " / enum branch " + db + ": " + dspec.doc.kind + " oracle — " + dmsg);
             continue;
           }
-          if (dspec.doc.kind === "yaml") stats.yamlOracles++; else stats.iniOracles++;
+          if (dspec.doc.kind === "yaml") stats.yamlOracles++;
+          else if (dspec.doc.kind === "ini") stats.iniOracles++;
+          else stats.linesOracles++;
         }
       }
     }
@@ -3692,6 +3735,7 @@ function main() {
     rich_rule_oracles: stats.oracles,
     yaml_oracle_checks: stats.yamlOracles,
     ini_oracle_checks: stats.iniOracles,
+    lines_oracle_checks: stats.linesOracles,
     doc_sweep_checks: docSweep,
     ini_type_checks: iniTypeChecks,
     ini_types_refused: iniRefused,
@@ -3825,11 +3869,10 @@ function main() {
                 "assembleCommand(), byte for byte, on every generator and every release");
     console.log("  " + report.pipeline_stig_shape_checks + " STIG-corpus shape checks (ADR-002: " +
                 "the closed set must express the pipelines DISA's own check text uses)");
-    console.log("  " + report.yaml_oracle_checks + " YAML-file oracle checks and " +
-                report.ini_oracle_checks + " INI-file oracle checks (MCR-SEC-010: every generated " +
-                "file is PARSED and compared line for line to the operator's intent -- every value " +
-                "back out exactly as it went in, every operator value quoted, every curated boolean " +
-                "bare, and the line count unchanged)");
+    console.log("  " + report.yaml_oracle_checks + " YAML-file, " +
+                report.ini_oracle_checks + " INI-file and " + report.lines_oracle_checks +
+                " token-line-file oracle checks (MCR-SEC-010: every generated file is PARSED and " +
+                "compared line for line to the operator's intent, with the line count unchanged)");
     console.log("  " + docSweep + " generated-file structure checks (every doc generator, every " +
                 "release, every combination of its optional fields and every enum branch) and " +
                 iniTypeChecks + " INI type checks: " + iniRefused + " field types refused an " +

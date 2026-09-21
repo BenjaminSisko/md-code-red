@@ -55,6 +55,10 @@ def ini_doc(lines):
     return {"kind": "ini", "filename": "ansible.cfg", "lines": lines}
 
 
+def lines_doc(lines):
+    return {"kind": "lines", "filename": "service.conf", "lines": lines}
+
+
 GOOD_YAML = yaml_doc([
     {"indent": 0, "seq": True, "key": "name", "field": "play_name"},
     {"indent": 1, "key": "hosts", "field": "hosts"},
@@ -80,7 +84,12 @@ class TheControlComesFirst(unittest.TestCase):
     def test_a_correct_ini_doc_validates_clean(self):
         self.assertEqual(schema.doc_errors("spec", GOOD_INI, BY_NAME), [])
 
-    def test_the_three_shipped_generators_validate_clean(self):
+    def test_a_correct_token_lines_doc_validates_clean(self):
+        doc = lines_doc([{"parts": [{"lit": "server"}, {"field": "hosts"},
+                                             {"lit": "iburst"}]}])
+        self.assertEqual(schema.doc_errors("spec", doc, BY_NAME), [])
+
+    def test_all_shipped_generators_validate_clean(self):
         """The real content, not an analogue. A rule that only the fixtures obey
         is a rule the shipped generators are exempt from."""
         with open(os.path.join(REPO, "content", "commands.json"), encoding="utf-8") as fh:
@@ -156,6 +165,16 @@ class EveryRuleRefusesItsOwnDefect(unittest.TestCase):
 
     def test_a_section_header_in_a_yaml_doc_is_refused(self):
         self._one(yaml_doc([{"section": "defaults"}]), "INI `section` in a yaml")
+
+    def test_token_lines_refuse_free_text_fields(self):
+        self._one(lines_doc([{"parts": [{"lit": "name"}, {"field": "play_name"}]}]),
+                  "closed grammar")
+
+    def test_token_lines_refuse_undeclared_fields(self):
+        self._one(lines_doc([{"parts": [{"field": "nope"}]}]), "does not declare")
+
+    def test_token_lines_refuse_shell_separator_literals(self):
+        self._one(lines_doc([{"parts": [{"lit": ";"}]}]), "literal token")
 
 
 class TheTwoStatementsAgree(unittest.TestCase):

@@ -302,7 +302,7 @@ FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portr
                     "protocol", "family", "action", "unit", "username", "groupname",
                     "path", "zone", "service", "package", "selinux_boolean", "audit_key",
                     "interface", "integer", "lvm_size", "group_list", "git_refname",
-                    "git_revision", "enum", "comment")
+                    "git_revision", "cron_minute", "cron_hour", "enum", "comment")
 
 # Closed-grammar types only. `comment` and `enum` are deliberately absent from
 # every slot: rich-rule attribute syntax has no escape for a double quote inside
@@ -575,12 +575,17 @@ def spec_template_errors(where, template, fields_by_name):
 # than a fourth escaper nobody can write correctly (MCR-SEC-001's ruling,
 # applied to a second grammar).
 # ---------------------------------------------------------------------------
-DOC_KINDS = ("yaml", "ini")
+DOC_KINDS = ("yaml", "ini", "lines")
 DOC_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
 DOC_LIT_RE = re.compile(r"^[A-Za-z0-9_./:@+-]+$")
+DOC_LINE_LIT_RE = re.compile(r"^[A-Za-z0-9_./:@%*(),=+-]+$")
+DOC_LINE_VALUE_RE = re.compile(r"^[A-Za-z0-9_./:@%*(),=+-]+$")
 DOC_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 INI_FIELD_TYPES = ("path", "username", "groupname", "integer", "port", "hostname",
-                   "interface", "package", "unit", "ipv4", "ipv6", "ipaddr")
+                   "interface", "package", "unit", "service", "ipv4", "ipv6", "ipaddr")
+LINE_FIELD_TYPES = ("path", "username", "groupname", "integer", "port", "hostname",
+                    "interface", "package", "unit", "service", "ipv4", "ipv6", "ipaddr",
+                    "cron_minute", "cron_hour")
 DOC_MAX_INDENT = 8
 DOC_LINE_SHAPES = ("field", "lit", "bool")
 
@@ -609,10 +614,60 @@ def doc_errors(where, doc, fields_by_name):
         return errs + ["%s: doc.lines must be a non-empty list" % where]
 
     yaml = (kind == "yaml")
+    token_lines = (kind == "lines")
     for i, line in enumerate(lines):
         at = "%s: doc.lines[%d]" % (where, i)
         if not isinstance(line, dict):
             errs.append("%s is not an object" % at)
+            continue
+        if token_lines:
+            parts = line.get("parts")
+            if not isinstance(parts, list) or not parts:
+                errs.append("%s parts must be a non-empty list" % at)
+                continue
+            req = line.get("requires")
+            if req is not None and req not in fields_by_name:
+                errs.append("%s requires field '%s', which this spec does not declare" % (at, req))
+            gated_names = [req] if req else []
+            for j, part in enumerate(parts):
+                pat = "%s.parts[%d]" % (at, j)
+                if not isinstance(part, dict):
+                    errs.append("%s is not an object" % pat)
+                    continue
+                shapes = [key for key in ("lit", "field") if part.get(key) is not None]
+                if len(shapes) != 1:
+                    errs.append("%s must carry exactly one literal token or field" % pat)
+                    continue
+                if part.get("sep") not in (None, "", " "):
+                    errs.append("%s sep must be either an empty string or one space" % pat)
+                if part.get("lit") is not None:
+                    if not DOC_LINE_LIT_RE.match(str(part["lit"])):
+                        errs.append("%s literal token %r must match %s" %
+                                    (pat, part["lit"], DOC_LINE_LIT_RE.pattern))
+                    continue
+                fname = part.get("field")
+                field = fields_by_name.get(fname)
+                if field is None:
+                    errs.append("%s field '%s' does not declare a matching form field" % (pat, fname))
+                    continue
+                gated_names.append(fname)
+                ftype = field.get("type")
+                if ftype == "enum":
+                    opts = field.get("options") or []
+                    values = [o if isinstance(o, str) else o.get("value") for o in opts]
+                    if not values or any(not isinstance(v, str) or not DOC_LINE_VALUE_RE.match(v)
+                                         for v in values):
+                        errs.append("%s enum field '%s' has an option outside the closed line "
+                                    "grammar %s" % (pat, fname, DOC_LINE_VALUE_RE.pattern))
+                elif ftype not in LINE_FIELD_TYPES:
+                    errs.append("%s field '%s' uses type '%s'; a token-line value has no escape "
+                                "syntax, so only a closed grammar may reach it: %s"
+                                % (pat, fname, ftype, ", ".join(LINE_FIELD_TYPES)))
+            droppable = any((not fields_by_name[n].get("required")) or
+                            bool(fields_by_name[n].get("versions"))
+                            for n in gated_names if n in fields_by_name)
+            if droppable and line.get("optional") is not True:
+                errs.append("%s can be absent without declaring optional:true" % at)
             continue
         if line.get("section") is not None:
             if yaml:
@@ -737,9 +792,13 @@ def spec_errors(where, spec):
         for key in ("field", "keyField", "requires"):
             if line.get(key):
                 used.add(line[key])
+        for part in line.get("parts") or []:
+            if isinstance(part, dict) and part.get("field"):
+                used.add(part["field"])
     for name in sorted(names - used):
-        errs.append("%s: field '%s' is declared but no template token uses it — the form would ask "
-                    "for a value that never reaches the command" % (where, name))
+        errs.append("%s: field '%s' is declared but no template token uses it and no generated "
+                    "document part uses it — the form would ask for a value that reaches no output"
+                    % (where, name))
 
     vs = spec.get("versions")
     if vs is not None and (not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs)):

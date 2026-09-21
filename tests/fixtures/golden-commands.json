@@ -1,7 +1,7 @@
 {
  "_doc": "The VALIDITY oracle for every shipped generator (MCR-SEC-015 / MCR-SEC-021, conditions E1 and E6).",
  "_why": "tests/hostile_harness.js proved CONTAINMENT and nothing else: every hostile value is rejected or confined to one single-quoted shell token whose skeleton matches the benign control. It never asserted that the benign control is a VALID invocation of its tool, which is exactly how 20 short-option tokens joined with '=' across 11 of 24 generators passed 76,225 checks. This table is the missing oracle. Every row states the exact command a generator must emit for a stated set of benign values, on a stated release.",
- "_authority": "Hand-authored from each tool's own man page and getopt(3) semantics — NEVER generated from the assembler. A table regenerated from the code it tests is a transcript, not an oracle. When a row and the assembler disagree, the row is presumed right until the man page says otherwise.",
+ "_authority": "Hand-authored from each tool's own man page and getopt(3) semantics \u2014 NEVER generated from the assembler. A table regenerated from the code it tests is a transcript, not an oracle. When a row and the assembler disagree, the row is presumed right until the man page says otherwise.",
  "_rules_pinned": [
   "A GNU long option takes its argument as --name=value (or --name value); both are accepted by getopt_long, and this product emits the '=' form.",
   "A single-dash SHORT option takes its argument as '-X value' or glued as '-Xvalue'. It NEVER takes '-X=value': getopt(3) passes the '=' through as the first character of optarg. `chage -M=60` sets maxdays to the string '=60'; `auditctl -w=/etc/motd` watches nothing; `useradd -c=RFC-1234 -s=/bin/bash` sets a wrong GECOS and an invalid login shell without erroring.",
@@ -9,16 +9,16 @@
   "Every operator-supplied value is single-quoted, on both sides of the join. That is MCR-SEC-004 and it does not change here."
  ],
  "_completeness": "The harness fails if a generator entry in content/commands.json has no row here, and fails if a row here names a generator that does not exist. A new generator cannot ship without stating the command it produces.",
- "_null_means": "commands.<release> === null means the generator is gated off that release and assembleCommand() must return null — not a shortened command.",
+ "_null_means": "commands.<release> === null means the generator is gated off that release and assembleCommand() must return null \u2014 not a shortened command.",
  "_enum_branches": {
-  "_why": "MCR-SEC-021, condition E6. benignFor() took opts[0], so the control value was always the first option — 'install', never 'remove'; 'start', never 'stop' or 'disable'. The destructive branch of every action enum was therefore never the benign control and its blast interaction was never asserted. The harness now sweeps every option of every enum field of every generator on every release, and every option named here must come out at least yellow.",
+  "_why": "MCR-SEC-021, condition E6. benignFor() took opts[0], so the control value was always the first option \u2014 'install', never 'remove'; 'start', never 'stop' or 'disable'. The destructive branch of every action enum was therefore never the benign control and its blast interaction was never asserted. The harness now sweeps every option of every enum field of every generator on every release, and every option named here must come out at least yellow.",
   "destructive": [
    "remove",
    "stop",
    "disable",
    "off"
   ],
-  "_not_listed": "'restart' and 'reload' are disruptive but not destructive: they are offered only by gen-systemctl-manage, which is DECLARED yellow, so listing them here would assert nothing the declaration does not already carry. The list is for branches whose rating has to be EARNED on a generator declared green — as of G4(d) (Eli Cross's ruling raising gen-dnf-package/gen-yum-package's declared blast to yellow, closing exactly this gap), no shipped generator with a 'remove'/'stop'/'disable'/'off' branch is declared green any more, so the _control assertion below has nothing to check against today and is kept for the day a new destructive-branch generator lands declared green, rather than earning its own raise.",
+  "_not_listed": "'restart' and 'reload' are disruptive but not destructive: they are offered only by gen-systemctl-manage, which is DECLARED yellow, so listing them here would assert nothing the declaration does not already carry. The list is for branches whose rating has to be EARNED on a generator declared green \u2014 as of G4(d) (Eli Cross's ruling raising gen-dnf-package/gen-yum-package's declared blast to yellow, closing exactly this gap), no shipped generator with a 'remove'/'stop'/'disable'/'off' branch is declared green any more, so the _control assertion below has nothing to check against today and is kept for the day a new destructive-branch generator lands declared green, rather than earning its own raise.",
   "_control": "For a generator declared green with a destructive branch, the sweep also requires that some branch comes out GREEN. A pattern table that rated everything yellow would satisfy the destructive assertion while proving nothing."
  },
  "generators": {
@@ -204,7 +204,7 @@
    }
   },
   "gen-useradd-create": {
-   "pins": "useradd(8): -m is bare; -c (GECOS), -G (groups) and -s (shell) are space-joined. The '=' join silently sets GECOS to '=RFC-1234' and the login shell to '=/bin/bash' without an error — MCR-SEC-015's second unsafe case.",
+   "pins": "useradd(8): -m is bare; -c (GECOS), -G (groups) and -s (shell) are space-joined. The '=' join silently sets GECOS to '=RFC-1234' and the login shell to '=/bin/bash' without an error \u2014 MCR-SEC-015's second unsafe case.",
    "values": {
     "username": "svcacct",
     "comment": "RFC-1234",
@@ -274,7 +274,7 @@
    }
   },
   "gen-dnf-package": {
-   "pins": "dnf does not exist on RHEL 7 — null, not a shortened command",
+   "pins": "dnf does not exist on RHEL 7 \u2014 null, not a shortened command",
    "values": {
     "action": "install",
     "pkg": "firewalld"
@@ -304,7 +304,7 @@
    }
   },
   "gen-setsebool-set": {
-   "pins": "setsebool(8): -P is a bare option meaning PERSISTENT. It is conditional on the persist field, and it is an OPTION, not an argument slot — dropping it shifts nothing (MCR-SEC-018 / MCR-SEC-022).",
+   "pins": "setsebool(8): -P is a bare option meaning PERSISTENT. It is conditional on the persist field, and it is an OPTION, not an argument slot \u2014 dropping it shifts nothing (MCR-SEC-018 / MCR-SEC-022).",
    "values": {
     "boolean": "httpd_can_network_connect",
     "state": "on",
@@ -342,7 +342,7 @@
    }
   },
   "gen-chage-list": {
-   "pins": "chage(1): -l is bare and the user name is positional. Benign value 'adm-linux' (J1, VER-001 exposure): 'svcacct' does not exist on either lab host, so the receipted capture ran 'adm-linux' instead (documented in the capture's field_substitutions) — the golden row is pinned to the value that was actually, verifiably run.",
+   "pins": "chage(1): -l is bare and the user name is positional. Benign value 'adm-linux' (J1, VER-001 exposure): 'svcacct' does not exist on either lab host, so the receipted capture ran 'adm-linux' instead (documented in the capture's field_substitutions) \u2014 the golden row is pinned to the value that was actually, verifiably run.",
    "values": {
     "username": "adm-linux"
    },
@@ -358,7 +358,7 @@
    }
   },
   "gen-chage-set-aging": {
-   "pins": "chage(1): -M/-m/-W each take a number, space-joined. `chage -M=60` errors with \"invalid numeric argument '=60'\" — loud, but still wrong.",
+   "pins": "chage(1): -M/-m/-W each take a number, space-joined. `chage -M=60` errors with \"invalid numeric argument '=60'\" \u2014 loud, but still wrong.",
    "values": {
     "username": "svcacct",
     "maxdays": "60",
@@ -669,7 +669,109 @@
     "9": "git branch 'recovery/lost-work' 'HEAD@{1}'",
     "10": "git branch 'recovery/lost-work' 'HEAD@{1}'"
    }
+  },
+  "gen-sshd-config": {
+   "pins": "syntax check reads the generated literal filename; -t and -f are separate short-option tokens",
+   "values": {
+    "port": "2222",
+    "allow_group": "sshadmins"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-t",
+    "-f"
+   ],
+   "commands": {
+    "7": "sshd -t -f sshd_config.generated",
+    "8": "sshd -t -f sshd_config.generated",
+    "9": "sshd -t -f sshd_config.generated",
+    "10": "sshd -t -f sshd_config.generated"
+   }
+  },
+  "gen-chrony-config": {
+   "pins": "parse/print mode reads the generated literal filename; -p and -f are separate short-option tokens",
+   "values": {
+    "server": "time.example.com"
+   },
+   "blast": "green",
+   "flags": [
+    "-p",
+    "-f"
+   ],
+   "commands": {
+    "7": "chronyd -p -f chrony.conf.generated",
+    "8": "chronyd -p -f chrony.conf.generated",
+    "9": "chronyd -p -f chrony.conf.generated",
+    "10": "chronyd -p -f chrony.conf.generated"
+   }
+  },
+  "gen-rsyslog-config": {
+   "pins": "-N1 is a literal validation mode and -f takes the generated literal filename",
+   "values": {
+    "target": "logs.example.com",
+    "port": "6514"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-N1",
+    "-f"
+   ],
+   "commands": {
+    "7": "rsyslogd -N1 -f rsyslog.conf.generated",
+    "8": "rsyslogd -N1 -f rsyslog.conf.generated",
+    "9": "rsyslogd -N1 -f rsyslog.conf.generated",
+    "10": "rsyslogd -N1 -f rsyslog.conf.generated"
+   }
+  },
+  "gen-sudoers-config": {
+   "pins": "-c and -f are literal validation options followed by the generated literal filename",
+   "values": {
+    "group": "wheel",
+    "command": "/usr/bin/systemctl"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-c",
+    "-f"
+   ],
+   "commands": {
+    "7": "visudo -c -f sudoers.generated",
+    "8": "visudo -c -f sudoers.generated",
+    "9": "visudo -c -f sudoers.generated",
+    "10": "visudo -c -f sudoers.generated"
+   }
+  },
+  "gen-systemd-unit": {
+   "pins": "verify is a subcommand and the generated unit filename is a positional operand",
+   "values": {
+    "description": "managed-service",
+    "exec_start": "/usr/local/bin/managed-service"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "systemd-analyze verify managed.service",
+    "8": "systemd-analyze verify managed.service",
+    "9": "systemd-analyze verify managed.service",
+    "10": "systemd-analyze verify managed.service"
+   }
+  },
+  "gen-cron-config": {
+   "pins": "the generated filename is the positional replacement-crontab operand",
+   "values": {
+    "minute": "15",
+    "hour": "2",
+    "command": "/usr/local/bin/backup"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "crontab cron.generated",
+    "8": "crontab cron.generated",
+    "9": "crontab cron.generated",
+    "10": "crontab cron.generated"
+   }
   }
  },
- "_flags_column": "MCR-SEC-023. The flag-by-flag panel must name every option the command shows, in the order the command shows them — option tokens AND option-shaped literals ('-T', '-P', '-r', '--permanent', '--boot'). A panel silent about a flag that is present is a smaller version of a panel describing one that is not. Where no curated or dictionary explanation exists the panel says 'unverified — see man page'; it never guesses."
+ "_flags_column": "MCR-SEC-023. The flag-by-flag panel must name every option the command shows, in the order the command shows them \u2014 option tokens AND option-shaped literals ('-T', '-P', '-r', '--permanent', '--boot'). A panel silent about a flag that is present is a smaller version of a panel describing one that is not. Where no curated or dictionary explanation exists the panel says 'unverified \u2014 see man page'; it never guesses."
 }

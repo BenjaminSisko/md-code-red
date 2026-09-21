@@ -1,17 +1,17 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
+  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified \u2014 ADR-001 \u00a75.1",
   "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
   "privilege_rule": "Optional, one of extract/schema.py's PRIVILEGES (\"root\" today). Set when the entry's OWN assembled command needs elevated privilege to run on a STIG'd host that the command text itself never requests (no sudo/su in the template) -- distinct from blast, which rates what the command DOES once it runs, not what it takes to run it. The UI shows a privilege badge next to blast and the evidence exporter records a Requires: line, so the content validation protocol's safety rule (no sudo used during a capture run) can defer the entry correctly instead of silently skipping it (G4(e); gen-sshd-test-config, sshd_config not world-readable on defiant/saratoga, CR-T-34).",
   "curated": true,
-  "status": "RHEL P0 guided command set complete, with the Phase 2 Git rail and eight guided Git scenarios now shipped.",
+  "status": "RHEL P0 and Phase 2 Git command sets complete; Phase 3 configuration-file generators shipped for sshd, chrony, rsyslog, sudoers, systemd, and cron.",
   "rhel_version_value_shapes": [
    "{command, notes, changed_in_note}",
    "{same_as: \"<other version key>\", changed_in_note?}",
    "{unavailable: {reason, alternative}}"
   ],
-  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
-  "entry_count": 193
+  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified \u2014 see man page'. The extractor and this file never guess.",
+  "entry_count": 199
  },
  "categories": [
   "firewall-cmd",
@@ -94,7 +94,7 @@
     }
    ],
    "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
-   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -162,7 +162,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -219,7 +219,7 @@
     }
    ],
    "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
-   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
+   "undo": "Nothing to undo \u2014 this command only reads unit state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -283,7 +283,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -341,7 +341,7 @@
     }
    ],
    "verify": "The command prints \"active\".",
-   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -377,7 +377,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -426,7 +426,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 firewall-cmd",
-    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -494,7 +494,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -556,7 +556,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -639,7 +639,7 @@
     "id": "src-man-nmcli-r8",
     "title": "nmcli(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 nmcli",
-    "version": "RHEL 8 — content-src/raw/rhel8/nmcli.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/nmcli.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -718,13 +718,13 @@
     }
    ],
    "verify": "The command prints matching journal entries. No matches is exit status 0 with no output, not a failure.",
-   "undo": "Nothing to undo — journalctl only reads the journal and changes nothing on the host.",
+   "undo": "Nothing to undo \u2014 journalctl only reads the journal and changes nothing on the host.",
    "blast": "green",
    "source": {
     "id": "src-man-journalctl-r8",
     "title": "journalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 journalctl",
-    "version": "RHEL 8 — content-src/raw/rhel8/journalctl.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/journalctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -774,7 +774,7 @@
     "id": "src-man-pvcreate-r8",
     "title": "pvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/pvcreate.man.txt",
-    "version": "RHEL 8 — content-src/raw/rhel8/pvcreate.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/pvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -822,7 +822,7 @@
     "id": "src-man-vgcreate-r8",
     "title": "vgcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/vgcreate.man.txt",
-    "version": "RHEL 8 — content-src/raw/rhel8/vgcreate.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/vgcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -872,13 +872,13 @@
     }
    ],
    "verify": "lvs <vg>/<name> shows the new logical volume at the requested size.",
-   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume — blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
+   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume \u2014 blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
    "blast": "yellow",
    "source": {
     "id": "src-man-lvcreate-r8",
     "title": "lvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvcreate",
-    "version": "RHEL 8 — content-src/raw/rhel8/lvcreate.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -937,7 +937,7 @@
     "id": "src-man-lvextend-r8",
     "title": "lvextend(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvextend",
-    "version": "RHEL 8 — content-src/raw/rhel8/lvextend.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvextend.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -974,13 +974,13 @@
     }
    ],
    "verify": "The command prints the merged, effective configuration and exits 0 with no syntax error.",
-   "undo": "Nothing to undo — test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
+   "undo": "Nothing to undo \u2014 test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
    "blast": "green",
    "source": {
     "id": "src-man-sshd-r8",
     "title": "sshd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 sshd",
-    "version": "RHEL 8 — content-src/raw/rhel8/sshd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/sshd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1045,13 +1045,13 @@
     }
    ],
    "verify": "getent passwd <username> shows the new account with a home directory and the requested shell.",
-   "undo": "userdel -r <username> removes the account and its home directory — blast: red, see the dangerous-pattern table (dp-userdel).",
+   "undo": "userdel -r <username> removes the account and its home directory \u2014 blast: red, see the dangerous-pattern table (dp-userdel).",
    "blast": "yellow",
    "source": {
     "id": "src-man-useradd-r8",
     "title": "useradd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 useradd",
-    "version": "RHEL 8 — content-src/raw/rhel8/useradd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/useradd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1095,13 +1095,13 @@
     }
    ],
    "verify": "id <username> lists the new group under supplementary groups.",
-   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it — usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
+   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it \u2014 usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
    "blast": "yellow",
    "source": {
     "id": "src-man-usermod-r8",
     "title": "usermod(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 usermod",
-    "version": "RHEL 8 — content-src/raw/rhel8/usermod.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/usermod.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1147,12 +1147,12 @@
     }
    ],
    "verify": "The command's own output IS the verification: is-active/is-enabled/is-failed print one word, status prints the full unit block.",
-   "undo": "Nothing to undo — every action in this generator only reads unit state.",
+   "undo": "Nothing to undo \u2014 every action in this generator only reads unit state.",
    "blast": "green",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1215,7 +1215,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1264,7 +1264,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1318,7 +1318,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1386,7 +1386,7 @@
     "id": "src-man-setsebool-r8",
     "title": "setsebool(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 setsebool",
-    "version": "RHEL 8 — content-src/raw/rhel8/setsebool.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/setsebool.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1446,9 +1446,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-semanage-port-r8",
-    "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "semanage-port(8) manual page \u2014 a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 8 semanage-port",
-    "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/9/10 \u2014 policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1483,13 +1483,13 @@
     }
    ],
    "verify": "The command prints the account's last change, expiry and warning-day settings.",
-   "undo": "Nothing to undo — this only reads aging state.",
+   "undo": "Nothing to undo \u2014 this only reads aging state.",
    "blast": "green",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1560,14 +1560,14 @@
      "field": "username"
     }
    ],
-   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value — leave at least one filled in to get a single non-interactive command.)",
+   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value \u2014 leave at least one filled in to get a single non-interactive command.)",
    "undo": "Run this generator again with the account's previous values (read them first with chage -l).",
    "blast": "yellow",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1582,7 +1582,7 @@
    "id": "gen-auditctl-watch",
    "tool": "auditctl",
    "category": "auditctl / ausearch",
-   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot — persistent rules go in /etc/audit/rules.d/)",
+   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot \u2014 persistent rules go in /etc/audit/rules.d/)",
    "fields": [
     {
      "name": "path",
@@ -1628,13 +1628,13 @@
     }
    ],
    "verify": "auditctl -l lists the new watch rule.",
-   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule — the flags must match the rule exactly.",
+   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule \u2014 the flags must match the rule exactly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-auditctl-r8",
     "title": "auditctl(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 auditctl",
-    "version": "RHEL 8 — content-src/raw/rhel8/auditctl.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/auditctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1677,13 +1677,13 @@
     }
    ],
    "verify": "The command prints matching audit events, or exits 1 with no output if none matched.",
-   "undo": "Nothing to undo — ausearch only reads the audit log.",
+   "undo": "Nothing to undo \u2014 ausearch only reads the audit log.",
    "blast": "green",
    "source": {
     "id": "src-man-ausearch-r8",
     "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 ausearch",
-    "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/ausearch.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1730,13 +1730,13 @@
     }
    ],
    "verify": "rsyslogd -N1 exits 0 and prints no error line if the configuration is valid.",
-   "undo": "Nothing to undo — -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
+   "undo": "Nothing to undo \u2014 -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
    "blast": "green",
    "source": {
     "id": "src-man-rsyslogd-r8",
     "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 rsyslogd",
-    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/rsyslogd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1785,7 +1785,7 @@
     "id": "src-man-chronyd-r8",
     "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/chronyd.man.txt#L68",
-    "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chronyd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1824,14 +1824,14 @@
      "requires": "all"
     }
    ],
-   "verify": "The command's own table output IS the verification — one row per container (running only, or every container with -a).",
-   "undo": "Nothing to undo — ps only lists container state.",
+   "verify": "The command's own table output IS the verification \u2014 one row per container (running only, or every container with -a).",
+   "undo": "Nothing to undo \u2014 ps only lists container state.",
    "blast": "green",
    "source": {
     "id": "src-man-podman-ps-r8",
-    "title": "podman-ps(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-ps(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-ps",
-    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1856,7 +1856,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "gen-podman-stop",
@@ -1886,9 +1886,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-podman-stop-r8",
-    "title": "podman-stop(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-stop(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-stop",
-    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1903,7 +1903,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "ls-listing",
@@ -7712,7 +7712,7 @@
     }
    ],
    "verify": "The command prints no more than the requested number of commits and labels reachable branch and tag names.",
-   "undo": "Nothing to undo — git log only reads repository history.",
+   "undo": "Nothing to undo \u2014 git log only reads repository history.",
    "blast": "green",
    "source": {
     "id": "src-git-htmldocs",
@@ -11482,6 +11482,561 @@
     "version": "Grey Beard Ansible v1.0.0; ansible-core 2.21.1",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-sshd-config",
+   "tool": "sshd",
+   "category": "ssh / sshd config",
+   "privilege": "root",
+   "intent": "Write a small hardened sshd configuration and validate its syntax before installation",
+   "fields": [
+    {
+     "name": "port",
+     "type": "port",
+     "required": true
+    },
+    {
+     "name": "allow_group",
+     "type": "groupname",
+     "required": false
+    }
+   ],
+   "template": [
+    {
+     "lit": "sshd"
+    },
+    {
+     "lit": "-t"
+    },
+    {
+     "lit": "-f"
+    },
+    {
+     "lit": "sshd_config.generated"
+    }
+   ],
+   "doc": {
+    "kind": "lines",
+    "filename": "sshd_config.generated",
+    "lines": [
+     {
+      "parts": [
+       {
+        "lit": "Port"
+       },
+       {
+        "field": "port"
+       }
+      ]
+     },
+     {
+      "parts": [
+       {
+        "lit": "PermitRootLogin"
+       },
+       {
+        "lit": "no"
+       }
+      ]
+     },
+     {
+      "parts": [
+       {
+        "lit": "PasswordAuthentication"
+       },
+       {
+        "lit": "no"
+       }
+      ]
+     },
+     {
+      "parts": [
+       {
+        "lit": "AllowGroups"
+       },
+       {
+        "field": "allow_group"
+       }
+      ],
+      "requires": "allow_group",
+      "optional": true
+     }
+    ]
+   },
+   "notes": "This creates a hardened fragment with direct root login and password authentication disabled. It is not a complete replacement for /etc/ssh/sshd_config. Validate it with the generated command, merge the reviewed directives into the managed configuration, keep an existing privileged session open, and reload sshd only after a second validation of the complete file.",
+   "verify": "sshd -t -f sshd_config.generated exits 0 and prints no diagnostic. Before deployment, run sshd -T against the complete managed configuration and confirm the effective values.",
+   "undo": "Delete the generated file if it has not been installed. If its directives were deployed, restore the prior sshd configuration from backup, validate it with sshd -t, and reload sshd while keeping the recovery session open.",
+   "blast": "yellow",
+   "stig": [
+    {
+     "stig_id": "RHEL-07-040370",
+     "rule_id": "SV-204592r991589_rule",
+     "rhel_version": "7",
+     "cci": [
+      "CCI-000366"
+     ],
+     "nist": [
+      "CM-6 b"
+     ],
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-08-010550",
+     "rule_id": "SV-230296r1069322_rule",
+     "rhel_version": "8",
+     "cci": [
+      "CCI-000770",
+      "CCI-004045"
+     ],
+     "nist": [
+      "IA-2 (5)"
+     ],
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-09-255045",
+     "rule_id": "SV-257985r1069364_rule",
+     "rhel_version": "9",
+     "cci": [
+      "CCI-004045",
+      "CCI-000770"
+     ],
+     "nist": [
+      "IA-2 (5)"
+     ],
+     "expected_output": null
+    },
+    {
+     "stig_id": "RHEL-10-700620",
+     "rule_id": "SV-281265r1184765_rule",
+     "rhel_version": "10",
+     "cci": [
+      "CCI-004045"
+     ],
+     "nist": [
+      "IA-2 (5)"
+     ],
+     "expected_output": null
+    }
+   ],
+   "source": {
+    "id": "src-man-sshd-config-r9",
+    "title": "sshd_config(5) manual page captured from the RHEL 9 source set",
+    "url_or_man": "content-src/raw/rhel9/sshd.sshd_config.man.txt",
+    "version": "RHEL 9 staged manual-page capture",
+    "retrieved_on": "2026-09-21",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-chrony-config",
+   "tool": "chronyd",
+   "category": "chronyd",
+   "intent": "Write a minimal chrony configuration for one time source and parse it without starting the daemon",
+   "fields": [
+    {
+     "name": "server",
+     "type": "hostname",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "chronyd"
+    },
+    {
+     "lit": "-p"
+    },
+    {
+     "lit": "-f"
+    },
+    {
+     "lit": "chrony.conf.generated"
+    }
+   ],
+   "doc": {
+    "kind": "lines",
+    "filename": "chrony.conf.generated",
+    "lines": [
+     {
+      "parts": [
+       {
+        "lit": "server"
+       },
+       {
+        "field": "server"
+       },
+       {
+        "lit": "iburst"
+       }
+      ]
+     },
+     {
+      "parts": [
+       {
+        "lit": "makestep"
+       },
+       {
+        "lit": "1.0"
+       },
+       {
+        "lit": "3"
+       }
+      ]
+     },
+     {
+      "parts": [
+       {
+        "lit": "rtcsync"
+       }
+      ]
+     }
+    ]
+   },
+   "notes": "The generated file declares one server with iburst, permits large startup corrections during the first three updates, and asks the kernel to synchronize the real-time clock. Review it alongside the distribution chrony.conf because production configurations commonly also need pool, driftfile, key, logging, and access-control directives.",
+   "verify": "chronyd -p -f chrony.conf.generated exits 0 after printing the parsed configuration; it does not start the daemon or adjust the clock.",
+   "undo": "Delete chrony.conf.generated. If its directives were later deployed, restore the previous chrony configuration and restart chronyd during an approved change window.",
+   "blast": "green",
+   "stig": [],
+   "source": {
+    "id": "src-man-chrony-config-r9",
+    "title": "chrony.conf(5) manual page captured from the RHEL 9 source set",
+    "url_or_man": "content-src/raw/rhel9/chronyd.chrony.conf.man.txt",
+    "version": "RHEL 9 staged manual-page capture",
+    "retrieved_on": "2026-09-21",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-rsyslog-config",
+   "tool": "rsyslogd",
+   "category": "rsyslog",
+   "intent": "Write a minimal TCP log-forwarding rule and validate it without starting rsyslog",
+   "fields": [
+    {
+     "name": "target",
+     "type": "hostname",
+     "required": true
+    },
+    {
+     "name": "port",
+     "type": "port",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "rsyslogd"
+    },
+    {
+     "lit": "-N1"
+    },
+    {
+     "lit": "-f"
+    },
+    {
+     "lit": "rsyslog.conf.generated"
+    }
+   ],
+   "doc": {
+    "kind": "lines",
+    "filename": "rsyslog.conf.generated",
+    "lines": [
+     {
+      "parts": [
+       {
+        "lit": "*.*"
+       },
+       {
+        "lit": "@@"
+       },
+       {
+        "field": "target",
+        "sep": ""
+       },
+       {
+        "lit": ":",
+        "sep": ""
+       },
+       {
+        "field": "port",
+        "sep": ""
+       }
+      ]
+     }
+    ]
+   },
+   "notes": "The two at signs select TCP forwarding. This is a minimal forwarding rule; it does not configure TLS, queues, certificates, or local inputs. Review transport security and reliability requirements before merging it into a production rsyslog configuration.",
+   "verify": "rsyslogd -N1 -f rsyslog.conf.generated exits 0 and reports no configuration error; test end-to-end receipt separately before deployment.",
+   "undo": "Delete rsyslog.conf.generated. If the rule was deployed, remove it from the managed configuration, validate the complete configuration, and reload rsyslog.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-rsyslogd-r8",
+    "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "man 8 rsyslogd",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/rsyslogd.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-sudoers-config",
+   "tool": "visudo",
+   "category": "Users & sudo",
+   "privilege": "root",
+   "intent": "Write one group-scoped sudoers rule and validate it before installation",
+   "fields": [
+    {
+     "name": "group",
+     "type": "groupname",
+     "required": true
+    },
+    {
+     "name": "command",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "visudo"
+    },
+    {
+     "lit": "-c"
+    },
+    {
+     "lit": "-f"
+    },
+    {
+     "lit": "sudoers.generated"
+    }
+   ],
+   "doc": {
+    "kind": "lines",
+    "filename": "sudoers.generated",
+    "lines": [
+     {
+      "parts": [
+       {
+        "lit": "%"
+       },
+       {
+        "field": "group",
+        "sep": ""
+       },
+       {
+        "lit": "ALL=(root)"
+       },
+       {
+        "field": "command"
+       }
+      ]
+     }
+    ]
+   },
+   "notes": "The rule grants members of the named group permission to run exactly one absolute command as root, subject to the site defaults for authentication. Install reviewed fragments with root ownership and mode 0440 under /etc/sudoers.d, and validate the complete policy before ending the current privileged session.",
+   "verify": "visudo -c -f sudoers.generated reports that the file parsed OK. After installation, visudo -c must also report that the complete sudoers policy parses successfully.",
+   "undo": "Delete the generated file if it has not been installed. If installed as a fragment, remove that fragment from a root recovery session and run visudo -c again.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-greybeard-r-visudo-c",
+    "title": "Grey Beard Ansible field kit, content/commands.json entry r-visudo-c; command behavior cross-checked against visudo(8)",
+    "url_or_man": "orbit/grey-beard-ansible content/commands.json#r-visudo-c",
+    "version": "Grey Beard Ansible v1.0.0, entry verified 2026-08-23",
+    "retrieved_on": "2026-09-17",
+    "license_class": "verbatim-ok"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-systemd-unit",
+   "tool": "systemd-analyze",
+   "category": "process",
+   "intent": "Write a simple systemd service unit and verify its syntax and dependencies before installation",
+   "fields": [
+    {
+     "name": "description",
+     "type": "service",
+     "required": true
+    },
+    {
+     "name": "exec_start",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "systemd-analyze"
+    },
+    {
+     "lit": "verify"
+    },
+    {
+     "lit": "managed.service"
+    }
+   ],
+   "doc": {
+    "kind": "ini",
+    "filename": "managed.service",
+    "lines": [
+     {
+      "section": "Unit"
+     },
+     {
+      "key": "Description",
+      "field": "description"
+     },
+     {
+      "key": "After",
+      "lit": "network-online.target"
+     },
+     {
+      "section": "Service"
+     },
+     {
+      "key": "Type",
+      "lit": "simple"
+     },
+     {
+      "key": "ExecStart",
+      "field": "exec_start"
+     },
+     {
+      "key": "Restart",
+      "lit": "on-failure"
+     },
+     {
+      "section": "Install"
+     },
+     {
+      "key": "WantedBy",
+      "lit": "multi-user.target"
+     }
+    ]
+   },
+   "notes": "The service runs one absolute executable with no arguments, restarts it after failures, and may be enabled under multi-user.target. Add user, environment, sandboxing, ordering, and resource controls deliberately before production use; a valid unit can still be operationally unsafe.",
+   "verify": "systemd-analyze verify managed.service exits 0 and reports no syntax or dependency error. After installation, run systemctl daemon-reload and inspect systemctl cat managed.service before starting it.",
+   "undo": "Delete managed.service if it has not been installed. If installed, disable and stop the unit when appropriate, remove the unit file, and run systemctl daemon-reload.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-systemd-analyze",
+    "title": "man page for systemd-analyze, as installed on the reference host",
+    "url_or_man": "man systemd-analyze(1)",
+    "version": "systemd 219-257",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   }
+  },
+  {
+   "id": "gen-cron-config",
+   "tool": "crontab",
+   "category": "process",
+   "intent": "Write a single daily cron job and install it as the current user crontab",
+   "fields": [
+    {
+     "name": "minute",
+     "type": "cron_minute",
+     "required": true
+    },
+    {
+     "name": "hour",
+     "type": "cron_hour",
+     "required": true
+    },
+    {
+     "name": "command",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "crontab"
+    },
+    {
+     "lit": "cron.generated"
+    }
+   ],
+   "doc": {
+    "kind": "lines",
+    "filename": "cron.generated",
+    "lines": [
+     {
+      "parts": [
+       {
+        "field": "minute"
+       },
+       {
+        "field": "hour"
+       },
+       {
+        "lit": "*"
+       },
+       {
+        "lit": "*"
+       },
+       {
+        "lit": "*"
+       },
+       {
+        "field": "command"
+       }
+      ]
+     }
+    ]
+   },
+   "notes": "This file contains one daily job and the generated command replaces the current user crontab with that file. First save the existing crontab with crontab -l > crontab.backup, then merge any existing jobs into cron.generated before installation. The command field accepts one absolute executable and no shell arguments.",
+   "verify": "After installation, crontab -l exactly matches cron.generated and the job runs at the intended local time. Check the service journal or the command output path after the first scheduled run.",
+   "undo": "Restore the saved crontab with crontab crontab.backup. If no prior crontab existed, remove the installed crontab with crontab -r only after confirming it contains no other jobs.",
+   "blast": "yellow",
+   "stig": [],
+   "source": {
+    "id": "src-man-crontab",
+    "title": "man page for crontab, as installed on the reference host",
+    "url_or_man": "man crontab(1)",
+    "version": "cronie 1.5-1.7",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
    },
    "verified": {
     "7": false,

@@ -63,11 +63,11 @@ Every idea in this file carries a timestamp, title, description, status, and con
 ## [ID: 260917-004]
 
 **Date:** 2026-09-17 | **Title:** Config file generators: sshd, chrony, rsyslog, sudoers, systemd, cron (P2 backlog)
-**Status:** Proposed
+**Status:** Shipped
 **Iteration:** Phase 3 (Weeks 13–20) | **Effort:** Medium
 **Controls relevance:** AC-17, AU-2, AU-12, SC-7
 **Description:** Form-driven generators for common hardening and compliance configs. Each output includes source citations (Red Hat docs, STIG), flags explained, and NIST control mappings. Reduces time to build compliant configurations.
-**Decision log:** None yet.
+**Decision log:** Shipped in v1.0.0-alpha.4 development. Added six form-driven generators and a closed token-line document grammar for formats that are neither YAML nor INI. The grammar accepts only declared literal tokens and closed field types; it has no free-text escape hatch. Generated files are independently checked by the hostile-input harness, and each companion command is pinned in the golden-command oracle.
 
 ---
 

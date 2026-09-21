@@ -16,6 +16,13 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Recent changes
 
+- **2026-09-21** -- **Configuration-file generators.** Adds guided builders
+  for sshd, chrony, rsyslog, sudoers, systemd service units, and cron. YAML,
+  INI, and token-line documents now share the same fail-closed schema/runtime
+  contract, and the hostile harness independently parses every generated file.
+  The catalog now contains 199 entries across 102 tools: 43 guided generators
+  and 156 static entries.
+
 - **2026-09-21** -- **Ansible generator completion.** The playbook builder now
   supports task-selection checkboxes for refreshing DNF metadata and starting
   and enabling a service whose name matches the selected package. The generated
