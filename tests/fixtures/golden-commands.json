@@ -119,6 +119,35 @@
     "10": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
    }
   },
+  "gen-pvcreate-initialize": {
+   "pins": "the block-device path is a validated absolute positional argument",
+   "values": {
+    "device": "/dev/sdb"
+   },
+   "blast": "red",
+   "flags": [],
+   "commands": {
+    "7": "pvcreate '/dev/sdb'",
+    "8": "pvcreate '/dev/sdb'",
+    "9": "pvcreate '/dev/sdb'",
+    "10": "pvcreate '/dev/sdb'"
+   }
+  },
+  "gen-vgcreate-new-vg": {
+   "pins": "the volume-group name and block-device path are validated positional arguments",
+   "values": {
+    "name": "vgdata",
+    "device": "/dev/sdb"
+   },
+   "blast": "red",
+   "flags": [],
+   "commands": {
+    "7": "vgcreate 'vgdata' '/dev/sdb'",
+    "8": "vgcreate 'vgdata' '/dev/sdb'",
+    "9": "vgcreate 'vgdata' '/dev/sdb'",
+    "10": "vgcreate 'vgdata' '/dev/sdb'"
+   }
+  },
   "gen-lvcreate-new-lv": {
    "pins": "lvcreate(8): -L takes a size and -n a name, both space-joined; the volume group is the trailing positional argument",
    "values": {

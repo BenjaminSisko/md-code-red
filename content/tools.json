@@ -2,9 +2,9 @@
  "_meta": {
   "schema": "tool: id, binary, label, category, availability{7,8,9,10}: {available, reason?, alternative?, note?} \u2014 ADR-001 \u00a75.5",
   "curated": true,
-  "status": "CR-T-17..25 \u2014 the full P0 generator tool matrix. Availability notes record which versions are host-verified (Defiant RHEL 8, Saratoga RHEL 10, CR-T-09/10) vs documented from the corpus (RHEL 7/9).",
+  "status": "Complete RHEL P0 generator tool matrix: all 21 non-Git RHEL administration tools are represented; Git remains the separately tracked P1 feature.",
   "rule": "availability is a value for all four RHEL keys, never an absence. A tool that is unavailable on a version renders disabled with its reason, never hidden.",
-  "tool_count": 100
+  "tool_count": 102
  },
  "tools": [
   {
@@ -123,6 +123,70 @@
     "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
+   }
+  },
+  {
+   "id": "pvcreate",
+   "binary": "pvcreate",
+   "label": "pvcreate (LVM)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (LVM chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "id": "src-man-pvcreate-r8",
+    "title": "pvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "content-src/raw/rhel8/pvcreate.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/pvcreate.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
+   }
+  },
+  {
+   "id": "vgcreate",
+   "binary": "vgcreate",
+   "label": "vgcreate (LVM)",
+   "category": "lvm",
+   "availability": {
+    "7": {
+     "available": true,
+     "note": "Documented from the RHEL 7 System Administrator's Guide (LVM chapter), not captured by the CR-T-09/10 host extraction."
+    },
+    "8": {
+     "available": true,
+     "note": "Flags host-verified from Defiant (RHEL 8.10), CR-T-09/10."
+    },
+    "9": {
+     "available": true,
+     "note": "Documented, not host-verified \u2014 RHEL 9 is between the two extraction hosts."
+    },
+    "10": {
+     "available": true,
+     "note": "Flags host-verified from Saratoga (RHEL 10.2), CR-T-09/10."
+    }
+   },
+   "source": {
+    "id": "src-man-vgcreate-r8",
+    "title": "vgcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
+    "url_or_man": "content-src/raw/rhel8/vgcreate.man.txt",
+    "version": "RHEL 8 \u2014 content-src/raw/rhel8/vgcreate.man.txt",
+    "retrieved_on": "2026-09-17",
+    "license_class": "paraphrase-only"
    }
   },
   {

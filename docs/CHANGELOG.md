@@ -2,6 +2,26 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased -- v1.0.0-alpha.4-dev
+
+### Added -- RHEL P0 LVM command completion
+
+- Added guided `pvcreate` and `vgcreate` builders, closing the two remaining
+  non-Git tools in the 22-tool P0 extraction matrix. Git stays in its separate
+  P1 feature track.
+- Both builders use absolute device-path validation, require root, cite the
+  captured RHEL 8 manual pages, and carry explicit verification and recovery
+  guidance.
+- Both operations are rated red. `content/dangerous.json` now independently
+  raises any assembled `pvcreate` or `vgcreate` command to the red floor, so
+  Copy remains locked until the operator acknowledges review.
+- Added exact golden commands for all four RHEL releases and a focused
+  completion regression test. The curated catalog is now 185 entries across
+  102 tools: 29 guided generators and 156 static entries.
+- Validation: Q1-Q25 and JavaScript syntax pass; 339 Python unit tests pass;
+  the hostile-input harness passes 101,957 checks, including all 29 real
+  generators and 116 exact per-release golden-command comparisons.
+
 ## v1.0.0-alpha.3 - 2026-09-20
 
 ### Fixed -- MCR-A2-KEY-001 six-rail keyboard navigation

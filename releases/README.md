@@ -9,4 +9,4 @@ annotated Git tag and release entry.
 |---|---|---|
 | v1.0.0-alpha.1 | `releases/v1.0.0-alpha.1/` | Tag `v1.0.0-alpha.1`; artifact, SHA-256 sidecar, and provenance manifest preserved unchanged |
 | v1.0.0-alpha.2 | `releases/v1.0.0-alpha.2/` | Immutable tag `v1.0.0-alpha.2`; current published artifact, SHA-256 sidecar, and post-tag-stamped provenance manifest preserved byte-for-byte from `main` |
-| v1.0.0-alpha.3 | Current correction candidate in `dist/` | Proposed tag only; closes MCR-A2-KEY-001; Q1-Q25, JS, full unit suite, hostile harness, deterministic rebuild, security/lineage review, and Riley exact-head regression review required before integration |
+| v1.0.0-alpha.3 | `releases/v1.0.0-alpha.3/` | Immutable tag `v1.0.0-alpha.3`; released artifact, SHA-256 sidecar, and provenance manifest preserved byte-for-byte before alpha.4 feature development |
