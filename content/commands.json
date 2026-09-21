@@ -11108,7 +11108,7 @@
    "id": "gen-ansible-playbook",
    "tool": "ansible-playbook",
    "category": "Check before you run",
-   "intent": "Write a one-task package playbook, and the --check command that dry-runs it",
+   "intent": "Write a package-management playbook with optional cache refresh and service management tasks, and dry-run it",
    "fields": [
     {
      "name": "play_name",
@@ -11119,6 +11119,16 @@
      "name": "hosts",
      "type": "hostname",
      "required": true
+    },
+    {
+     "name": "refresh_cache",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox",
+     "label": "Refresh DNF package metadata first"
     },
     {
      "name": "task_name",
@@ -11139,6 +11149,16 @@
       "absent",
       "latest"
      ]
+    },
+    {
+     "name": "manage_service",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox",
+     "label": "Start and enable the same-named service"
     }
    ],
    "template": [
@@ -11192,6 +11212,27 @@
       "indent": 2,
       "seq": true,
       "key": "name",
+      "lit": "Refresh-DNF-package-metadata",
+      "requires": "refresh_cache",
+      "optional": true
+     },
+     {
+      "indent": 3,
+      "key": "ansible.builtin.dnf",
+      "requires": "refresh_cache",
+      "optional": true
+     },
+     {
+      "indent": 4,
+      "key": "update_cache",
+      "bool": true,
+      "requires": "refresh_cache",
+      "optional": true
+     },
+     {
+      "indent": 2,
+      "seq": true,
+      "key": "name",
       "field": "task_name"
      },
      {
@@ -11207,12 +11248,47 @@
       "indent": 4,
       "key": "state",
       "field": "state"
+     },
+     {
+      "indent": 2,
+      "seq": true,
+      "key": "name",
+      "lit": "Start-and-enable-same-named-service",
+      "requires": "manage_service",
+      "optional": true
+     },
+     {
+      "indent": 3,
+      "key": "ansible.builtin.service",
+      "requires": "manage_service",
+      "optional": true
+     },
+     {
+      "indent": 4,
+      "key": "name",
+      "field": "package",
+      "requires": "manage_service",
+      "optional": true
+     },
+     {
+      "indent": 4,
+      "key": "state",
+      "lit": "started",
+      "requires": "manage_service",
+      "optional": true
+     },
+     {
+      "indent": 4,
+      "key": "enabled",
+      "bool": true,
+      "requires": "manage_service",
+      "optional": true
      }
     ]
    },
-   "notes": "become and gather_facts are fixed true and are not offered as form fields. That is the quoting law, not a missing feature: a YAML boolean is a BARE scalar, and there is deliberately no path from a form field to a bare scalar - every value you type is quoted. A curated `bool` line in the spec is not operator text, so it is the one thing emitted unquoted. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible). Grey Beard built this file by concatenating strings and quoted almost none of it; here every value you type reaches the file through the assembler's YAML quoter, and a value the quoter cannot contain produces no file at all rather than a file with a hole in it.",
-   "verify": "ansible-playbook site.yml --syntax-check exits 0; the --check run reports changed= counts and changes nothing on the hosts.",
-   "undo": "Nothing to undo on a host - --check changes nothing. Delete site.yml to discard the generated file.",
+   "notes": "The package task is always present. The optional checkboxes add a DNF metadata refresh before it and service management after it; the service task deliberately uses the package name, so leave it unchecked when the service unit has a different name. become and gather_facts are fixed true. Operator values are always YAML-quoted; curated booleans are the only bare scalars. The command keeps --check and --diff, so the generated invocation is a dry run.",
+   "verify": "ansible-playbook site.yml --syntax-check exits 0; the generated --check --diff invocation reports proposed changes without changing managed hosts.",
+   "undo": "The generated command uses --check and changes no host. Delete site.yml to discard the generated file; if the playbook is later run without --check, use its recap and the package/service states to plan reversal.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-generators",

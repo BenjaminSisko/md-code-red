@@ -193,7 +193,14 @@ block device, so the confirmation flow below is visible for real catalog content
    if you expect to come back to it; see "Favorites & Recent" below.
 
 **Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+3`) contains
-guided playbook, inventory, and `ansible.cfg` builders. The **Git** rail
+guided playbook, inventory, and `ansible.cfg` builders. The playbook form always
+creates the requested package task and provides two optional task checkboxes:
+**Refresh DNF package metadata first** and **Start and enable the same-named
+service**. The service checkbox deliberately uses the package name as the unit
+name; leave it unchecked when those names differ. Every typed YAML scalar is
+quoted, the two checkbox choices only add complete curated YAML blocks, and the
+offered `ansible-playbook` invocation keeps `--check --diff` so it reports the
+proposed changes without applying them. The **Git** rail
 (`Ctrl+Alt+4`) contains the curated Git reference entries plus eight guided
 forms: clone, create a branch, merge, rebase, create an annotated tag, inspect a
 bounded log, start a bisect, and recover a lost commit by creating a branch at
