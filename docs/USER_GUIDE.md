@@ -1,15 +1,15 @@
 ---
 type: user-guide
 status: current
-last_verified: 2026-09-20
+last_verified: 2026-09-21
 ---
 
 # MD CODE RED User Guide
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the shipped build (`dist/md-code-red_v1.0.0-alpha.3.html`, 183 curated
-command entries, 100 tools, and 14,439 mined reference commands) actually does,
+describes what the development build (`dist/md-code-red_v1.0.0-alpha.4-dev.html`, 185 curated
+command entries, 102 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
 this build does not yet do, that is called out plainly rather than described as if
@@ -19,7 +19,7 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-The catalog includes 27 **guided form generators** -- you fill in
+The catalog includes 29 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
@@ -183,8 +183,9 @@ release's content.
    entry's own **Verify** / **Undo** lines (printed under the command) before you
    run anything that changes host state.
 2. A red rating (from an entry's own content, or from the destructive-pattern table
-   matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `dnf remove`,
-   and the rest of `content/dangerous.json`'s eleven rows) opens a red bordered
+   matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `pvcreate`,
+   `vgcreate`, `dnf remove`, and the rest of `content/dangerous.json`'s fifteen
+   rows) opens a red bordered
    banner above the command: **"Destructive operation -- review before running,"**
    naming which pattern matched and why. **Copy** and **Copy with comment** are
    both disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
@@ -194,12 +195,10 @@ release's content.
 3. **Favorite** the entry (toolbar button, or from the Favorites rail once opened)
    if you expect to come back to it; see "Favorites & Recent" below.
 
-**Ansible and git generators.** The activity rail also shows an **Ansible** icon
-(`Ctrl+Alt+3`). Clicking it shows a placeholder: "The Ansible generator ... [is]
-still open." No Ansible, git, or config-file generator ships in this build --
-they are Phase 2/3 backlog items (`docs/IDEAS.md` 260917-002, 260917-003,
-260917-004), not a third working journey. Do not rely on this guide's earlier
-drafts, or on the PRD, for what these rail items currently do.
+**Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+3`) is live and
+contains guided playbook, inventory, and `ansible.cfg` builders. A dedicated
+Git generator does not ship yet; Git remains Phase 2 backlog item 260917-002 in
+`docs/IDEAS.md`.
 
 ## UI Reference
 
@@ -220,7 +219,7 @@ function (`verificationStatusForVersion()`) so the three places can never disagr
 |---|---|---|
 | **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
 | **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
-| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: of the 27 entries x 4 RHEL versions (108 pairs), 18 pairs are verified and the other 90 are not host-verified. |
+| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: of the 29 guided entries x 4 RHEL versions (116 pairs), 18 pairs are verified and the other 98 are not host-verified. |
 
 A version whose command is a `same_as` pointer at another version (for example RHEL
 9 often reuses RHEL 8's command text) shows **Not host-verified** even when the text
@@ -251,7 +250,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-alpha.3 -- RHEL 8
+# MD CODE RED v1.0.0-alpha.4-dev -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -391,10 +390,10 @@ the same text.
 ## Known Limitations
 
 This is the honest state of the shipped build, not a roadmap. Numbers below are
-read directly off `dist/md-code-red_v1.0.0-alpha.3.html` and its build content, not
+read directly off `dist/md-code-red_v1.0.0-alpha.4-dev.html` and its build content, not
 estimated.
 
-- **183 curated command entries across 100 tools.** 27 are guided-form generators
+- **185 curated command entries across 102 tools.** 29 are guided-form generators
   and 156 are static checks. The separate mined reference tier contains 14,439
   distinct commands with 45,281 source citations; reference rows are discovery
   material and are never silently promoted into the curated catalog.
@@ -425,15 +424,13 @@ estimated.
 - **The "Captured, awaiting QA" verification badge is implemented and tested but
   never actually shown in this build** -- every capture on record already has a QA
   receipt.
-- **No entry in this build is rated blast red**, and no generator's field values
-  currently assemble into a command matching a row of the destructive-pattern
-  table. The red confirmation banner and its review checkbox are real, gate-tested
-  code paths (proved against synthetic commands by `tests/hostile_harness.js`), but
-  nothing in this release's content exercises them end to end in the running UI.
-- **The STIG Search and Ansible rail items are placeholders.** STIG lookup today
-  happens through the command palette (Journey 2), not a dedicated browse view. No
-  Ansible, git, or config-file generator ships; see `docs/IDEAS.md` for the backlog
-  items this maps to.
+- **Two guided entries are rated blast red:** `pvcreate` and `vgcreate`. Both
+  write LVM metadata to a selected block device. The Copy controls stay locked
+  until the operator checks **I have reviewed this command**.
+- **The STIG Search rail item is a placeholder.** STIG lookup today happens
+  through the command palette (Journey 2), not a dedicated browse view. The
+  Ansible rail is live; Git and additional config-file generators remain in
+  `docs/IDEAS.md` as feature work.
 - **English only, desktop only.** No localization, no mobile layout beyond the
   responsive breakpoint at 1024px that stacks the inspector under the sidebar.
 

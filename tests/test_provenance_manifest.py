@@ -85,9 +85,12 @@ class ProvenanceManifestTests(unittest.TestCase):
             cls.rc = proc.returncode
             cls.stderr = proc.stderr.decode("utf-8", "replace")
             if os.path.exists(manifest_path):
+                with open(manifest_path, "rb") as f:
+                    cls.generated_bytes = f.read()
                 with open(manifest_path, encoding="utf-8") as f:
                     cls.manifest = json.load(f)
             else:
+                cls.generated_bytes = None
                 cls.manifest = None
         finally:
             # Running verification must never replace a release manifest's real
@@ -128,8 +131,13 @@ class ProvenanceManifestTests(unittest.TestCase):
         # for whatever runs next (a later gate, or `git add` at commit time),
         # which is exactly the kind of self-inflicted drift this repo's own
         # gates (Q21) exist to catch.
-        with open(self.manifest_path, "rb") as f:
-            original_bytes = f.read()
+        original_bytes = None
+        if os.path.exists(self.manifest_path):
+            with open(self.manifest_path, "rb") as f:
+                original_bytes = f.read()
+        elif self.generated_bytes is not None:
+            with open(self.manifest_path, "wb") as f:
+                f.write(self.generated_bytes)
         try:
             proc = subprocess.run([sys.executable, SCRIPT, "--commit", "deadbeef" * 5],
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=REPO)
@@ -143,8 +151,11 @@ class ProvenanceManifestTests(unittest.TestCase):
                              "two runs of make_provenance.py against the same build produced "
                              "different output in a field other than git_commit")
         finally:
-            with open(self.manifest_path, "wb") as f:
-                f.write(original_bytes)
+            if original_bytes is not None:
+                with open(self.manifest_path, "wb") as f:
+                    f.write(original_bytes)
+            elif os.path.exists(self.manifest_path):
+                os.unlink(self.manifest_path)
 
 
 if __name__ == "__main__":

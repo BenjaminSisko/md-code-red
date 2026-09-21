@@ -98,7 +98,9 @@ class ABuildWithHostileContentStillWorks(unittest.TestCase):
         cls.rc = proc.returncode
         cls.out = proc.stdout.decode("utf-8", "replace")
         dist = os.path.join(cls.tmp, "dist")
-        cls.artifact = os.path.join(dist, os.listdir(dist)[0]) if os.path.isdir(dist) else None
+        artifacts = ([name for name in os.listdir(dist) if name.endswith(".html")]
+                     if os.path.isdir(dist) else [])
+        cls.artifact = os.path.join(dist, artifacts[0]) if len(artifacts) == 1 else None
 
     @classmethod
     def tearDownClass(cls):

@@ -10,11 +10,20 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.3 (correction alpha, lab-only, unsigned -- restores the advertised six-rail keyboard contract while preserving the alpha.2 content corpus)
+**Current version:** v1.0.0-alpha.4-dev (feature development, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-20
+**Last built:** 2026-09-21
 
 ## Recent changes
+
+- **2026-09-21** -- **RHEL P0 command completion.** Adds guided `pvcreate`
+  and `vgcreate` builders from the existing captured RHEL 8/10 manual corpus,
+  with all-version golden-command oracles. Both operations are rated red and
+  require the existing review acknowledgement because they write LVM metadata
+  to a selected block device. The curated catalog now contains 185 entries
+  across 102 tools, including 29 guided generators. All 21 non-Git RHEL P0
+  administration tools now have guided builders; Git remains its separately
+  tracked feature.
 
 - **2026-09-20** -- **v1.0.0-alpha.3 correction candidate.** Closes
   MCR-A2-KEY-001 by binding `Ctrl+Alt+1` through `Ctrl+Alt+6` to all six
