@@ -32,11 +32,15 @@ Every idea in this file carries a timestamp, title, description, status, and con
 ## [ID: 260917-002]
 
 **Date:** 2026-09-17 | **Title:** Git Command Generator (P1 backlog)
-**Status:** Proposed
+**Status:** Shipped
 **Iteration:** Phase 2 (Weeks 7–12) | **Effort:** Medium
 **Controls relevance:** N/A
 **Description:** Guided builder for clone, branch, merge, rebase, tag, log, bisect, and recovery scenarios. Helps junior admins and automation engineers avoid common git mistakes in isolated repos. Feeds into Phase 2 roadmap pending Phase 1 pilot feedback.
-**Decision log:** None yet.
+**Decision log:**
+- 2026-09-21: Implemented the dedicated Git rail and all eight proposed guided
+  scenarios in v1.0.0-alpha.4-dev, with typed branch/revision validation,
+  exact per-release golden commands, hostile-input coverage, and rail-routing
+  regression tests.
 
 ---
 

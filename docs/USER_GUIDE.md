@@ -8,7 +8,7 @@ last_verified: 2026-09-21
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the development build (`dist/md-code-red_v1.0.0-alpha.4-dev.html`, 185 curated
+describes what the development build (`dist/md-code-red_v1.0.0-alpha.4-dev.html`, 193 curated
 command entries, 102 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
@@ -19,7 +19,7 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-The catalog includes 29 **guided form generators** -- you fill in
+The catalog includes 37 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
@@ -170,13 +170,10 @@ you are entitled to see the difference.
 Every assembled command carries a blast rating -- **green** (read-only), **yellow**
 (a reversible state change), or **red** (destructive, confirmation required) -- shown
 in the muted line under the command's title (`tool . RHEL N . blast <level>`).
-Fourteen of the 24 generator entries in this build are rated yellow (add a user,
-extend a logical volume, open a firewall port, and so on); the three static entries
-and the remaining ten generators are green. **No entry in this shipped build is
-rated red**, and no generator's currently offered field values assemble into a
-command that matches a row of the destructive-pattern table either (see Known
-Limitations) -- the confirmation flow below is real, gate-tested, and inert for this
-release's content.
+Of the 37 guided entries, 23 are yellow (add a user, merge or rebase Git history,
+extend a logical volume, open a firewall port, and so on), 12 are green, and two
+are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
+block device, so the confirmation flow below is visible for real catalog content.
 
 1. A yellow rating is informational only: it does not block **Copy** or **Copy with
    comment**, and there is no checkbox to tick. Read the muted blast line and the
@@ -195,10 +192,15 @@ release's content.
 3. **Favorite** the entry (toolbar button, or from the Favorites rail once opened)
    if you expect to come back to it; see "Favorites & Recent" below.
 
-**Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+3`) is live and
-contains guided playbook, inventory, and `ansible.cfg` builders. A dedicated
-Git generator does not ship yet; Git remains Phase 2 backlog item 260917-002 in
-`docs/IDEAS.md`.
+**Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+3`) contains
+guided playbook, inventory, and `ansible.cfg` builders. The **Git** rail
+(`Ctrl+Alt+4`) contains the curated Git reference entries plus eight guided
+forms: clone, create a branch, merge, rebase, create an annotated tag, inspect a
+bounded log, start a bisect, and recover a lost commit by creating a branch at
+its revision. Branch and tag fields reject invalid ref shapes; revision fields
+accept conservative commit expressions such as `main`, `origin/main`, `HEAD~1`,
+and `HEAD@{1}`. Git values remain single shell-quoted operands in the assembled
+command.
 
 ## UI Reference
 
@@ -219,7 +221,7 @@ function (`verificationStatusForVersion()`) so the three places can never disagr
 |---|---|---|
 | **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
 | **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
-| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: of the 29 guided entries x 4 RHEL versions (116 pairs), 18 pairs are verified and the other 98 are not host-verified. |
+| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 guided-entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
 
 A version whose command is a `same_as` pointer at another version (for example RHEL
 9 often reuses RHEL 8's command text) shows **Not host-verified** even when the text
@@ -297,7 +299,7 @@ in the file's own header comment and in the About panel. It exists because the t
 is air-gapped: there is nowhere to look the content up to compare it against. What
 it actually proves is narrower than "this content is correct" -- it proves **this
 evidence export came from this exact file**. To check it: open the same file's
-**About** panel (`Ctrl+Alt+6`) and compare its "Content fingerprint" line,
+**About** panel (`Ctrl+Alt+7`) and compare its "Content fingerprint" line,
 character for character, against the one printed at the top of the evidence export.
 They are read from one constant (`CONTENT_FINGERPRINT`), so inside one file they can
 never disagree. **If they do not match**, the evidence text did not come from the
@@ -323,9 +325,10 @@ the tool does cannot drift apart without the table changing.
 | Command Builder | `Ctrl+Alt+1` | Opens the guided command builder and focuses its rail button. |
 | STIG and Evidence Search | `Ctrl+Alt+2` | Opens STIG and evidence search and focuses its rail button. |
 | Ansible Generator | `Ctrl+Alt+3` | Opens the Ansible generator and focuses its rail button. |
-| Favorites and Recent | `Ctrl+Alt+4` | Opens saved and recently used entries and focuses its rail button. |
-| Reference Commands | `Ctrl+Alt+5` | Opens the mined reference-command catalog and focuses its rail button. |
-| About | `Ctrl+Alt+6` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
+| Git Command Generator | `Ctrl+Alt+4` | Opens the curated Git catalog and its eight guided scenarios, and focuses its rail button. |
+| Favorites and Recent | `Ctrl+Alt+5` | Opens saved and recently used entries and focuses its rail button. |
+| Reference Commands | `Ctrl+Alt+6` | Opens the mined reference-command catalog and focuses its rail button. |
+| About | `Ctrl+Alt+7` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
 | Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |
 | Export as Evidence | `Ctrl+E` | Opens the evidence preview modal. |
 | Move through palette results, or within any list (tools, commands, palette rows) | Arrow Up / Arrow Down | Wraps at both ends inside the palette. |
@@ -339,16 +342,15 @@ the tool does cannot drift apart without the table changing.
 `Space`, or click it.
 
 Every focusable control shows a visible focus ring; no rule in the stylesheet
-removes an outline without replacing it. The rail buttons are icon-only by design
-(`>`, `$`, `Y`, `*`, `i`), and each reveals its text label on focus as well as on
-hover, so a keyboard user reads the same word a mouse user does.
+removes an outline without replacing it. Each rail button shows both a compact
+glyph and its text label, and exposes the same name through its accessible label.
 
 ### Favorites & Recent
 
 Every command entry's toolbar carries a **Favorite** / **Favorited** toggle. The
-**Favorites** rail (`Ctrl+Alt+4`) lists favorited entries and, below them, the
+**Favorites** rail (`Ctrl+Alt+5`) lists favorited entries and, below them, the
 entries opened most recently this session, newest first (up to 20). Selecting
-either jumps straight back to the Command Builder rail with that entry loaded.
+either opens the entry in its owning rail: Git, Ansible, or Command Builder.
 
 Only entry IDs are ever written to `localStorage` (namespaced `mdcr.v1.`, schema-
 versioned like every other stored value) -- never the entry's text. Every ID read
@@ -380,7 +382,7 @@ browser restarted) starts from the system preference again.
 
 ### About Panel
 
-The **About** rail (`Ctrl+Alt+6`) shows the tool's version and build date, the
+The **About** rail (`Ctrl+Alt+7`) shows the tool's version and build date, the
 content fingerprint, every embedded STIG release with its version, benchmark date
 and rule count (and a sunset marker for RHEL 7), the embedded source families with
 their license classes, and the required attribution block from SALM's Content
@@ -393,7 +395,7 @@ This is the honest state of the shipped build, not a roadmap. Numbers below are
 read directly off `dist/md-code-red_v1.0.0-alpha.4-dev.html` and its build content, not
 estimated.
 
-- **185 curated command entries across 102 tools.** 29 are guided-form generators
+- **193 curated command entries across 102 tools.** 37 are guided-form generators
   and 156 are static checks. The separate mined reference tier contains 14,439
   distinct commands with 45,281 source citations; reference rows are discovery
   material and are never silently promoted into the curated catalog.
@@ -429,7 +431,7 @@ estimated.
   until the operator checks **I have reviewed this command**.
 - **The STIG Search rail item is a placeholder.** STIG lookup today happens
   through the command palette (Journey 2), not a dedicated browse view. The
-  Ansible rail is live; Git and additional config-file generators remain in
+  Ansible and Git rails are live; additional config-file generators remain in
   `docs/IDEAS.md` as feature work.
 - **English only, desktop only.** No localization, no mobile layout beyond the
   responsive breakpoint at 1024px that stacks the inspector under the sidebar.

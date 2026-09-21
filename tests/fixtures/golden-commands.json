@@ -538,6 +538,137 @@
     "9": "ansible-config dump --only-changed",
     "10": "ansible-config dump --only-changed"
    }
+  },
+  "gen-git-clone": {
+   "pins": "git clone accepts repository and destination as positional operands",
+   "values": {
+    "repository": "ssh://git@git.internal/team/project.git",
+    "directory": "project"
+   },
+   "blast": "green",
+   "flags": [],
+   "commands": {
+    "7": "git clone 'ssh://git@git.internal/team/project.git' 'project'",
+    "8": "git clone 'ssh://git@git.internal/team/project.git' 'project'",
+    "9": "git clone 'ssh://git@git.internal/team/project.git' 'project'",
+    "10": "git clone 'ssh://git@git.internal/team/project.git' 'project'"
+   }
+  },
+  "gen-git-branch": {
+   "pins": "checkout -b is supported across the covered RHEL Git generations; start is positional",
+   "values": {
+    "name": "feature/audit-report",
+    "start": "main"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-b"
+   ],
+   "commands": {
+    "7": "git checkout -b 'feature/audit-report' 'main'",
+    "8": "git checkout -b 'feature/audit-report' 'main'",
+    "9": "git checkout -b 'feature/audit-report' 'main'",
+    "10": "git checkout -b 'feature/audit-report' 'main'"
+   }
+  },
+  "gen-git-merge": {
+   "pins": "--no-ff is a bare long option and source is positional",
+   "values": {
+    "source": "feature/audit-report"
+   },
+   "blast": "yellow",
+   "flags": [
+    "--no-ff"
+   ],
+   "commands": {
+    "7": "git merge --no-ff 'feature/audit-report'",
+    "8": "git merge --no-ff 'feature/audit-report'",
+    "9": "git merge --no-ff 'feature/audit-report'",
+    "10": "git merge --no-ff 'feature/audit-report'"
+   }
+  },
+  "gen-git-rebase": {
+   "pins": "upstream and optional branch are positional operands",
+   "values": {
+    "upstream": "origin/main",
+    "branch": "feature/audit-report"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "git rebase 'origin/main' 'feature/audit-report'",
+    "8": "git rebase 'origin/main' 'feature/audit-report'",
+    "9": "git rebase 'origin/main' 'feature/audit-report'",
+    "10": "git rebase 'origin/main' 'feature/audit-report'"
+   }
+  },
+  "gen-git-tag": {
+   "pins": "-a is bare; short -m takes its value space-joined before tag and target operands",
+   "values": {
+    "tag": "v1.0.0",
+    "message": "Release 1.0.0",
+    "target": "HEAD"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-a",
+    "-m"
+   ],
+   "commands": {
+    "7": "git tag -a -m 'Release 1.0.0' 'v1.0.0' 'HEAD'",
+    "8": "git tag -a -m 'Release 1.0.0' 'v1.0.0' 'HEAD'",
+    "9": "git tag -a -m 'Release 1.0.0' 'v1.0.0' 'HEAD'",
+    "10": "git tag -a -m 'Release 1.0.0' 'v1.0.0' 'HEAD'"
+   }
+  },
+  "gen-git-log": {
+   "pins": "--oneline and --decorate are bare; short -n takes a space-joined count",
+   "values": {
+    "count": "20",
+    "revision": "main"
+   },
+   "blast": "green",
+   "flags": [
+    "--oneline",
+    "--decorate",
+    "-n"
+   ],
+   "commands": {
+    "7": "git log --oneline --decorate -n '20' 'main'",
+    "8": "git log --oneline --decorate -n '20' 'main'",
+    "9": "git log --oneline --decorate -n '20' 'main'",
+    "10": "git log --oneline --decorate -n '20' 'main'"
+   }
+  },
+  "gen-git-bisect": {
+   "pins": "start is a subcommand; bad and good are positional revisions in that order",
+   "values": {
+    "bad": "HEAD",
+    "good": "v1.0.0"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "git bisect start 'HEAD' 'v1.0.0'",
+    "8": "git bisect start 'HEAD' 'v1.0.0'",
+    "9": "git bisect start 'HEAD' 'v1.0.0'",
+    "10": "git bisect start 'HEAD' 'v1.0.0'"
+   }
+  },
+  "gen-git-recovery": {
+   "pins": "branch recovery creates a named ref at the lost revision without moving HEAD",
+   "values": {
+    "recovered_branch": "recovery/lost-work",
+    "lost_revision": "HEAD@{1}"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "git branch 'recovery/lost-work' 'HEAD@{1}'",
+    "8": "git branch 'recovery/lost-work' 'HEAD@{1}'",
+    "9": "git branch 'recovery/lost-work' 'HEAD@{1}'",
+    "10": "git branch 'recovery/lost-work' 'HEAD@{1}'"
+   }
   }
  },
  "_flags_column": "MCR-SEC-023. The flag-by-flag panel must name every option the command shows, in the order the command shows them — option tokens AND option-shaped literals ('-T', '-P', '-r', '--permanent', '--boot'). A panel silent about a flag that is present is a smaller version of a panel describing one that is not. Where no curated or dictionary explanation exists the panel says 'unverified — see man page'; it never guesses."

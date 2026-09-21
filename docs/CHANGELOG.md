@@ -4,6 +4,26 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased -- v1.0.0-alpha.4-dev
 
+### Added -- Git Command Generator
+
+- Added a dedicated **Git** activity rail (`Ctrl+Alt+4`) containing the full
+  curated Git catalog and eight guided scenarios: clone, branch, merge,
+  rebase, annotated tag, bounded log, bisect, and lost-commit recovery.
+- Added closed `git_refname` and `git_revision` field grammars for branch, tag,
+  commit, and reflog expressions. Repository addresses and annotation text use
+  the existing capped, control-character-rejecting free-text path and still
+  reach the command only as one shell-quoted operand.
+- Palette and Favorites selections now return Git entries to the Git rail and
+  Ansible entries to the Ansible rail. The Command Builder excludes both
+  dedicated categories, so each tool appears in one activity slice.
+- Added exact golden commands for every generator on RHEL 7, 8, 9, and 10,
+  hostile-input coverage for both new field types, and a focused Git-rail
+  regression test. The catalog now has 193 entries across 102 tools: 37 guided
+  generators and 156 static entries.
+- The activity-rail keyboard contract now covers seven rendered buttons:
+  Favorites moves to `Ctrl+Alt+5`, Reference to `Ctrl+Alt+6`, and About to
+  `Ctrl+Alt+7`.
+
 ### Added -- RHEL P0 LVM command completion
 
 - Added guided `pvcreate` and `vgcreate` builders, closing the two remaining

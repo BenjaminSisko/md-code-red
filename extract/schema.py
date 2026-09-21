@@ -301,7 +301,8 @@ def resolved_command(entry, version):
 FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portrange",
                     "protocol", "family", "action", "unit", "username", "groupname",
                     "path", "zone", "service", "package", "selinux_boolean", "audit_key",
-                    "interface", "integer", "lvm_size", "group_list", "enum", "comment")
+                    "interface", "integer", "lvm_size", "group_list", "git_refname",
+                    "git_revision", "enum", "comment")
 
 # Closed-grammar types only. `comment` and `enum` are deliberately absent from
 # every slot: rich-rule attribute syntax has no escape for a double quote inside
