@@ -61,7 +61,7 @@
    "status": "extracted from rhel9-stig-test (RHEL 9) \u2014 22 tools"
   }
  },
- "git_commit": "TAG_COMMIT_PLACEHOLDER",
+ "git_commit": "e2991029e2f6db6c60db57626f4f6bf24b950d27",
  "receipt_count": 18,
  "review_lineage": {
   "change_record": "docs/CHANGELOG.md -- heading for v1.0.0-alpha.5",

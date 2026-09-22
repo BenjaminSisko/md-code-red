@@ -1,23 +1,24 @@
 ---
 type: release-evidence
-status: candidate
+status: released
 last_verified: 2026-09-22
 ---
 
 # Release Report -- v1.0.0-alpha.5
 
-This candidate incorporates the Linux administrator and instructor review of
+This release incorporates the Linux administrator and instructor review of
 alpha.4. It corrects unsafe or incomplete recovery guidance and adds the
 instructional and evidence controls needed to use the catalog as a supervised
 learning and change-preparation tool.
 
-| Release fact | Candidate value |
+| Release fact | Released value |
 |---|---|
 | Version / date | `v1.0.0-alpha.5` / 2026-09-22 |
 | Artifact | `dist/md-code-red_v1.0.0-alpha.5.html`; 8,892,535 bytes |
 | Artifact SHA-256 | `c64337a2aee3c494171bc9b6f7bb89a0b1006992fc26c7fbe8793579cd8ada7a` |
 | Content fingerprint | `41fb7c1e59cc32805fa06a240aca2913e16acb496689c2de0ec9dff598b34c91` |
-| Provenance | Placeholder until the reviewed merge SHA exists |
+| Tag target | `e2991029e2f6db6c60db57626f4f6bf24b950d27` (reviewed PR #16 merge) |
+| Provenance | Stamped with the tag target; SHA-256 `309739bd1e4767e8a33e9ff25b17cfe991c50f1cd1f2ff6fbf68a04d1056430f` |
 | Signing | Unsigned; no authorized publisher key is provisioned |
 | Verification | Q1-Q26 + JS; 402 unit tests; 122,313 hostile checks; Gitleaks clean |
 
