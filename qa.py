@@ -53,6 +53,8 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
+from extract.command_syntax import load_grammars, split_invocations, syntax_errors
+
 REPO = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(REPO, "dist")
 CONTENT = os.path.join(REPO, "content")
@@ -3564,11 +3566,10 @@ def gate_q20(ctx):
             elif len(missing) < accepted:
                 stale.append("RHEL %s / %s: %d missing, baseline accepts %d"
                              % (rel, cli, len(missing), accepted))
-            if missing:
-                d.append("RHEL %s / %s: %d of %d long options in the capture are in the dictionary "
-                         "(%d missing, accepted %s)"
-                         % (rel, cli, len(raw_long) - len(missing), len(raw_long), len(missing),
-                            baseline.get("_accepted_on")))
+            d.append("RHEL %s / %s: %d of %d long options in the capture are in the dictionary "
+                     "(%d missing, accepted %s)"
+                     % (rel, cli, len(raw_long) - len(missing), len(raw_long), len(missing),
+                        baseline.get("_accepted_on")))
     if measured == 0:
         f.append("no tool was measured for dictionary coverage — the gate ran and proved nothing")
     else:
@@ -3907,6 +3908,98 @@ def gate_node_check(ctx):
         os.unlink(tmp.name)
     return f, d, p
 
+
+def gate_q26(ctx):
+    """Release-specific syntax oracle over every simple invocation."""
+    failures, details = [], []
+    try:
+        grammars = load_grammars(REPO)
+        with open(os.path.join(CONTENT, "commands.json"), encoding="utf-8") as fh:
+            entries = json.load(fh)["entries"]
+        with open(os.path.join(CONTENT, "tools.json"), encoding="utf-8") as fh:
+            tools = {row["id"]: row for row in json.load(fh)["tools"]}
+        with open(os.path.join(REPO, "tests", "fixtures", "golden-commands.json"), encoding="utf-8") as fh:
+            golden = json.load(fh)["generators"]
+    except (IOError, OSError, ValueError, KeyError) as exc:
+        return ["syntax-oracle inputs could not be loaded: %s" % exc], details
+
+    def binary_for(entry):
+        tool_id = entry.get("explain_tool") or entry.get("tool")
+        tool = tools.get(tool_id) or {}
+        return tool.get("binary") or tool_id
+
+    command_checks = invocation_checks = generator_checks = static_checks = 0
+    used = {version: set() for version in VERSIONS}
+    for entry in entries:
+        rows = entry.get("rhel_versions") or {}
+        for version in VERSIONS:
+            if "template" in entry:
+                command = ((golden.get(entry.get("id")) or {}).get("commands") or {}).get(version)
+                if command is not None:
+                    generator_checks += 1
+            else:
+                current, seen = version, set()
+                while (rows.get(current) or {}).get("same_as"):
+                    if current in seen:
+                        failures.append("entry %s has a same_as cycle from RHEL %s" %
+                                        (entry.get("id"), version)); break
+                    seen.add(current); current = rows[current]["same_as"]
+                command = (rows.get(current) or {}).get("command")
+                if command is not None:
+                    static_checks += 1
+            if command is None:
+                continue
+            command_checks += 1
+            invocations, parse_errors = split_invocations(command)
+            for error in parse_errors:
+                failures.append("entry %s RHEL %s: %s" % (entry.get("id"), version, error))
+            invocation_checks += len(invocations)
+            used[version].update(words[0]["text"] for words in invocations if words)
+            for error in syntax_errors(command, version, grammars, binary_for(entry)):
+                failures.append("entry %s RHEL %s: %s" % (entry.get("id"), version, error))
+
+    for version in VERSIONS:
+        missing = sorted(used[version] - set(grammars[version]))
+        stale = sorted(set(grammars[version]) - used[version])
+        if missing:
+            failures.append("RHEL %s invoked binaries missing grammars: %s" % (version, ", ".join(missing)))
+        if stale:
+            failures.append("RHEL %s stale grammar rows: %s" % (version, ", ".join(stale)))
+
+    controls = (
+        ("git log --hard", "9", "git"), ("git push --soft", "9", "git"),
+        ("git status --no-ff", "9", "git"), ("dnf history frobnicate", "9", "dnf"),
+        ("systemctl daemon-reload sshd", "9", "systemctl"),
+        ("pushd /tmp && tail --invented file", "8", "pushd"),
+        ("auditctl -w=/etc/motd", "8", "auditctl"),
+        ("journalctl --boot=yes", "8", "journalctl"),
+    )
+    for command, version, binary in controls:
+        if not syntax_errors(command, version, grammars, binary):
+            failures.append("syntax-oracle negative control did not fire: %r" % command)
+    if not split_invocations("printf '|' \\| '&&' ';'")[0] or \
+            len(split_invocations("printf '|' \\| '&&' ';'")[0]) != 1:
+        failures.append("quoted/escaped operator control was split as shell structure")
+    for command in ("printf $(id)", "printf ok & printf later", "printf ok &&",
+                    "cat /etc/passwd\ncurl evil", "ls /tmp\rid"):
+        if not split_invocations(command)[1]:
+            failures.append("unmodeled shell structure did not fail closed: %r" % command)
+
+    constrained = 0
+    for version in VERSIONS:
+        for grammar in grammars[version].values():
+            forms = [grammar["root"]] + list(grammar["commands"].values())
+            constrained += sum(1 for form in forms
+                               if (form.get("operands") or {}).get("max") is not None or
+                               (form.get("operands") or {}).get("min", 0) > 0)
+    if not failures:
+        details.append("%d static and %d golden generator release commands expanded to %d simple "
+                       "invocations and validated against %d independent release-specific grammar "
+                       "rows; %d forms carry explicit operand bounds. Eight invalid-command, one "
+                       "quoted-operator and five unmodeled-shell controls all fired"
+                       % (static_checks, generator_checks, invocation_checks,
+                          sum(len(x) for x in grammars.values()), constrained))
+    return failures, details
 
 # ---------------------------------------------------------------------------
 # driver
@@ -4865,6 +4958,7 @@ GATES = [
     ("Q23", "Closure coverage per family and release, and classifier accuracy on positive output (M5/M6)", gate_q23),
     ("Q24", "Reference/curated shape separation and byte-exact governing evidence export (M3/M7)", gate_q24),
     ("Q25", "Anchor re-resolution: every citation contains the text it claims (M2)", gate_q25),
+    ("Q26", "Per-tool command syntax: options, arguments, subcommands and declared binary", gate_q26),
     ("JS", "JS syntax of the extracted app script (BQP Gate 2 #1/#9, Node optional)", gate_node_check),
 ]
 

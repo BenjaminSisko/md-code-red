@@ -32,13 +32,13 @@ Every idea in this file carries a timestamp, title, description, status, and con
 ## [ID: 260917-002]
 
 **Date:** 2026-09-17 | **Title:** Git Command Generator (P1 backlog)
-**Status:** Shipped
+**Status:** In Build
 **Iteration:** Phase 2 (Weeks 7–12) | **Effort:** Medium
 **Controls relevance:** N/A
 **Description:** Guided builder for clone, branch, merge, rebase, tag, log, bisect, and recovery scenarios. Helps junior admins and automation engineers avoid common git mistakes in isolated repos. Feeds into Phase 2 roadmap pending Phase 1 pilot feedback.
 **Decision log:**
 - 2026-09-21: Implemented the dedicated Git rail and all eight proposed guided
-  scenarios in v1.0.0-alpha.4-dev, with typed branch/revision validation,
+  scenarios in v1.0.0-alpha.4, with typed branch/revision validation,
   exact per-release golden commands, hostile-input coverage, and rail-routing
   regression tests.
 
@@ -54,7 +54,7 @@ Every idea in this file carries a timestamp, title, description, status, and con
 **Decision log:**
 - 2026-09-21: The playbook, inventory, and `ansible.cfg` document generators
   were already live; the remaining task-selection gap closed in
-  v1.0.0-alpha.4-dev with typed checkboxes for DNF metadata refresh and
+  v1.0.0-alpha.4 with typed checkboxes for DNF metadata refresh and
   same-named service management. All optional YAML block combinations are
   parser-checked by the hostile harness on every RHEL selection.
 
@@ -74,7 +74,7 @@ Every idea in this file carries a timestamp, title, description, status, and con
 ## [ID: 260917-005]
 
 **Date:** 2026-09-17 | **Title:** Per-tool syntax oracle, generalized from the golden-command table
-**Status:** Proposed
+**Status:** Shipped
 **Iteration:** Not yet scheduled | **Effort:** Medium
 **Controls relevance:** N/A
 **Description:** `tests/fixtures/golden-commands.json` is a hand-authored VALIDITY
@@ -95,7 +95,24 @@ a natural next step from the golden-command table's own docstring, which
 already states it exists because "a table regenerated from the code it tests
 is a transcript, not an oracle" -- the same principle argues for deriving
 syntax rules from tool grammar rather than re-authoring them per generator.
-**Decision log:** None yet.
+**Decision log:**
+- 2026-09-22: Completed the corrected Q26 implementation after independent
+  review. It loads 420 release-specific grammar rows, expands 789 release
+  commands into 865 simple invocations, explicitly bounds operands on 221
+  forms, validates every stage of compound commands, and fails closed on
+  unmodeled shell structure. Fourteen adversarial controls cover invalid command
+  forms, quoted or escaped operators, and unsupported shell constructs.
+- 2026-09-22: Reopened after independent review found that the first Q26
+  implementation unioned release dictionaries, truncated compound commands,
+  and overclaimed operand and provenance coverage. Those claims are withdrawn
+  until the replacement release-specific, compound-aware grammar passes its
+  adversarial review corpus.
+- 2026-09-21: The first Q26 implementation named grammar policy in
+  `content/command-syntax.json`, inheriting source provenance from `tools.json`
+  and option arity from the captured RHEL flag dictionaries. It was superseded
+  by the corrected 2026-09-22 implementation after independent review found
+  release-union and compound-command gaps. The golden table remained active as
+  an independent exact-output oracle throughout the replacement.
 
 ---
 

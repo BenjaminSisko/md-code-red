@@ -22,7 +22,6 @@
  "clis": {
   "auditctl": {
    "available": true,
-   "package": "audit-3.1.2-1.el8_10.1.x86_64",
    "pages": [
     {
      "name": "auditctl",
@@ -337,7 +336,6 @@
   },
   "ausearch": {
    "available": true,
-   "package": "audit-3.1.2-1.el8_10.1.x86_64",
    "pages": [
     {
      "name": "ausearch",
@@ -867,7 +865,6 @@
   },
   "chage": {
    "available": true,
-   "package": "shadow-utils-4.6-23.el8_10.x86_64",
    "pages": [
     {
      "name": "chage",
@@ -981,7 +978,6 @@
   },
   "chronyd": {
    "available": true,
-   "package": "chrony-4.5-2.el8_10.x86_64",
    "pages": [
     {
      "name": "chronyd",
@@ -2311,7 +2307,6 @@
   },
   "dnf": {
    "available": true,
-   "package": "dnf-4.7.0-21.el8_10.noarch",
    "pages": [
     {
      "name": "dnf",
@@ -2877,7 +2872,6 @@
   },
   "firewall-cmd": {
    "available": true,
-   "package": "firewalld-0.9.11-12.el8_10.noarch",
    "pages": [
     {
      "name": "firewall-cmd",
@@ -4294,7 +4288,6 @@
   },
   "git": {
    "available": true,
-   "package": "git-core-2.43.7-1.el8_10.x86_64",
    "pages": [
     {
      "name": "git",
@@ -4543,7 +4536,6 @@
   },
   "journalctl": {
    "available": true,
-   "package": "systemd-239-82.el8_10.19.x86_64",
    "pages": [
     {
      "name": "journalctl",
@@ -4603,7 +4595,7 @@
       "-n",
       "--lines"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4635,7 +4627,7 @@
       "-o",
       "--output"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4645,7 +4637,7 @@
      "names": [
       "--output-fields"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4762,7 +4754,7 @@
      "names": [
       "--user-unit"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4773,7 +4765,7 @@
       "-p",
       "--priority"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4784,7 +4776,7 @@
       "-g",
       "--grep"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4805,7 +4797,7 @@
       "-c",
       "--cursor"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4815,7 +4807,7 @@
      "names": [
       "--after-cursor"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4838,7 +4830,7 @@
       "-U",
       "--until"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4849,7 +4841,7 @@
       "-F",
       "--field"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4882,7 +4874,7 @@
       "-M",
       "--machine"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -4955,7 +4947,7 @@
       "--vacuum-time",
       "--vacuum-files"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -5015,7 +5007,7 @@
      "names": [
       "--interval"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -5035,7 +5027,7 @@
      "names": [
       "--verify-key"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "journalctl",
      "section": "1",
@@ -5107,7 +5099,6 @@
   },
   "lvcreate": {
    "available": true,
-   "package": "lvm2-2.03.14-15.el8_10.3.x86_64",
    "pages": [
     {
      "name": "lvcreate",
@@ -5882,7 +5873,6 @@
   },
   "lvextend": {
    "available": true,
-   "package": "lvm2-2.03.14-15.el8_10.3.x86_64",
    "pages": [
     {
      "name": "lvextend",
@@ -6237,7 +6227,6 @@
   },
   "nmcli": {
    "available": true,
-   "package": "NetworkManager-1.40.16-21.el8_10.x86_64",
    "pages": [
     {
      "name": "nmcli",
@@ -6392,7 +6381,6 @@
   },
   "podman": {
    "available": true,
-   "package": "podman-4.9.4-37.module+el8.10.0+24790+ef71b018.x86_64",
    "pages": [
     {
      "name": "podman",
@@ -6801,7 +6789,6 @@
   },
   "pvcreate": {
    "available": true,
-   "package": "lvm2-2.03.14-15.el8_10.3.x86_64",
    "pages": [
     {
      "name": "pvcreate",
@@ -7146,7 +7133,6 @@
   },
   "rsyslogd": {
    "available": true,
-   "package": "rsyslog-8.2102.0-15.el8_10.1.x86_64",
    "pages": [
     {
      "name": "rsyslogd",
@@ -7257,7 +7243,6 @@
   },
   "semanage": {
    "available": true,
-   "package": "policycoreutils-python-utils-2.9-26.el8_10.noarch",
    "pages": [
     {
      "name": "semanage",
@@ -7283,7 +7268,6 @@
   },
   "setsebool": {
    "available": true,
-   "package": "policycoreutils-2.9-26.el8_10.x86_64",
    "pages": [
     {
      "name": "setsebool",
@@ -7303,7 +7287,6 @@
   },
   "sshd": {
    "available": true,
-   "package": "openssh-server-8.0p1-30.el8_10.x86_64",
    "pages": [
     {
      "name": "sshd",
@@ -8394,7 +8377,6 @@
   },
   "systemctl": {
    "available": true,
-   "package": "systemd-239-82.el8_10.19.x86_64",
    "pages": [
     {
      "name": "systemctl",
@@ -8409,7 +8391,7 @@
       "-t",
       "--type"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8419,7 +8401,7 @@
      "names": [
       "--state"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8430,7 +8412,7 @@
       "-p",
       "--property"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8523,7 +8505,7 @@
      "names": [
       "--job-mode"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8554,7 +8536,7 @@
      "names": [
       "--check-inhibitors"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8685,7 +8667,7 @@
      "names": [
       "--kill-who"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8696,7 +8678,7 @@
       "-s",
       "--signal"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8717,7 +8699,7 @@
      "names": [
       "--message"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8737,7 +8719,7 @@
      "names": [
       "--root"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8757,7 +8739,7 @@
      "names": [
       "--preset-mode"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8768,7 +8750,7 @@
       "-n",
       "--lines"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8779,7 +8761,7 @@
       "-o",
       "--output"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8810,7 +8792,7 @@
       "-H",
       "--host"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8821,7 +8803,7 @@
       "-M",
       "--machine"
      ],
-     "takes_arg": false,
+     "takes_arg": true,
      "explain": null,
      "page": "systemctl",
      "section": "1",
@@ -8873,7 +8855,6 @@
   },
   "useradd": {
    "available": true,
-   "package": "shadow-utils-4.6-23.el8_10.x86_64",
    "pages": [
     {
      "name": "useradd",
@@ -9207,7 +9188,6 @@
   },
   "usermod": {
    "available": true,
-   "package": "shadow-utils-4.6-23.el8_10.x86_64",
    "pages": [
     {
      "name": "usermod",
@@ -9464,7 +9444,6 @@
   },
   "vgcreate": {
    "available": true,
-   "package": "lvm2-2.03.14-15.el8_10.3.x86_64",
    "pages": [
     {
      "name": "vgcreate",
@@ -9879,7 +9858,6 @@
   },
   "yum": {
    "available": true,
-   "package": "yum-4.7.0-21.el8_10.noarch",
    "pages": [
     {
      "name": "yum",

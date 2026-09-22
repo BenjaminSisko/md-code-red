@@ -26,12 +26,12 @@ enforces that at the browser level (`connect-src 'none'`), not just by omission.
 The file is **built, never hand-edited**: `python3 build.py` reads curated and
 generated JSON under `content/`, validates it against `extract/schema.py`, and
 substitutes it into `template.html` to produce `dist/md-code-red_<version>.html`.
-`python3 qa.py` then runs 25 independent gates (plus an optional Node syntax
+`python3 qa.py` then runs 26 independent gates (plus an optional Node syntax
 check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As built (`v1.0.0-alpha.4-dev`, 2026-09-21): 199 curated command
+As built (`v1.0.0-alpha.4`, 2026-09-22): 199 curated command
 entries across 102 tools (43 guided-form generators and 156 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
@@ -105,8 +105,9 @@ so that a defect has to be present in both copies to reach the browser.
 |---|---|---|
 | `template.html` | The shell: static markup, inline `<style>`, an empty `<script id="mcr-data">` placeholder, and one `<script>` containing the entire app (~124 KB unminified, ES5). Never opened as the deliverable itself -- it has no data until built. | |
 | `build.py` | Loads `content/`, validates via `extract/schema.py`, resolves `same_as` chains and joins captures, injects the JSON data island and five `__TOKEN__` substitutions into `template.html`, writes `dist/md-code-red_<version>.html` and its `.sha256` sidecar. Stdlib only. | See Section 2 above and the docstring at the top of the file, which states the "never patched by hand" rule this whole pipeline exists to enforce. |
-| `qa.py` | 25 independent gates (Q1-Q25) plus an optional `node --check`, run against the **shipped artifact**, not against `content/`. Fully documented gate by gate in `docs/QA_GATES.md` -- not duplicated here. | |
+| `qa.py` | 26 independent gates (Q1-Q26) plus an optional `node --check`, run against the shipped artifact and its governed source inputs. Q26 adds the generalized per-tool command syntax oracle; the gates are documented in `docs/QA_GATES.md`. | |
 | `extract/schema.py` | The one statement of the content schema: `VERSIONS`, `BLASTS`, `LICENSE_CLASSES`, `PRIVILEGES`, `PROVENANCE_FIELDS`, and every `*_errors()` function `build.py`'s `validate()` and `tests/test_schema.py` both call. | No I/O; pure functions over already-loaded JSON. |
+| `content/command-syntax.json` + `extract/command_syntax.py` | The Q26 release-specific grammar policy and compound-aware, fail-closed parser. The tokenizer retains quote/escape identity, splits only real shell operators, and checks every resulting invocation. Each RHEL release loads only its own captured options. Explicit policy facts carry concrete source/anchor records; Git, DNF and systemctl use scoped subcommand forms. The generator golden table stays independent. | |
 | `extract/parse_xccdf.py` | Regenerates `content/rules_rhel{7,8,9,10}.json` and `content/cci_nist.json` from the pinned DISA XCCDF sources in `stig-src/`, after verifying `stig-src/SHA256SUMS`. Deterministic: same pins in, byte-identical files out (no wall clock). `--check` re-runs and diffs, which is what `qa.py`'s Q15 gate calls. | |
 | `extract/extract_flags.py` | Regenerates `content/flags_rhel<N>.json` by SSHing (read-only, no sudo) to a real host and parsing `man -P cat` / `--help` output, or by re-parsing already-staged raw text under `content-src/raw/rhel<N>/` in `--check` mode. Never writes prose: every flag's `explain` comes out `null` until a human curates it, and a re-run never clobbers a curated value. | All four release dictionaries currently cover 22 tools; RHEL 7 uses a container. |
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |

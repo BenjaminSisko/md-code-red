@@ -2,7 +2,8 @@
 
 **Status:** In Draft
 **Owner:** Noor Patel (ISSO / security engineer, content) with Alex Okafor (Compliance Officer, control and evidence mapping)
-**Last Updated:** 2026-09-17 (content-gap items added by Sam Kim, Technical Writer, Stage 07)
+**Last Updated:** 2026-09-22 (repository-evidence reconciliation by Zee; no
+new closure authority asserted)
 
 ---
 
@@ -23,25 +24,23 @@ schedules for MD CODE RED.
 
 | Finding ID | Severity | Category | Owner | Status | Due Date | Description |
 |---|---|---|---|---|---|---|
-| MCR-SEC-020 | LOW | Provenance / Explainer | Caleb Stone (extractor fix, CR-T-09 follow-up) | Open (ratchet expiring) | 2026-09-25 | See "D4 security-review residuals" below -- carried here as the same finding, same owner, same date, not a duplicate. |
-| POAM-CONTENT-001 | MEDIUM | Content Coverage | Caleb Stone (or a named delegate) | Open | Not yet scheduled | RHEL 9 has no flag dictionary and no captures at all (`content/flags_rhel9.json` is an empty, pending skeleton; blocked on a reachable RHEL 9 host). Every RHEL 9 command's Inspector panel reads "unverified -- see man page" regardless of curation done for the same flag on RHEL 8/10, and no RHEL 9 entry can carry a `verified` receipt. RHEL 9 is also this build's default version on load (`docs/ARCHITECTURE_BIBLE.md` Section 23), so it is the first thing a new operator sees. |
+| POAM-CONTENT-001 | MEDIUM | Content Verification | Caleb Stone (or a named delegate) | Open | Not yet scheduled | RHEL 9 now has raw captures from `rhel9-stig-test` and a release-specific 22-tool flag dictionary (`content/flags_rhel9.json`; 20 tools available, 964 extracted flag rows). That capture work does not independently verify commands: none of the build's 18 QA-reviewed `verified[version]` receipts is for RHEL 9. The remaining action is to capture and independently review representative RHEL 9 command executions under `docs/WORKFLOW.md` Section 2a. Flag availability, curated flag explanation, and command verification are separate claims; this finding tracks the last of those. |
 | POAM-CONTENT-002 | LOW | Content Coverage | Caleb Stone (RHEL 7 host access, or continued container use) | Open | Not yet scheduled | RHEL 7 flags are read from a UBI7 *container* standing in for a real RHEL 7 host (none exists in the lab) and cover only 6 of the probed tools (`systemctl`, `journalctl`, `yum`, `useradd`, `usermod`, `chage`); the container ships no `man`/`man-db` at all, so every result is `--help`-only, and kernel/systemd-manager-dependent behavior was never observed. RHEL 7's pinned STIG (V3R15) is also DISA's stated terminal release (`docs/WORKFLOW.md`, "The RHEL 7 frozen source") -- worth weighing against POAM-CONTENT-001 when prioritizing: RHEL 7's ceiling is fixed either way, RHEL 9's is not. |
-| POAM-CONTENT-003 | LOW | Curation Coverage | Not yet assigned (RHEL SME) | Open | Not yet scheduled | 0 of 2,009 flag-dictionary entries across RHEL 7/8/10 carry a curated `explain` (the extractor deliberately writes `null`; curation is a separate human step that has not started). Only 4 flags anywhere in the shipped build carry curated text, all on the 3 static STIG-sourced entries. The no-guess rule means this is not a defect in what ships, but it means the Inspector is not yet a teaching tool for most of the catalog. |
+| POAM-CONTENT-003 | LOW | Curation Coverage | Not yet assigned (RHEL SME) | Open | Not yet scheduled | 0 of 3,178 flag-dictionary entries across RHEL 7/8/9/10 carry a curated `explain` (the extractor deliberately writes `null`; curation is a separate human step that has not started). Only 4 flags anywhere in the shipped build carry curated text, all on the 3 static STIG-sourced entries. The no-guess rule means this is not a defect in what ships, but it means the Inspector is not yet a teaching tool for most of the catalog. |
 | POAM-QA-001 | LOW | Test Coverage | Not yet assigned | Open | Not yet scheduled | `docs/TEST_PLAN.md`'s Spot-Check Sampling section has no assigned rate or lead -- independent human re-verification of curated content (as distinct from the automated gates, which prove structure and safety but not "does this explanation read correctly") has no owner. |
 
 ### Example Entry (retained from the original skeleton for format reference)
 
 | Finding ID | Severity | Category | Owner | Status | Due Date | Description |
 |---|---|---|---|---|---|---|
-| SSP-001 | MEDIUM | Input Validation | Zee | Open | 2026-10-01 | Validate that all form fields reject null bytes and overly long strings |
+| SSP-001 | MEDIUM | Input Validation | Zee | Remediated (awaiting formal closure) | Not scheduled | All form-field grammars reject NUL and enforce a per-type length cap; the hostile fixture includes NUL and 4,096-character overlength vectors, and `tests/test_hostile_inputs.py` requires them to be exercised against every field type. |
 
 (SSP-001 above predates this pass and is retained as the format example the
-skeleton originally used -- it is not re-verified here. All form fields
-currently do reject control characters and enforce a per-type length cap,
-per `docs/ARCHITECTURE_BIBLE.md` Section 5's `FIELD_TYPES` table and
-`tests/hostile_harness.js`'s 81,577 checks, so this specific item reads as
-already addressed; Zee/Noor should confirm and close it formally rather than
-this document asserting closure on their behalf.)
+skeleton originally used. The implementation and automated tests demonstrate
+remediation: `template.html`'s field grammars reject controls and cap length,
+and the current hostile harness completes with zero failures, including the
+fixture's NUL and two overlength cases. No named security reviewer has recorded
+formal closure, so the status remains Remediated rather than Verified.)
 
 ---
 
@@ -73,17 +72,17 @@ sections above are untouched.
 ## Remediation Schedule
 
 **Phase 1 (Pre-Pilot):**
-- Close or formally accept-with-date the four content-coverage findings above
+- Close or formally disposition the four open content and QA findings above
   (POAM-CONTENT-001/002/003, POAM-QA-001) before scheduling
-  `docs/TEST_PLAN.md`'s pilot -- running a pilot against RHEL 9's empty flag
-  dictionary and mostly-uncurated flag panel would surface these as pilot
-  findings rather than validate a feature-complete build.
-- Target: 2026-09-30 (retained from the original skeleton; not re-committed to
-  by this pass).
+  `docs/TEST_PLAN.md`'s pilot. RHEL 9 flag capture is complete; RHEL 9 command
+  receipts, RHEL 7 host evidence, flag-explanation curation, and independent
+  content spot-check ownership remain separate gaps.
+- Target: Not scheduled. The former 2026-09-30 skeleton date had no recorded
+  recommitment and is not presented as an approved deadline.
 
 **Phase 2 (Post-Pilot):**
 - Address medium findings from pilot feedback.
-- Target: 2026-10-31.
+- Target: Not scheduled until the pilot is authorized and run.
 
 **Phase 3 (Pre-Release):**
 - All findings resolved before v1.0.0 ship.
@@ -96,13 +95,15 @@ sections above are untouched.
 **Current counts, read directly off this build rather than left as N/A:**
 
 - Total findings tracked in this file: 9 (4 open in the main table, 4 in the
-  D4 residuals table -- one of which, MCR-SEC-020, is the same underlying
-  finding as its main-table counterpart and is not double-counted -- and 1
-  retained example).
-- Findings closed: 2 (MCR-SEC-025, and MCR-SEC-016/MCR-SEC-014 accepted rather
-  than closed, so not counted here as closed).
-- Findings with a hard expiry date: 1 (MCR-SEC-020 / Q20's baseline, 2026-09-25
-  -- 8 days out as of this writing).
+  D4 residuals table, and 1 retained example).
+- Status counts: 4 Open, 1 Remediated awaiting formal closure, 2 Accepted,
+  1 Retired, and 1 Closed.
+- Findings closed or retired: 2 (MCR-SEC-025 closed; MCR-SEC-020 retired with
+  authority and evidence on 2026-09-20). MCR-SEC-016 and MCR-SEC-014 remain
+  Accepted, and SSP-001 remains Remediated, so none is counted as closed.
+- Findings with a live hard expiry date: 0. MCR-SEC-020's baseline retains its
+  historical 2026-09-25 retirement date, but the tested retirement evidence
+  keeps that former deadline from remaining an open expiry.
 - Critical findings aging > 30 days: none tracked in this file at CRITICAL
   severity.
 

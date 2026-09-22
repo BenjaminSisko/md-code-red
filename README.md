@@ -10,11 +10,19 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.4-dev (feature development, lab-only, unsigned)
+**Current version:** v1.0.0-alpha.4 (release candidate, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-21
+**Last built:** 2026-09-22
 
 ## Recent changes
+
+- **2026-09-22** -- **Generalized command syntax oracle.** Q26 validates every
+  resolved static release command and every hand-authored golden generator
+  command, including every simple invocation after a real shell operator,
+  against 420 independently loaded RHEL-specific grammar rows for 106 invoked
+  binaries. Quoted and escaped operator text remains an operand. Git, DNF and
+  systemctl use subcommand-scoped options and operand bounds. The exact golden
+  table remains active as an independent generator regression oracle.
 
 - **2026-09-21** -- **Configuration-file generators.** Adds guided builders
   for sshd, chrony, rsyslog, sudoers, systemd service units, and cron. YAML,

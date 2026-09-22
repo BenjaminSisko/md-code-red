@@ -1,0 +1,154 @@
+{
+ "artifact": {
+  "bytes": 8830936,
+  "filename": "md-code-red_v1.0.0-alpha.4.html",
+  "sha256": "cb2763dc7927aeee23773abc6872fa4e1e3e87f6df39b9075d9791d72231c4ee"
+ },
+ "build_date": "2026-09-22",
+ "capture_count": 5,
+ "cci_list": {
+  "entry_count": 200,
+  "filtered_from": 5137,
+  "list_date": "2025-01-23",
+  "xccdf_file": "U_CCI_List.xml",
+  "xccdf_sha256": "a9e3850f7f30665170c377839abea2fd94863019e434cb27b3f6b2d5e277f403",
+  "zip_sha256": "077cbb6d2ae5f8fdbaaf416d87a34a8621767cdba490f3283feb0c5c35892700",
+  "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CCI_List.zip"
+ },
+ "content_fingerprint": "d11292cc1df80a3689a568e53558427f6fcb7df656ac963f4f7b19fc73eead3e",
+ "flag_coverage_baseline": {
+  "accepted_by": "Milo Vance, Toolkit Systems Engineer \u2014 under condition E5 of Marcus Reed's D4 review",
+  "accepted_on": "2026-09-17",
+  "retire_by": "2026-09-25",
+  "retire_owner": "Caleb Stone (extractor, CR-T-09 follow-up)",
+  "ticket": "CR-T-09/10 (extractor) \u2014 the shortfall is theirs to close; MCR-SEC-020 is closed here as ACCEPTED WITH A DATE plus this gate"
+ },
+ "flag_dictionaries": {
+  "10": {
+   "container_image_digest": null,
+   "extractor_version": "1.0.0",
+   "generator": "extract/extract_flags.py",
+   "host": "saratoga",
+   "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+   "redhat_release": "Red Hat Enterprise Linux release 10.2 (Coughlan)",
+   "status": "extracted from saratoga (RHEL 10) \u2014 22 tools"
+  },
+  "7": {
+   "container_image_digest": "sha256:046e525722f14702c360dc6092324af7c21656e76b0c254b067871f1d4d3df68",
+   "extractor_version": "1.0.0",
+   "generator": "extract/extract_flags.py",
+   "host": "ubi7 container on saratoga",
+   "kernel": "6.12.0-211.53.1.el10_2.x86_64",
+   "redhat_release": "Red Hat Enterprise Linux Server release 7.9 (Maipo)",
+   "status": "extracted from ubi7 container on saratoga (RHEL 7) \u2014 22 tools"
+  },
+  "8": {
+   "container_image_digest": null,
+   "extractor_version": "1.0.0",
+   "generator": "extract/extract_flags.py",
+   "host": "defiant",
+   "kernel": "4.18.0-553.163.1.el8_10.x86_64",
+   "redhat_release": "Red Hat Enterprise Linux release 8.10 (Ootpa)",
+   "status": "extracted from defiant (RHEL 8) \u2014 22 tools"
+  },
+  "9": {
+   "container_image_digest": null,
+   "extractor_version": "1.0.0",
+   "generator": "extract/extract_flags.py",
+   "host": "rhel9-stig-test",
+   "kernel": "5.14.0-687.5.3.el9_8.x86_64",
+   "redhat_release": "Red Hat Enterprise Linux release 9.8 (Plow)",
+   "status": "extracted from rhel9-stig-test (RHEL 9) \u2014 22 tools"
+  }
+ },
+ "git_commit": "TAG_COMMIT_PLACEHOLDER",
+ "receipt_count": 18,
+ "review_lineage": {
+  "change_record": "docs/CHANGELOG.md -- heading for v1.0.0-alpha.4",
+  "governance_baseline": {
+   "adr": "ADR-001-engine-and-content, section 9, 2026-09-18",
+   "gate3_qa_py": "ENG-2026-09-18-001",
+   "gate3_whole_tree": "ENG-2026-09-18-002",
+   "pilot_sop": "MD CODE RED v1.0.0-alpha Pilot Standard Operating Procedure, 2026-09-18",
+   "readiness_assessment": "REL-2026-09-18-001",
+   "sar": "SAR-v1.0.0-alpha-candidate-01abbc3-2026-09-18",
+   "ter": "TER-v1.0.0-alpha-candidate-01abbc3-2026-09-18"
+  },
+  "independent_review": "Exact-head regression, security, and content review must be recorded for this version before publication; this manifest does not itself assert that those reviews passed.",
+  "release_version": "v1.0.0-alpha.4",
+  "required_release_evidence": [
+   "docs/BQP_SUMMARY_v1.0.0-alpha.4.md",
+   "docs/QA_REPORT_v1.0.0-alpha.4.md",
+   "docs/SECURITY_REVIEW_v1.0.0-alpha.4.md",
+   "docs/RELEASE_REPORT_v1.0.0-alpha.4.md"
+  ]
+ },
+ "roster": [
+  {
+   "name": "Caleb Stone",
+   "roles": [
+    "SME"
+   ]
+  },
+  {
+   "name": "Renata Osei",
+   "roles": [
+    "SME"
+   ]
+  },
+  {
+   "name": "Riley Park",
+   "roles": [
+    "QA"
+   ]
+  }
+ ],
+ "stig_pins": {
+  "10": {
+   "benchmark_date": "01 Jul 2026",
+   "benchmark_version": "V1R2",
+   "status": "current (Draft V1R0.1 of 2026-09-02 in comment, not authoritative)",
+   "xccdf_file": "U_RHEL_10_STIG_V1R2_Manual-xccdf.xml",
+   "xccdf_sha256": "91327cd50ab0b4041463a9a1bdaf9b7c365576d67b6ed9864ab99b002bb33ae1",
+   "zip_sha256": "d050b93c00d3c2cf8b0adec4a852f27bd827720cc4510ce32f3368006ad63ac3",
+   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_RHEL_10_V1R2_STIG.zip"
+  },
+  "7": {
+   "benchmark_date": "24 Jul 2024",
+   "benchmark_version": "V3R15",
+   "status": "SUNSET at DISA; frozen terminal version. In project only while RHEL 7 can be validated (Founder, 2026-09-17).",
+   "xccdf_file": "U_RHEL_7_STIG_V3R15_Manual-xccdf.xml",
+   "xccdf_sha256": "c563a56ccbe934c82fbea336fabc26d0e5c2c23efc54e6a562f649bc65ec83b2",
+   "zip_sha256": "89cf7d04b1ca6536b51cad2fe7ff5b729c9022a77522156f8a9c7b6967e6c52f",
+   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_RHEL_7_V3R15_STIG.zip"
+  },
+  "8": {
+   "benchmark_date": "01 Jul 2026",
+   "benchmark_version": "V2R8",
+   "status": "current",
+   "xccdf_file": "U_RHEL_8_STIG_V2R8_Manual-xccdf.xml",
+   "xccdf_sha256": "4dcfbe0aa0d9745e2c37ec1d63bc2922d67bb86dc8e2bda10c851a461318a3ff",
+   "zip_sha256": "5180ff6be545c306950f2041330e0cba835b148529e3c51c55c386f95c363a8c",
+   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_RHEL_8_V2R8_STIG.zip"
+  },
+  "9": {
+   "benchmark_date": "01 Jul 2026",
+   "benchmark_version": "V2R9",
+   "status": "current",
+   "xccdf_file": "U_RHEL_9_STIG_V2R9_Manual-xccdf.xml",
+   "xccdf_sha256": "c912407aa6a2f151979db8bf6d901a06116f1624bf60b19b3737febf73bba539",
+   "zip_sha256": "1875de2543d01695c5a346c51888cc336113e9199bfe6726d74a08de286ca1ae",
+   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_RHEL_9_V2R9_STIG.zip"
+  }
+ },
+ "toolchain": {
+  "extractors": {
+   "extract/extract_flags.py": "1.0.0",
+   "extract/make_pending_skeletons.py": null,
+   "extract/parse_xccdf.py": null
+  },
+  "node": "v22.23.2",
+  "python3": "3.14.6"
+ },
+ "version": "v1.0.0-alpha.4"
+}

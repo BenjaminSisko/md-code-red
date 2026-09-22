@@ -378,8 +378,11 @@ def _parse_cli_term(stripped):
             flag_name, _eq, metavar = flag.partition("=")
             flag_name = re.sub(r"[^\w-]+$", "", flag_name)  # e.g. '--boot[' -> '--boot'
             names.append(flag_name)
-            if metavar:
-                takes_arg = True
+            # In systemd-family manuals an empty suffix (`--type=`) still
+            # means the option REQUIRES an argument.  The previous `if
+            # metavar` silently marked --type/--state/--property/--root/--host
+            # argument-free on every captured release.
+            takes_arg = True
         else:
             names.append(flag)
         if len(toks) > 1 and _looks_like_metavar_phrase(toks[1:]):
@@ -478,21 +481,28 @@ def parse_help_text(raw_text, page, raw_ref):
     for line in raw_text.splitlines():
         if not line.strip().startswith("-"):
             continue
-        m = HELP_OPT_RE.match(line)
-        if not m:
+        # Help output commonly separates aliases with whitespace rather than
+        # a comma (`-H --host=[USER@]HOST`).  Split the option column from its
+        # description, then parse every dash token in that column.
+        stripped = line.strip()
+        columns = re.split(r"\s{2,}", stripped, maxsplit=1)
+        spec = columns[0]
+        matches = re.findall(r"-{1,2}[A-Za-z0-9][\w-]*(?:=\S+)?", spec)
+        if not matches:
             if re.match(r"^\s{0,4}-", line):
                 unparsed.append({"raw_ref": raw_ref, "page": page, "text": line.strip()[:200]})
             continue
-        names_part = m.group(1)
-        tail = (m.group(2) or "").strip()
-        names = [tok.strip().split("=")[0] for tok in names_part.split(",")]
+        names = [tok.split("=")[0] for tok in matches]
+        takes_arg = any("=" in tok for tok in matches)
+        residual = spec
+        for tok in matches:
+            residual = residual.replace(tok, " ", 1)
+        if not takes_arg and _looks_like_metavar_phrase(residual.split()):
+            takes_arg = True
         key = tuple(names)
         if key in seen:
             continue
         seen.add(key)
-        takes_arg = bool(tail) and (
-            "=" in (m.group(2) or "") or bool(re.match(r"^[<\[]?[A-Z0-9_]{1,24}[>\]]?(\s|$)", tail))
-        )
         flags.append({
             "names": names, "takes_arg": takes_arg, "explain": None,
             "page": page, "section": "--help", "raw_ref": raw_ref,

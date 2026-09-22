@@ -2,7 +2,17 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased -- v1.0.0-alpha.4-dev
+## v1.0.0-alpha.4 - 2026-09-22
+
+### Added -- Generalized command syntax oracle
+
+- Completed roadmap item 260917-005: a generalized, source-cited per-tool
+  command syntax oracle now validates all 865 simple invocations contained in
+  620 resolved static and 169 hand-authored golden generator release commands.
+  Its 420 grammar rows load independently by RHEL release; the tokenizer keeps
+  quoted/escaped operators as operands and validates later compound commands.
+  Git, DNF and systemctl options and operands are scoped by subcommand. The
+  exact generator golden table remains active as an independent oracle.
 
 ### Added -- Configuration-file generators
 
