@@ -28,7 +28,7 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO, "extract"))
 import schema  # noqa: E402
 APP_NAME = "MD CODE RED"
-APP_VERSION = "v1.0.0-alpha.4"
+APP_VERSION = "v1.0.0-alpha.5"
 # Pinned, not date.today(): a release commit fixes both the version and the
 # build date together so the artifact this commit produces is reproducible on
 # any machine, any day (readiness REL-2026-09-18-001, tag procedure step 2).
@@ -50,6 +50,7 @@ CONTENT = {
     "commands": "commands.json",
     "tools": "tools.json",
     "dangerous": "dangerous.json",
+    "instructional": "instructional.json",
     # glossary.json (AL-GATE3-011) is deliberately NOT embedded here for the
     # alpha: it shipped in the island, bound to DATASETS.GLOSSARY, and was
     # read by nothing -- no Glossary kind in the search index, no rail, no

@@ -178,7 +178,17 @@ walks through with expected output numbers for this build.
 
 Releases are prepared and verified locally, merged through a release pull
 request, mirrored to Forgejo, and published as a GitHub prerelease. There is no
-release workflow or protected-branch check in this repository; a publisher must
+publisher-signing identity in this repository. Until an authorized release key
+is provisioned, release notes and receipts must say **unsigned**. When a key is
+provisioned, follow `docs/RELEASE_SIGNING.md`; the tooling requires an explicit
+key fingerprint and verifies both the detached signature and every artifact
+digest. SHA-256 without that signature proves integrity, not publisher identity.
+
+The browser's reference export and a real execution receipt are separate
+artifacts. `docs/EXECUTION_EVIDENCE.md` defines the latter and the validated v1
+format; never infer execution from expected output or the reference export.
+There is no automated release workflow or protected-branch check in this
+repository; a publisher must
 run and record every step below. A GitHub release is publication, not deployment
 or pilot acceptance. Transfer to a receiving host still follows that enclave's
 approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.

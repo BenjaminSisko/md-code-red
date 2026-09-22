@@ -31,6 +31,9 @@ Signature status:        UNSIGNED -- sha256 integrity only, unless and until
                           a signing key is provisioned (readiness item 5).
                           Neither the sha256 nor the content fingerprint
                           proves who built the file.
+                          If signed, record the detached signature filename,
+                          full verified signer fingerprint, and verification
+                          result from docs/RELEASE_SIGNING.md.
 Built from commit:       <exact git sha of the tagged release>
 Built by:                <person / CI run ID that produced the artifact>
 Host census ID:          <the receiving host's own census/inventory ID --

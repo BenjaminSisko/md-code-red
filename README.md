@@ -10,11 +10,21 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.4 (release candidate, lab-only, unsigned)
+**Current version:** v1.0.0-alpha.5 (release candidate, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
 **Last built:** 2026-09-22
 
 ## Recent changes
+
+- **2026-09-22** -- **Administrator and instructor feedback release.** Corrects
+  firewalld, NetworkManager, package, service, LVM, cron, and configuration
+  recovery; audits privilege metadata; and narrows commands whose old intent
+  promised more than they performed. Adds complete value-bound operational
+  plans and field instruction for every generator, Start Here learning paths,
+  RHEL comparison and source guidance, nine troubleshooting trees, formal
+  execution receipts, real-host validation tracking, generated release facts,
+  and a fail-closed publisher-signing workflow. The browser export is now named
+  **Export command and control reference** to state its evidentiary boundary.
 
 - **2026-09-22** -- **Generalized command syntax oracle.** Q26 validates every
   resolved static release command and every hand-authored golden generator
@@ -338,8 +348,8 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   banner from `rules_rhel7._meta.sunset`, and the entry's "changed in RHEL X" note. The badge renders
   only when `stig[]` is non-empty. A STIG rule reached via search with no command in the catalog opens
   on its own (`selectStigRule()`), with the same panel and an honest "no command yet" message in the
-  editor. **CR-T-28 evidence exporter:** `Ctrl+E` / the Export as Evidence button opens a deterministic
-  plain-text SCTM-ready block — tool version, the new content fingerprint, STIG ID/version/benchmark
+  editor. **CR-T-28 reference exporter:** `Ctrl+E` / the Export command and control reference button opens a deterministic
+  plain-text command/control reference — tool version, the new content fingerprint, STIG ID/version/benchmark
   date, CAT, CCI → NIST controls, check/fix text, expected output (or "not captured"), the assembled
   command exactly as `currentResult()` produced it (never recomputed), source citation, capture
   metadata when present, and the operator's own date line — previewed in an escaped `<pre>` that is
@@ -683,10 +693,11 @@ family's raw source is staged for a licensing audit).
 - [docs/POAM.md](docs/POAM.md) -- Open findings and remediation plans
 
 **Status:** Build stage, Phase 1 engineering scope on `main`. `python3 qa.py`
-passes all 25 gates plus the JS syntax check; see `docs/QA_GATES.md` for what
+passes all 26 gates plus the JS syntax check; see `docs/QA_GATES.md` for what
 each gate proves and does not prove, and `docs/POAM.md` for open findings.
-Known content gaps (RHEL 9 flags, RHEL 7 host coverage, uncurated flag
-explanations) are listed in `docs/USER_GUIDE.md`'s Known Limitations section,
-not hidden in this status line.
+Current release counts and the receipt-derived default RHEL release are generated
+in `docs/generated/RELEASE_FACTS.md`. Known content gaps (RHEL 9 command
+receipts, RHEL 7 host coverage, and uncurated flag explanations) are listed in
+`docs/USER_GUIDE.md`'s Known Limitations section, not hidden in this status line.
 
 **Contact:** Zee (Engineering) | Jordan Patel (PM) | Sam Kim (Technical Writer)

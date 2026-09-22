@@ -2344,7 +2344,7 @@
     "firewall-cmd": {
       "10": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
+          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --zone takes_arg=true; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
           "source": "content-src/raw/rhel10/firewall-cmd.man.txt"
         },
         "captured_options": true,
@@ -2359,13 +2359,14 @@
             "--list-all": false,
             "--permanent": false,
             "--reload": false,
-            "--state": false
+            "--state": false,
+            "--zone": true
           }
         }
       },
       "7": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
+          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --zone takes_arg=true; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
           "source": "firewall-cmd(1), RHEL 7 OPTIONS"
         },
         "captured_options": true,
@@ -2380,13 +2381,14 @@
             "--list-all": false,
             "--permanent": false,
             "--reload": false,
-            "--state": false
+            "--state": false,
+            "--zone": true
           }
         }
       },
       "8": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
+          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --zone takes_arg=true; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
           "source": "content-src/raw/rhel8/firewall-cmd.man.txt"
         },
         "captured_options": true,
@@ -2401,13 +2403,14 @@
             "--list-all": false,
             "--permanent": false,
             "--reload": false,
-            "--state": false
+            "--state": false,
+            "--zone": true
           }
         }
       },
       "9": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
+          "anchor": "SYNOPSIS/OPTIONS: firewall-cmd root option --add-service takes_arg=true; firewall-cmd root option --get-active-zones takes_arg=false; firewall-cmd root option --list-all takes_arg=false; firewall-cmd root option --permanent takes_arg=false; firewall-cmd root option --reload takes_arg=false; firewall-cmd root option --zone takes_arg=true; firewall-cmd root option --state takes_arg=false; firewall-cmd root operands 0..unbounded",
           "source": "content-src/raw/rhel9/firewall-cmd.man.txt"
         },
         "captured_options": true,
@@ -2422,7 +2425,8 @@
             "--list-all": false,
             "--permanent": false,
             "--reload": false,
-            "--state": false
+            "--state": false,
+            "--zone": true
           }
         }
       }

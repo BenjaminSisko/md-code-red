@@ -8,7 +8,7 @@ last_verified: 2026-09-22
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the development build (`dist/md-code-red_v1.0.0-alpha.4.html`, 193 curated
+describes what the development build (`dist/md-code-red_v1.0.0-alpha.5.html`, 199 curated
 command entries, 102 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
@@ -19,7 +19,7 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-The catalog includes 37 **guided form generators** -- you fill in
+The catalog includes 43 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
@@ -98,7 +98,7 @@ the tool writes it:
    free text, and it is quoted in the command.
 5. The assembled line above updates as you go:
    `journalctl --no-pager --unit='sshd.service' | tee '/srv/audit/sshd.log'`.
-   **Copy**, **Copy with comment** and **Export as Evidence** all now act on the
+   **Copy**, **Copy with comment** and **Export command and control reference** all now act on the
    WHOLE pipeline; the comment header and the evidence export name every stage,
    its operator, its rating and its citation.
 
@@ -162,8 +162,10 @@ you are entitled to see the difference.
    then it says so honestly -- **No capture yet** -- rather than inventing one. In
    this build only 5 STIG ID/version pairs carry a capture at all (see Known
    Limitations).
-5. Click **Export as Evidence** (or `Ctrl+E`) for the SCTM-ready plain-text block --
-   see below.
+5. Click **Export command and control reference** (or `Ctrl+E`) for a deterministic **command and
+   control reference**. It contains expected content, not proof of execution.
+   To bind an actual run, target, operator, exit code and observed output to the
+   artifact, use the separate receipt format in `docs/EXECUTION_EVIDENCE.md`.
 
 ### Journey 3: Review a state-changing command before you copy it
 
@@ -259,7 +261,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-alpha.4 -- RHEL 8
+# MD CODE RED v1.0.0-alpha.5 -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -273,12 +275,18 @@ payload that is not `#`-prefixed; if the command itself cannot be rendered as sa
 single-line text, the whole copy is refused rather than silently dropping the
 comment.
 
-### Export as Evidence
+### Export command and control reference
 
-`Ctrl+E`, or the **Export as Evidence** button in the command toolbar, opens a
-plain-text, SCTM-ready block in a modal. The preview shown is byte-for-byte what
+`Ctrl+E`, or the **Export command and control reference** button in the command toolbar, opens a
+plain-text command and control reference in a modal. The preview shown is
+byte-for-byte what
 **Copy evidence text** puts on the clipboard -- nothing is recomputed between the
 two. The block, in order:
+
+This reference can support preparation of an SCTM or assessment package, but it
+does not contain actual execution output, an exit code or operator attestation
+and therefore is not proof that the command ran. Use
+`docs/EXECUTION_EVIDENCE.md` for a bound execution receipt.
 
 1. Header line, tool version and build date.
 2. **Content fingerprint** (see below).
@@ -337,7 +345,7 @@ the tool does cannot drift apart without the table changing.
 | Reference Commands | `Ctrl+Alt+6` | Opens the mined reference-command catalog and focuses its rail button. |
 | About | `Ctrl+Alt+7` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
 | Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |
-| Export as Evidence | `Ctrl+E` | Opens the evidence preview modal. |
+| Export command and control reference | `Ctrl+E` | Opens the command/control reference preview modal. |
 | Move through palette results, or within any list (tools, commands, palette rows) | Arrow Up / Arrow Down | Wraps at both ends inside the palette. |
 | Open the selected palette result | `Enter` | A tool opens its command list; a STIG/CCI/NIST hit opens the rule or resolves to one; a command loads into the editor. |
 | Focus an editor line and pin its explanation | `Enter` or `Space` on a gutter line | Gutter lines are `role="button"`, `tabindex="0"`. |
@@ -398,9 +406,12 @@ the same text.
 
 ## Known Limitations
 
-This is the honest state of the shipped build, not a roadmap. Numbers below are
-read directly off `dist/md-code-red_v1.0.0-alpha.4.html` and its build content, not
-estimated.
+This is the honest state of the shipped build, not a roadmap. Current counts,
+the receipt-derived default release and per-release flag totals are generated
+from build inputs in `docs/generated/RELEASE_FACTS.md`; the unit suite checks
+that file with `python3 tools/generate_release_facts.py --check` so these facts do not depend on
+hand-maintained prose. The current derived default is RHEL 8: RHEL 8 and 10 tie
+with nine receipts each, and the documented algorithm chooses the lower release.
 
 - **199 curated command entries across 102 tools.** 43 are guided-form generators
   and 156 are static checks. The separate mined reference tier contains 14,439
@@ -438,12 +449,20 @@ estimated.
   until the operator checks **I have reviewed this command**.
 - **The STIG Search rail item is a placeholder.** STIG lookup today happens
   through the command palette (Journey 2), not a dedicated browse view. The
-  Ansible and Git rails are live; additional config-file generators remain in
-  `docs/IDEAS.md` as feature work.
+  Ansible and Git rails are live. Six configuration generators have shipped:
+  sshd, chrony, rsyslog, sudoers, systemd units and cron. Their output is a
+  reviewed fragment; deployment still requires site-specific backup, ownership,
+  mode, SELinux context, service action and recovery steps.
 - **English only, desktop only.** No localization, no mobile layout beyond the
   responsive breakpoint at 1024px that stacks the inspector under the sidebar.
 
 ## Troubleshooting
+
+Nine RHEL-first, read-only decision trees for boot/emergency mode, fstab,
+DNF/RPM, NetworkManager, firewalld, LVM/filesystems, SELinux AVCs, time sync and
+rsyslog are maintained in `content/rhel_troubleshooting.json`. They preserve
+unknowns and stop before destructive repair. They are operator data in this
+release and are not yet rendered as an in-browser rail.
 
 **The file will not open, or shows "Not built yet."** You have `template.html`
 itself, not a built artifact -- it has no data island. Run `python3 build.py` from
@@ -471,7 +490,7 @@ hardened configurations still block it. Select the text in the editor or the
 evidence preview and use your browser's own copy command instead.
 
 **The evidence export's content fingerprint does not match the About panel.** See
-"Export as Evidence" above -- re-export from the file you actually have open rather
+"Export command and control reference" above -- re-export from the file you actually have open rather
 than trusting a fingerprint from elsewhere.
 
 **A tool or command I expect is greyed out.** Check the RHEL version selector

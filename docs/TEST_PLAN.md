@@ -18,13 +18,14 @@ test plan and charter, and is the QA role checked against
 ## Automated Gate Suite
 
 This is the part of the two-tier model this repo actually runs and can prove:
-`python3 qa.py` -- 25 gates plus an optional Node syntax check, against the
+`python3 qa.py` -- 26 gates plus an optional Node syntax check, against the
 **shipped artifact**. `docs/QA_GATES.md` is the full authority -- what each
 gate proves, how it has been watched fail, and its stated residual -- and is not
-duplicated here. On this build: all 25 gates plus `JS` PASS; the unit suite and
+duplicated here. On this build: all 26 gates plus `JS` PASS; the unit suite and
 hostile harness must also pass with zero failures
-(`python3 -m unittest discover -s tests`), and 101,297 hostile-input checks with
-0 failures (`node tests/hostile_harness.js`).
+(`python3 -m unittest discover -s tests` and `node tests/hostile_harness.js`).
+The harness reports its current check count; documentation does not pin that
+implementation-dependent number.
 
 **The pipeline composer (CR-T-31)** is gated by the same suite and is documented
 in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
@@ -70,7 +71,7 @@ captures, QA reviews, the roster and two-person rule, the closed grammars on
 - [x] **Flags accurate, where curated:** every flag a command shows either
       resolves to a curated explanation or honestly renders "unverified -- see
       man page" (`qa.py`'s Q22 gate, and the assembler's no-guess rule --
-      `docs/ARCHITECTURE_BIBLE.md` Section 5). As of this build, 0 of 2,009
+      `docs/ARCHITECTURE_BIBLE.md` Section 5). As of this build, 0 of 3,178
       flag-dictionary entries carry a curated explanation; only 4 flags
       anywhere in the build do, all on the 3 static entries.
 - [x] **STIG mapping correctness, mechanically checked:** `qa.py`'s Q10 gate

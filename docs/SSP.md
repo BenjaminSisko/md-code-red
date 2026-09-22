@@ -19,7 +19,10 @@ MD CODE RED is a single-file, offline HTML application: one `.html` file, no
 server, no database, no network dependency of any kind, opened directly by a
 browser (`file://` or a network share) on a RHEL or Windows jump box. It
 generates RHEL 7/8/9/10 administration commands, DISA STIG/NIST SP 800-53
-crosswalks, and plain-text SCTM-ready evidence exports. All state (favorites,
+crosswalks, and plain-text command/control reference exports. A reference export
+does not assert execution; the separate format in `docs/EXECUTION_EVIDENCE.md`
+binds actual output and operator attestation when a receiving process captures
+them. All browser state (favorites,
 recent, theme, RHEL version choice) lives in the browser's own
 `localStorage`/`sessionStorage`, scoped to that browser profile, and never
 leaves it. See `docs/ARCHITECTURE_BIBLE.md` Section 1 for the full technical

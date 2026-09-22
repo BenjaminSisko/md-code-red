@@ -251,6 +251,13 @@ code,pre{font-family:var(--font-mono);}
 .favbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);}
 .aboutblock{border-left:3px solid var(--border-primary); padding:2px 0 2px 10px;
   margin:0 0 12px; font-size:12px; white-space:pre-wrap;}
+.fieldhelp{margin:4px 0 8px;padding:7px 9px;border-left:3px solid var(--accent);background:var(--bg-editor);font-size:12px;line-height:1.45;}
+.fieldhelp p{margin:2px 0}.opplan{margin:14px 0;border:1px solid var(--border-primary);border-radius:6px;overflow:hidden}
+.planstep{padding:10px 12px;border-top:1px solid var(--border-primary)}.planstep:first-child{border-top:0}
+.planstep h3{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.planstep pre{white-space:pre-wrap;margin:5px 0}
+.compare{width:100%;border-collapse:collapse;font-size:12px}.compare th,.compare td{text-align:left;vertical-align:top;padding:6px;border:1px solid var(--border-primary)}
+.learncard{border-left:3px solid var(--accent);padding:8px 10px;margin:8px 0;background:var(--bg-editor)}
+.risknote{padding:7px 9px;border:1px solid var(--border-primary);border-radius:5px;margin:8px 0}
 @media print{
   body{display:block;}
   #rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
@@ -1543,7 +1550,7 @@ function assembleCommand(spec,version,values,opts){
          (a) PROVENANCE. ADR-002: joining two vendor strings produces a command
              the vendor never published while the citation still claims they
              did. That false attribution would travel into an accreditation
-             package through Export as Evidence, which prints every stage's
+             package through Export command and control reference, which prints every stage's
              source. A mined record is structurally incapable of being a stage
              -- not filtered out of the picker, which a future picker could
              forget to do.
@@ -2542,7 +2549,7 @@ function queryIndex(index,q){
 
 /* ===== MCR-EVIDENCE-BEGIN ===================================================
    CR-T-28. formatEvidenceText() is the deterministic plain-text formatter
-   behind Export as Evidence. Pure, like the block above: every value it prints
+   behind Export command and control reference. Pure, like the block above: every value it prints
    is passed in explicitly, nothing is read from DATASETS/STATE/the DOM/the
    clock inside it, so tests/test_evidence_export.js can call it twice with the
    same fixture and assert the output is byte-identical except the operator's
@@ -2604,7 +2611,7 @@ function formatEvidenceText(opts){
   var lines=[],res=opts.res,entry=opts.entry,stigRow=opts.stigRow,rule=opts.rule;
   function push(s){ lines.push(evidenceLineSafe(s)); }
   function kv(label,val){ push(label+": "+(val===null||val===undefined||val===""?"not captured":val)); }
-  push("MD CODE RED — Evidence Export");
+  push("MD CODE RED — Command and Control Reference Export");
   push("Tool version: "+(opts.appVersion||"")+"  built "+(opts.appBuildDate||""));
   push("Content fingerprint (sha256 of every embedded data island): "+(opts.contentFingerprint||""));
   /* Per-version verification status (task item 4): the receipt line for THE
@@ -2867,6 +2874,7 @@ try{
     COMMANDS:DATA.commands,
     TOOLS:DATA.tools,
     DANGEROUS:DATA.dangerous,
+    INSTRUCTIONAL:DATA.instructional,
     GLOSSARY:DATA.glossary,
     RULES:DATA.rules,
     FLAGS:DATA.flags,
@@ -2904,6 +2912,47 @@ var GENERATORS=(function(){
   return out;
 })();
 function isGeneratorEntry(entry){ return !!(entry&&entry.template); }
+function instructionFor(entry){
+  var rows=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.entries)||{};
+  return entry?rows[entry.id]||null:null;
+}
+function fieldInstruction(entry,name){
+  var row=instructionFor(entry);
+  return row&&row.fields?row.fields[name]||null:null;
+}
+function bindInstruction(text,values){
+  return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>/g,function(_m,name){
+    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"<"+name+">";
+  }).replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,function(_m,name){
+    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"{{"+name+"}}";
+  });
+}
+function operationalPlan(entry,res){
+  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],i,item,match;
+  for(var valueName in formValues){
+    if(Object.prototype.hasOwnProperty.call(formValues,valueName)) values[valueName]=formValues[valueName];
+  }
+  /* A firewalld rich rule is assembled from closed, typed slots. Preserve the
+     exact shell-quoted operand from the run command so recovery removes that
+     same rule instead of leaving an operator to reconstruct it by hand. */
+  match=String((res&&res.command)||"").match(/--add-rich-rule=('[^']*')/);
+  if(match) values.generated_rule_arg=match[1];
+  for(i=0;i<(ins.prerequisites||[]).length;i++){
+    item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+  }
+  for(i=0;i<(ins.preflight||[]).length;i++){
+    item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+  }
+  return {preflight:pre.join("\n"),run:res.command,
+          verify:bindInstruction(entry.verify||"No curated verification step.",values),
+          recover:bindInstruction(entry.undo||"No curated recovery step.",values)};
+}
+function instructionIsBound(text){
+  /* Hyphenated and plain-English placeholders previously escaped the narrow
+     identifier-only check. A shell input redirect contains whitespace right
+     after '<', so it does not match this placeholder grammar. */
+  return !/<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}/.test(String(text||""));
+}
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
@@ -3351,7 +3400,7 @@ function formValuesKey(){
 }
 function computeResult(){
   /* CR-T-31. When a pipeline exists it IS the result: the gutter, the banner,
-     the inspector, Copy, Copy with comment and Export as Evidence all read
+     the inspector, Copy, Copy with comment and Export command and control reference all read
      currentResult(), so routing the pipeline through this one function is what
      makes every one of them operate on the WHOLE pipeline without a second
      code path to keep in step (MCR-SEC-012's rule, applied to the composer). */
@@ -3508,6 +3557,17 @@ function doCopy(withComment){
   var ok=copyText(payload);
   toast(ok?("Copied to clipboard — RHEL "+res.version):"Copy failed — select the text in the editor and use your browser's copy.");
 }
+function doCopyPlanStep(which){
+  var entry=STATE.entryId?entryById(STATE.entryId):null,res=currentResult();
+  if(!entry||!res||!isGeneratorEntry(entry)){ toast("No complete guided plan is assembled."); return; }
+  if(res.blast==="red"&&!STATE.acked){ toast("Destructive command — tick the review box first."); return; }
+  var plan=operationalPlan(entry,res),payload;
+  if(which==="all") payload="PREFLIGHT\n"+plan.preflight+"\n\nRUN\n"+plan.run+"\n\nVERIFY\n"+plan.verify+"\n\nRECOVER\n"+plan.recover;
+  else payload=plan[which];
+  if(payload===undefined){ toast("That plan step is unavailable."); return; }
+  if(!instructionIsBound(payload)){ toast("Copy refused — this step still contains an unresolved placeholder."); return; }
+  toast(copyText(payload)?"Copied operational plan step":"Copy failed — select the displayed plan text and copy it manually.");
+}
 
 /* CR-T-25. Copying the generated FILE. Separate from doCopy() on purpose: the
    payloads are different things in different grammars, and a single function
@@ -3525,7 +3585,7 @@ function doCopyDoc(){
   toast(ok?("Copied "+res.doc.filename+" to clipboard"):"Copy failed — select the text in the file preview and use your browser's copy.");
 }
 
-/* ============ CR-T-28: Export as Evidence ============
+/* ============ CR-T-28: Export command and control reference ============
    exportEvidence() gathers exactly the data formatEvidenceText() (the pure
    MCR-EVIDENCE block above) needs and hands it over — `res` is currentResult(),
    the SAME rendered-state object the screen and the clipboard already read
@@ -3600,7 +3660,7 @@ function renderEvidenceModal(){
     stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
-  var html="<p class=\"region-label\">Export as Evidence — SCTM-ready, plain text</p>";
+  var html="<p class=\"region-label\">Command and control reference — plain text</p>";
   html+="<pre class=\"evidencepre\" aria-label=\"Evidence export preview — exactly what Copy copies\">"+
         esc(text)+"</pre>";
   html+="<div class=\"toolbar\">";
@@ -3880,12 +3940,25 @@ function renderToolList(){
   }
   if(STATE.rail!=="builder"&&STATE.rail!=="ansible"&&STATE.rail!=="git"){
     html+="<p class=\"region-label\">"+esc(STATE.rail)+"</p>";
-    html+="<p class=\"muted\">This rail lands with its own task: STIG search over the whole catalog "+
-          "(CR-T-26 put the STIG panel and search-by-STIG-ID in the Inspector and the command "+
-          "palette instead; a dedicated browse view here is still open). The Command Builder, "+
-          "Ansible, Git, Favorites, Reference and About rails are live now.</p>";
+    html+="<p class=\"muted\">Use the activity rail to open a catalog workspace.</p>";
     el("sidebar-body").innerHTML=html;
     return;
+  }
+  if(STATE.rail==="builder"){
+    var paths=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.learning_paths)||[];
+    html+="<p class=\"region-label\">Start here</p>";
+    for(var lp=0;lp<paths.length;lp++){
+      var path=paths[lp];
+      html+="<div class=\"learncard\"><strong>"+esc(path.title)+"</strong><p class=\"muted\">"+
+            esc(path.summary)+"</p><ol>";
+      for(var ls=0;ls<path.entry_ids.length;ls++){
+        var lessonEntry=entryById(path.entry_ids[ls]);
+        html+="<li><button type=\"button\" class=\"btn\" data-learn-entry=\""+
+              escapeAttr(path.entry_ids[ls])+"\">"+esc(lessonEntry?(lessonEntry.intent||lessonEntry.id):path.entry_ids[ls])+"</button></li>";
+      }
+      html+="</ol><details><summary>Comprehension check</summary><p>"+esc(path.check.question)+
+            "</p><p class=\"muted\">Answer: "+esc(path.check.answer)+"</p></details></div>";
+    }
   }
   /* The Ansible rail renders the SAME tool list as the Command Builder, over a
      different slice of tools.json: the seven ansible-* control-node binaries,
@@ -4674,7 +4747,7 @@ function renderEditor(){
   html+="<div class=\"toolbar\">";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export as Evidence</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
   html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
         escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
         (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
@@ -4719,10 +4792,18 @@ function renderGeneratorForm(entry){
     var val=STATE.formValues[name]!==undefined?STATE.formValues[name]:"";
     var gated=!fieldAvailable(field,STATE.version);
     var id="genf-"+entry.id+"-"+name;
-    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc(field.label||name);
+    var teaching=fieldInstruction(entry,name);
+    html+="<div class=\"field\"><label for=\""+escapeAttr(id)+"\">"+esc((teaching&&teaching.label)||field.label||name);
     if(field.required){ html+=" <span class=\"req\">*</span> (required)"; }
     else{ html+=" (optional)"; }
     html+="</label>";
+    if(teaching){
+      html+="<div class=\"fieldhelp\"><p>"+esc(teaching.meaning)+"</p>";
+      html+="<p><strong>Example:</strong> "+esc(teaching.example===null?"No curated example.":teaching.example)+"</p>";
+      html+="<p><strong>Discover:</strong> "+esc(teaching.discovery_command===null?
+            "No discovery command has been curated; consult the cited source.":teaching.discovery_command)+"</p>";
+      html+="<p><strong>Consequence:</strong> "+esc(teaching.consequence)+"</p></div>";
+    }
     if(gated){
       html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
             "\" disabled aria-disabled=\"true\" aria-describedby=\""+escapeAttr(id)+"-why\" value=\"\">";
@@ -4768,7 +4849,7 @@ function renderGeneratorForm(entry){
     html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
           "\" aria-required=\""+(field.required?"true":"false")+"\" maxlength=\""+
           escapeAttr(String((FIELD_TYPES[field.type]||{}).cap||200))+"\" placeholder=\""+
-          escapeAttr((FIELD_TYPES[field.type]||{}).label||field.type)+"\" value=\""+
+          escapeAttr(teaching&&teaching.example?teaching.example:((FIELD_TYPES[field.type]||{}).label||field.type))+"\" value=\""+
           escapeAttr(val)+"\"></div>";
   }
   el("gen-fields").innerHTML=html;
@@ -4807,6 +4888,10 @@ function renderGeneratorResult(){
   var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
   html+="<p class=\"muted\">"+esc(subjG)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
         (privG?"<span class=\"badge privilege\">requires ":"")+(privG?esc(privG):"")+(privG?"</span>":"")+"</p>";
+  var teachingRow=instructionFor(entry)||{};
+  if(res.blast==="yellow") html+="<p class=\"risknote\"><strong>State-changing operation.</strong> A reviewed recovery plan is required before use.</p>";
+  if(res.blast==="red") html+="<p class=\"risknote\"><strong>Destructive or lockout-prone operation.</strong> Verify the target and recovery access independently.</p>";
+  html+="<p><span class=\"badge\">"+esc(teachingRow.proven_reversible?"Proven reversible":"Recovery not proven")+"</span></p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
@@ -4820,7 +4905,7 @@ function renderGeneratorResult(){
   html+="<div class=\"toolbar\">";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export as Evidence</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
   if(res.doc){
     html+="<button type=\"button\" class=\"btn\" data-action=\"copy-doc\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy "+esc(res.doc.filename)+"</button>";
   }
@@ -4843,8 +4928,27 @@ function renderGeneratorResult(){
           esc(res.copy_comment)+"</pre>";
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
-  html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
-  html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
+  html+="<div class=\"opplan\">";
+  for(var pk=0;pk<planKeys.length;pk++){
+    var planText=plan[planKeys[pk]];
+    var planBound=instructionIsBound(planText);
+    html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
+          (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
+          "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
+          (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
+  }
+  html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div>";
+  html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
+  for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
+    var compareVersion=RHEL_VERSIONS[cv];
+    var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
+    var compareStatus=verificationStatusForVersion(entry,compareVersion);
+    html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
+          "</td><td>"+esc(compareStatus.label)+"</td><td>"+
+          esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
+  }
+  html+="</tbody></table></details>";
   target.innerHTML=html;
 }
 function renderGeneratorEditor(entry){
@@ -4909,7 +5013,29 @@ function renderInspector(){
     html+="<p class=\"region-label\">Source</p>";
     html+="<p class=\"muted\">"+esc(srcObj.title||"")+" — "+esc(srcObj.version||"")+
           " (retrieved "+esc(srcObj.retrieved_on||"")+")</p>";
+    html+="<p><strong>Read next:</strong> <code>"+esc(srcObj.url_or_man||"No exact source locator recorded")+"</code></p>";
+    var manMatch=String(srcObj.url_or_man||"").match(/(?:man\s+)?([1-9])\s*\(?([A-Za-z0-9_.+-]+)\)?|([A-Za-z0-9_.+-]+)\(([1-9])\)/);
+    if(manMatch){
+      var manSection=manMatch[1]||manMatch[4],manTopic=manMatch[2]||manMatch[3];
+      html+="<p class=\"muted\">Man section "+esc(manSection)+" identifies the documentation class. Open it with <code>man "+
+            esc(manSection)+" "+esc(manTopic)+"</code>";
+      if(flags.length) html+=" and search inside the page with <code>/"+esc(flags[0].flag)+"</code>";
+      html+=".</p>";
+    }else if(flags.length){
+      html+="<p class=\"muted\">Use the exact locator above; search its content for <code>"+esc(flags[0].flag)+"</code>.</p>";
+    }
   }
+  html+="<details><summary>RHEL release comparison</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Exact command</th><th>Evidence</th><th>Why changed</th></tr></thead><tbody>";
+  for(var rv=0;rv<RHEL_VERSIONS.length;rv++){
+    var release=RHEL_VERSIONS[rv],rr=assembleCommand(entry,release,isGeneratorEntry(entry)?STATE.formValues:{},{patterns:PATTERNS});
+    var rs=verificationStatusForVersion(entry,release),slot=(entry.rhel_versions||{})[release]||{},why="No release-specific rationale recorded.";
+    if(slot.changed_in_note) why=slot.changed_in_note;
+    else if(slot.unavailable) why=slot.unavailable.reason||"Unavailable on this release.";
+    else if(rr&&rr.resolved_from) why="Command text is shared with RHEL "+rr.resolved_from+"; this release remains independently unverified unless a receipt is shown.";
+    html+="<tr><th>"+esc(release)+"</th><td>"+esc(rr?rr.command:"Not available or incomplete")+"</td><td>"+
+          esc(rs.label)+"</td><td>"+esc(why)+"</td></tr>";
+  }
+  html+="</tbody></table></details>";
   el("inspector-body").innerHTML=html;
 }
 
@@ -5189,6 +5315,14 @@ function selectStigRule(ruleId,version){
   setVersion(version);
 }
 function setRail(name){
+  if(name==="stig"){
+    STATE.rail="stig";
+    renderRail();
+    openPalette();
+    el("palette-input").value="STIG";
+    renderPalette();
+    return;
+  }
   STATE.rail=name;
   renderAll();
 }
@@ -5226,6 +5360,8 @@ document.addEventListener("click",function(ev){
   if(v){ setVersion(v.getAttribute("data-version")); return; }
   var r=t.closest("[data-rail]");
   if(r){ setRail(r.getAttribute("data-rail")); return; }
+  var learn=t.closest("[data-learn-entry]");
+  if(learn){ selectEntry(learn.getAttribute("data-learn-entry")); return; }
   var tool=t.closest("[data-tool]");
   if(tool){ selectTool(tool.getAttribute("data-tool"),true); return; }
   var entry=t.closest("[data-entry]");
@@ -5238,6 +5374,8 @@ document.addEventListener("click",function(ev){
   if(reffam){ selectRefFamily(reffam.getAttribute("data-reffam")); return; }
   var hit=t.closest("[data-hit]");
   if(hit){ activateHit(parseInt(hit.getAttribute("data-hit"),10)); return; }
+  var planStep=t.closest("[data-plan-step]");
+  if(planStep){ doCopyPlanStep(planStep.getAttribute("data-plan-step")); return; }
   var line=t.closest("[data-line]");
   if(line){
     STATE.line=parseInt(line.getAttribute("data-line"),10);
@@ -5380,7 +5518,7 @@ var KEYMAP=[
   {id:"copy-comment",keys:["c","C"],mods:"ctrlShift",whenTyping:false,
    doc:"Copy the command with its comment header",run:function(){ doCopy(true); }},
   {id:"export-evidence",keys:["e","E"],mods:"ctrl",whenTyping:false,
-   doc:"Export as Evidence",run:function(){ exportEvidence(); }},
+   doc:"Export command and control reference",run:function(){ exportEvidence(); }},
   /* CR-T-31. Ctrl+Shift+P adds the command on screen as the next stage;
      Ctrl+Shift+Backspace clears the pipeline. Both are listed in KEYMAP like
      every other binding, so docs/USER_GUIDE.md stays checkable against one
