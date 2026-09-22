@@ -451,81 +451,39 @@
   "7": {
    "chage": {
     "raw_long_options": 9,
-    "dictionary_long_options": 2,
-    "accepted_missing": 7,
-    "sample_missing": [
-     "--expiredate",
-     "--inactive",
-     "--lastday",
-     "--maxdays",
-     "--mindays",
-     "--root"
-    ]
+    "dictionary_long_options": 9,
+    "accepted_missing": 0,
+    "sample_missing": []
    },
    "journalctl": {
     "raw_long_options": 47,
-    "dictionary_long_options": 0,
-    "accepted_missing": 47,
-    "sample_missing": [
-     "--after-cursor",
-     "--all",
-     "--boot",
-     "--catalog",
-     "--cursor",
-     "--directory"
-    ]
+    "dictionary_long_options": 47,
+    "accepted_missing": 0,
+    "sample_missing": []
    },
    "systemctl": {
     "raw_long_options": 33,
-    "dictionary_long_options": 0,
-    "accepted_missing": 33,
-    "sample_missing": [
-     "--all",
-     "--force",
-     "--full",
-     "--global",
-     "--help",
-     "--host"
-    ]
+    "dictionary_long_options": 33,
+    "accepted_missing": 0,
+    "sample_missing": []
    },
    "useradd": {
     "raw_long_options": 24,
-    "dictionary_long_options": 9,
-    "accepted_missing": 15,
-    "sample_missing": [
-     "--base-dir",
-     "--comment",
-     "--expiredate",
-     "--gid",
-     "--groups",
-     "--home-dir"
-    ]
+    "dictionary_long_options": 24,
+    "accepted_missing": 0,
+    "sample_missing": []
    },
    "usermod": {
     "raw_long_options": 23,
-    "dictionary_long_options": 6,
-    "accepted_missing": 17,
-    "sample_missing": [
-     "--add-subgids",
-     "--add-subuids",
-     "--comment",
-     "--del-subgids",
-     "--del-subuids",
-     "--expiredate"
-    ]
+    "dictionary_long_options": 23,
+    "accepted_missing": 0,
+    "sample_missing": []
    },
    "yum": {
     "raw_long_options": 39,
-    "dictionary_long_options": 21,
-    "accepted_missing": 18,
-    "sample_missing": [
-     "--advisories",
-     "--advisory",
-     "--bzs",
-     "--color",
-     "--config",
-     "--cves"
-    ]
+    "dictionary_long_options": 39,
+    "accepted_missing": 0,
+    "sample_missing": []
    }
   },
   "9": {

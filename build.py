@@ -28,7 +28,7 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO, "extract"))
 import schema  # noqa: E402
 APP_NAME = "MD CODE RED"
-APP_VERSION = "v1.0.0-alpha.4-dev"
+APP_VERSION = "v1.0.0-alpha.4"
 # Pinned, not date.today(): a release commit fixes both the version and the
 # build date together so the artifact this commit produces is reproducible on
 # any machine, any day (readiness REL-2026-09-18-001, tag procedure step 2).
@@ -36,7 +36,7 @@ APP_VERSION = "v1.0.0-alpha.4-dev"
 # useful answer; a tagged release needs "when was this released" instead, and
 # that value has to stop moving once it's committed. The next version bump
 # repins this alongside APP_VERSION.
-APP_BUILD_DATE = "2026-09-21"
+APP_BUILD_DATE = "2026-09-22"
 CLASSIFICATION = "UNCLASSIFIED"
 
 VERSIONS = schema.VERSIONS

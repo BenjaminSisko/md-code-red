@@ -54,7 +54,10 @@ sys.path.insert(0, REPO)
 
 import qa  # noqa: E402
 
-APP_VERSION = "v1.0.0-alpha.3"
+# This suite exercises a scratch build.py, but the version used in that fixture
+# should follow the real product identity.  A release bump must not require a
+# second, unrelated version edit in a dist-integrity test.
+APP_VERSION = qa.load_build_constants()["APP_VERSION"]
 
 BUILD_PY_STUB = (
     'APP_NAME = "MD CODE RED"\n'

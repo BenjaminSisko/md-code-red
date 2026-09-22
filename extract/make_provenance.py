@@ -106,7 +106,8 @@ def load_build_constants():
 def find_artifact(version):
     path = os.path.join(DIST, "md-code-red_%s.html" % version)
     if not os.path.exists(path):
-        sys.exit("FATAL: %s does not exist -- run `rm -rf dist && python3 build.py` first"
+        sys.exit("FATAL: %s does not exist -- run `git clean -fdx dist && "
+                 "python3 build.py` first"
                   % os.path.relpath(path, REPO))
     return path
 
@@ -273,19 +274,39 @@ def node_version():
         return None
 
 
-def review_lineage():
+def review_lineage(version):
+    """Return release evidence pointers without claiming a review occurred.
+
+    The manifest generator also runs on development builds, before a release
+    packet or tag exists.  Keep these values version-derived and procedural:
+    version-specific reports may record a result, while this manifest only
+    names the evidence that a publisher must supply.  Historical governance
+    records remain useful as the baseline, but are not represented as approval
+    of the current version.
+    """
     return {
-        "alpha3_correction": "MCR-A2-KEY-001 -- six-rail keyboard navigation correction; historical v1.0.0-alpha.2 tag and assets remain immutable",
-        "alpha3_original_task_base": "46507926500ea92aa8904c6a9d69698e2d3ba705",
-        "alpha3_reconciled_main_base": "f5a29549a7b68b11ccdf20ac39bde834954c112f (contains required receipt-history merge b9906e460625fa7b63406854646e4666459e9450)",
-        "alpha3_regression_review": "Riley Park exact-head review is required on the candidate PR; it is not browser or pilot acceptance",
-        "readiness_assessment": "REL-2026-09-18-001",
-        "sar": "SAR-v1.0.0-alpha-candidate-01abbc3-2026-09-18 (Marcus Reed -- APPROVE WITH CONDITIONS, lab-only unsigned)",
-        "ter": "TER-v1.0.0-alpha-candidate-01abbc3-2026-09-18 (Riley Park -- RELEASE WITH KNOWN ISSUES; SME joint sign-off Caleb Stone)",
-        "gate3_whole_tree": "ENG-2026-09-18-002 (Al Kowalski, Chief Architect)",
-        "gate3_qa_py": "ENG-2026-09-18-001 (Al Kowalski, Chief Architect)",
-        "adr": "ADR-001-engine-and-content -- ACCEPTED, section 9 signed by Avery Quinn, 2026-09-18",
-        "pilot_sop": "MD CODE RED v1.0.0-alpha -- Pilot Standard Operating Procedure, 2026-09-18",
+        "release_version": version,
+        "change_record": "docs/CHANGELOG.md -- heading for %s" % version,
+        "required_release_evidence": [
+            "docs/BQP_SUMMARY_%s.md" % version,
+            "docs/QA_REPORT_%s.md" % version,
+            "docs/SECURITY_REVIEW_%s.md" % version,
+            "docs/RELEASE_REPORT_%s.md" % version,
+        ],
+        "independent_review": (
+            "Exact-head regression, security, and content review must be recorded "
+            "for this version before publication; this manifest does not itself "
+            "assert that those reviews passed."
+        ),
+        "governance_baseline": {
+            "readiness_assessment": "REL-2026-09-18-001",
+            "sar": "SAR-v1.0.0-alpha-candidate-01abbc3-2026-09-18",
+            "ter": "TER-v1.0.0-alpha-candidate-01abbc3-2026-09-18",
+            "gate3_whole_tree": "ENG-2026-09-18-002",
+            "gate3_qa_py": "ENG-2026-09-18-001",
+            "adr": "ADR-001-engine-and-content, section 9, 2026-09-18",
+            "pilot_sop": "MD CODE RED v1.0.0-alpha Pilot Standard Operating Procedure, 2026-09-18",
+        },
     }
 
 
@@ -322,7 +343,7 @@ def build_manifest(commit):
             "node": node_version(),
             "extractors": extractor_versions(),
         },
-        "review_lineage": review_lineage(),
+        "review_lineage": review_lineage(version),
     }
 
 

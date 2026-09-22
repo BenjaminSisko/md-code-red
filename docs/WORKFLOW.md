@@ -151,7 +151,7 @@ rows), then substitute the JSON payload and five identity tokens
 
 ## 5. QA Gate
 
-`python3 qa.py` runs 25 independent gates plus an optional `node --check`
+`python3 qa.py` runs 26 independent gates plus an optional `node --check`
 against the **shipped artifact** (not `content/` -- that is `build.py`'s own
 `validate()`, a separate check). Every gate, what it proves, how it has been
 watched fail, and what it explicitly does not prove is `docs/QA_GATES.md`, not
@@ -176,11 +176,74 @@ walks through with expected output numbers for this build.
 
 ## 6. Release & Distribution
 
-Not yet formalized in this repo. No distribution channel (file share, USB, NFS,
-email) is codified anywhere in the build, QA, or CI configuration -- `qa.py`'s
-own comments and `docs/POAM.md` do not name one. This is an open item, not an
-oversight this document can resolve by asserting a channel that does not exist
-in the pipeline today.
+Releases are prepared and verified locally, merged through a release pull
+request, mirrored to Forgejo, and published as a GitHub prerelease. There is no
+release workflow or protected-branch check in this repository; a publisher must
+run and record every step below. A GitHub release is publication, not deployment
+or pilot acceptance. Transfer to a receiving host still follows that enclave's
+approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
+
+1. **Prepare one final-version candidate.** Start from synchronized, clean
+   `main` and confirm that the proposed tag and release do not already exist.
+   Set `APP_VERSION` and the pinned `APP_BUILD_DATE` together in `build.py`,
+   update the matching current-version documentation and fixtures, and move the
+   prior release's three files from `dist/` to its versioned directory under
+   `releases/` only if that archival move has not already happened. Never alter
+   an archived file or an existing tag.
+2. **Build the candidate and placeholder provenance.** Run:
+
+   ```text
+   git clean -fdx dist && python3 build.py
+   python3 extract/make_provenance.py
+   ```
+
+   Before merge, `git_commit` must be `TAG_COMMIT_PLACEHOLDER`: the merge commit
+   that the release tag will identify does not exist yet. Verify the generated
+   `.html.sha256` sidecar and create the version-specific BQP, QA, security, and
+   release-readiness reports named in the manifest.
+3. **Prove reproducibility and run the release gates.** Run the four commands in
+   Section 5, `git diff --check`, the repository-configured Gitleaks scan when
+   Gitleaks is available, and all focused tests for the release's changed
+   behavior. Repeat the clean build and provenance generation; the HTML,
+   sidecar, and placeholder manifest must be byte-identical across the two
+   cycles. Record actual counts, hashes, and the content fingerprint in the
+   reports rather than carrying numbers forward from an older release.
+4. **Commit and review the exact candidate.** `dist/` is ignored on development
+   branches, so explicitly force-add exactly the current HTML, sidecar, and
+   provenance manifest. Open a release PR and record independent regression,
+   security, and content review against its exact head. A changed head requires
+   fresh review. Do not represent publication, deployment, or browser/pilot
+   acceptance as completed in a candidate report.
+5. **Merge and retest the tag target.** Merge without changing candidate files.
+   Record the full merge SHA as the tag target, rebuild from that exact tree,
+   rerun the complete release gates, and compare the artifact SHA-256 and
+   fingerprint with the reviewed candidate. The pinned version and date make
+   this comparison deterministic.
+6. **Stamp provenance in a later commit.** From post-merge `main`, run
+   `python3 extract/make_provenance.py --commit <full-tag-target-sha>`, change the
+   release report from candidate to released state, and commit those updates.
+   The manifest names the merge that produced the artifact. The later commit
+   carries that now-knowable fact; it is deliberately not the tag target.
+7. **Create and mirror the immutable tag.** Create an annotated tag named exactly
+   like `APP_VERSION`, explicitly targeting the merge SHA from step 5, and push
+   the same tag plus the post-stamp `main` commit to GitHub and Forgejo. Existing
+   tags are never moved. Unless an approved signing identity has been provisioned,
+   state plainly that the tag and artifact are unsigned and rely on SHA-256 plus
+   Git lineage for integrity, not publisher identity.
+8. **Publish and verify the GitHub prerelease.** Publish exactly three assets
+   from the post-stamp tree: the HTML, its `.html.sha256` sidecar, and the stamped
+   `.provenance.json`. Release notes must name the tag target, artifact hash,
+   content fingerprint, gate results, known limitations, and unsigned status.
+   Read the release back from GitHub and verify that it is a non-draft prerelease,
+   the tag peels to the intended merge on both remotes, all three remote asset
+   digests match local bytes, and provenance contains the tag target rather than
+   the placeholder.
+9. **Keep deployment separate.** Do not infer receiving-host or browser
+   acceptance from source, build, or publication evidence. If deployment is
+   authorized, preserve the prior version as rollback and create one completed
+   deploy receipt per artifact/host pair. When development of the next version
+   begins, archive the just-released three-file set byte-for-byte under
+   `releases/<version>/`; until then, the current release remains in `dist/`.
 
 ## Quarterly STIG Refresh Cycle
 
