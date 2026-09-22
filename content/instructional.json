@@ -1,1642 +1,1642 @@
 {
-  "_meta": {
-    "purpose": "Instructional guidance for guided generators; null discovery commands are explicit uncurated gaps.",
-    "schema_version": 1
-  },
-  "entries": {
-    "gen-ansible-cfg": {
-      "fields": {
-        "forks": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "5",
-          "label": "Forks",
-          "meaning": "The forks value used by this ansible-config command."
-        },
-        "inventory_path": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "ansible-config dump --only-changed",
-          "example": "/etc/ansible/inventory.yml",
-          "label": "Inventory Path",
-          "meaning": "The inventory path written to ansible.cfg."
-        },
-        "remote_user": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "deploy",
-          "label": "Remote user",
-          "meaning": "The remote user value used by this ansible-config command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
+ "_meta": {
+  "purpose": "Instructional guidance for guided generators; null discovery commands are explicit uncurated gaps.",
+  "schema_version": 1
+ },
+ "entries": {
+  "gen-ansible-cfg": {
+   "fields": {
+    "forks": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "5",
+     "label": "Forks",
+     "meaning": "The forks value used by this ansible-config command."
     },
-    "gen-ansible-inventory": {
-      "fields": {
-        "group": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "webservers",
-          "label": "Group",
-          "meaning": "The group value used by this ansible-inventory command."
-        },
-        "host": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "web01",
-          "label": "Host",
-          "meaning": "The inventory hostname written to the generated inventory."
-        },
-        "host_ip": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "192.0.2.11",
-          "label": "Host Ip",
-          "meaning": "The address assigned to ansible_host."
-        },
-        "remote_user": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "deploy",
-          "label": "Remote user",
-          "meaning": "The remote user value used by this ansible-inventory command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
+    "inventory_path": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "ansible-config dump --only-changed",
+     "example": "/etc/ansible/inventory.yml",
+     "label": "Inventory Path",
+     "meaning": "The inventory path written to ansible.cfg."
     },
-    "gen-ansible-playbook": {
-      "fields": {
-        "hosts": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "webservers",
-          "label": "Hosts",
-          "meaning": "The Ansible inventory pattern targeted by the play."
-        },
-        "manage_service": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": null,
-          "label": "Start and enable the same-named service",
-          "meaning": "The manage service value used by this ansible-playbook command."
-        },
-        "package": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "httpd",
-          "label": "Package",
-          "meaning": "The package value used by this ansible-playbook command."
-        },
-        "play_name": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "Configure servers",
-          "label": "Play Name",
-          "meaning": "The play name value used by this ansible-playbook command."
-        },
-        "refresh_cache": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": null,
-          "label": "Refresh DNF package metadata first",
-          "meaning": "The refresh cache value used by this ansible-playbook command."
-        },
-        "state": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "present",
-          "label": "State",
-          "meaning": "The state value used by this ansible-playbook command."
-        },
-        "task_name": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "Ensure httpd is present",
-          "label": "Task Name",
-          "meaning": "The task name value used by this ansible-playbook command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-auditctl-watch": {
-      "fields": {
-        "key": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "identity",
-          "label": "Key",
-          "meaning": "The key value used by this auditctl command."
-        },
-        "path": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "/etc/motd",
-          "label": "Path",
-          "meaning": "The exact filesystem path the command will read or modify."
-        },
-        "perms": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "r",
-          "label": "Perms",
-          "meaning": "The perms value used by this auditctl command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-ausearch-by-key": {
-      "fields": {
-        "key": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "identity",
-          "label": "Key",
-          "meaning": "The key value used by this ausearch command."
-        },
-        "start": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "today",
-          "label": "Start",
-          "meaning": "The start value used by this ausearch command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-chage-list": {
-      "fields": {
-        "username": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "getent passwd",
-          "example": "adm-linux",
-          "label": "Username",
-          "meaning": "The username value used by this chage command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-chage-set-aging": {
-      "fields": {
-        "maxdays": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "60",
-          "label": "Maxdays",
-          "meaning": "The maxdays value used by this chage command."
-        },
-        "mindays": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "7",
-          "label": "Mindays",
-          "meaning": "The mindays value used by this chage command."
-        },
-        "username": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getent passwd",
-          "example": "svcacct",
-          "label": "Username",
-          "meaning": "The username value used by this chage command."
-        },
-        "warndays": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "14",
-          "label": "Warndays",
-          "meaning": "The warndays value used by this chage command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-chrony-config": {
-      "fields": {
-        "server": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "time.example.com",
-          "label": "Server",
-          "meaning": "The server value used by this chronyd command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-chronyd-one-shot-check": {
-      "fields": {
-        "directive": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "server time.mil iburst",
-          "label": "Directive",
-          "meaning": "One chronyd source directive, such as server or pool plus its host."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-cron-config": {
-      "fields": {
-        "command": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "/usr/local/bin/backup",
-          "label": "Command",
-          "meaning": "The executable path placed in the generated configuration."
-        },
-        "hour": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "2",
-          "label": "Hour",
-          "meaning": "The hour value used by this crontab command."
-        },
-        "minute": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "15",
-          "label": "Minute",
-          "meaning": "The minute value used by this crontab command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-dnf-package": {
-      "fields": {
-        "action": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "install",
-          "label": "Action",
-          "meaning": "The operation the tool will perform."
-        },
-        "pkg": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "dnf list --available",
-          "example": "firewalld",
-          "label": "Package name",
-          "meaning": "The package name passed to the package manager."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-fw-allow-service": {
-      "fields": {
-        "act": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "accept",
-          "label": "Firewall action",
-          "meaning": "The terminal action in the rich rule."
-        },
-        "family": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "ipv4",
-          "label": "Family",
-          "meaning": "The family value used by this firewall-cmd command."
-        },
-        "source": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "10.1.0.0/16",
-          "label": "Source",
-          "meaning": "The source network allowed or blocked by the rule."
-        },
-        "svc": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "firewall-cmd --get-services",
-          "example": "ssh",
-          "label": "Firewalld service",
-          "meaning": "The svc value used by this firewall-cmd command."
-        },
-        "zone": {
-          "label": "Firewalld zone",
-          "meaning": "The explicit zone that owns the rich rule.",
-          "example": "public",
-          "discovery_command": "firewall-cmd --get-zones",
-          "consequence": "Selecting the wrong zone can expose or block traffic on unintended interfaces or sources."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-fw-open-port": {
-      "fields": {
-        "act": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "accept",
-          "label": "Firewall action",
-          "meaning": "The terminal action in the rich rule."
-        },
-        "family": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "ipv4",
-          "label": "Family",
-          "meaning": "The family value used by this firewall-cmd command."
-        },
-        "port": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "8443",
-          "label": "Port",
-          "meaning": "The port value used by this firewall-cmd command."
-        },
-        "proto": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "tcp",
-          "label": "Proto",
-          "meaning": "The proto value used by this firewall-cmd command."
-        },
-        "source": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "10.1.0.0/16",
-          "label": "Source",
-          "meaning": "The source network allowed or blocked by the rule."
-        },
-        "zone": {
-          "label": "Firewalld zone",
-          "meaning": "The explicit zone that owns the rich rule.",
-          "example": "public",
-          "discovery_command": "firewall-cmd --get-zones",
-          "consequence": "Selecting the wrong zone can expose or block traffic on unintended interfaces or sources."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-fw-set-default-zone": {
-      "fields": {
-        "zone": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "firewall-cmd --get-zones",
-          "example": "public",
-          "label": "Zone",
-          "meaning": "The zone value used by this firewall-cmd command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-bisect": {
-      "fields": {
-        "bad": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git log --oneline --decorate -n 20",
-          "example": "HEAD",
-          "label": "Bad",
-          "meaning": "The bad value used by this git command."
-        },
-        "good": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git log --oneline --decorate -n 20",
-          "example": "v1.0.0",
-          "label": "Good",
-          "meaning": "The good value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-branch": {
-      "fields": {
-        "name": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "feature/audit-report",
-          "label": "Name",
-          "meaning": "The name value used by this git command."
-        },
-        "start": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "main",
-          "label": "Start",
-          "meaning": "The start value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-clone": {
-      "fields": {
-        "directory": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "project",
-          "label": "Directory",
-          "meaning": "The directory value used by this git command."
-        },
-        "repository": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "git remote -v",
-          "example": "ssh://git@git.internal/team/project.git",
-          "label": "Repository",
-          "meaning": "The repository URL or local path Git will clone."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-log": {
-      "fields": {
-        "count": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "20",
-          "label": "Count",
-          "meaning": "The count value used by this git command."
-        },
-        "revision": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "git log --oneline --decorate -n 20",
-          "example": "main",
-          "label": "Revision",
-          "meaning": "The revision value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-merge": {
-      "fields": {
-        "source": {
-          "consequence": "Merging this source can change the current branch and may create conflicts or a merge commit.",
-          "discovery_command": "git branch --all",
-          "example": "feature/audit-report",
-          "label": "Source",
-          "meaning": "The existing branch, tag, or commit to merge into the current branch."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-rebase": {
-      "fields": {
-        "branch": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git branch --all",
-          "example": "feature/audit-report",
-          "label": "Branch",
-          "meaning": "The branch value used by this git command."
-        },
-        "upstream": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git branch --all",
-          "example": "origin/main",
-          "label": "Upstream",
-          "meaning": "The upstream value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-recovery": {
-      "fields": {
-        "lost_revision": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git reflog",
-          "example": "HEAD@{1}",
-          "label": "Lost Revision",
-          "meaning": "The lost revision value used by this git command."
-        },
-        "recovered_branch": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "recovery/lost-work",
-          "label": "Recovered Branch",
-          "meaning": "The recovered branch value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-git-tag": {
-      "fields": {
-        "message": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "Release 1.0.0",
-          "label": "Message",
-          "meaning": "The message value used by this git command."
-        },
-        "tag": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "v1.0.0",
-          "label": "Tag",
-          "meaning": "The tag value used by this git command."
-        },
-        "target": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "git log --oneline --decorate -n 20",
-          "example": "HEAD",
-          "label": "Target",
-          "meaning": "The target value used by this git command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-journalctl-unit-logs": {
-      "fields": {
-        "priority": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "err",
-          "label": "Priority",
-          "meaning": "The priority value used by this journalctl command."
-        },
-        "since": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "today",
-          "label": "Since",
-          "meaning": "The since value used by this journalctl command."
-        },
-        "thisboot": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "yes",
-          "label": "Current boot only",
-          "meaning": "The thisboot value used by this journalctl command."
-        },
-        "unit": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "systemctl list-unit-files",
-          "example": "sshd.service",
-          "label": "Unit",
-          "meaning": "The systemd unit name to inspect or manage."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-lvcreate-new-lv": {
-      "fields": {
-        "name": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "lv0",
-          "label": "Name",
-          "meaning": "The name value used by this lvcreate command."
-        },
-        "size": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "10G",
-          "label": "Size",
-          "meaning": "The size value used by this lvcreate command."
-        },
-        "vg": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "vgs",
-          "example": "vg0",
-          "label": "Volume group",
-          "meaning": "The vg value used by this lvcreate command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-lvextend-grow": {
-      "fields": {
-        "lvpath": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "lvs -o lv_path,lv_size,vg_name",
-          "example": "/dev/vg0/lv0",
-          "label": "Logical volume path",
-          "meaning": "The lvpath value used by this lvextend command."
-        },
-        "resizefs": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "yes",
-          "label": "Resize the filesystem",
-          "meaning": "The resizefs value used by this lvextend command."
-        },
-        "size": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "+10G",
-          "label": "Size",
-          "meaning": "The size value used by this lvextend command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-nmcli-static-ipv4": {
-      "fields": {
-        "address": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "192.168.1.50/24",
-          "label": "Address",
-          "meaning": "The IPv4 address and prefix to assign."
-        },
-        "con": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "nmcli connection show",
-          "example": "lab-eth0",
-          "label": "NetworkManager connection name",
-          "meaning": "The saved NetworkManager connection profile to modify."
-        },
-        "gateway": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "192.168.1.1",
-          "label": "Gateway",
-          "meaning": "The gateway value used by this nmcli command."
-        },
-        "ifname": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "nmcli device status",
-          "example": "eth0",
-          "label": "Network interface",
-          "meaning": "The interface that the connection profile is bound to."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-podman-ps": {
-      "fields": {
-        "all": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "yes",
-          "label": "Include stopped containers",
-          "meaning": "The all value used by this podman command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-podman-stop": {
-      "fields": {
-        "container": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "podman ps",
-          "example": "web01",
-          "label": "Container",
-          "meaning": "The container value used by this podman command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-pvcreate-initialize": {
-      "fields": {
-        "device": {
-          "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
-          "discovery_command": "lsblk -fp",
-          "example": "/dev/sdb",
-          "label": "Device",
-          "meaning": "The exact block-device path the command will modify."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-rsyslog-config": {
-      "fields": {
-        "port": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "6514",
-          "label": "Port",
-          "meaning": "The port value used by this rsyslogd command."
-        },
-        "target": {
-          "consequence": "An incorrect target can send logs to the wrong system or cause forwarding to fail.",
-          "discovery_command": "getent ahosts <target>",
-          "example": "logs.example.com",
-          "label": "Target",
-          "meaning": "The DNS hostname of the remote system that will receive forwarded logs."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-rsyslogd-test-config": {
-      "fields": {
-        "path": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "/etc/rsyslog.conf",
-          "label": "Path",
-          "meaning": "The exact filesystem path the command will read or modify."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-semanage-port-add": {
-      "fields": {
-        "port": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "8443",
-          "label": "Port",
-          "meaning": "The port value used by this semanage command."
-        },
-        "porttype": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "semanage port -l",
-          "example": "http_port_t",
-          "label": "Porttype",
-          "meaning": "The porttype value used by this semanage command."
-        },
-        "proto": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "tcp",
-          "label": "Proto",
-          "meaning": "The proto value used by this semanage command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-setsebool-set": {
-      "fields": {
-        "boolean": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getsebool -a",
-          "example": "httpd_can_network_connect",
-          "label": "Boolean",
-          "meaning": "The boolean value used by this setsebool command."
-        },
-        "persist": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "yes",
-          "label": "Persist across reboot",
-          "meaning": "The persist value used by this setsebool command."
-        },
-        "state": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "on",
-          "label": "State",
-          "meaning": "The state value used by this setsebool command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-sshd-config": {
-      "fields": {
-        "allow_group": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "sshadmins",
-          "label": "Allow Group",
-          "meaning": "The allow group value used by this sshd command."
-        },
-        "port": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "2222",
-          "label": "Port",
-          "meaning": "The port value used by this sshd command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-sshd-test-config": {
-      "fields": {
-        "path": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "/etc/ssh/sshd_config",
-          "label": "Path",
-          "meaning": "The exact filesystem path the command will read or modify."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-sudoers-config": {
-      "fields": {
-        "command": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "/usr/bin/systemctl",
-          "label": "Command",
-          "meaning": "The executable path placed in the generated configuration."
-        },
-        "group": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "wheel",
-          "label": "Group",
-          "meaning": "The group value used by this visudo command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-systemctl-manage": {
-      "fields": {
-        "action": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "start",
-          "label": "Action",
-          "meaning": "The operation the tool will perform."
-        },
-        "unit": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "systemctl list-unit-files",
-          "example": "sshd.service",
-          "label": "Unit",
-          "meaning": "The systemd unit name to inspect or manage."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-systemctl-query": {
-      "fields": {
-        "action": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": null,
-          "example": "status",
-          "label": "Action",
-          "meaning": "The operation the tool will perform."
-        },
-        "unit": {
-          "consequence": "This value limits what the read-only command inspects.",
-          "discovery_command": "systemctl list-unit-files",
-          "example": "sshd.service",
-          "label": "Unit",
-          "meaning": "The systemd unit name to inspect or manage."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-systemd-unit": {
-      "fields": {
-        "description": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "managed-service",
-          "label": "Description",
-          "meaning": "The description value used by this systemd-analyze command."
-        },
-        "exec_start": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "/usr/local/bin/managed-service",
-          "label": "Executable path",
-          "meaning": "The executable path used by the service unit."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-useradd-create": {
-      "fields": {
-        "comment": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "RFC-1234",
-          "label": "Comment",
-          "meaning": "The comment value used by this useradd command."
-        },
-        "groups": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getent group",
-          "example": "wheel",
-          "label": "Groups",
-          "meaning": "The groups value used by this useradd command."
-        },
-        "shell": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "/bin/bash",
-          "label": "Shell",
-          "meaning": "The shell value used by this useradd command."
-        },
-        "username": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getent passwd",
-          "example": "svcacct",
-          "label": "Username",
-          "meaning": "The username value used by this useradd command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-usermod-add-group": {
-      "fields": {
-        "groups": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getent group",
-          "example": "wheel",
-          "label": "Groups",
-          "meaning": "The groups value used by this usermod command."
-        },
-        "username": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "getent passwd",
-          "example": "svcacct",
-          "label": "Username",
-          "meaning": "The username value used by this usermod command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-vgcreate-new-vg": {
-      "fields": {
-        "device": {
-          "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
-          "discovery_command": "lsblk -fp",
-          "example": "/dev/sdb",
-          "label": "Device",
-          "meaning": "The exact block-device path the command will modify."
-        },
-        "name": {
-          "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
-          "discovery_command": null,
-          "example": "vgdata",
-          "label": "Name",
-          "meaning": "The name value used by this vgcreate command."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
-    },
-    "gen-yum-package": {
-      "fields": {
-        "action": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": null,
-          "example": "install",
-          "label": "Action",
-          "meaning": "The operation the tool will perform."
-        },
-        "pkg": {
-          "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
-          "discovery_command": "dnf list --available",
-          "example": "firewalld",
-          "label": "Package name",
-          "meaning": "The package name passed to the package manager."
-        }
-      },
-      "preflight": [
-        {
-          "command": null,
-          "text": "Confirm the target identity and intended scope before running the command."
-        },
-        {
-          "command": null,
-          "text": "Capture the current state and confirm a tested recovery path before making this change."
-        }
-      ],
-      "prerequisites": [
-        {
-          "command": null,
-          "text": "Confirm that the selected RHEL release and cited source apply to the target host."
-        }
-      ],
-      "proven_reversible": false
+    "remote_user": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "deploy",
+     "label": "Remote user",
+     "meaning": "The remote user value used by this ansible-config command."
     }
-  },
-  "learning_paths": [
+   },
+   "preflight": [
     {
-      "check": {
-        "answer": "Confirm the selected release matches the target; verification and flag dictionaries are release-specific.",
-        "question": "What must you confirm before treating output as evidence for a different RHEL release?"
-      },
-      "entry_ids": [
-        "gen-systemctl-query",
-        "gen-journalctl-unit-logs"
-      ],
-      "id": "inspect",
-      "summary": "Start with read-only service and log checks.",
-      "title": "Inspect safely"
-    },
-    {
-      "check": {
-        "answer": "Those are separate states, and recovery must restore the state that existed before the command.",
-        "question": "Why capture active and enabled state before a service change?"
-      },
-      "entry_ids": [
-        "gen-systemctl-query",
-        "gen-systemctl-manage"
-      ],
-      "id": "service",
-      "summary": "Move from inspection to a supervised service state change.",
-      "title": "Change a service with recovery in view"
-    },
-    {
-      "check": {
-        "answer": "A tested console or out-of-band recovery path.",
-        "question": "What access should be available before a network change can interrupt SSH?"
-      },
-      "entry_ids": [
-        "gen-pvcreate-initialize",
-        "gen-nmcli-static-ipv4"
-      ],
-      "id": "storage-network",
-      "summary": "Practice target discovery and recovery planning before storage or network changes.",
-      "title": "Prepare higher-risk changes"
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
     }
-  ]
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-ansible-inventory": {
+   "fields": {
+    "group": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "webservers",
+     "label": "Group",
+     "meaning": "The group value used by this ansible-inventory command."
+    },
+    "host": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "web01",
+     "label": "Host",
+     "meaning": "The inventory hostname written to the generated inventory."
+    },
+    "host_ip": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "192.0.2.11",
+     "label": "Host Ip",
+     "meaning": "The address assigned to ansible_host."
+    },
+    "remote_user": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "deploy",
+     "label": "Remote user",
+     "meaning": "The remote user value used by this ansible-inventory command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-ansible-playbook": {
+   "fields": {
+    "hosts": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "webservers",
+     "label": "Hosts",
+     "meaning": "The Ansible inventory pattern targeted by the play."
+    },
+    "manage_service": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": null,
+     "label": "Start and enable the same-named service",
+     "meaning": "The manage service value used by this ansible-playbook command."
+    },
+    "package": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "httpd",
+     "label": "Package",
+     "meaning": "The package value used by this ansible-playbook command."
+    },
+    "play_name": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "Configure servers",
+     "label": "Play Name",
+     "meaning": "The play name value used by this ansible-playbook command."
+    },
+    "refresh_cache": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": null,
+     "label": "Refresh DNF package metadata first",
+     "meaning": "The refresh cache value used by this ansible-playbook command."
+    },
+    "state": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "present",
+     "label": "State",
+     "meaning": "The state value used by this ansible-playbook command."
+    },
+    "task_name": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "Ensure httpd is present",
+     "label": "Task Name",
+     "meaning": "The task name value used by this ansible-playbook command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-auditctl-watch": {
+   "fields": {
+    "key": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "identity",
+     "label": "Key",
+     "meaning": "The key value used by this auditctl command."
+    },
+    "path": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "/etc/motd",
+     "label": "Path",
+     "meaning": "The exact filesystem path the command will read or modify."
+    },
+    "perms": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "r",
+     "label": "Perms",
+     "meaning": "The perms value used by this auditctl command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-ausearch-by-key": {
+   "fields": {
+    "key": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "identity",
+     "label": "Key",
+     "meaning": "The key value used by this ausearch command."
+    },
+    "start": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "today",
+     "label": "Start",
+     "meaning": "The start value used by this ausearch command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-chage-list": {
+   "fields": {
+    "username": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "getent passwd",
+     "example": "adm-linux",
+     "label": "Username",
+     "meaning": "The username value used by this chage command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-chage-set-aging": {
+   "fields": {
+    "maxdays": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "60",
+     "label": "Maxdays",
+     "meaning": "The maxdays value used by this chage command."
+    },
+    "mindays": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "7",
+     "label": "Mindays",
+     "meaning": "The mindays value used by this chage command."
+    },
+    "username": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getent passwd",
+     "example": "svcacct",
+     "label": "Username",
+     "meaning": "The username value used by this chage command."
+    },
+    "warndays": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "14",
+     "label": "Warndays",
+     "meaning": "The warndays value used by this chage command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-chrony-config": {
+   "fields": {
+    "server": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "time.example.com",
+     "label": "Server",
+     "meaning": "The server value used by this chronyd command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-chronyd-one-shot-check": {
+   "fields": {
+    "directive": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "server time.mil iburst",
+     "label": "Directive",
+     "meaning": "One chronyd source directive, such as server or pool plus its host."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-cron-config": {
+   "fields": {
+    "command": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "/usr/local/bin/backup",
+     "label": "Command",
+     "meaning": "The executable path placed in the generated configuration."
+    },
+    "hour": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "2",
+     "label": "Hour",
+     "meaning": "The hour value used by this crontab command."
+    },
+    "minute": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "15",
+     "label": "Minute",
+     "meaning": "The minute value used by this crontab command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-dnf-package": {
+   "fields": {
+    "action": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "install",
+     "label": "Action",
+     "meaning": "The operation the tool will perform."
+    },
+    "pkg": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "dnf list --available",
+     "example": "firewalld",
+     "label": "Package name",
+     "meaning": "The package name passed to the package manager."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-fw-allow-service": {
+   "fields": {
+    "act": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "accept",
+     "label": "Firewall action",
+     "meaning": "The terminal action in the rich rule."
+    },
+    "family": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "ipv4",
+     "label": "Family",
+     "meaning": "The family value used by this firewall-cmd command."
+    },
+    "source": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "10.1.0.0/16",
+     "label": "Source",
+     "meaning": "The source network allowed or blocked by the rule."
+    },
+    "svc": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "firewall-cmd --get-services",
+     "example": "ssh",
+     "label": "Firewalld service",
+     "meaning": "The svc value used by this firewall-cmd command."
+    },
+    "zone": {
+     "label": "Firewalld zone",
+     "meaning": "The explicit zone that owns the rich rule.",
+     "example": "public",
+     "discovery_command": "firewall-cmd --get-zones",
+     "consequence": "Selecting the wrong zone can expose or block traffic on unintended interfaces or sources."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-fw-open-port": {
+   "fields": {
+    "act": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "accept",
+     "label": "Firewall action",
+     "meaning": "The terminal action in the rich rule."
+    },
+    "family": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "ipv4",
+     "label": "Family",
+     "meaning": "The family value used by this firewall-cmd command."
+    },
+    "port": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "8443",
+     "label": "Port",
+     "meaning": "The port value used by this firewall-cmd command."
+    },
+    "proto": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "tcp",
+     "label": "Proto",
+     "meaning": "The proto value used by this firewall-cmd command."
+    },
+    "source": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "10.1.0.0/16",
+     "label": "Source",
+     "meaning": "The source network allowed or blocked by the rule."
+    },
+    "zone": {
+     "label": "Firewalld zone",
+     "meaning": "The explicit zone that owns the rich rule.",
+     "example": "public",
+     "discovery_command": "firewall-cmd --get-zones",
+     "consequence": "Selecting the wrong zone can expose or block traffic on unintended interfaces or sources."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-fw-set-default-zone": {
+   "fields": {
+    "zone": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "firewall-cmd --get-zones",
+     "example": "public",
+     "label": "Zone",
+     "meaning": "The zone value used by this firewall-cmd command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-bisect": {
+   "fields": {
+    "bad": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git log --oneline --decorate -n 20",
+     "example": "HEAD",
+     "label": "Bad",
+     "meaning": "The bad value used by this git command."
+    },
+    "good": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git log --oneline --decorate -n 20",
+     "example": "v1.0.0",
+     "label": "Good",
+     "meaning": "The good value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-branch": {
+   "fields": {
+    "name": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "feature/audit-report",
+     "label": "Name",
+     "meaning": "The name value used by this git command."
+    },
+    "start": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "main",
+     "label": "Start",
+     "meaning": "The start value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-clone": {
+   "fields": {
+    "directory": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "project",
+     "label": "Directory",
+     "meaning": "The directory value used by this git command."
+    },
+    "repository": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "git remote -v",
+     "example": "ssh://git@git.internal/team/project.git",
+     "label": "Repository",
+     "meaning": "The repository URL or local path Git will clone."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-log": {
+   "fields": {
+    "count": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "20",
+     "label": "Count",
+     "meaning": "The count value used by this git command."
+    },
+    "revision": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "git log --oneline --decorate -n 20",
+     "example": "main",
+     "label": "Revision",
+     "meaning": "The revision value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-merge": {
+   "fields": {
+    "source": {
+     "consequence": "Merging this source can change the current branch and may create conflicts or a merge commit.",
+     "discovery_command": "git branch --all",
+     "example": "feature/audit-report",
+     "label": "Source",
+     "meaning": "The existing branch, tag, or commit to merge into the current branch."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-rebase": {
+   "fields": {
+    "branch": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git branch --all",
+     "example": "feature/audit-report",
+     "label": "Branch",
+     "meaning": "The branch value used by this git command."
+    },
+    "upstream": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git branch --all",
+     "example": "origin/main",
+     "label": "Upstream",
+     "meaning": "The upstream value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-recovery": {
+   "fields": {
+    "lost_revision": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git reflog",
+     "example": "HEAD@{1}",
+     "label": "Lost Revision",
+     "meaning": "The lost revision value used by this git command."
+    },
+    "recovered_branch": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "recovery/lost-work",
+     "label": "Recovered Branch",
+     "meaning": "The recovered branch value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-git-tag": {
+   "fields": {
+    "message": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "Release 1.0.0",
+     "label": "Message",
+     "meaning": "The message value used by this git command."
+    },
+    "tag": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "v1.0.0",
+     "label": "Tag",
+     "meaning": "The tag value used by this git command."
+    },
+    "target": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "git log --oneline --decorate -n 20",
+     "example": "HEAD",
+     "label": "Target",
+     "meaning": "The target value used by this git command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-journalctl-unit-logs": {
+   "fields": {
+    "priority": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "err",
+     "label": "Priority",
+     "meaning": "The priority value used by this journalctl command."
+    },
+    "since": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "today",
+     "label": "Since",
+     "meaning": "The since value used by this journalctl command."
+    },
+    "thisboot": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "yes",
+     "label": "Current boot only",
+     "meaning": "The thisboot value used by this journalctl command."
+    },
+    "unit": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "systemctl list-unit-files",
+     "example": "sshd.service",
+     "label": "Unit",
+     "meaning": "The systemd unit name to inspect or manage."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-lvcreate-new-lv": {
+   "fields": {
+    "name": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "lv0",
+     "label": "Name",
+     "meaning": "The name value used by this lvcreate command."
+    },
+    "size": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "10G",
+     "label": "Size",
+     "meaning": "The size value used by this lvcreate command."
+    },
+    "vg": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "vgs",
+     "example": "vg0",
+     "label": "Volume group",
+     "meaning": "The vg value used by this lvcreate command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-lvextend-grow": {
+   "fields": {
+    "lvpath": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "lvs -o lv_path,lv_size,vg_name",
+     "example": "/dev/vg0/lv0",
+     "label": "Logical volume path",
+     "meaning": "The lvpath value used by this lvextend command."
+    },
+    "resizefs": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "yes",
+     "label": "Resize the filesystem",
+     "meaning": "The resizefs value used by this lvextend command."
+    },
+    "size": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "+10G",
+     "label": "Size",
+     "meaning": "The size value used by this lvextend command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-nmcli-static-ipv4": {
+   "fields": {
+    "address": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "192.168.1.50/24",
+     "label": "Address",
+     "meaning": "The IPv4 address and prefix to assign."
+    },
+    "con": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "nmcli connection show",
+     "example": "lab-eth0",
+     "label": "NetworkManager connection name",
+     "meaning": "The saved NetworkManager connection profile to modify."
+    },
+    "gateway": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "192.168.1.1",
+     "label": "Gateway",
+     "meaning": "The gateway value used by this nmcli command."
+    },
+    "ifname": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "nmcli device status",
+     "example": "eth0",
+     "label": "Network interface",
+     "meaning": "The interface that the connection profile is bound to."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-podman-ps": {
+   "fields": {
+    "all": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "yes",
+     "label": "Include stopped containers",
+     "meaning": "The all value used by this podman command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-podman-stop": {
+   "fields": {
+    "container": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "podman ps",
+     "example": "web01",
+     "label": "Container",
+     "meaning": "The container value used by this podman command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-pvcreate-initialize": {
+   "fields": {
+    "device": {
+     "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
+     "discovery_command": "lsblk -fp",
+     "example": "/dev/sdb",
+     "label": "Device",
+     "meaning": "The exact block-device path the command will modify."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-rsyslog-config": {
+   "fields": {
+    "port": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "6514",
+     "label": "Port",
+     "meaning": "The port value used by this rsyslogd command."
+    },
+    "target": {
+     "consequence": "An incorrect target can send logs to the wrong system or cause forwarding to fail.",
+     "discovery_command": "getent ahosts <target>",
+     "example": "logs.example.com",
+     "label": "Target",
+     "meaning": "The DNS hostname of the remote system that will receive forwarded logs."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-rsyslogd-test-config": {
+   "fields": {
+    "path": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "/etc/rsyslog.conf",
+     "label": "Path",
+     "meaning": "The exact filesystem path the command will read or modify."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-semanage-port-add": {
+   "fields": {
+    "port": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "8443",
+     "label": "Port",
+     "meaning": "The port value used by this semanage command."
+    },
+    "porttype": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "semanage port -l",
+     "example": "http_port_t",
+     "label": "Porttype",
+     "meaning": "The porttype value used by this semanage command."
+    },
+    "proto": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "tcp",
+     "label": "Proto",
+     "meaning": "The proto value used by this semanage command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-setsebool-set": {
+   "fields": {
+    "boolean": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getsebool -a",
+     "example": "httpd_can_network_connect",
+     "label": "Boolean",
+     "meaning": "The boolean value used by this setsebool command."
+    },
+    "persist": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "yes",
+     "label": "Persist across reboot",
+     "meaning": "The persist value used by this setsebool command."
+    },
+    "state": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "on",
+     "label": "State",
+     "meaning": "The state value used by this setsebool command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-sshd-config": {
+   "fields": {
+    "allow_group": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "sshadmins",
+     "label": "Allow Group",
+     "meaning": "The allow group value used by this sshd command."
+    },
+    "port": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "2222",
+     "label": "Port",
+     "meaning": "The port value used by this sshd command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-sshd-test-config": {
+   "fields": {
+    "path": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "/etc/ssh/sshd_config",
+     "label": "Path",
+     "meaning": "The exact filesystem path the command will read or modify."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-sudoers-config": {
+   "fields": {
+    "command": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "/usr/bin/systemctl",
+     "label": "Command",
+     "meaning": "The executable path placed in the generated configuration."
+    },
+    "group": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "wheel",
+     "label": "Group",
+     "meaning": "The group value used by this visudo command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-systemctl-manage": {
+   "fields": {
+    "action": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "start",
+     "label": "Action",
+     "meaning": "The operation the tool will perform."
+    },
+    "unit": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "systemctl list-unit-files",
+     "example": "sshd.service",
+     "label": "Unit",
+     "meaning": "The systemd unit name to inspect or manage."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-systemctl-query": {
+   "fields": {
+    "action": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": null,
+     "example": "status",
+     "label": "Action",
+     "meaning": "The operation the tool will perform."
+    },
+    "unit": {
+     "consequence": "This value limits what the read-only command inspects.",
+     "discovery_command": "systemctl list-unit-files",
+     "example": "sshd.service",
+     "label": "Unit",
+     "meaning": "The systemd unit name to inspect or manage."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-systemd-unit": {
+   "fields": {
+    "description": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "managed-service",
+     "label": "Description",
+     "meaning": "The description value used by this systemd-analyze command."
+    },
+    "exec_start": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "/usr/local/bin/managed-service",
+     "label": "Executable path",
+     "meaning": "The executable path used by the service unit."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-useradd-create": {
+   "fields": {
+    "comment": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "RFC-1234",
+     "label": "Comment",
+     "meaning": "The comment value used by this useradd command."
+    },
+    "groups": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getent group",
+     "example": "wheel",
+     "label": "Groups",
+     "meaning": "The groups value used by this useradd command."
+    },
+    "shell": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "/bin/bash",
+     "label": "Shell",
+     "meaning": "The shell value used by this useradd command."
+    },
+    "username": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getent passwd",
+     "example": "svcacct",
+     "label": "Username",
+     "meaning": "The username value used by this useradd command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-usermod-add-group": {
+   "fields": {
+    "groups": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getent group",
+     "example": "wheel",
+     "label": "Groups",
+     "meaning": "The groups value used by this usermod command."
+    },
+    "username": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "getent passwd",
+     "example": "svcacct",
+     "label": "Username",
+     "meaning": "The username value used by this usermod command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-vgcreate-new-vg": {
+   "fields": {
+    "device": {
+     "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
+     "discovery_command": "lsblk -fp",
+     "example": "/dev/sdb",
+     "label": "Device",
+     "meaning": "The exact block-device path the command will modify."
+    },
+    "name": {
+     "consequence": "This value selects the target or scope of a destructive or lockout-prone operation; verify it independently.",
+     "discovery_command": null,
+     "example": "vgdata",
+     "label": "Name",
+     "meaning": "The name value used by this vgcreate command."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "gen-yum-package": {
+   "fields": {
+    "action": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": null,
+     "example": "install",
+     "label": "Action",
+     "meaning": "The operation the tool will perform."
+    },
+    "pkg": {
+     "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
+     "discovery_command": "dnf list --available",
+     "example": "firewalld",
+     "label": "Package name",
+     "meaning": "The package name passed to the package manager."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm the target identity and intended scope before running the command."
+    },
+    {
+     "command": null,
+     "text": "Capture the current state and confirm a tested recovery path before making this change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  }
+ },
+ "learning_paths": [
+  {
+   "check": {
+    "answer": "Confirm the selected release matches the target; verification and flag dictionaries are release-specific.",
+    "question": "What must you confirm before treating output as evidence for a different RHEL release?"
+   },
+   "entry_ids": [
+    "gen-systemctl-query",
+    "gen-journalctl-unit-logs"
+   ],
+   "id": "inspect",
+   "summary": "Start with read-only service and log checks.",
+   "title": "Inspect safely"
+  },
+  {
+   "check": {
+    "answer": "Those are separate states, and recovery must restore the state that existed before the command.",
+    "question": "Why capture active and enabled state before a service change?"
+   },
+   "entry_ids": [
+    "gen-systemctl-query",
+    "gen-systemctl-manage"
+   ],
+   "id": "service",
+   "summary": "Move from inspection to a supervised service state change.",
+   "title": "Change a service with recovery in view"
+  },
+  {
+   "check": {
+    "answer": "A tested console or out-of-band recovery path.",
+    "question": "What access should be available before a network change can interrupt SSH?"
+   },
+   "entry_ids": [
+    "gen-pvcreate-initialize",
+    "gen-nmcli-static-ipv4"
+   ],
+   "id": "storage-network",
+   "summary": "Practice target discovery and recovery planning before storage or network changes.",
+   "title": "Prepare higher-risk changes"
+  }
+ ]
 }
