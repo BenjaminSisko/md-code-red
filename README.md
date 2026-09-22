@@ -348,7 +348,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   banner from `rules_rhel7._meta.sunset`, and the entry's "changed in RHEL X" note. The badge renders
   only when `stig[]` is non-empty. A STIG rule reached via search with no command in the catalog opens
   on its own (`selectStigRule()`), with the same panel and an honest "no command yet" message in the
-  editor. **CR-T-28 evidence exporter:** `Ctrl+E` / the Export as Evidence button opens a deterministic
+  editor. **CR-T-28 reference exporter:** `Ctrl+E` / the Export command and control reference button opens a deterministic
   plain-text command/control reference — tool version, the new content fingerprint, STIG ID/version/benchmark
   date, CAT, CCI → NIST controls, check/fix text, expected output (or "not captured"), the assembled
   command exactly as `currentResult()` produced it (never recomputed), source citation, capture
