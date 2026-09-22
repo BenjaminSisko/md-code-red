@@ -12,11 +12,11 @@ byte-identical outputs.
 
 | Item | Result |
 |---|---|
-| HTML | `dist/md-code-red_v1.0.0-alpha.5.html`; 8,891,476 bytes |
-| HTML SHA-256 | `334dc3f5f094e1e14ef300a519cba273082213b708ed650d3af62f48bd1ae554` |
-| Content fingerprint | `f5a709078b6eb96e130937282116e10788825cdb4e3c4ea687d3ffb41b52629a` |
-| Sidecar SHA-256 | `f62403ac7ed4dd7f92e2a64f92e8e3f6a5232fc274981687f8b7a6c64bda92bd` |
-| Placeholder provenance SHA-256 | `fbb6cefa66efd1f71dc3ab68d35c3fca3802b2cdce8b64b64510f0404a16ae20` |
+| HTML | `dist/md-code-red_v1.0.0-alpha.5.html`; 8,892,535 bytes |
+| HTML SHA-256 | `c64337a2aee3c494171bc9b6f7bb89a0b1006992fc26c7fbe8793579cd8ada7a` |
+| Content fingerprint | `41fb7c1e59cc32805fa06a240aca2913e16acb496689c2de0ec9dff598b34c91` |
+| Sidecar SHA-256 | `12ed3773854353f47c57904d2ab39f18f0aa922d8316c2fa42c4a7f3ec07bf39` |
+| Placeholder provenance SHA-256 | `769823bc5f5d33026b93cc39b2c562528a072713e62075fbde058a0073662dc2` |
 | Build identity | MD CODE RED `v1.0.0-alpha.5`, built 2026-09-22, UNCLASSIFIED |
 | Reproducibility | PASS; two consecutive cycles matched all three files |
 | Historical archive | Released alpha.4 files moved byte-for-byte to `releases/v1.0.0-alpha.4/` |

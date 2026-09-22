@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import re
 import sys
 import unittest
 
@@ -66,6 +67,27 @@ class InstructionalSchemaTests(unittest.TestCase):
     def test_stig_rail_no_longer_uses_placeholder_copy(self):
         self.assertNotIn('This rail lands with its own task: STIG search',self.template)
         self.assertIn('el("palette-input").value="STIG"',self.template)
+
+    def test_generator_plan_placeholders_are_bindable_and_broadly_detected(self):
+        placeholder=re.compile(r'<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}')
+        special={'generated_rule_arg'}
+        for entry in (e for e in self.commands if 'template' in e):
+            names={f['name'] for f in entry['fields']}|special
+            for field in ('verify','undo'):
+                for token in placeholder.findall(entry[field]):
+                    name=token.strip('<>{}')
+                    self.assertIn(name,names,(entry['id'],field,token))
+        self.assertNotIn('<exact generated rule>',json.dumps(self.commands))
+        self.assertIn("values.generated_rule_arg=match[1]",self.template)
+        self.assertIn("(?: [A-Za-z][A-Za-z0-9_-]*)*>",self.template)
+
+    def test_known_field_guidance_is_domain_correct(self):
+        git_source=self.data['entries']['gen-git-merge']['fields']['source']
+        self.assertIn('branch, tag, or commit',git_source['meaning'])
+        self.assertEqual(git_source['discovery_command'],'git branch --all')
+        rsyslog_target=self.data['entries']['gen-rsyslog-config']['fields']['target']
+        self.assertIn('remote system',rsyslog_target['meaning'])
+        self.assertEqual(rsyslog_target['discovery_command'],'getent ahosts <target>')
 
 
 if __name__=='__main__':

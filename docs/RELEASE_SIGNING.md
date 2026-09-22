@@ -16,7 +16,7 @@ python3 tools/release_signing.py prepare \
 ```
 
 The output is still unsigned. The authorized release owner signs it by naming
-the full published key fingerprint explicitly:
+the full published 40- or 64-hex-character key fingerprint explicitly:
 
 ```text
 python3 tools/release_signing.py sign dist/SHA256SUMS \

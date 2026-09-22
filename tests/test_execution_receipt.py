@@ -70,6 +70,26 @@ class ExecutionReceiptTests(unittest.TestCase):
             self.assertTrue(any("artifact_sha256" in item
                                 for item in module.validate(receipt, artifact.name)))
 
+    def test_schema_closure_integer_type_and_fingerprint_binding(self):
+        receipt = self.receipt()
+        receipt["undeclared"] = "refused"
+        receipt["attestation"]["undeclared"] = True
+        receipt["exit_code"] = True
+        errors = module.validate(receipt)
+        self.assertTrue(any("undeclared top-level" in item for item in errors), errors)
+        self.assertTrue(any("undeclared attestation" in item for item in errors), errors)
+        self.assertTrue(any("exit_code must be an integer" in item for item in errors), errors)
+
+        receipt = self.receipt()
+        artifact = (b'<script>var APP_VERSION="v1.0.0-alpha.4";'
+                    b'var CONTENT_FINGERPRINT="' + b'c' * 64 + b'";</script>')
+        with tempfile.NamedTemporaryFile() as handle:
+            handle.write(artifact)
+            handle.flush()
+            receipt["artifact_sha256"] = module.digest_bytes(artifact)
+            errors = module.validate(receipt, handle.name)
+        self.assertTrue(any("content_fingerprint does not match" in item for item in errors), errors)
+
     def test_import_stores_validated_receipt_and_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as directory:
             source = os.path.join(directory, "receipt.json")

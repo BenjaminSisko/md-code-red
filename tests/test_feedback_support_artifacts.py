@@ -87,6 +87,12 @@ class FeedbackSupportArtifactTests(unittest.TestCase):
                                     text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("do not authenticate a publisher", result.stderr)
+            result = subprocess.run(
+                ["python3", script, "sign", first,
+                 "--key-fingerprint", "publisher@example.invalid"],
+                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("40- or 64-hex-character", result.stderr)
 
 
 if __name__ == "__main__":

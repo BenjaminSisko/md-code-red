@@ -16,6 +16,8 @@ import sys
 
 SCHEMA = "md-code-red/execution-receipt/v1"
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+ARTIFACT_FINGERPRINT = re.compile(br'var CONTENT_FINGERPRINT="([0-9a-f]{64})"')
+ARTIFACT_VERSION = re.compile(br'var APP_VERSION="([^"]+)"')
 
 
 def digest_bytes(value):
@@ -39,10 +41,15 @@ def validate(receipt, artifact_path=None):
         "content_fingerprint", "exit_code", "stdout", "stdout_sha256",
         "stderr", "stderr_sha256", "verification", "attestation",
     )
-    for key in required:
-        if key not in receipt:
-            errors.append("missing %s" % key)
-    if errors:
+    if not isinstance(receipt, dict):
+        return ["receipt must be an object"]
+    allowed = set(required)
+    for key in sorted(set(receipt) - allowed):
+        errors.append("undeclared top-level property: %s" % key)
+    missing = [key for key in required if key not in receipt]
+    for key in missing:
+        errors.append("missing %s" % key)
+    if missing:
         return errors
     if receipt["schema"] != SCHEMA:
         errors.append("schema must be %s" % SCHEMA)
@@ -57,7 +64,7 @@ def validate(receipt, artifact_path=None):
             errors.append("executed_at must include a timezone")
     except (TypeError, ValueError):
         errors.append("executed_at must be an ISO-8601 timestamp")
-    if not isinstance(receipt["exit_code"], int):
+    if not isinstance(receipt["exit_code"], int) or isinstance(receipt["exit_code"], bool):
         errors.append("exit_code must be an integer")
     for key in ("command_sha256", "artifact_sha256", "content_fingerprint",
                 "stdout_sha256", "stderr_sha256"):
@@ -77,6 +84,8 @@ def validate(receipt, artifact_path=None):
     if not isinstance(att, dict):
         errors.append("attestation must be an object")
     else:
+        for key in sorted(set(att) - {"command_was_executed", "outputs_are_actual", "statement"}):
+            errors.append("undeclared attestation property: %s" % key)
         if att.get("command_was_executed") is not True:
             errors.append("attestation.command_was_executed must be true")
         if att.get("outputs_are_actual") is not True:
@@ -84,9 +93,20 @@ def validate(receipt, artifact_path=None):
         if not isinstance(att.get("statement"), str) or not att["statement"].strip():
             errors.append("attestation.statement must be non-empty")
     if artifact_path:
-        actual = digest_bytes(read_bytes(artifact_path))
+        artifact = read_bytes(artifact_path)
+        actual = digest_bytes(artifact)
         if actual != receipt["artifact_sha256"]:
             errors.append("artifact_sha256 does not match %s" % artifact_path)
+        fingerprint = ARTIFACT_FINGERPRINT.search(artifact)
+        if not fingerprint:
+            errors.append("artifact has no embedded content fingerprint")
+        elif fingerprint.group(1).decode("ascii") != receipt["content_fingerprint"]:
+            errors.append("content_fingerprint does not match %s" % artifact_path)
+        version = ARTIFACT_VERSION.search(artifact)
+        if not version:
+            errors.append("artifact has no embedded tool version")
+        elif version.group(1).decode("utf-8", "replace") != receipt["tool_version"]:
+            errors.append("tool_version does not match %s" % artifact_path)
     return errors
 
 

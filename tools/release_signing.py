@@ -8,6 +8,7 @@ choose, create, or imply an authorized publisher identity.
 import argparse
 import hashlib
 import os
+import re
 import subprocess
 import sys
 
@@ -34,13 +35,15 @@ def prepare(args):
 
 
 def sign(args):
-    if not args.key_fingerprint or len(args.key_fingerprint.replace(" ", "")) < 16:
-        raise SystemExit("an explicit authorized GPG key fingerprint is required")
+    fingerprint = re.sub(r"\s+", "", args.key_fingerprint or "")
+    if not re.fullmatch(r"(?:[0-9A-Fa-f]{40}|[0-9A-Fa-f]{64})", fingerprint):
+        raise SystemExit("a complete 40- or 64-hex-character authorized GPG fingerprint is required")
+    fingerprint = fingerprint.upper()
     output = args.output or args.manifest + ".asc"
     command = ["gpg", "--batch", "--yes", "--armor", "--detach-sign",
-               "--local-user", args.key_fingerprint, "--output", output, args.manifest]
+               "--local-user", fingerprint, "--output", output, args.manifest]
     subprocess.run(command, check=True)
-    print("SIGNED %s with requested key %s" % (args.manifest, args.key_fingerprint))
+    print("SIGNED %s with requested key %s" % (args.manifest, fingerprint))
 
 
 def verify(args):

@@ -14,12 +14,12 @@ learning and change-preparation tool.
 | Release fact | Candidate value |
 |---|---|
 | Version / date | `v1.0.0-alpha.5` / 2026-09-22 |
-| Artifact | `dist/md-code-red_v1.0.0-alpha.5.html`; 8,891,476 bytes |
-| Artifact SHA-256 | `334dc3f5f094e1e14ef300a519cba273082213b708ed650d3af62f48bd1ae554` |
-| Content fingerprint | `f5a709078b6eb96e130937282116e10788825cdb4e3c4ea687d3ffb41b52629a` |
+| Artifact | `dist/md-code-red_v1.0.0-alpha.5.html`; 8,892,535 bytes |
+| Artifact SHA-256 | `c64337a2aee3c494171bc9b6f7bb89a0b1006992fc26c7fbe8793579cd8ada7a` |
+| Content fingerprint | `41fb7c1e59cc32805fa06a240aca2913e16acb496689c2de0ec9dff598b34c91` |
 | Provenance | Placeholder until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 399 unit tests; 122,313 hostile checks; Gitleaks clean |
+| Verification | Q1-Q26 + JS; 402 unit tests; 122,313 hostile checks; Gitleaks clean |
 
 The release adds or changes:
 

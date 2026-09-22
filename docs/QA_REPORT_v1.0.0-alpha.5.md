@@ -12,14 +12,14 @@ The complete candidate verification sequence passed on 2026-09-22.
 |---|---|
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 399 tests |
+| Python unit suite | PASS; 402 tests |
 | Hostile-input harness | PASS; 122,313 checks, zero failures |
 | Generator golden commands | PASS; 172 release-specific comparisons |
 | Command syntax oracle | PASS; 865 simple invocations, 420 release-specific grammar rows |
 | Real reference-export snapshot | PASS after deliberate alpha.5 version/fingerprint/name refresh |
 | Generated release facts | PASS; current against source data |
 | Validation-matrix drift check | PASS; receipt counts match `content/commands.json` |
-| Gitleaks | PASS; 189 commits and approximately 69 MB scanned, no leaks |
+| Gitleaks | PASS; complete reachable history scanned with the repository policy, no leaks |
 | `git diff --check` | PASS |
 
 The candidate contains 199 curated entries across 102 tools: 43 guided

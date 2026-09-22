@@ -2928,7 +2928,15 @@ function bindInstruction(text,values){
   });
 }
 function operationalPlan(entry,res){
-  var ins=instructionFor(entry)||{},values=STATE.formValues||{},pre=[],i,item;
+  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],i,item,match;
+  for(var valueName in formValues){
+    if(Object.prototype.hasOwnProperty.call(formValues,valueName)) values[valueName]=formValues[valueName];
+  }
+  /* A firewalld rich rule is assembled from closed, typed slots. Preserve the
+     exact shell-quoted operand from the run command so recovery removes that
+     same rule instead of leaving an operator to reconstruct it by hand. */
+  match=String((res&&res.command)||"").match(/--add-rich-rule=('[^']*')/);
+  if(match) values.generated_rule_arg=match[1];
   for(i=0;i<(ins.prerequisites||[]).length;i++){
     item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
   }
@@ -2939,7 +2947,12 @@ function operationalPlan(entry,res){
           verify:bindInstruction(entry.verify||"No curated verification step.",values),
           recover:bindInstruction(entry.undo||"No curated recovery step.",values)};
 }
-function instructionIsBound(text){ return !/<[A-Za-z_][A-Za-z0-9_]*>|\{\{[A-Za-z_][A-Za-z0-9_]*\}\}/.test(String(text||"")); }
+function instructionIsBound(text){
+  /* Hyphenated and plain-English placeholders previously escaped the narrow
+     identifier-only check. A shell input redirect contains whitespace right
+     after '<', so it does not match this placeholder grammar. */
+  return !/<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}/.test(String(text||""));
+}
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),

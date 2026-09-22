@@ -420,7 +420,7 @@
     }
    ],
    "verify": "firewall-cmd --get-default-zone prints the zone just set.",
-   "undo": "Restore the recorded previous zone with firewall-cmd --set-default-zone=<previous-zone>, then verify it with firewall-cmd --get-default-zone.",
+   "undo": "Before the change, record the exact output of firewall-cmd --get-default-zone in the approved change record. To recover, set that recorded zone with firewall-cmd --set-default-zone and verify it with firewall-cmd --get-default-zone. If the pre-change value was not recorded, stop and determine the intended zone from authoritative configuration; do not guess.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -499,7 +499,7 @@
     }
    ],
    "verify": "After firewall-cmd --reload, run firewall-cmd --zone=<zone> --permanent --list-rich-rules and firewall-cmd --zone=<zone> --list-rich-rules; the permanent and runtime results must contain the exact generated rule.",
-   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule='<exact generated rule>'; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
+   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule={{generated_rule_arg}}; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -572,7 +572,7 @@
     }
    ],
    "verify": "After firewall-cmd --reload, run firewall-cmd --zone=<zone> --permanent --list-rich-rules and firewall-cmd --zone=<zone> --list-rich-rules; the permanent and runtime results must contain the exact generated rule.",
-   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule='<exact generated rule>'; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
+   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule={{generated_rule_arg}}; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -1126,7 +1126,7 @@
     }
    ],
    "verify": "id <username> lists the new group under supplementary groups.",
-   "undo": "Read the account's CURRENT group list with id <username> before running this, then run usermod -G <that exact list minus the added group> <username> to restore it \u2014 usermod -G always REPLACES the supplementary group list, so omitting -a would drop every other group.",
+   "undo": "Restore the account supplementary-group list from the exact pre-change `id <username>` output recorded during preflight. Use usermod -G with that complete recorded list, then run id <username> to verify it. If pre-state was not recorded, stop and do not guess.",
    "blast": "yellow",
    "source": {
     "id": "src-man-usermod-r8",
@@ -7589,7 +7589,7 @@
     }
    ],
    "verify": "git status reports a clean merge, and git log --graph --oneline shows the merge commit and both parents.",
-   "undo": "Before committing a conflicted merge, git merge --abort returns to the pre-merge state. After commit, prefer git revert -m 1 <merge-commit> on shared history.",
+   "undo": "Before committing a conflicted merge, git merge --abort returns to the pre-merge state. Immediately after a completed merge, first verify that HEAD is the merge commit and no later work depends on it; on shared history, git revert -m 1 HEAD creates a recovery commit.",
    "blast": "yellow",
    "source": {
     "id": "src-git-htmldocs",
@@ -7857,8 +7857,8 @@
      "field": "lost_revision"
     }
    ],
-   "verify": "git show <recovered-branch> displays the recovered commit, and git branch --contains <lost-revision> includes the new branch.",
-   "undo": "After moving or integrating the recovered work, delete the temporary branch with git branch -d <recovered-branch>.",
+   "verify": "git show <recovered_branch> displays the recovered commit, and git branch --contains <lost_revision> includes the new branch.",
+   "undo": "After moving or integrating the recovered work, delete the temporary branch with git branch -d <recovered_branch>.",
    "blast": "yellow",
    "source": {
     "id": "src-git-htmldocs",
