@@ -2,6 +2,53 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
+## v1.0.0-alpha.5 - 2026-09-22
+
+### Fixed -- Operational recovery and administrative accuracy
+
+- Firewalld rich-rule generators now require an explicit zone, apply permanent
+  changes to runtime with reload, verify both stores, and recover by removing
+  the exact generated rule. The prior contradictory-rule and direct XML-edit
+  advice is gone.
+- NetworkManager, DNF/YUM, systemd, LVM, cron, and generated-configuration
+  recovery now starts from captured pre-change state. Remote network changes
+  require recovery access; destructive storage steps require exact device
+  identity, signature, mount, holder, LVM-membership, backup, and review checks.
+- Privilege metadata was audited across all 199 curated entries. Thirty-seven
+  commands that normally require elevation on hardened RHEL now say so.
+- Added curated consequence explanations for every previously unexplained
+  option or subcommand used by a yellow/red static entry, including systemd
+  `--now`, firewalld permanence/reload, group replacement, journal vacuuming,
+  and Ansible Galaxy/Vault actions.
+- NFS mount, journal vacuum, and local-repository metadata entries now describe
+  exactly the single operation their command performs.
+
+### Added -- Instructional workflows
+
+- Added schema-validated instructional metadata for all 43 generators and all
+  106 fields: labels, meanings, examples, consequences, discovery guidance,
+  prerequisites, and preflight checks.
+- Generated operations now render value-bound Preflight, Run, Verify, and
+  Recover steps with per-step and full-plan copy controls. Copy fails closed if
+  any instructional placeholder remains unresolved.
+- Added Start Here learning pathways, RHEL 7-10 command/evidence comparisons,
+  exact man-page commands and search hints, honest recovery-proof badges, and a
+  working STIG-search rail action.
+
+### Added -- Execution evidence, validation, and distribution controls
+
+- Renamed the browser action to **Export command and control reference** so its
+  expected output and source context cannot be mistaken for proof of execution.
+- Added a formal execution-receipt schema and offline tool that bind actual
+  output, stderr, exit status, target, operator, timestamp, ticket, command,
+  artifact, fingerprint, verification, hashes, and attestation without running
+  the command itself.
+- Added nine RHEL troubleshooting decision trees, a real-host validation matrix
+  with explicit unknowns, generated release facts with drift checks, and a
+  signing workflow that refuses to choose or fabricate a publisher identity.
+- Archived the released alpha.4 artifact set byte-for-byte under
+  `releases/v1.0.0-alpha.4/` before building alpha.5.
+
 ## v1.0.0-alpha.4 - 2026-09-22
 
 ### Added -- Generalized command syntax oracle

@@ -1194,10 +1194,98 @@ def content_errors(data, source_ids=None, have_sources_json=False):
     if dupes:
         errs.append("duplicate command entry ids: %s" % ", ".join(dupes))
 
+    # Compact unit-test fixtures intentionally exercise one content family at a
+    # time.  A real build always loads this key through build.py's CONTENT map;
+    # when present, coverage is exact and fail-closed.
+    if "instructional" in data:
+        errs += instructional_errors(data.get("instructional"),
+                                     (data.get("commands") or {}).get("entries", []))
+
     # The mined vendor-reference family. Checked against the CURATED ids so a
     # mined record can never occupy an id the assembler would resolve.
     if "reference_commands" in data:
         errs += reference_commands_errors(data.get("reference_commands"), curated_ids=ids)
+    return errs
+
+
+def instructional_errors(ds, command_entries):
+    """The teaching layer must cover every guided form without inventing facts.
+
+    A null discovery_command is a deliberate, visible gap.  Omitting the key is
+    ambiguous, so the schema refuses it along with missing field records.
+    """
+    errs = []
+    if not isinstance(ds, dict):
+        return ["instructional: dataset is missing or is not an object"]
+    rows = ds.get("entries")
+    if not isinstance(rows, dict):
+        return ["instructional.entries is not an object"]
+    generators = {e.get("id"): e for e in command_entries if isinstance(e, dict) and "template" in e}
+    if set(rows) != set(generators):
+        missing = sorted(set(generators) - set(rows))
+        extra = sorted(set(rows) - set(generators))
+        if missing:
+            errs.append("instructional: missing generator entries %s" % ", ".join(missing))
+        if extra:
+            errs.append("instructional: unknown generator entries %s" % ", ".join(extra))
+    for eid, entry in sorted(generators.items()):
+        row = rows.get(eid)
+        if not isinstance(row, dict):
+            continue
+        for key in ("prerequisites", "preflight"):
+            items = row.get(key)
+            if not isinstance(items, list):
+                errs.append("instructional %s: %s must be a list" % (eid, key))
+                continue
+            for i, item in enumerate(items):
+                if not isinstance(item, dict) or not item.get("text") or "command" not in item:
+                    errs.append("instructional %s: %s[%d] must carry text and an explicit command (string or null)" % (eid, key, i))
+                elif item.get("command") is not None and not isinstance(item.get("command"), str):
+                    errs.append("instructional %s: %s[%d].command must be a string or null" % (eid, key, i))
+                else:
+                    errs += single_line_errors("instructional %s: %s[%d].text" % (eid, key, i), item.get("text"))
+                    if item.get("command") is not None:
+                        errs += single_line_errors("instructional %s: %s[%d].command" % (eid, key, i), item.get("command"))
+        if not isinstance(row.get("proven_reversible"), bool):
+            errs.append("instructional %s: proven_reversible must be true or false" % eid)
+        expected = {f.get("name") for f in entry.get("fields", []) if isinstance(f, dict)}
+        fields = row.get("fields")
+        if not isinstance(fields, dict):
+            errs.append("instructional %s: fields must be an object" % eid)
+            continue
+        if set(fields) != expected:
+            errs.append("instructional %s: field metadata keys must exactly match the generator fields" % eid)
+        for name, meta in sorted(fields.items()):
+            if not isinstance(meta, dict):
+                errs.append("instructional %s.%s: metadata is not an object" % (eid, name))
+                continue
+            for key in ("label", "meaning", "example", "discovery_command", "consequence"):
+                if key not in meta:
+                    errs.append("instructional %s.%s: missing %s" % (eid, name, key))
+            for key in ("label", "meaning", "consequence"):
+                if not isinstance(meta.get(key), str) or not meta.get(key).strip():
+                    errs.append("instructional %s.%s: %s must be non-empty text" % (eid, name, key))
+            for key in ("example", "discovery_command"):
+                if meta.get(key) is not None and not isinstance(meta.get(key), str):
+                    errs.append("instructional %s.%s: %s must be a string or null" % (eid, name, key))
+            errs += single_line_errors("instructional %s.%s" % (eid, name), meta)
+    paths = ds.get("learning_paths")
+    if not isinstance(paths, list) or not paths:
+        errs.append("instructional.learning_paths must be a non-empty list")
+    else:
+        for i, path in enumerate(paths):
+            if not isinstance(path, dict):
+                errs.append("instructional.learning_paths[%d] is not an object" % i)
+                continue
+            check = path.get("check")
+            if not path.get("id") or not path.get("title") or not path.get("summary"):
+                errs.append("instructional.learning_paths[%d] is missing id/title/summary" % i)
+            if not isinstance(path.get("entry_ids"), list) or not path.get("entry_ids"):
+                errs.append("instructional.learning_paths[%d].entry_ids must be a non-empty list" % i)
+            elif any(eid not in generators for eid in path["entry_ids"]):
+                errs.append("instructional.learning_paths[%d] cites an unknown generator" % i)
+            if not isinstance(check, dict) or not check.get("question") or not check.get("answer"):
+                errs.append("instructional.learning_paths[%d].check needs a question and answer" % i)
     return errs
 
 

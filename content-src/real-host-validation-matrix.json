@@ -1,0 +1,93 @@
+{
+  "schema": "md-code-red/real-host-validation-matrix/v1",
+  "policy": {
+    "read_only_only": true,
+    "receipt_path": "tests/captures/<rhel>/<entry-id>.json",
+    "independent_review_required": true,
+    "unknowns_remain_unknown": true
+  },
+  "releases": {
+    "7": {
+      "support_posture": "legacy/reference decision pending",
+      "host_access": "unavailable",
+      "verified_receipts": 0,
+      "next_evidence": "Either provide a real RHEL 7 host and run this matrix, or formally mark RHEL 7 legacy/reference-only. The UBI7 extraction container is not host validation."
+    },
+    "8": {
+      "support_posture": "active",
+      "host_access": "Read-only matrix probe completed on Defiant in this session; no new independently reviewed entry receipts.",
+      "verified_receipts": 9,
+      "matrix_status": "partial",
+      "latest_observation": "2026-09-22: 11 read-only cases attempted; 8 returned rc 0, while firewalld, LVM and chrony exposed expected non-root/daemon-access limits. Raw output retained only in the authorized session, not the public repository."
+    },
+    "9": {
+      "support_posture": "active and highest validation priority",
+      "host_access": "Documented host address timed out during this session; no commands ran.",
+      "verified_receipts": 0,
+      "matrix_status": "not started"
+    },
+    "10": {
+      "support_posture": "active",
+      "host_access": "Documented host was down during this session; no commands ran.",
+      "verified_receipts": 9,
+      "matrix_status": "partial"
+    }
+  },
+  "read_only_cases": [
+    {
+      "id": "identity",
+      "command": "cat /etc/redhat-release",
+      "proves": "claimed RHEL release"
+    },
+    {
+      "id": "kernel",
+      "command": "uname -r",
+      "proves": "observed kernel identity"
+    },
+    {
+      "id": "service",
+      "command": "systemctl status sshd.service",
+      "proves": "service-query shape"
+    },
+    {
+      "id": "journal",
+      "command": "journalctl -u sshd.service -n 20 --no-pager",
+      "proves": "bounded journal-query shape"
+    },
+    {
+      "id": "firewalld",
+      "command": "firewall-cmd --state",
+      "proves": "firewalld status-query shape"
+    },
+    {
+      "id": "network",
+      "command": "nmcli device status",
+      "proves": "NetworkManager query shape"
+    },
+    {
+      "id": "packages",
+      "command": "dnf repolist",
+      "proves": "repository-query shape"
+    },
+    {
+      "id": "lvm",
+      "command": "lvs --noheadings",
+      "proves": "LVM query shape"
+    },
+    {
+      "id": "selinux",
+      "command": "getenforce",
+      "proves": "SELinux-mode query shape"
+    },
+    {
+      "id": "time",
+      "command": "chronyc tracking",
+      "proves": "time-status query shape"
+    },
+    {
+      "id": "logging",
+      "command": "rsyslogd -N1",
+      "proves": "configuration parse only; not end-to-end receipt"
+    }
+  ]
+}

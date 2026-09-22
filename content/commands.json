@@ -420,7 +420,7 @@
     }
    ],
    "verify": "firewall-cmd --get-default-zone prints the zone just set.",
-   "undo": "Run this generator again with the previous zone name.",
+   "undo": "Restore the recorded previous zone with firewall-cmd --set-default-zone=<previous-zone>, then verify it with firewall-cmd --get-default-zone.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -435,14 +435,21 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "Record the previous default from firewall-cmd --get-default-zone before changing it. Changing the default affects interfaces and sources that are not explicitly assigned to a zone."
   },
   {
    "id": "gen-fw-open-port",
    "tool": "firewall-cmd",
    "category": "firewall-cmd",
-   "intent": "Open (or close) a port through the permanent firewalld configuration",
+   "intent": "Add an explicit accept, reject, or drop rich rule for a port in one firewalld zone",
    "fields": [
+    {
+     "name": "zone",
+     "type": "zone",
+     "required": true
+    },
     {
      "name": "family",
      "type": "family",
@@ -474,6 +481,10 @@
      "lit": "firewall-cmd"
     },
     {
+     "flag": "--zone",
+     "field": "zone"
+    },
+    {
      "lit": "--permanent"
     },
     {
@@ -487,8 +498,8 @@
      }
     }
    ],
-   "verify": "firewall-cmd --permanent --list-rich-rules shows the rule; run firewall-cmd --reload afterward to apply it to the running firewall.",
-   "undo": "Run this generator again with action=reject or action=drop reversed to accept, or edit /etc/firewalld/zones/<zone>.xml and reload.",
+   "verify": "After firewall-cmd --reload, run firewall-cmd --zone=<zone> --permanent --list-rich-rules and firewall-cmd --zone=<zone> --list-rich-rules; the permanent and runtime results must contain the exact generated rule.",
+   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule='<exact generated rule>'; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -503,14 +514,21 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not \u201cundo\u201d an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
   },
   {
    "id": "gen-fw-allow-service",
    "tool": "firewall-cmd",
    "category": "firewall-cmd",
-   "intent": "Allow (or block) a named firewalld service through the permanent configuration",
+   "intent": "Add an explicit accept, reject, or drop rich rule for a service in one firewalld zone",
    "fields": [
+    {
+     "name": "zone",
+     "type": "zone",
+     "required": true
+    },
     {
      "name": "family",
      "type": "family",
@@ -537,6 +555,10 @@
      "lit": "firewall-cmd"
     },
     {
+     "flag": "--zone",
+     "field": "zone"
+    },
+    {
      "lit": "--permanent"
     },
     {
@@ -549,8 +571,8 @@
      }
     }
    ],
-   "verify": "firewall-cmd --permanent --list-rich-rules shows the rule; run firewall-cmd --reload afterward to apply it to the running firewall.",
-   "undo": "Run this generator again with the reverse action, or edit /etc/firewalld/zones/<zone>.xml and reload.",
+   "verify": "After firewall-cmd --reload, run firewall-cmd --zone=<zone> --permanent --list-rich-rules and firewall-cmd --zone=<zone> --list-rich-rules; the permanent and runtime results must contain the exact generated rule.",
+   "undo": "Remove the exact rule that was added: firewall-cmd --zone=<zone> --permanent --remove-rich-rule='<exact generated rule>'; then run firewall-cmd --reload and verify that both permanent and runtime --list-rich-rules no longer contain it. Do not add a contradictory rule and do not edit the zone XML directly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-firewall-cmd-r8",
@@ -565,13 +587,15 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not \u201cundo\u201d an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
   },
   {
    "id": "gen-nmcli-static-ipv4",
    "tool": "nmcli",
    "category": "nmcli",
-   "intent": "Give a NetworkManager connection a static IPv4 address, gateway and DNS method",
+   "intent": "Give a NetworkManager connection a static IPv4 address and gateway",
    "fields": [
     {
      "name": "con",
@@ -632,8 +656,8 @@
      "lit": "manual"
     }
    ],
-   "verify": "nmcli connection show <con> reports the new address under IP4.ADDRESS and IP4.GATEWAY. If the connection is not currently active, bring it up with nmcli connection up <con>.",
-   "undo": "nmcli connection modify <con> ipv4.method auto, then nmcli connection up <con>, returns the connection to DHCP.",
+   "verify": "Review nmcli connection show <con> for ipv4.method, ipv4.addresses, ipv4.gateway and ipv4.dns, then activate only from a recoverable session and confirm address, route, DNS and management reachability.",
+   "undo": "Do not assume ipv4.method auto reconstructs the prior profile. Re-import or restore the complete saved NetworkManager connection profile, activate it from console or out-of-band access, and verify address, route, DNS and management reachability.",
    "blast": "yellow",
    "source": {
     "id": "src-man-nmcli-r8",
@@ -648,7 +672,9 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "Before changing the profile, save its complete pre-state with nmcli connection export <con> and record nmcli connection show <con>. This command does not configure DNS. Activating the profile can immediately disconnect a remote session; require console or out-of-band recovery access before changing the active management connection."
   },
   {
    "id": "gen-journalctl-unit-logs",
@@ -766,9 +792,9 @@
      "field": "device"
     }
    ],
-   "notes": "This writes an LVM label and metadata to the selected device. Confirm the device with lsblk and blkid before running it.",
+   "notes": "Destructive storage operation. Before running, capture lsblk -fp, blkid, findmnt, lsblk -o NAME,PATH,SIZE,MODEL,SERIAL,FSTYPE,MOUNTPOINTS, pvs, vgs and lvs. Re-enter and compare the exact device path, size, model and serial, confirm no holders or mounts, record the backup/change reference, and require console recovery access.",
    "verify": "pvs <device> shows the device as an LVM physical volume, with the expected size and no unexpected volume-group assignment.",
-   "undo": "pvremove <device> removes the LVM label only after every volume group and logical volume using it has been removed. That cleanup can destroy data; verify backups first.",
+   "undo": "pvremove only removes an unused LVM label; it does not restore filesystem or partition metadata overwritten by pvcreate. Recovery requires the pre-change backup or image. Never run pvremove until pvs, vgs, lvs, lsblk, blkid and findmnt prove the device is unused.",
    "blast": "red",
    "source": {
     "id": "src-man-pvcreate-r8",
@@ -814,9 +840,9 @@
      "field": "device"
     }
    ],
-   "notes": "vgcreate can initialize a device that is not already an LVM physical volume. Confirm the device identity and current contents before running it.",
+   "notes": "Destructive storage operation. Capture lsblk -fp, blkid, findmnt, pvs, vgs and lvs; verify device path, size, model and serial; confirm backups and console recovery. vgcreate can initialize a device that is not already a PV.",
    "verify": "vgs <name> shows the new volume group, and pvs <device> shows that physical volume assigned to it.",
-   "undo": "vgremove <name> removes the volume group and can destroy every logical volume inside it. Back up data and inspect lvs <name> before any removal.",
+   "undo": "vgremove destroys the volume-group mapping and any logical volumes it contains; it is not an automatic rollback. If the new group is empty and unused, verify with lvs, pvs, lsblk and findmnt before removal. Data recovery otherwise depends on the pre-change backup or image.",
    "blast": "red",
    "source": {
     "id": "src-man-vgcreate-r8",
@@ -872,7 +898,7 @@
     }
    ],
    "verify": "lvs <vg>/<name> shows the new logical volume at the requested size.",
-   "undo": "lvremove -f /dev/<vg>/<name> removes the logical volume \u2014 blast: red, see the dangerous-pattern table (dp-lvremove); back up first.",
+   "undo": "lvremove destroys the new logical volume and all data written to it; use it only after lsblk, findmnt and lvs prove the LV is unmounted and no longer needed. It cannot restore the volume group\u2019s exact prior allocation or recover data; use the pre-change backup when recovery is required.",
    "blast": "yellow",
    "source": {
     "id": "src-man-lvcreate-r8",
@@ -887,7 +913,9 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "Before creation, record vgs and lvs output, free extents, device identities, mounts and the backup/change reference. Confirm the requested name and size before running."
   },
   {
    "id": "gen-lvextend-grow",
@@ -946,7 +974,9 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "Before growth, record lvs, vgs, findmnt, filesystem type and size, free extents, backups and console recovery. Confirm that the filesystem supports the requested online growth; -r delegates filesystem resizing to fsadm where supported."
   },
   {
    "id": "gen-sshd-test-config",
@@ -1060,7 +1090,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-usermod-add-group",
@@ -1110,7 +1141,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-systemctl-query",
@@ -1210,7 +1242,7 @@
     }
    ],
    "verify": "systemctl is-active <unit> (and is-enabled <unit> for enable/disable) reports the new state.",
-   "undo": "Run this generator again with the reverse action (start<->stop, enable<->disable).",
+   "undo": "Restore the recorded active and enabled states only when safe. A start/stop or enable/disable inverse is valid only if it matches that captured pre-state; restart and reload have no automatic inverse. Restore unit configuration separately if it changed.",
    "blast": "yellow",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
@@ -1224,7 +1256,9 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root",
+   "notes": "Before the change, record systemctl is-active, systemctl is-enabled, systemctl cat, and recent journal output for the unit. Restart and reload have no inverse, and service state can be changed by dependencies or failed starts."
   },
   {
    "id": "gen-dnf-package",
@@ -1259,7 +1293,7 @@
     }
    ],
    "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
-   "undo": "Run this generator again with the reverse action.",
+   "undo": "Use the recorded transaction ID and inspect it before attempting a package-manager history undo. Confirm repository availability for the prior versions. Restore saved configuration and service state separately; a reverse install/remove action does not recreate the previous system state.",
    "blast": "yellow",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
@@ -1278,7 +1312,9 @@
     "8",
     "9",
     "10"
-   ]
+   ],
+   "privilege": "root",
+   "notes": "Before running, record the installed package version, the package-manager transaction list, dependent packages, relevant configuration files, and any affected service state. Removing and reinstalling is not an exact rollback."
   },
   {
    "id": "gen-yum-package",
@@ -1313,7 +1349,7 @@
     }
    ],
    "verify": "rpm -q <pkg> confirms install; rpm -q <pkg> failing (package not installed) confirms remove.",
-   "undo": "Run this generator again with the reverse action.",
+   "undo": "Use the recorded transaction ID and inspect it before attempting a package-manager history undo. Confirm repository availability for the prior versions. Restore saved configuration and service state separately; a reverse install/remove action does not recreate the previous system state.",
    "blast": "yellow",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
@@ -1333,7 +1369,9 @@
     "8",
     "9",
     "10"
-   ]
+   ],
+   "privilege": "root",
+   "notes": "Before running, record the installed package version, the package-manager transaction list, dependent packages, relevant configuration files, and any affected service state. Removing and reinstalling is not an exact rollback."
   },
   {
    "id": "gen-setsebool-set",
@@ -1395,7 +1433,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-semanage-port-add",
@@ -1457,7 +1496,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-chage-list",
@@ -1576,7 +1616,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-auditctl-watch",
@@ -1643,7 +1684,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "gen-ausearch-by-key",
@@ -4466,7 +4508,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "stat-file-metadata",
@@ -4708,7 +4751,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "umount-detach-filesystem",
@@ -4767,7 +4811,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "lsblk-list-block-devices",
@@ -8052,7 +8097,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-findmnt",
@@ -8110,7 +8156,7 @@
    "id": "r-nfs-mount",
    "tool": "mount",
    "category": "Disks & LVM",
-   "intent": "Mount an NFS share, now and at boot",
+   "intent": "Mount one NFS export for the current boot after its mountpoint and prerequisites are prepared",
    "rhel_versions": {
     "7": {
      "same_as": "9",
@@ -8130,8 +8176,8 @@
      "changed_in_note": null
     }
    },
-   "verify": "findmnt /mnt/vault shows the mount; findmnt --verify passes; after reboot the mount returns.",
-   "undo": "umount /mnt/vault && remove the fstab line && findmnt --verify",
+   "verify": "findmnt /mnt/vault shows the live mount. This command does not create the mountpoint or an /etc/fstab entry and therefore does not establish persistence across reboot.",
+   "undo": "umount /mnt/vault removes this transient mount. If an operator separately added an fstab entry, remove the exact added line and run findmnt --verify.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-nfs-mount",
@@ -8146,7 +8192,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-sysstatus",
@@ -8243,7 +8290,7 @@
     },
     {
      "flag": "--now",
-     "explain": null,
+     "explain": "Enable or disable the unit for future boots and immediately start or stop it in the same invocation; both boot-time and current runtime state change.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -8264,7 +8311,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-failed",
@@ -8370,7 +8418,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-sys-edit",
@@ -8420,7 +8469,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-nmcli-status",
@@ -8822,7 +8872,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-semanage-fcontext",
@@ -8884,7 +8935,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-setsebool",
@@ -8934,7 +8986,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-fw-list",
@@ -9014,7 +9067,7 @@
     },
     "9": {
      "command": "firewall-cmd --add-service=https --permanent && firewall-cmd --reload",
-     "notes": "--permanent writes config but does NOT change the running firewall; --reload applies it. Without --permanent the rule vanishes at reload/reboot. The pair is the idiom. Ports: --add-port=8443/tcp. Mentor: Every firewalld surprise in history is runtime-vs-permanent confusion. Say the pair out loud as one command. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
+     "notes": "--permanent writes config but does NOT change the running firewall; --reload applies it. Without --permanent the rule vanishes at reload/reboot. The pair is the idiom. Ports: --add-port=8443/tcp. Mentor: Every firewalld surprise in history is runtime-vs-permanent confusion. Say the pair out loud as one command. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise. This example operates in the current default zone; record firewall-cmd --get-default-zone before running it.",
      "changed_in_note": null
     },
     "10": {
@@ -9031,19 +9084,19 @@
     },
     {
      "flag": "--permanent",
-     "explain": null,
+     "explain": "Write the change to firewalld permanent configuration; it does not affect the current runtime configuration until reload or an equivalent runtime change.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     },
     {
      "flag": "--reload",
-     "explain": null,
+     "explain": "Replace firewalld runtime configuration from the permanent store; runtime-only changes that were not saved are discarded.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
    ],
-   "verify": "firewall-cmd --list-services shows it; survives firewall-cmd --reload.",
-   "undo": "firewall-cmd --remove-service=https --permanent && firewall-cmd --reload",
+   "verify": "After reload, firewall-cmd --zone=<recorded-default-zone> --permanent --query-service=https and the runtime form without --permanent both return success.",
+   "undo": "firewall-cmd --zone=<recorded-default-zone> --remove-service=https --permanent && firewall-cmd --reload; then confirm both permanent and runtime queries fail.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-fw-add",
@@ -9058,7 +9111,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-id",
@@ -9129,13 +9183,13 @@
    "flags": [
     {
      "flag": "-a",
-     "explain": null,
+     "explain": "Append supplementary groups instead of replacing the account's existing supplementary-group list; use together with -G.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     },
     {
      "flag": "-G",
-     "explain": null,
+     "explain": "Set the account's supplementary groups. Without -a, groups omitted from this list are removed from the account.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -9156,7 +9210,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-visudo-c",
@@ -9358,7 +9413,7 @@
    "id": "r-journal-cap",
    "tool": "journalctl",
    "category": "Logs & journald",
-   "intent": "Cap the journal's disk usage permanently (after a cleanup)",
+   "intent": "Reclaim journal disk space once, retaining at most 500M of the oldest archived journal data",
    "rhel_versions": {
     "7": {
      "same_as": "9",
@@ -9381,13 +9436,13 @@
    "flags": [
     {
      "flag": "--vacuum-size",
-     "explain": null,
+     "explain": "Delete the oldest archived journal files until archived usage is below the requested size; this is immediate reclamation, not a persistent size policy.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
    ],
-   "verify": "journalctl --disk-usage stays at or under the cap over the following days.",
-   "undo": "rm /etc/systemd/journald.conf.d/size.conf && systemctl restart systemd-journald",
+   "verify": "journalctl --disk-usage reports current use after vacuuming. This one-time command does not impose a permanent cap.",
+   "undo": "Vacuuming deletes archived journal data and cannot be undone. No journald configuration is changed by this command.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-journal-cap",
@@ -9402,7 +9457,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-logrotate",
@@ -9504,7 +9560,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-dnf-history",
@@ -9556,7 +9613,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-rpm-qf",
@@ -9604,7 +9662,7 @@
    "id": "r-localrepo",
    "tool": "createrepo_c",
    "category": "Packages",
-   "intent": "Stand up or repair a local dnf repository (air-gapped)",
+   "intent": "Create or refresh repository metadata for one directory of RPMs",
    "rhel_versions": {
     "7": {
      "unavailable": {
@@ -9626,8 +9684,8 @@
      "changed_in_note": null
     }
    },
-   "verify": "dnf repolist shows the repo with a package count; dnf --disablerepo='*' --enablerepo=local-baseos install <pkg> resolves.",
-   "undo": "rm /etc/yum.repos.d/local.repo && dnf clean all",
+   "verify": "repodata/ exists under /srv/repo/rhel9-baseos and createrepo_c completed successfully. This command does not create a .repo client definition or refresh dnf caches.",
+   "undo": "Restore or remove the generated repodata directory according to its captured pre-state. This command does not create /etc/yum.repos.d/local.repo, so removing that file is not its inverse.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-localrepo",
@@ -9642,7 +9700,8 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "privilege": "root"
   },
   {
    "id": "r-ps-sort",
@@ -10919,13 +10978,13 @@
    "flags": [
     {
      "flag": "collection",
-     "explain": null,
+     "explain": "Select the Ansible collection object type rather than roles.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     },
     {
      "flag": "install",
-     "explain": null,
+     "explain": "Install the named collection from the supplied source into the configured collection path.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -10975,7 +11034,7 @@
    "flags": [
     {
      "flag": "create",
-     "explain": null,
+     "explain": "Create a new encrypted Ansible Vault file; the command prompts for vault credentials and writes a new ciphertext file.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -11081,7 +11140,7 @@
    "flags": [
     {
      "flag": "rekey",
-     "explain": null,
+     "explain": "Decrypt an existing Vault file with its current credential and re-encrypt it with a new credential; loss of either required credential can block recovery.",
      "source_ref": null,
      "license_class": "paraphrase-only"
     }
@@ -11570,9 +11629,9 @@
      }
     ]
    },
-   "notes": "This creates a hardened fragment with direct root login and password authentication disabled. It is not a complete replacement for /etc/ssh/sshd_config. Validate it with the generated command, merge the reviewed directives into the managed configuration, keep an existing privileged session open, and reload sshd only after a second validation of the complete file.",
+   "notes": "Before deployment, capture the destination file, owner, mode, SELinux context, effective configuration and sshd state. Install atomically, validate the complete merged configuration, keep an existing privileged recovery session open, then reload and test a new connection.",
    "verify": "sshd -t -f sshd_config.generated exits 0 and prints no diagnostic. Before deployment, run sshd -T against the complete managed configuration and confirm the effective values.",
-   "undo": "Delete the generated file if it has not been installed. If its directives were deployed, restore the prior sshd configuration from backup, validate it with sshd -t, and reload sshd while keeping the recovery session open.",
+   "undo": "If deployed, atomically restore the captured file with its owner, mode and SELinux context, validate the complete configuration, reload sshd from the retained recovery session, and prove a new connection works.",
    "blast": "yellow",
    "stig": [
     {
@@ -11706,9 +11765,9 @@
      }
     ]
    },
-   "notes": "The generated file declares one server with iburst, permits large startup corrections during the first three updates, and asks the kernel to synchronize the real-time clock. Review it alongside the distribution chrony.conf because production configurations commonly also need pool, driftfile, key, logging, and access-control directives.",
+   "notes": "Before deployment, capture the destination file, owner, mode, SELinux context and chronyd state. Install atomically, validate the complete merged configuration, restart during an approved window, and verify synchronization.",
    "verify": "chronyd -p -f chrony.conf.generated exits 0 after printing the parsed configuration; it does not start the daemon or adjust the clock.",
-   "undo": "Delete chrony.conf.generated. If its directives were later deployed, restore the previous chrony configuration and restart chronyd during an approved change window.",
+   "undo": "If deployed, atomically restore the captured file with owner, mode and SELinux context, validate it, restore the recorded chronyd state, and verify synchronization.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -11785,9 +11844,9 @@
      }
     ]
    },
-   "notes": "The two at signs select TCP forwarding. This is a minimal forwarding rule; it does not configure TLS, queues, certificates, or local inputs. Review transport security and reliability requirements before merging it into a production rsyslog configuration.",
+   "notes": "Before deployment, capture the destination file, owner, mode, SELinux context and rsyslog state. Install atomically, validate the complete merged configuration, reload during an approved window, and prove source-attributed end-to-end receipt.",
    "verify": "rsyslogd -N1 -f rsyslog.conf.generated exits 0 and reports no configuration error; test end-to-end receipt separately before deployment.",
-   "undo": "Delete rsyslog.conf.generated. If the rule was deployed, remove it from the managed configuration, validate the complete configuration, and reload rsyslog.",
+   "undo": "If deployed, atomically restore the captured file with owner, mode and SELinux context, validate the complete configuration, restore the recorded rsyslog state, and prove expected local and remote logging.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -11860,9 +11919,9 @@
      }
     ]
    },
-   "notes": "The rule grants members of the named group permission to run exactly one absolute command as root, subject to the site defaults for authentication. Install reviewed fragments with root ownership and mode 0440 under /etc/sudoers.d, and validate the complete policy before ending the current privileged session.",
+   "notes": "Before deployment, capture the destination fragment, owner, mode and SELinux context. Install atomically as root:root mode 0440, validate the complete policy, keep a working privileged recovery session open, then test authorization from a separate session.",
    "verify": "visudo -c -f sudoers.generated reports that the file parsed OK. After installation, visudo -c must also report that the complete sudoers policy parses successfully.",
-   "undo": "Delete the generated file if it has not been installed. If installed as a fragment, remove that fragment from a root recovery session and run visudo -c again.",
+   "undo": "If deployed, remove or atomically restore the captured fragment from the retained root recovery session, restore owner, mode and SELinux context, validate the complete policy, and retest authorization.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -11947,9 +12006,9 @@
      }
     ]
    },
-   "notes": "The service runs one absolute executable with no arguments, restarts it after failures, and may be enabled under multi-user.target. Add user, environment, sandboxing, ordering, and resource controls deliberately before production use; a valid unit can still be operationally unsafe.",
+   "notes": "Before deployment, capture any existing unit file, owner, mode, SELinux context, enabled/active state and recent journal. Install atomically, restorecon, daemon-reload, inspect the loaded unit, then start or enable only in an approved window.",
    "verify": "systemd-analyze verify managed.service exits 0 and reports no syntax or dependency error. After installation, run systemctl daemon-reload and inspect systemctl cat managed.service before starting it.",
-   "undo": "Delete managed.service if it has not been installed. If installed, disable and stop the unit when appropriate, remove the unit file, and run systemctl daemon-reload.",
+   "undo": "If deployed, restore the captured unit file and metadata or remove only the newly installed file, daemon-reload, then restore the recorded active and enabled states when safe.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -12025,9 +12084,9 @@
      }
     ]
    },
-   "notes": "This file contains one daily job and the generated command replaces the current user crontab with that file. First save the existing crontab with crontab -l > crontab.backup, then merge any existing jobs into cron.generated before installation. The command field accepts one absolute executable and no shell arguments.",
+   "notes": "Before installation, capture whether a crontab exists and save its exact contents. The command replaces the entire current-user crontab, so merge every retained job into cron.generated first. The command field accepts one absolute executable and no shell arguments.",
    "verify": "After installation, crontab -l exactly matches cron.generated and the job runs at the intended local time. Check the service journal or the command output path after the first scheduled run.",
-   "undo": "Restore the saved crontab with crontab crontab.backup. If no prior crontab existed, remove the installed crontab with crontab -r only after confirming it contains no other jobs.",
+   "undo": "Restore the exact saved crontab. If no crontab existed before, remove the newly installed crontab with crontab -r only after verifying it contains no unrelated jobs.",
    "blast": "yellow",
    "stig": [],
    "source": {

@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Regression coverage for the guided Linux-instruction layer."""
+import copy
+import json
+import os
+import sys
+import unittest
+
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0,os.path.join(ROOT,'extract'))
+import schema
+
+
+def load(name):
+    with open(os.path.join(ROOT,'content',name),encoding='utf-8') as fh:
+        return json.load(fh)
+
+
+class InstructionalSchemaTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.commands=load('commands.json')['entries']
+        cls.data=load('instructional.json')
+        with open(os.path.join(ROOT,'template.html'),encoding='utf-8') as fh:
+            cls.template=fh.read()
+
+    def test_every_generator_and_field_has_instructional_metadata(self):
+        generators={e['id']:e for e in self.commands if 'template' in e}
+        self.assertEqual(set(generators),set(self.data['entries']))
+        self.assertEqual(sum(len(e['fields']) for e in generators.values()),
+                         sum(len(r['fields']) for r in self.data['entries'].values()))
+        self.assertEqual([],schema.instructional_errors(self.data,self.commands))
+
+    def test_missing_metadata_fails_closed(self):
+        broken=copy.deepcopy(self.data)
+        eid=sorted(broken['entries'])[0]
+        name=sorted(broken['entries'][eid]['fields'])[0]
+        del broken['entries'][eid]['fields'][name]['meaning']
+        errors=schema.instructional_errors(broken,self.commands)
+        self.assertTrue(any('missing meaning' in e for e in errors),errors)
+
+    def test_null_discovery_is_explicit_not_omitted(self):
+        for eid,row in self.data['entries'].items():
+            for name,meta in row['fields'].items():
+                self.assertIn('discovery_command',meta,(eid,name))
+                self.assertTrue(meta['discovery_command'] is None or isinstance(meta['discovery_command'],str))
+
+    def test_learning_paths_resolve_and_have_checks(self):
+        ids={e['id'] for e in self.commands if 'template' in e}
+        for path in self.data['learning_paths']:
+            self.assertTrue(path['entry_ids'])
+            self.assertTrue(set(path['entry_ids'])<=ids)
+            self.assertTrue(path['check']['question'])
+            self.assertTrue(path['check']['answer'])
+
+    def test_template_has_instructional_workflows(self):
+        markers=(
+            'function operationalPlan(', 'data-plan-step=', 'Preflight', 'Recover',
+            'function bindInstruction(', 'RHEL release comparison', 'Read next:',
+            'Man section ', 'data-learn-entry=', 'Comprehension check',
+            'if(name==="stig")', 'Recovery not proven', 'State-changing operation.'
+        )
+        for marker in markers:
+            self.assertIn(marker,self.template,marker)
+
+    def test_stig_rail_no_longer_uses_placeholder_copy(self):
+        self.assertNotIn('This rail lands with its own task: STIG search',self.template)
+        self.assertIn('el("palette-input").value="STIG"',self.template)
+
+
+if __name__=='__main__':
+    unittest.main()

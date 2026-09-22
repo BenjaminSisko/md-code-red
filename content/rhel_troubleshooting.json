@@ -1,0 +1,344 @@
+{
+  "schema": "md-code-red/rhel-troubleshooting/v1",
+  "scope": "Read-only diagnosis first; placeholders require operator substitution and review.",
+  "trees": [
+    {
+      "id": "boot-emergency",
+      "title": "Boot or emergency mode",
+      "symptom": "The host fails normal boot or enters emergency mode.",
+      "preconditions": [
+        "Record the console error and current boot target.",
+        "Use the console or approved out-of-band path; do not troubleshoot a failed boot only over SSH."
+      ],
+      "branches": [
+        {
+          "when": "The console names a failed mount or dependency",
+          "observe": [
+            "systemctl --failed",
+            "journalctl -b -p warning"
+          ],
+          "next": "Continue with the fstab tree; do not bypass an unknown storage failure."
+        },
+        {
+          "when": "The console names a failed service",
+          "observe": [
+            "systemctl status <unit>",
+            "journalctl -b -u <unit>"
+          ],
+          "next": "Inspect the named unit and its dependency failure before changing targets."
+        },
+        {
+          "when": "The cause is still unclear",
+          "observe": [
+            "journalctl -b",
+            "systemctl list-jobs"
+          ],
+          "next": "Preserve the boot journal and escalate before editing bootloader or initramfs state."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 8 systemctl; man 1 journalctl"
+    },
+    {
+      "id": "fstab",
+      "title": "Broken /etc/fstab",
+      "symptom": "Boot or mount processing fails after a filesystem-table change.",
+      "preconditions": [
+        "Keep console access available.",
+        "Capture the current file and mount state before editing."
+      ],
+      "branches": [
+        {
+          "when": "Syntax or option error is suspected",
+          "observe": [
+            "findmnt --verify --verbose",
+            "cat /etc/fstab"
+          ],
+          "next": "Correct only the identified row, then re-run findmnt verification."
+        },
+        {
+          "when": "The referenced device is absent",
+          "observe": [
+            "lsblk -fp",
+            "blkid",
+            "findmnt --fstab"
+          ],
+          "next": "Confirm the intended UUID/device with inventory; do not substitute a guessed device."
+        },
+        {
+          "when": "Filesystem damage is suspected",
+          "observe": [
+            "journalctl -b -k",
+            "findmnt --target <mountpoint>"
+          ],
+          "next": "Stop write activity and follow the filesystem-specific offline repair procedure."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 5 fstab; man 8 findmnt"
+    },
+    {
+      "id": "dnf-rpm",
+      "title": "DNF or RPM failure",
+      "symptom": "Package operations report locks, dependency conflicts, repository failures, or transaction errors.",
+      "preconditions": [
+        "Do not delete RPM database lock files.",
+        "Record the requested package and repository configuration."
+      ],
+      "branches": [
+        {
+          "when": "Another package process may be active",
+          "observe": [
+            "ps -ef",
+            "systemctl status dnf-makecache.timer"
+          ],
+          "next": "Identify and allow the legitimate transaction to finish; do not kill it blindly."
+        },
+        {
+          "when": "Repository metadata fails",
+          "observe": [
+            "dnf repolist --verbose",
+            "dnf makecache --refresh"
+          ],
+          "next": "Check the named repository URL, entitlement, DNS, proxy and time state."
+        },
+        {
+          "when": "Dependencies conflict",
+          "observe": [
+            "dnf repoquery --duplicates",
+            "dnf history list"
+          ],
+          "next": "Preserve the solver output and review package provenance before using remove, downgrade or distro-sync."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 8 dnf; man 8 rpm"
+    },
+    {
+      "id": "networkmanager",
+      "title": "NetworkManager connectivity",
+      "symptom": "A connection is down, has the wrong address, or activation interrupts reachability.",
+      "preconditions": [
+        "Maintain console or out-of-band access before changing the active management profile.",
+        "Record all saved and active connection profiles."
+      ],
+      "branches": [
+        {
+          "when": "The device is disconnected",
+          "observe": [
+            "nmcli device status",
+            "nmcli connection show --active"
+          ],
+          "next": "Identify the saved profile intended for the device before activation."
+        },
+        {
+          "when": "Address, route or DNS is wrong",
+          "observe": [
+            "nmcli -f all connection show <connection>",
+            "ip address show",
+            "ip route show",
+            "resolvectl status"
+          ],
+          "next": "Compare saved profile, active state and approved network plan; do not infer DNS from address configuration."
+        },
+        {
+          "when": "Activation caused lockout",
+          "observe": [
+            "nmcli connection show --active"
+          ],
+          "next": "Use console access to reactivate the captured prior profile."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 1 nmcli; man 8 NetworkManager"
+    },
+    {
+      "id": "firewalld",
+      "title": "Firewalld reachability",
+      "symptom": "A service is unreachable or a rule appears ineffective after a firewall change.",
+      "preconditions": [
+        "Record source and destination addresses, protocol, port and intended zone.",
+        "Keep an existing management session and console recovery path."
+      ],
+      "branches": [
+        {
+          "when": "Runtime and permanent state may differ",
+          "observe": [
+            "firewall-cmd --get-active-zones",
+            "firewall-cmd --list-all",
+            "firewall-cmd --permanent --list-all"
+          ],
+          "next": "Compare the exact zone and exact rule in both stores."
+        },
+        {
+          "when": "A rich rule was added",
+          "observe": [
+            "firewall-cmd --zone=<zone> --list-rich-rules",
+            "firewall-cmd --permanent --zone=<zone> --list-rich-rules"
+          ],
+          "next": "Recover with --remove-rich-rule using the exact original rule; do not add a contradictory rule."
+        },
+        {
+          "when": "The rule is present but traffic fails",
+          "observe": [
+            "ss -lntup",
+            "journalctl -b -u firewalld"
+          ],
+          "next": "Verify the service listener and network path before changing the firewall again."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 1 firewall-cmd; man 5 firewalld.richlanguage"
+    },
+    {
+      "id": "lvm-filesystem",
+      "title": "LVM or filesystem capacity",
+      "symptom": "A filesystem is full, an LV is missing, or storage layout differs from expectation.",
+      "preconditions": [
+        "Stop before any pvcreate, vgcreate, lvremove, filesystem creation or repair.",
+        "Record device identity, holders, mounts and LVM membership."
+      ],
+      "branches": [
+        {
+          "when": "Capacity is exhausted",
+          "observe": [
+            "df -hT",
+            "df -i",
+            "du -x -d 1 <mountpoint>"
+          ],
+          "next": "Determine whether blocks, inodes or deleted-open files are responsible before extending storage."
+        },
+        {
+          "when": "LVM layout is unclear",
+          "observe": [
+            "lsblk -fp",
+            "pvs",
+            "vgs",
+            "lvs -a -o +devices"
+          ],
+          "next": "Match serial, path and membership to inventory before any write."
+        },
+        {
+          "when": "Filesystem errors are reported",
+          "observe": [
+            "findmnt <mountpoint>",
+            "journalctl -b -k"
+          ],
+          "next": "Stop writes and use the filesystem-specific, offline recovery runbook."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 8 lvs; man 8 findmnt; filesystem-specific repair documentation"
+    },
+    {
+      "id": "selinux-avc",
+      "title": "SELinux AVC denial",
+      "symptom": "An operation fails and the audit log contains an AVC denial.",
+      "preconditions": [
+        "Keep SELinux enforcing while diagnosing.",
+        "Record the exact application action, path and domain."
+      ],
+      "branches": [
+        {
+          "when": "A recent denial matches the failure",
+          "observe": [
+            "ausearch -m AVC,USER_AVC -ts recent",
+            "sealert -a /var/log/audit/audit.log"
+          ],
+          "next": "Correct labeling or supported policy configuration; review suggested policy changes rather than applying them blindly."
+        },
+        {
+          "when": "A file label appears wrong",
+          "observe": [
+            "ls -lZ <path>",
+            "matchpathcon -V <path>"
+          ],
+          "next": "Use restorecon only after confirming the expected label and file purpose."
+        },
+        {
+          "when": "No matching denial exists",
+          "observe": [
+            "getenforce",
+            "journalctl -b"
+          ],
+          "next": "Continue diagnosing the application; do not disable SELinux to manufacture a different symptom."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 8 ausearch; man 8 restorecon; Red Hat SELinux guide"
+    },
+    {
+      "id": "time-sync",
+      "title": "Chrony and time synchronization",
+      "symptom": "The clock is unsynchronized, sources are unreachable, or skew breaks authentication.",
+      "preconditions": [
+        "Record the current clock, timezone and configured sources.",
+        "Large time steps can disrupt applications; do not force one without an approved window."
+      ],
+      "branches": [
+        {
+          "when": "Synchronization status is unknown",
+          "observe": [
+            "timedatectl status",
+            "chronyc tracking",
+            "chronyc sources -v"
+          ],
+          "next": "Identify whether chronyd is running and whether any source is selectable."
+        },
+        {
+          "when": "Sources are unreachable",
+          "observe": [
+            "chronyc activity",
+            "journalctl -b -u chronyd"
+          ],
+          "next": "Check DNS, route and UDP/123 policy for the configured source."
+        },
+        {
+          "when": "Configuration is suspect",
+          "observe": [
+            "chronyd -p"
+          ],
+          "next": "Review parsed configuration before restart; preserve the prior file."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 1 chronyc; man 8 chronyd; man 5 chrony.conf"
+    },
+    {
+      "id": "rsyslog",
+      "title": "Rsyslog forwarding and receipt",
+      "symptom": "Local logs exist but remote receipt is absent or delayed.",
+      "preconditions": [
+        "Record expected source identity, destination, protocol and port.",
+        "Do not include secrets or sensitive log bodies in tickets."
+      ],
+      "branches": [
+        {
+          "when": "Configuration syntax may be invalid",
+          "observe": [
+            "rsyslogd -N1"
+          ],
+          "next": "Fix reported syntax errors before reload."
+        },
+        {
+          "when": "The service is not forwarding",
+          "observe": [
+            "systemctl status rsyslog",
+            "journalctl -b -u rsyslog",
+            "ss -ntup"
+          ],
+          "next": "Verify queue/action errors and destination reachability."
+        },
+        {
+          "when": "Transport works but events are not searchable",
+          "observe": [
+            "logger -t mcr-validation <approved-test-token>"
+          ],
+          "next": "Confirm source-attributed receipt at the collector; a healthy sender alone is not end-to-end evidence."
+        }
+      ],
+      "escalate": "Stop and preserve observed output when device identity, recovery access, approved state, or change authority is uncertain.",
+      "source": "man 8 rsyslogd; man 1 logger; RHEL logging documentation"
+    }
+  ]
+}

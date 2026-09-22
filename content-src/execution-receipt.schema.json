@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "md-code-red/execution-receipt/v1",
+  "title": "MD CODE RED execution receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "tool_version", "entry_id", "rhel_version", "target", "operator", "executed_at", "ticket",
+    "command", "command_sha256", "artifact_sha256", "content_fingerprint",
+    "exit_code", "stdout", "stdout_sha256", "stderr", "stderr_sha256",
+    "verification", "attestation"
+  ],
+  "properties": {
+    "schema": {"const": "md-code-red/execution-receipt/v1"},
+    "tool_version": {"type": "string", "minLength": 1},
+    "entry_id": {"type": "string", "minLength": 1},
+    "rhel_version": {"enum": ["7", "8", "9", "10"]},
+    "target": {"type": "string", "minLength": 1},
+    "operator": {"type": "string", "minLength": 1},
+    "executed_at": {"type": "string", "format": "date-time"},
+    "ticket": {"type": "string", "minLength": 1},
+    "command": {"type": "string"},
+    "command_sha256": {"$ref": "#/$defs/sha256"},
+    "artifact_sha256": {"$ref": "#/$defs/sha256"},
+    "content_fingerprint": {"$ref": "#/$defs/sha256"},
+    "exit_code": {"type": "integer"},
+    "stdout": {"type": "string"},
+    "stdout_sha256": {"$ref": "#/$defs/sha256"},
+    "stderr": {"type": "string"},
+    "stderr_sha256": {"$ref": "#/$defs/sha256"},
+    "verification": {"type": "string", "minLength": 1},
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_was_executed", "outputs_are_actual", "statement"],
+      "properties": {
+        "command_was_executed": {"const": true},
+        "outputs_are_actual": {"const": true},
+        "statement": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -41,6 +41,7 @@
   "gen-fw-open-port": {
    "pins": "--add-rich-rule= carries the composed rule as one single-quoted word; the rule's own grammar is checked by the rich-rule oracle",
    "values": {
+    "zone": "public",
     "family": "ipv4",
     "source": "10.1.0.0/16",
     "port": "8443",
@@ -49,19 +50,21 @@
    },
    "blast": "yellow",
    "flags": [
+    "--zone",
     "--permanent",
     "--add-rich-rule"
    ],
    "commands": {
-    "7": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
-    "8": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
-    "9": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
-    "10": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'"
+    "7": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "8": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "9": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'",
+    "10": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" port port=\"8443\" protocol=\"tcp\" accept'"
    }
   },
   "gen-fw-allow-service": {
    "pins": "the service element is composed into the rich rule, not passed as --add-service (MCR-SEC-019 is about this generator's citation)",
    "values": {
+    "zone": "public",
     "family": "ipv4",
     "source": "10.1.0.0/16",
     "svc": "ssh",
@@ -69,14 +72,15 @@
    },
    "blast": "yellow",
    "flags": [
+    "--zone",
     "--permanent",
     "--add-rich-rule"
    ],
    "commands": {
-    "7": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
-    "8": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
-    "9": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
-    "10": "firewall-cmd --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'"
+    "7": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "8": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "9": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'",
+    "10": "firewall-cmd --zone='public' --permanent --add-rich-rule='rule family=\"ipv4\" source address=\"10.1.0.0/16\" service name=\"ssh\" accept'"
    }
   },
   "gen-nmcli-static-ipv4": {

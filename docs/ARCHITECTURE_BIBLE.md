@@ -31,7 +31,7 @@ check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As built (`v1.0.0-alpha.4`, 2026-09-22): 199 curated command
+As built (`v1.0.0-alpha.5`, 2026-09-22): 199 curated command
 entries across 102 tools (43 guided-form generators and 156 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
@@ -77,7 +77,7 @@ explanation gaps without treating mined reference material as curated content.
                               |
                               v
                           qa.py
-              (25 gates + JS syntax check against
+              (26 gates + JS syntax check against
                the SHIPPED artifact, independent
                of build.py's own validation)
                               |
@@ -332,7 +332,7 @@ loses focus mid-word (Section 15).
 
 ---
 
-## 8. Export as Evidence
+## 8. Export command and control reference
 
 `exportEvidence()` gathers the current rendered result plus the matched STIG row
 and rule (never recomputing the command) and hands them to `formatEvidenceText()`
@@ -810,10 +810,10 @@ not track (`docs/QA_GATES.md`'s "Clean rebuild" section says why):
 
 1. `git clean -fdx dist && python3 build.py` -- clean build, no schema errors,
    prints a sha256 and a content fingerprint.
-2. `python3 qa.py` -- all 25 gates plus `JS` PASS (Node required for Q18/Q19;
+2. `python3 qa.py` -- all 26 gates plus `JS` PASS (Node required for Q18/Q19;
    `JS` correctly downgrades to PENDING without it).
-3. `python3 -m unittest discover -s tests` -- 204 tests OK on this build.
-4. `node tests/hostile_harness.js` -- 81,577 checks, 0 FAILED.
+3. `python3 -m unittest discover -s tests` -- the complete unit suite passes.
+4. `node tests/hostile_harness.js` -- the report completes with 0 failures.
 5. Build twice from the same sources (`git clean -fdx dist && python3 build.py`
    a second time on the same day) and diff the two artifacts -- they should be
    byte-identical (`build.py` has no wall-clock dependency beyond the build date,
