@@ -28,7 +28,8 @@
   --accent:#b45309; --success:#059669; --warning:#b45309; --danger:#dc2626;
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
   --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#f59e0b;
-  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-ui:"Trebuchet MS","Liberation Sans",sans-serif;
+  --font-display:"DejaVu Serif","Liberation Serif",Georgia,serif;
   --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
   /* --rail-w was 48px (icon-only, label revealed on hover/focus). Problem 3
      (2026-09-17): the rail now shows its label text unconditionally, so the
@@ -71,13 +72,27 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
     grid-template-rows:minmax(0,1fr) 220px var(--statusbar-h);
     grid-template-areas:"rail sidebar editor" "rail sidebar inspector" "status status status";
   }
+  body[data-sidebar="off"]{
+    grid-template-columns:var(--rail-w) minmax(0,1fr);
+    grid-template-areas:"rail editor" "rail inspector" "status status";
+  }
+  body[data-inspector="off"]{
+    grid-template-columns:var(--rail-w) 200px minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) var(--statusbar-h);
+    grid-template-areas:"rail sidebar editor" "status status status";
+  }
+  body[data-sidebar="off"][data-inspector="off"]{
+    grid-template-columns:var(--rail-w) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) var(--statusbar-h);
+    grid-template-areas:"rail editor" "status status";
+  }
 }
 /* Never outline:none without a replacement (UI spec §6) — :focus is the ESR
    fallback for engines that predate :focus-visible. */
 :focus{outline:2px solid var(--focus-ring); outline-offset:1px;}
 :focus-visible{outline:2px solid var(--focus-ring); outline-offset:1px;}
 #rail{grid-area:rail; background:var(--bg-surface); border-right:1px solid var(--border-primary);
-  display:flex; flex-direction:column; align-items:stretch; gap:2px; padding:6px 6px;}
+  display:flex; flex-direction:column; align-items:stretch; gap:3px; padding:8px 7px;}
 #sidebar{grid-area:sidebar; background:var(--bg-surface); border-right:1px solid var(--border-primary);
   overflow:auto; padding:10px;}
 #editor{grid-area:editor; background:var(--bg-editor); overflow:auto; padding:14px 16px; min-width:0;}
@@ -86,6 +101,22 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
 #statusbar{grid-area:status; background:var(--bg-surface); border-top:1px solid var(--border-primary);
   display:flex; align-items:center; gap:10px; padding:0 10px; font-size:12px;
   color:var(--text-secondary); overflow:hidden; white-space:nowrap;}
+.skiplink{position:fixed; left:12px; top:8px; z-index:100; padding:8px 12px;
+  border:2px solid var(--focus-ring); border-radius:5px; background:var(--bg-surface);
+  color:var(--text-primary); transform:translateY(-160%);}
+.skiplink:focus{transform:translateY(0);}
+.railbrand{padding:4px 8px 12px; margin:0 0 5px; border-bottom:1px solid var(--border-primary);}
+.railbrand strong{display:block; font-family:var(--font-display); font-size:17px; line-height:1;
+  letter-spacing:.025em;}
+.railbrand strong span{color:var(--danger);}
+.railbrand small{display:block; margin-top:6px; color:var(--text-muted); font-family:var(--font-mono);
+  font-size:9px; letter-spacing:.12em; text-transform:uppercase;}
+.quicksearch{width:100%; min-height:34px; margin:0 0 5px; border:1px solid var(--border-primary);
+  border-radius:6px; background:var(--bg-editor); color:var(--text-secondary); font:inherit;
+  font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  padding:0 8px; text-align:left;}
+.quicksearch:hover{border-color:var(--accent); color:var(--text-primary);}
+.quicksearch kbd{font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
 #palette[hidden]{display:none;}
 #palette{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex;
   align-items:flex-start; justify-content:center; padding-top:12vh; z-index:50;}
@@ -100,7 +131,8 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; padding:0 8px;
   text-align:left;}
 .railbtn:hover{border-color:var(--border-primary); color:var(--text-primary);}
-.railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);}
+.railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);
+  background:linear-gradient(90deg,rgba(180,83,9,.10),transparent 75%);}
 /* Founder alpha feedback (2026-09-17), problem 3: "the left rail's icons [...]
    read as bare symbols with no meaning." The glyph (">", "$", etc.) and the
    aria-label/title always named each rail item, but .lbl used to sit
@@ -117,15 +149,18 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   background:transparent; color:var(--text-secondary); font:inherit; cursor:pointer;}
 .seg button[aria-pressed="true"]{border-color:var(--accent); color:var(--accent); font-weight:600;}
 .card{border:1px solid var(--border-primary); border-radius:8px; background:var(--bg-surface);
-  padding:12px 14px; margin:0 0 12px;}
-.card h2{margin:0 0 6px; font-size:15px;}
+  padding:14px 16px; margin:0 0 12px; box-shadow:0 1px 0 rgba(0,0,0,.03);}
+.card h2{margin:0 0 7px; font-family:var(--font-display); font-size:18px; line-height:1.25;}
 .muted{color:var(--text-muted);}
 code,pre{font-family:var(--font-mono);}
 .statusitem{display:inline-flex; align-items:center; gap:5px;}
 .statusitem+.statusitem::before{content:"\00b7"; color:var(--text-muted); margin-right:5px;}
-.themebtn{margin-left:auto; border:1px solid var(--border-primary); border-radius:5px;
+.statusactions{margin-left:auto; display:flex; align-items:center; gap:5px;}
+.themebtn,.panelbtn{border:1px solid var(--border-primary); border-radius:5px;
   background:transparent; color:var(--text-secondary); font:inherit; font-size:12px;
   padding:1px 8px; cursor:pointer;}
+.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);}
+.themebtn:hover,.panelbtn:hover{border-color:var(--accent); color:var(--text-primary);}
 .toast{color:var(--accent); font-weight:600;}
 /* list rows — tools, entries, palette results. Arrow keys move between them. */
 .list{list-style:none; margin:0 0 12px; padding:0;}
@@ -258,6 +293,38 @@ code,pre{font-family:var(--font-mono);}
 .compare{width:100%;border-collapse:collapse;font-size:12px}.compare th,.compare td{text-align:left;vertical-align:top;padding:6px;border:1px solid var(--border-primary)}
 .learncard{border-left:3px solid var(--accent);padding:8px 10px;margin:8px 0;background:var(--bg-editor)}
 .risknote{padding:7px 9px;border:1px solid var(--border-primary);border-radius:5px;margin:8px 0}
+@media (max-width:720px){
+  html,body{height:auto; min-height:100%;}
+  body,body[data-sidebar="off"],body[data-inspector="off"],
+  body[data-sidebar="off"][data-inspector="off"]{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto auto auto auto;
+    grid-template-areas:"rail" "sidebar" "editor" "inspector" "status";
+  }
+  #rail{position:sticky; top:0; z-index:20; flex-direction:row; align-items:center;
+    overflow-x:auto; overscroll-behavior-x:contain; padding:6px; border-right:0;
+    border-bottom:1px solid var(--border-primary); box-shadow:0 2px 10px rgba(0,0,0,.08);}
+  .railbrand{flex:0 0 auto; min-width:116px; padding:3px 9px; margin:0 3px 0 0;
+    border-bottom:0; border-right:1px solid var(--border-primary);}
+  .railbrand strong{font-size:14px;}.railbrand small{display:none;}
+  .quicksearch{flex:0 0 auto; width:auto; min-height:40px; margin:0; gap:10px;}
+  .railbtn{flex:0 0 auto; width:auto; min-height:40px; height:40px; padding:0 10px;}
+  .railbtn[aria-current="true"]{background:rgba(180,83,9,.10);}
+  #sidebar{max-height:42vh; border-right:0; border-bottom:1px solid var(--border-primary);}
+  #editor{overflow:visible; padding:12px;}
+  #inspector{overflow:visible; border-left:0; border-top:1px solid var(--border-primary);}
+  #statusbar{min-height:var(--statusbar-h); height:auto; flex-wrap:wrap; white-space:normal;
+    overflow:visible; padding:6px 10px;}
+  .statusactions{width:100%; margin-left:0;}
+  .themebtn,.panelbtn{min-height:36px; flex:1;}
+  body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:none;}
+}
+@media (max-width:440px){
+  .railbtn .glyph{display:none;}
+  .railbtn{padding:0 9px;}
+  .card{padding:12px;}
+  .toolbar>.btn,.toolbar>.favbtn{min-height:40px; flex:1 1 auto;}
+}
 @media print{
   body{display:block;}
   #rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
@@ -269,11 +336,16 @@ code,pre{font-family:var(--font-mono);}
 </style>
 </head>
 <body data-sidebar="on" data-inspector="on">
+<a class="skiplink" href="#editor">Skip to command workspace</a>
 
 <!-- RAIL — activity rail. Founder alpha feedback (2026-09-17): the glyph plus
      label is now always visible, not revealed only on hover/focus (UI spec §2
      as amended, problem 3) -- see .railbtn/.railbtn .lbl in the stylesheet. -->
 <nav id="rail" role="navigation" aria-label="Activity rail">
+  <div class="railbrand" aria-label="MD CODE RED RHEL field console">
+    <strong>MD <span>CODE RED</span></strong><small>RHEL field console</small>
+  </div>
+  <button type="button" class="quicksearch" data-action="palette" aria-label="Search all tools, commands, STIGs, CCIs, and controls"><span>Search all</span><kbd>Ctrl K</kbd></button>
   <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Command Builder</span></button>
   <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
   <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
@@ -5074,8 +5146,15 @@ function renderStatusBar(){
   parts.push("<span class=\"statusitem\">"+esc(APP_NAME)+" "+esc(APP_VERSION)+"</span>");
   parts.push("<span class=\"statusitem\">built "+esc(APP_BUILD_DATE)+"</span>");
   parts.push("<span class=\"statusitem\">"+esc(APP_CLASSIFICATION)+"</span>");
-  parts.push("<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\"Toggle dark and light theme\">Theme: "+
-             esc(THEME.resolved()==="dark"?"Dark":"Light")+"</button>");
+  parts.push("<span class=\"statusactions\">"+
+             "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-sidebar\" aria-pressed=\""+
+             escapeAttr(document.body.getAttribute("data-sidebar")==="on"?"true":"false")+
+             "\" aria-label=\"Show or hide the command navigator\">Navigator</button>"+
+             "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-inspector\" aria-pressed=\""+
+             escapeAttr(document.body.getAttribute("data-inspector")==="on"?"true":"false")+
+             "\" aria-label=\"Show or hide the command inspector\">Inspector</button>"+
+             "<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\"Toggle dark and light theme\">Theme: "+
+             esc(THEME.resolved()==="dark"?"Dark":"Light")+"</button></span>");
   el("statusbar").innerHTML=parts.join("");
 }
 
@@ -5338,6 +5417,7 @@ function togglePanel(which){
     document.body.setAttribute("data-inspector",
       document.body.getAttribute("data-inspector")==="off"?"on":"off");
   }
+  renderStatusBar();
 }
 
 function renderAll(){
@@ -5402,6 +5482,9 @@ document.addEventListener("click",function(ev){
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
+  if(action==="palette"){ openPalette(); return; }
+  if(action==="panel-sidebar"){ togglePanel("sidebar"); return; }
+  if(action==="panel-inspector"){ togglePanel("inspector"); return; }
   if(action==="theme"){ THEME.toggle(); return; }
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="ref-ack"){ STATE.refAck=!!a.checked; renderEditor(); return; }

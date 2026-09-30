@@ -8,7 +8,7 @@ last_verified: 2026-09-22
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the development build (`dist/md-code-red_v1.0.0-alpha.5.html`, 199 curated
+describes what the development build (`dist/md-code-red_v1.0.0-alpha.6-dev.html`, 199 curated
 command entries, 102 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
@@ -261,7 +261,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-alpha.5 -- RHEL 8
+# MD CODE RED v1.0.0-alpha.6-dev -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -324,6 +324,15 @@ in hand and re-export it; do not attach an evidence block whose fingerprint you
 cannot match to the file that produced it.
 
 ### Keyboard Operation
+
+The activity rail now begins with a visible **Search all** button. It opens the
+same typed command palette as `/` or `Ctrl+K` / `Cmd+K`, so mouse and touch users
+do not need to discover a shortcut first. The status bar includes **Navigator**
+and **Inspector** buttons; their highlighted pressed state means the panel is
+open. Below 720 pixels the activity rail stays at the top and scrolls sideways,
+while the navigator, command workspace, inspector, and status appear in that
+reading order. Keyboard users can press `Tab` once from the top of the document
+to reveal **Skip to command workspace**.
 
 No mouse is required. Every binding below comes from one table in the app script
 (`KEYMAP`) read by one delegated `keydown` listener, so what this page says and what

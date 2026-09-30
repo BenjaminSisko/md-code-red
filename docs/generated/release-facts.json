@@ -1,5 +1,5 @@
 {
-  "build_date": "2026-09-22",
+  "build_date": "2026-09-30",
   "curated_entries": 199,
   "default_rhel": "8",
   "flag_rows": {
@@ -18,5 +18,5 @@
     "8": 9,
     "9": 0
   },
-  "version": "v1.0.0-alpha.5"
+  "version": "v1.0.0-alpha.6-dev"
 }

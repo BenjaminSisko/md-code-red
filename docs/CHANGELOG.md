@@ -2,6 +2,23 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
+## Unreleased -- v1.0.0-alpha.6-dev
+
+### Changed -- Responsive operations-console UX
+
+- Added an always-visible **Search all** control for tools, commands, STIGs,
+  CCIs, and NIST controls, without changing the existing keyboard shortcuts.
+- Added visible **Navigator** and **Inspector** controls whose pressed state
+  reports whether each panel is open.
+- Reworked the layout below 720 pixels into a single-column reading order with
+  a horizontally scrollable, sticky activity rail and larger touch targets.
+- Fixed the tablet layout so hiding the inspector also removes its empty row.
+- Added a keyboard skip link, clearer product identity, stronger command-title
+  hierarchy, and focused industrial typography while preserving the offline,
+  zero-asset, single-file design.
+- Archived the immutable alpha.5 HTML, SHA-256 sidecar, and provenance manifest
+  before starting alpha.6 development.
+
 ## v1.0.0-alpha.5 - 2026-09-22
 
 ### Fixed -- Operational recovery and administrative accuracy
