@@ -26,6 +26,7 @@
   --bg-app:#fafafa; --bg-surface:#ffffff; --bg-editor:#f6f8fa; --bg-gutter:#eef1f6;
   --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#8494ab;
   --accent:#b45309; --success:#059669; --warning:#b45309; --danger:#dc2626;
+  --brand:#991b1b; --selected-fill:rgba(180,83,9,.10);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
   --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#f59e0b;
   --font-ui:"Trebuchet MS","Liberation Sans",sans-serif;
@@ -42,6 +43,7 @@
     --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
     --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
     --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+    --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
     --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
     --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
   }
@@ -50,6 +52,7 @@
   --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
   --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
   --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+  --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
   --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
 }
@@ -106,17 +109,17 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   color:var(--text-primary); transform:translateY(-160%);}
 .skiplink:focus{transform:translateY(0);}
 .railbrand{padding:4px 8px 12px; margin:0 0 5px; border-bottom:1px solid var(--border-primary);}
-.railbrand strong{display:block; font-family:var(--font-display); font-size:17px; line-height:1;
+.railbrand h1{display:block; margin:0; font-family:var(--font-display); font-size:17px; line-height:1;
   letter-spacing:.025em;}
-.railbrand strong span{color:var(--danger);}
-.railbrand small{display:block; margin-top:6px; color:var(--text-muted); font-family:var(--font-mono);
-  font-size:9px; letter-spacing:.12em; text-transform:uppercase;}
+.railbrand h1 span{color:var(--brand);}
+.railbrand small{display:block; margin-top:6px; color:var(--text-secondary); font-family:var(--font-mono);
+  font-size:11px; line-height:1.2; letter-spacing:.08em; text-transform:uppercase;}
 .quicksearch{width:100%; min-height:34px; margin:0 0 5px; border:1px solid var(--border-primary);
   border-radius:6px; background:var(--bg-editor); color:var(--text-secondary); font:inherit;
-  font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
   padding:0 8px; text-align:left;}
 .quicksearch:hover{border-color:var(--accent); color:var(--text-primary);}
-.quicksearch kbd{font-family:var(--font-mono); font-size:10px; color:var(--text-muted);}
+.quicksearch kbd{font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);}
 #palette[hidden]{display:none;}
 #palette{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex;
   align-items:flex-start; justify-content:center; padding-top:12vh; z-index:50;}
@@ -132,7 +135,7 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   text-align:left;}
 .railbtn:hover{border-color:var(--border-primary); color:var(--text-primary);}
 .railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);
-  background:linear-gradient(90deg,rgba(180,83,9,.10),transparent 75%);}
+  background:linear-gradient(90deg,var(--selected-fill),transparent 75%);}
 /* Founder alpha feedback (2026-09-17), problem 3: "the left rail's icons [...]
    read as bare symbols with no meaning." The glyph (">", "$", etc.) and the
    aria-label/title always named each rail item, but .lbl used to sit
@@ -159,7 +162,8 @@ code,pre{font-family:var(--font-mono);}
 .themebtn,.panelbtn{border:1px solid var(--border-primary); border-radius:5px;
   background:transparent; color:var(--text-secondary); font:inherit; font-size:12px;
   padding:1px 8px; cursor:pointer;}
-.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);}
+.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);
+  background:var(--selected-fill); font-weight:600;}
 .themebtn:hover,.panelbtn:hover{border-color:var(--accent); color:var(--text-primary);}
 .toast{color:var(--accent); font-weight:600;}
 /* list rows — tools, entries, palette results. Arrow keys move between them. */
@@ -287,47 +291,86 @@ code,pre{font-family:var(--font-mono);}
 .aboutblock{border-left:3px solid var(--border-primary); padding:2px 0 2px 10px;
   margin:0 0 12px; font-size:12px; white-space:pre-wrap;}
 .fieldhelp{margin:4px 0 8px;padding:7px 9px;border-left:3px solid var(--accent);background:var(--bg-editor);font-size:12px;line-height:1.45;}
-.fieldhelp p{margin:2px 0}.opplan{margin:14px 0;border:1px solid var(--border-primary);border-radius:6px;overflow:hidden}
+.fieldhelp p{margin:2px 0}.fieldhelp>p:first-child{color:var(--text-secondary)}
+.fieldhelp details{margin-top:5px}.fieldhelp summary{cursor:pointer;color:var(--accent);font-weight:600}
+.fieldhelp details p{margin:5px 0 0}
+.opplan{margin:14px 0;border:1px solid var(--border-primary);border-radius:6px;overflow:hidden}
 .planstep{padding:10px 12px;border-top:1px solid var(--border-primary)}.planstep:first-child{border-top:0}
 .planstep h3{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.planstep pre{white-space:pre-wrap;margin:5px 0}
 .compare{width:100%;border-collapse:collapse;font-size:12px}.compare th,.compare td{text-align:left;vertical-align:top;padding:6px;border:1px solid var(--border-primary)}
 .learncard{border-left:3px solid var(--accent);padding:8px 10px;margin:8px 0;background:var(--bg-editor)}
 .risknote{padding:7px 9px;border:1px solid var(--border-primary);border-radius:5px;margin:8px 0}
+/* Task-first home and selected-command workspace. These are presentation
+   surfaces over the existing curated IDs and currentResult(); they do not
+   change assembly, validation, evidence, or clipboard behavior. */
+.homehero{padding:24px;max-width:1040px;margin:0 auto;background:linear-gradient(135deg,var(--bg-surface),var(--bg-editor));}
+.homehero h2{font-size:28px;margin-bottom:8px}.homehero>p{max-width:68ch;font-size:15px;color:var(--text-secondary)}
+.homeactions{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}.homeactions .btn{min-height:44px;font-weight:700}
+.homegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:1040px;margin:0 auto 12px}
+.homepanel{border:1px solid var(--border-primary);border-radius:8px;background:var(--bg-surface);padding:16px}
+.homepanel h3{font:700 16px var(--font-display);margin:0 0 5px}.homepanel p{color:var(--text-secondary);margin:0 0 10px}
+.taskcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.taskcard{display:block;width:100%;min-height:64px;text-align:left;border:1px solid var(--border-primary);border-radius:7px;background:var(--bg-editor);color:var(--text-primary);padding:10px 12px;cursor:pointer}
+.taskcard:hover{border-color:var(--accent)}.taskcard strong{display:block}.taskcard span{display:block;margin-top:3px;color:var(--text-secondary);font-size:12px}
+.trustboundary{border-left:4px solid var(--accent);padding:10px 12px;background:var(--bg-editor);color:var(--text-secondary)}.trustboundary+.trustboundary{margin-top:10px}
+.taskcrumb{font:11px var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 7px}
+.tasktitle{font-size:24px!important;margin-bottom:5px!important}.workflowsteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:16px 0}
+.workflowsteps span{border-top:3px solid var(--border-primary);padding:7px 2px 0;color:var(--text-secondary);font-size:12px;font-weight:700}.workflowsteps span:first-child{border-color:var(--accent);color:var(--text-primary)}
+.builderworkspace{display:grid;grid-template-columns:minmax(260px,1fr) minmax(360px,1.1fr);gap:16px;align-items:start}
+.builderfields,.commandreview{min-width:0;border:1px solid var(--border-primary);border-radius:8px;background:var(--bg-surface);padding:16px}
+.builderfields{grid-column:1}.commandreview{grid-column:2;position:sticky;top:0}
+.builderfields>.region-label,.commandreview>.region-label{color:var(--text-secondary);font-weight:700}
+.trustbar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.trustfact{border:1px solid var(--border-primary);border-radius:999px;padding:3px 8px;font-size:11px;color:var(--text-secondary)}
+.trustfact.risk-green{border-color:var(--success)}.trustfact.risk-yellow{border-color:var(--warning)}.trustfact.risk-red{border-color:var(--danger)}
+.primaryaction{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;min-height:40px}
+.supportdetails{margin-top:12px;border-top:1px solid var(--border-primary)}.supportdetails>summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--text-primary)}
 @media (max-width:720px){
-  html,body{height:auto; min-height:100%;}
+  html,body{height:auto; min-height:100%; width:100%; max-width:100%; overflow-x:hidden;}
   body,body[data-sidebar="off"],body[data-inspector="off"],
   body[data-sidebar="off"][data-inspector="off"]{
     grid-template-columns:minmax(0,1fr);
     grid-template-rows:auto auto auto auto auto;
     grid-template-areas:"rail" "sidebar" "editor" "inspector" "status";
   }
-  #rail{position:sticky; top:0; z-index:20; flex-direction:row; align-items:center;
-    overflow-x:auto; overscroll-behavior-x:contain; padding:6px; border-right:0;
+  body[data-selection-open="true"],
+  body[data-selection-open="true"][data-sidebar="off"],
+  body[data-selection-open="true"][data-inspector="off"],
+  body[data-selection-open="true"][data-sidebar="off"][data-inspector="off"]{
+    grid-template-areas:"rail" "editor" "sidebar" "inspector" "status";
+  }
+  #rail{position:sticky; top:0; z-index:20; width:100%; max-width:100%; min-width:0; flex-direction:row; align-items:center;
+    flex-wrap:wrap; overflow-x:visible; padding:6px; border-right:0;
     border-bottom:1px solid var(--border-primary); box-shadow:0 2px 10px rgba(0,0,0,.08);}
-  .railbrand{flex:0 0 auto; min-width:116px; padding:3px 9px; margin:0 3px 0 0;
+  .railbrand{flex:0 1 98px; min-width:88px; padding:3px 7px; margin:0 2px 0 0;
     border-bottom:0; border-right:1px solid var(--border-primary);}
-  .railbrand strong{font-size:14px;}.railbrand small{display:none;}
-  .quicksearch{flex:0 0 auto; width:auto; min-height:40px; margin:0; gap:10px;}
-  .railbtn{flex:0 0 auto; width:auto; min-height:40px; height:40px; padding:0 10px;}
-  .railbtn[aria-current="true"]{background:rgba(180,83,9,.10);}
-  #sidebar{max-height:42vh; border-right:0; border-bottom:1px solid var(--border-primary);}
-  #editor{overflow:visible; padding:12px;}
-  #inspector{overflow:visible; border-left:0; border-top:1px solid var(--border-primary);}
+  .railbrand h1{font-size:14px;}.railbrand small{display:none;}
+  .quicksearch{flex:1 1 145px; width:auto; min-width:0; min-height:40px; margin:0; gap:8px;}
+  .railbtn{flex:1 1 78px; width:auto; min-width:0; min-height:40px; height:40px; padding:0 8px;}
+  .railbtn[aria-current="true"]{background:var(--selected-fill);}
+  #sidebar{max-height:42vh; max-width:100%; min-width:0; border-right:0; border-bottom:1px solid var(--border-primary);}
+  #editor{overflow:visible; max-width:100%; min-width:0; padding:12px; scroll-margin-top:132px;}
+  #inspector{overflow:visible; max-width:100%; min-width:0; border-left:0; border-top:1px solid var(--border-primary);}
   #statusbar{min-height:var(--statusbar-h); height:auto; flex-wrap:wrap; white-space:normal;
     overflow:visible; padding:6px 10px;}
   .statusactions{width:100%; margin-left:0;}
   .themebtn,.panelbtn{min-height:36px; flex:1;}
   body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:none;}
+  .seg{width:100%; min-width:0}.seg button{min-width:0}
+  .homehero,.homegrid,.homepanel,.taskcards{width:100%; max-width:100%; min-width:0}
+  .homehero{padding:18px 14px}.homehero h2{font-size:23px}.homegrid,.taskcards{grid-template-columns:minmax(0,1fr)}
+  .homepanel p,.taskcard span,.muted{overflow-wrap:anywhere}
+  .homeactions .btn{flex:1 1 100%;white-space:normal}
+  .builderworkspace{display:flex;flex-direction:column}.commandreview{order:1;position:static;width:100%}.builderfields{order:2;width:100%}
+  .workflowsteps{padding:8px 0;margin:8px 0}
 }
 @media (max-width:440px){
   .railbtn .glyph{display:none;}
-  .railbtn{padding:0 9px;}
+  .railbtn{flex-basis:70px;padding:0 7px;}
   .card{padding:12px;}
   .toolbar>.btn,.toolbar>.favbtn{min-height:40px; flex:1 1 auto;}
 }
 @media print{
   body{display:block;}
-  #rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
+  .skiplink,#rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
   #editor{background:none; color:#000;}
   .codeline .ln{background:none;}
   .print-only{display:block !important;}
@@ -335,37 +378,37 @@ code,pre{font-family:var(--font-mono);}
 .print-only{display:none;}
 </style>
 </head>
-<body data-sidebar="on" data-inspector="on">
+<body data-sidebar="on" data-inspector="off" data-selection-open="false">
 <a class="skiplink" href="#editor">Skip to command workspace</a>
 
 <!-- RAIL — activity rail. Founder alpha feedback (2026-09-17): the glyph plus
      label is now always visible, not revealed only on hover/focus (UI spec §2
      as amended, problem 3) -- see .railbtn/.railbtn .lbl in the stylesheet. -->
-<nav id="rail" role="navigation" aria-label="Activity rail">
-  <div class="railbrand" aria-label="MD CODE RED RHEL field console">
-    <strong>MD <span>CODE RED</span></strong><small>RHEL field console</small>
+<nav id="rail" role="navigation" aria-label="Primary navigation">
+  <div class="railbrand">
+    <h1>MD <span>CODE RED</span></h1><small>RHEL field console</small>
   </div>
   <button type="button" class="quicksearch" data-action="palette" aria-label="Search all tools, commands, STIGs, CCIs, and controls"><span>Search all</span><kbd>Ctrl K</kbd></button>
-  <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Command Builder</span></button>
-  <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
-  <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
-  <button type="button" class="railbtn" data-rail="git" aria-label="Git Command Generator" title="Git Command Generator (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">G</span><span class="lbl">Git</span></button>
-  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
-  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference Commands" title="Reference Commands (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">?</span><span class="lbl">Reference</span></button>
+  <button type="button" class="railbtn" data-rail="favorites" aria-label="Home" title="Home (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">H</span><span class="lbl">Home</span></button>
+  <button type="button" class="railbtn" data-rail="builder" aria-label="Build reviewed commands" title="Build reviewed commands (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Build</span></button>
+  <button type="button" class="railbtn" data-rail="stig" aria-label="Compliance search" title="Compliance search (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">C</span><span class="lbl">Compliance</span></button>
+  <button type="button" class="railbtn" data-rail="ansible" aria-label="Build Ansible automation" title="Build Ansible automation (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
+  <button type="button" class="railbtn" data-rail="git" aria-label="Build Git commands" title="Build Git commands (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">G</span><span class="lbl">Git</span></button>
+  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference library" title="Reference library (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">L</span><span class="lbl">Library</span></button>
   <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+7)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
 </nav>
 
 <!-- SIDEBAR — context panel for the active rail tool -->
-<aside id="sidebar" role="complementary" aria-label="Sidebar">
+<aside id="sidebar" role="complementary" aria-label="Command navigator">
   <p class="region-label">RHEL version</p>
   <div class="seg" id="version-seg" role="group" aria-label="RHEL version selector"></div>
   <div id="sidebar-body"><p class="muted">Reading the embedded content island.</p></div>
 </aside>
 
 <!-- EDITOR — the generated command, with gutter -->
-<main id="editor" role="main" aria-label="Editor">
+<main id="editor" role="main" aria-label="Command workspace" tabindex="-1">
   <div id="blast-banner"></div>
-  <div class="card" id="editor-card" aria-live="polite" aria-atomic="false">
+  <div class="card" id="editor-card">
     <h2>Loading</h2>
     <p class="muted" id="editor-empty">Reading the embedded content island.</p>
   </div>
@@ -383,7 +426,7 @@ code,pre{font-family:var(--font-mono);}
 </main>
 
 <!-- INSPECTOR — flag explanations, badges, provenance -->
-<aside id="inspector" role="complementary" aria-label="Inspector">
+<aside id="inspector" role="complementary" aria-label="Command safety and evidence">
   <p class="region-label">Inspector</p>
   <!-- CR-T-26: renderStigPanel() owns this sink exclusively. -->
   <div id="stig-panel"></div>
@@ -391,14 +434,14 @@ code,pre{font-family:var(--font-mono);}
 </aside>
 
 <!-- STATUSBAR — version state, pinned STIG releases, tool version -->
-<footer id="statusbar" role="contentinfo" aria-label="Status bar"></footer>
+<footer id="statusbar" role="contentinfo" aria-label="Application status and controls"></footer>
 
 <!-- PALETTE — command palette overlay (/ or Ctrl/Cmd+K) -->
 <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
   <div class="panel">
     <label class="region-label" for="palette-input">Search tools and commands</label>
-    <input id="palette-input" type="text" autocomplete="off" spellcheck="false"
-           aria-controls="palette-results" aria-describedby="palette-help"
+    <input id="palette-input" type="text" role="combobox" autocomplete="off" spellcheck="false"
+           aria-autocomplete="list" aria-expanded="false" aria-controls="palette-list" aria-describedby="palette-help"
            placeholder="Tool name or command intent">
     <p class="region-label" id="palette-help">Up and down arrows move, Enter opens, Esc closes</p>
     <div id="palette-results"></div>
@@ -409,7 +452,7 @@ code,pre{font-family:var(--font-mono);}
      <pre> here is the SAME string doCopy()'s clipboard rule requires: what is
      previewed is exactly and only what a Copy button on this panel copies
      (threat-model-v1 §9, MCR-SEC-003's rule applied to the exporter). -->
-<div id="evidence-modal" role="dialog" aria-modal="true" aria-label="Export as evidence" hidden>
+<div id="evidence-modal" role="dialog" aria-modal="true" aria-label="Export command and control reference" hidden>
   <div class="panel" id="evidence-modal-body"></div>
 </div>
 
@@ -3028,7 +3071,7 @@ function instructionIsBound(text){
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
-           rail:"builder",toolId:null,entryId:null,line:0,acked:false,
+           rail:"favorites",toolId:null,entryId:null,line:0,acked:false,
            toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],paletteGroups:[],
            formValues:{},
            /* CR-T-26: a STIG rule opened from search with no associated command. */
@@ -3703,8 +3746,25 @@ function exportEvidence(){
     toast("Nothing to export — select a command or a STIG rule first.");
     return;
   }
+  EVIDENCE_OPENER=document.activeElement;
   STATE.evidenceOpen=true;
+  setEvidenceBackgroundInert(true);
   renderEvidenceModal();
+}
+var EVIDENCE_OPENER=null,EVIDENCE_INERTED=[];
+function setEvidenceBackgroundInert(on){
+  var modal=el("evidence-modal"),children=document.body&&document.body.children?document.body.children:[],i,node;
+  if(on){
+    EVIDENCE_INERTED=[];
+    for(i=0;i<children.length;i++){
+      node=children[i];
+      if(node===modal) continue;
+      if("inert" in node){ node.inert=true; EVIDENCE_INERTED.push(node); }
+    }
+  }else{
+    for(i=0;i<EVIDENCE_INERTED.length;i++){ EVIDENCE_INERTED[i].inert=false; }
+    EVIDENCE_INERTED=[];
+  }
 }
 function renderEvidenceModal(){
   if(!STATE.evidenceOpen){
@@ -3741,12 +3801,20 @@ function renderEvidenceModal(){
   html+="</div>";
   el("evidence-modal-body").innerHTML=html;
   el("evidence-modal").hidden=false;
+  if(!el("evidence-modal").contains(document.activeElement)){
+    var first=el("evidence-modal-body").querySelector("button");
+    if(first) first.focus();
+  }
 }
 function closeEvidenceModal(){
   STATE.evidenceOpen=false;
   STATE._evidenceText=null;
   el("evidence-modal").hidden=true;
   el("evidence-modal-body").innerHTML="";
+  setEvidenceBackgroundInert(false);
+  var back=EVIDENCE_OPENER;
+  EVIDENCE_OPENER=null;
+  if(back&&back!==document.body&&back.focus&&document.documentElement.contains(back)) back.focus();
 }
 function doCopyEvidence(){
   if(!STATE._evidenceText){ toast("Nothing to copy."); return; }
@@ -3960,7 +4028,9 @@ function entryGateInfo(e){
    trusted, let alone rendered). An id that no longer resolves — an older
    build's favorite — is silently skipped rather than shown blank. */
 function renderFavoritesSidebar(){
-  var html="<p class=\"region-label\">Favorites</p>";
+  var html="<p class=\"region-label\">Home</p>";
+  html+="<p class=\"muted\">Start from an outcome, return to saved work, or use Search all. Reviewed tasks stay separate from the Library's mined reference text.</p>";
+  html+="<p class=\"region-label\">Favorites</p>";
   var i,id,entry,tool;
   if(!STATE.favorites.length){
     html+="<p class=\"muted\">No favorites yet. Open a command and use the Favorite button in its toolbar.</p>";
@@ -3998,6 +4068,47 @@ function renderFavoritesSidebar(){
   }
   el("sidebar-body").innerHTML=html;
 }
+function renderHome(){
+  var html="<section class=\"homehero\"><p class=\"taskcrumb\">Offline · deterministic · RHEL "+esc(STATE.version)+"</p>"+
+           "<h2>What do you need to do?</h2>"+
+           "<p>Choose a reviewed task by outcome. MD CODE RED keeps the exact command, release, risk, source, verification, and recovery guidance together.</p>"+
+           "<div class=\"homeactions\"><button type=\"button\" class=\"btn primaryaction\" data-action=\"palette\">Find a reviewed task</button>"+
+           "<button type=\"button\" class=\"btn\" data-rail=\"builder\">Browse all reviewed commands</button>"+
+           "<button type=\"button\" class=\"btn\" data-rail=\"stig\">Assess controls</button></div></section>";
+  html+="<div class=\"homegrid\"><section class=\"homepanel\"><h3>Common RHEL tasks</h3>"+
+        "<p>Open a guided builder with the selected release carried forward.</p><div class=\"taskcards\">";
+  var common=["gen-journalctl-unit-logs","gen-systemctl-manage","gen-useradd-create","gen-fw-allow-service","gen-lsblk-inspect-storage","r-dnf-install"];
+  var labels={"gen-journalctl-unit-logs":"Read service logs","gen-systemctl-manage":"Manage a service","gen-useradd-create":"Create a local user","gen-fw-allow-service":"Open firewall access","gen-lsblk-inspect-storage":"Inspect storage","r-dnf-install":"Install a package"};
+  for(var ci=0;ci<common.length;ci++){
+    var ce=entryById(common[ci]);
+    if(!ce) continue;
+    html+="<button type=\"button\" class=\"taskcard\" data-entry=\""+escapeAttr(ce.id)+"\"><strong>"+
+          esc(labels[ce.id]||ce.intent||ce.id)+"</strong><span>"+esc(ce.tool)+(isGeneratorEntry(ce)?" · guided form":" · reviewed recipe")+"</span></button>";
+  }
+  html+="</div></section><section class=\"homepanel\"><h3>Choose a working mode</h3>"+
+        "<p>Start in the area that matches the outcome.</p><div class=\"taskcards\">"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"builder\"><strong>Operate a host</strong><span>Commands, services, users, packages, storage, and networking</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"ansible\"><strong>Automate a change</strong><span>Ansible playbooks and control-node commands</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"git\"><strong>Work with Git</strong><span>Repository, branch, recovery, and history tasks</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"reference\"><strong>Research vendor syntax</strong><span>Clearly labeled Library material with copy friction</span></button></div></section>";
+  var paths=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.learning_paths)||[];
+  html+="<section class=\"homepanel\"><h3>Learn and teach</h3><p>Short paths reuse the same reviewed tasks operators run.</p>";
+  for(var lp=0;lp<paths.length;lp++){
+    var path=paths[lp];
+    html+="<div class=\"learncard\"><strong>"+esc(path.title)+"</strong><p>"+esc(path.summary)+"</p><ol>";
+    for(var ls=0;ls<path.entry_ids.length;ls++){
+      var lessonEntry=entryById(path.entry_ids[ls]);
+      html+="<li><button type=\"button\" class=\"btn\" data-learn-entry=\""+escapeAttr(path.entry_ids[ls])+"\">"+
+            esc(lessonEntry?(lessonEntry.intent||lessonEntry.id):path.entry_ids[ls])+"</button></li>";
+    }
+    html+="</ol><details><summary>Comprehension check</summary><p>"+esc(path.check.question)+
+          "</p><p class=\"muted\">Answer: "+esc(path.check.answer)+"</p></details></div>";
+  }
+  html+="</section><section class=\"homepanel\"><h3>Know what you are using</h3>"+
+        "<div class=\"trustboundary\"><strong>Reviewed catalog</strong><br>Curated commands use deterministic assembly, RHEL gating, safety classification, and cited sources.</div>"+
+        "<div class=\"trustboundary\"><strong>Reference Library</strong><br>Mined vendor and DISA text is visibly unrated, never assembled, and requires acknowledgement before copy.</div></section></div>";
+  el("editor-card").innerHTML=html;
+}
 function renderToolList(){
   var all=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
@@ -4015,22 +4126,6 @@ function renderToolList(){
     html+="<p class=\"muted\">Use the activity rail to open a catalog workspace.</p>";
     el("sidebar-body").innerHTML=html;
     return;
-  }
-  if(STATE.rail==="builder"){
-    var paths=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.learning_paths)||[];
-    html+="<p class=\"region-label\">Start here</p>";
-    for(var lp=0;lp<paths.length;lp++){
-      var path=paths[lp];
-      html+="<div class=\"learncard\"><strong>"+esc(path.title)+"</strong><p class=\"muted\">"+
-            esc(path.summary)+"</p><ol>";
-      for(var ls=0;ls<path.entry_ids.length;ls++){
-        var lessonEntry=entryById(path.entry_ids[ls]);
-        html+="<li><button type=\"button\" class=\"btn\" data-learn-entry=\""+
-              escapeAttr(path.entry_ids[ls])+"\">"+esc(lessonEntry?(lessonEntry.intent||lessonEntry.id):path.entry_ids[ls])+"</button></li>";
-      }
-      html+="</ol><details><summary>Comprehension check</summary><p>"+esc(path.check.question)+
-            "</p><p class=\"muted\">Answer: "+esc(path.check.answer)+"</p></details></div>";
-    }
   }
   /* The Ansible rail renders the SAME tool list as the Command Builder, over a
      different slice of tools.json: the seven ansible-* control-node binaries,
@@ -4052,6 +4147,7 @@ function renderToolList(){
     else if(!ansibleRail && !gitRail && all[ti].category!=="ansible" && all[ti].category!=="git") tools.push(all[ti]);
   }
   html+="<p class=\"region-label\">"+esc(ansibleRail?"Ansible":gitRail?"Git":"Tools")+"</p>";
+  html+="<p class=\"muted\">Reviewed catalog only. Mined vendor and DISA text stays in the separate Library.</p>";
   if(!tools.length){
     html+="<p class=\"muted\">No tools in this build's content island.</p>";
     el("sidebar-body").innerHTML=html;
@@ -4097,30 +4193,6 @@ function renderToolList(){
               (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+
               (isGeneratorEntry(e)?"<span class=\"why\">guided form</span>":"")+"</button></li>";
       }
-    }
-    var refs=refCommandsForTool(t.id);
-    if(refs.length){
-      html+="<li><p class=\"region-label reftier\">Reference commands ("+
-            esc(String(refs.length))+") &mdash; vendor text, not host-verified</p>";
-      html+="<ul class=\"list reflist\" data-listnav=\"refs\">";
-      var shown=0,r2;
-      for(r2=0;r2<refs.length&&shown<REF_SIDEBAR_CAP;r2++){
-        var rr=refs[r2];
-        if(!refOnVersion(rr)) continue;
-        shown++;
-        html+="<li><button type=\"button\" class=\"row ref\" data-ref=\""+escapeAttr(rr.id)+
-              "\" aria-current=\""+(rr.id===STATE.refId?"true":"false")+"\">"+esc(rr.c)+
-              "<span class=\"why\">"+esc(rr.authority==="governing"?"DISA reference":"vendor doc")+
-              (rr.trunc?esc(" \u00b7 incomplete line"):"")+"</span></button></li>";
-      }
-      if(!shown){
-        html+="<li><p class=\"muted\">No reference command for this tool on RHEL "+
-              esc(STATE.version)+".</p></li>";
-      }else if(refs.length>shown){
-        html+="<li><p class=\"muted\">Showing "+esc(String(shown))+" of "+esc(String(refs.length))+
-              ". Press / and search to reach the rest.</p></li>";
-      }
-      html+="</ul></li>";
     }
     html+="</ul></li>";
   }
@@ -4753,6 +4825,11 @@ function renderReferenceEditor(rec){
 
 function renderEditor(){
   var html="";
+  if(STATE.rail==="favorites"){
+    renderBlastBanner(null);
+    renderHome();
+    return;
+  }
   if(STATE.rail==="about"){
     renderAbout();
     return;
@@ -4801,11 +4878,18 @@ function renderEditor(){
     el("editor-card").innerHTML=html;
     return;
   }
-  html+="<h2>"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"taskcrumb\">Build / "+esc(entry.tool)+" / reviewed command</p>";
+  html+="<h2 class=\"tasktitle\">"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
-  html+="<p class=\"muted\">"+esc(subjA)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+
-        (privA?"<span class=\"badge privilege\">requires ":"")+(privA?esc(privA):"")+(privA?"</span>":"")+"</p>";
+  var riskLabelA=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
+  var vstatusA=verificationStatusForVersion(entry,res.version);
+  html+="<div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+esc(riskLabelA)+"</span>"+
+        "<span class=\"trustfact\">RHEL "+esc(res.version)+"</span><span class=\"trustfact\">"+esc(vstatusA.label)+"</span>";
+  if(privA) html+="<span class=\"trustfact\">requires "+esc(privA)+"</span>";
+  if(res.resolved_from) html+="<span class=\"trustfact\">same as RHEL "+esc(res.resolved_from)+"</span>";
+  html+="</div>";
+  html+="<p class=\"muted\">"+esc(subjA)+" · reviewed task</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -4817,7 +4901,7 @@ function renderEditor(){
   html+="</div>";
   var blocked=(res.blast==="red"&&!STATE.acked);
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn primaryaction\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy command</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
   html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
@@ -4856,7 +4940,7 @@ function renderEditor(){
    function is none of those, so the helper's returned markup would be an
    unaudited segment no matter how carefully the helper itself escapes it. */
 function renderGeneratorForm(entry){
-  var html="<p class=\"region-label\">Fields</p>";
+  var html="<p class=\"region-label\">Essential fields</p><p class=\"muted\">Configure the operation. The command preview updates without rebuilding these controls.</p>";
   var fields=entry.fields||[];
   for(var i=0;i<fields.length;i++){
     var field=fields[i];
@@ -4871,10 +4955,11 @@ function renderGeneratorForm(entry){
     html+="</label>";
     if(teaching){
       html+="<div class=\"fieldhelp\"><p>"+esc(teaching.meaning)+"</p>";
-      html+="<p><strong>Example:</strong> "+esc(teaching.example===null?"No curated example.":teaching.example)+"</p>";
-      html+="<p><strong>Discover:</strong> "+esc(teaching.discovery_command===null?
-            "No discovery command has been curated; consult the cited source.":teaching.discovery_command)+"</p>";
-      html+="<p><strong>Consequence:</strong> "+esc(teaching.consequence)+"</p></div>";
+      html+="<details><summary>Why this field?</summary>"+
+            "<p><strong>Example:</strong> "+esc(teaching.example===null?"No curated example.":teaching.example)+"</p>"+
+            "<p><strong>Discover:</strong> "+esc(teaching.discovery_command===null?
+            "No discovery command has been curated; consult the cited source.":teaching.discovery_command)+"</p>"+
+            "<p><strong>Consequence:</strong> "+esc(teaching.consequence)+"</p></details></div>";
     }
     if(gated){
       html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
@@ -4958,8 +5043,14 @@ function renderGeneratorResult(){
     return;
   }
   var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
-  html+="<p class=\"muted\">"+esc(subjG)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (privG?"<span class=\"badge privilege\">requires ":"")+(privG?esc(privG):"")+(privG?"</span>":"")+"</p>";
+  var riskLabelG=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
+  var vstatusG=verificationStatusForVersion(entry,res.version);
+  html+="<p class=\"region-label\">Command preview</p><div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+
+        esc(riskLabelG)+"</span><span class=\"trustfact\">RHEL "+esc(res.version)+"</span>"+
+        "<span class=\"trustfact\">"+esc(vstatusG.label)+"</span>";
+  if(privG) html+="<span class=\"trustfact\">requires "+esc(privG)+"</span>";
+  html+="</div>";
+  html+="<p class=\"muted\">"+esc(subjG)+" · reviewed task</p>";
   var teachingRow=instructionFor(entry)||{};
   if(res.blast==="yellow") html+="<p class=\"risknote\"><strong>State-changing operation.</strong> A reviewed recovery plan is required before use.</p>";
   if(res.blast==="red") html+="<p class=\"risknote\"><strong>Destructive or lockout-prone operation.</strong> Verify the target and recovery access independently.</p>";
@@ -4975,7 +5066,7 @@ function renderGeneratorResult(){
   html+="</div>";
   var blocked=(res.blast==="red"&&!STATE.acked);
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn primaryaction\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy command</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
   if(res.doc){
@@ -5001,7 +5092,7 @@ function renderGeneratorResult(){
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
   var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
-  html+="<div class=\"opplan\">";
+  html+="<details class=\"supportdetails\"><summary>Review runbook: Preflight, Run, Verify, Recover</summary><div class=\"opplan\">";
   for(var pk=0;pk<planKeys.length;pk++){
     var planText=plan[planKeys[pk]];
     var planBound=instructionIsBound(planText);
@@ -5010,7 +5101,7 @@ function renderGeneratorResult(){
           "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
           (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
   }
-  html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div>";
+  html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div></details>";
   html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
   for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
     var compareVersion=RHEL_VERSIONS[cv];
@@ -5029,9 +5120,12 @@ function renderGeneratorEditor(entry){
      esc()/escapeAttr()/escapeRegex() and literals are) — the fields and the
      result each write into their OWN sink below, as separate statements,
      never concatenated into this accumulator. */
-  var html="<h2>"+esc(entry.intent||entry.id)+"</h2>";
-  html+="<p class=\"muted\">"+esc(entry.tool)+" — guided form</p>";
-  html+="<div id=\"gen-fields\"></div><div id=\"gen-result\"></div>";
+  var html="<p class=\"taskcrumb\">Build / "+esc(entry.tool)+" / guided task</p>";
+  html+="<h2 class=\"tasktitle\">"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"muted\">Build a release-aware command from typed, validated fields.</p>";
+  html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
+  html+="<div class=\"builderworkspace\"><section class=\"builderfields\" id=\"gen-fields\" aria-label=\"Command fields\"></section>"+
+        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\"></aside></div>";
   el("editor-card").innerHTML=html;
   renderGeneratorForm(entry);
   renderGeneratorResult();
@@ -5121,9 +5215,30 @@ function stigReleaseLabel(){
   if(meta.partial) label+=" · partial dataset";
   return label;
 }
+/* The status bar is rendered from state after every panel/theme action. Keep
+   keyboard focus on the logical control that initiated that render instead of
+   stranding focus on <body> when innerHTML replaces the old button. The
+   allow-list also prevents an arbitrary data-action value from becoming a
+   focus target. */
+function focusedStatusAction(){
+  var active=document.activeElement;
+  var status=el("statusbar");
+  if(!active||!status||!status.contains(active)||!active.getAttribute) return null;
+  var action=active.getAttribute("data-action");
+  if(action==="panel-sidebar"||action==="panel-inspector"||action==="theme") return action;
+  return null;
+}
+function restoreStatusAction(action){
+  if(!action) return;
+  var controls=el("statusbar").querySelectorAll("[data-action]");
+  for(var i=0;i<controls.length;i++){
+    if(controls[i].getAttribute("data-action")===action){ controls[i].focus(); return; }
+  }
+}
 function renderStatusBar(){
+  var restoreAction=focusedStatusAction();
   var parts=[];
-  if(STATE.toast) parts.push("<span class=\"statusitem toast\">"+esc(STATE.toast)+"</span>");
+  if(STATE.toast) parts.push("<span class=\"statusitem toast\" role=\"status\">"+esc(STATE.toast)+"</span>");
   parts.push("<span class=\"statusitem\">RHEL "+esc(STATE.version)+"</span>");
   /* Version-selector badge (task item 4): the currently selected entry's
      verification state for the currently selected RHEL version, read through
@@ -5146,16 +5261,23 @@ function renderStatusBar(){
   parts.push("<span class=\"statusitem\">"+esc(APP_NAME)+" "+esc(APP_VERSION)+"</span>");
   parts.push("<span class=\"statusitem\">built "+esc(APP_BUILD_DATE)+"</span>");
   parts.push("<span class=\"statusitem\">"+esc(APP_CLASSIFICATION)+"</span>");
+  var sidebarOn=document.body.getAttribute("data-sidebar")==="on";
+  var inspectorOn=document.body.getAttribute("data-inspector")==="on";
+  var themeName=THEME.resolved()==="dark"?"Dark":"Light";
   parts.push("<span class=\"statusactions\">"+
              "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-sidebar\" aria-pressed=\""+
-             escapeAttr(document.body.getAttribute("data-sidebar")==="on"?"true":"false")+
-             "\" aria-label=\"Show or hide the command navigator\">Navigator</button>"+
+             escapeAttr(sidebarOn?"true":"false")+
+             "\" aria-label=\""+escapeAttr("Navigator: "+(sidebarOn?"On. Hide the command navigator":"Off. Show the command navigator"))+
+             "\">Navigator: "+esc(sidebarOn?"On":"Off")+"</button>"+
              "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-inspector\" aria-pressed=\""+
-             escapeAttr(document.body.getAttribute("data-inspector")==="on"?"true":"false")+
-             "\" aria-label=\"Show or hide the command inspector\">Inspector</button>"+
-             "<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\"Toggle dark and light theme\">Theme: "+
-             esc(THEME.resolved()==="dark"?"Dark":"Light")+"</button></span>");
+             escapeAttr(inspectorOn?"true":"false")+
+             "\" aria-label=\""+escapeAttr("Inspector: "+(inspectorOn?"On. Hide command safety and evidence":"Off. Show command safety and evidence"))+
+             "\">Inspector: "+esc(inspectorOn?"On":"Off")+"</button>"+
+             "<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\""+
+             escapeAttr("Theme: "+themeName+". Toggle dark and light theme")+"\">Theme: "+
+             esc(themeName)+"</button></span>");
   el("statusbar").innerHTML=parts.join("");
+  restoreStatusAction(restoreAction);
 }
 
 /* ============ CR-T-29: palette over the lazy typed search index ============
@@ -5165,6 +5287,7 @@ function renderStatusBar(){
    dataset). Every later keystroke only calls queryIndex(), which is cheap:
    the index is already built. */
 var SEARCH_INDEX=null;
+var PALETTE_OPENER=null;
 function ensureSearchIndex(){
   if(!SEARCH_INDEX) SEARCH_INDEX=buildIndex(DATASETS);
   return SEARCH_INDEX;
@@ -5194,14 +5317,17 @@ function paletteMatches(q){
 }
 function renderPalette(){
   var html="";
-  var q=el("palette-input").value;
+  var paletteInput=el("palette-input");
+  var q=paletteInput.value;
   STATE.paletteHits=paletteMatches(q);
   if(!q){
+    paletteInput.removeAttribute("aria-activedescendant");
     html+="<p class=\"muted\">Type a tool name, a command intent, a flag, a STIG ID, a CCI, or a NIST control number (e.g. AC-6).</p>";
     el("palette-results").innerHTML=html;
     return;
   }
   if(!STATE.paletteHits.length){
+    paletteInput.removeAttribute("aria-activedescendant");
     html+="<p class=\"muted\">No matches for "+esc(q)+". Try a tool name such as "+
           esc(nearestToolNames(q))+".</p>";
     el("palette-results").innerHTML=html;
@@ -5216,7 +5342,7 @@ function renderPalette(){
     for(hi=0;hi<group.hits.length;hi++){
       var h=group.hits[hi];
       var atIndex=flatIndex;
-      html+="<li><button type=\"button\" class=\"row\" role=\"option\" aria-selected=\""+
+      html+="<li><button type=\"button\" class=\"row\" id=\"palette-option-"+escapeAttr(String(atIndex))+"\" role=\"option\" aria-selected=\""+
             (atIndex===STATE.paletteSel?"true":"false")+"\" aria-current=\""+
             (atIndex===STATE.paletteSel?"true":"false")+
             "\" data-hit=\""+escapeAttr(String(atIndex))+"\">"+esc(h.label)+
@@ -5228,6 +5354,7 @@ function renderPalette(){
   html+="</ul>";
   html+="<p class=\"palettetiming\">"+esc(String(STATE.paletteHits.length))+" match(es)</p>";
   el("palette-results").innerHTML=html;
+  paletteInput.setAttribute("aria-activedescendant","palette-option-"+String(STATE.paletteSel));
 }
 function nearestToolNames(q){
   var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[],scored=[];
@@ -5244,19 +5371,30 @@ function nearestToolNames(q){
   return out.join(", ")||"none in this build";
 }
 function openPalette(){
+  if(!STATE.paletteOpen) PALETTE_OPENER=document.activeElement;
   STATE.paletteOpen=true;
   STATE.paletteSel=0;
   el("palette").hidden=false;
+  el("palette-input").setAttribute("aria-expanded","true");
   el("palette-input").value="";
   renderPalette();
   el("palette-input").focus();
 }
-function closePalette(){
+function closePalette(restoreFocus){
   if(!STATE.paletteOpen) return;
   STATE.paletteOpen=false;
   el("palette").hidden=true;
-  var back=el("editor-card").querySelector("button");
-  if(back) back.focus();
+  el("palette-input").setAttribute("aria-expanded","false");
+  el("palette-input").removeAttribute("aria-activedescendant");
+  var back=PALETTE_OPENER;
+  PALETTE_OPENER=null;
+  if(restoreFocus===false) return;
+  if(back&&back!==document.body&&back.focus&&document.documentElement.contains(back)){
+    back.focus();
+    return;
+  }
+  var search=document.querySelector(".quicksearch");
+  if(search) search.focus();
 }
 /* A search-index hit for a CCI or a NIST control has no command of its own —
    it resolves to the first embedded STIG rule that cites it, current release
@@ -5288,7 +5426,7 @@ function activateHit(i){
     if(h.tool) selectTool(h.tool);
   }
   else{ if(h.tool) STATE.toolId=h.tool; selectEntry(h.id); }
-  closePalette();
+  closePalette(false);
 }
 
 /* ============ selection ============ */
@@ -5315,6 +5453,7 @@ function selectRefCommand(id){
   STATE.refAck=false;
   STATE.entryId=null;
   STATE.stigRuleId=null;
+  STATE.rail="reference";
   STATE.line=0;
   renderAll();
 }
@@ -5422,6 +5561,11 @@ function togglePanel(which){
 
 function renderAll(){
   invalidateResult();          /* one interaction, one assembly (MCR-SEC-012) */
+  /* On narrow screens, put a selected command ahead of the long navigator so
+     the result of a task choice appears immediately. The navigator remains in
+     the document after the workspace and its status-bar control still works. */
+  document.body.setAttribute("data-selection-open",
+    STATE.entryId||STATE.refId||STATE.stigRuleId?"true":"false");
   renderRail();
   renderVersionSelector();
   renderToolList();
@@ -5430,6 +5574,17 @@ function renderAll(){
   renderInspector();
   renderStatusBar();
   renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
+}
+
+/* Static shell actions share one closed router so the visible data-action
+   controls and their behavior can be exercised directly by the UI contract
+   tests. Returning false leaves entry-specific actions to the main router. */
+function routeChromeAction(action){
+  if(action==="palette"){ openPalette(); return true; }
+  if(action==="panel-sidebar"){ togglePanel("sidebar"); return true; }
+  if(action==="panel-inspector"){ togglePanel("inspector"); return true; }
+  if(action==="theme"){ THEME.toggle(); return true; }
+  return false;
 }
 
 /* ============ one delegated click router — zero inline handlers ============ */
@@ -5482,10 +5637,7 @@ document.addEventListener("click",function(ev){
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
-  if(action==="palette"){ openPalette(); return; }
-  if(action==="panel-sidebar"){ togglePanel("sidebar"); return; }
-  if(action==="panel-inspector"){ togglePanel("inspector"); return; }
-  if(action==="theme"){ THEME.toggle(); return; }
+  if(routeChromeAction(action)) return;
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="ref-ack"){ STATE.refAck=!!a.checked; renderEditor(); return; }
   if(action==="ref-copy"){ doRefCopy(false); return; }
@@ -5628,6 +5780,15 @@ function modsMatch(rule,ev){
 document.addEventListener("keydown",function(ev){
   var typing=isTypingTarget(ev.target);
   var key=ev.key;
+  if(STATE.evidenceOpen && key==="Tab"){
+    var evidenceFocusables=el("evidence-modal").querySelectorAll("button");
+    if(evidenceFocusables.length){
+      var evidenceFirst=evidenceFocusables[0],evidenceLast=evidenceFocusables[evidenceFocusables.length-1];
+      if(ev.shiftKey && ev.target===evidenceFirst){ evidenceLast.focus(); ev.preventDefault(); }
+      else if(!ev.shiftKey && ev.target===evidenceLast){ evidenceFirst.focus(); ev.preventDefault(); }
+    }
+    return;
+  }
   /* palette-local navigation first: arrows move the selection, Enter opens it */
   if(STATE.paletteOpen){
     if(key==="ArrowDown"||key==="ArrowUp"){

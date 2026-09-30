@@ -892,6 +892,30 @@
    ],
    "proven_reversible": false
   },
+  "gen-lsblk-inspect-storage": {
+   "fields": {
+    "columns": {
+     "consequence": "This choice changes only which read-only block-device facts are displayed; it does not modify storage.",
+     "discovery_command": "lsblk --help",
+     "example": "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS",
+     "label": "Storage view columns",
+     "meaning": "Choose a curated column set for capacity, filesystems, parent topology, or LVM/device-mapper relationships. Every choice keeps NAME first so the output remains a hierarchy."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "If devices were just added or changed, wait for udev to settle before treating the listing as current."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Choose MOUNTPOINT on RHEL 7/8 or MOUNTPOINTS on RHEL 9/10 when every mount location matters."
+    }
+   ],
+   "proven_reversible": false
+  },
   "gen-lvcreate-new-lv": {
    "fields": {
     "name": {

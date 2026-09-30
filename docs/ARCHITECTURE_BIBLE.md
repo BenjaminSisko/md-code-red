@@ -31,8 +31,8 @@ check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As built (`v1.0.0-alpha.6-dev`, 2026-09-30): 199 curated command
-entries across 102 tools (43 guided-form generators and 156 static checks), 14,439
+As built (`v1.0.0-alpha.6-dev`, 2026-09-30): 200 curated command
+entries across 102 tools (44 guided-form generators and 156 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
 exact data payload. `docs/USER_GUIDE.md` states the remaining evidence and
@@ -113,7 +113,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |
 | `extract/import_captures.py` | Walks `tests/captures/<rhel_version>/<entry_id>.json`, validates every record against the content validation protocol's field set, verifies `command_hash_at_capture`, and folds STIG-mapped captures into `content/expected_output.json`. `--check` re-runs into a temp dir and diffs (Q15). | The canonical capture path, per Eli Cross's ruling -- see `docs/WORKFLOW.md`. |
 | `extract/make_pending_skeletons.py` | Writes empty, honestly-`pending` skeletons for content that has no source yet. | |
-| `content/commands.json` | The 199 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 43 generators and 156 static checks. |
+| `content/commands.json` | The 200 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 44 generators and 156 static checks. |
 | `content/tools.json` | The 102 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
 | `content/dangerous.json` | The 15-row destructive-pattern table `blastFor()` matches against every assembled command, both quoted and unquoted. | |
 | `content/glossary.json` | Loaded into the data island (`DATASETS.GLOSSARY`) but **never read by any renderer in `template.html`**. Inherited from the Grey Beard Ansible fork; its terms (implicit localhost, delegation, pipelining) are Ansible concepts, not RHEL ones. See Section 23. | |
@@ -141,7 +141,7 @@ example).
 
 **Command entry** (`content/commands.json`, one of two shapes):
 
-*Static (fixed per-RHEL-version command)* -- 156 of 199 entries:
+*Static (fixed per-RHEL-version command)* -- 156 of 200 entries:
 ```
 {
   id, tool, explain_tool?, category, intent,
@@ -158,7 +158,7 @@ A `slot` is one of: `{command, notes?, changed_in_note?}`, `{same_as: "<version>
 changed_in_note?}`, or `{unavailable: {reason, alternative?}}`. A `receipt` is
 `{by, on, host, capture}` -- see Section 6.
 
-*Generator (guided form)* -- 43 of 199 entries:
+*Generator (guided form)* -- 44 of 200 entries:
 ```
 {
   id, tool, category, intent,
@@ -319,7 +319,7 @@ never spliced into the caller's accumulator.
 
 Regions and their owning renderer: rail (`renderRail`), version selector
 (`renderVersionSelector`), sidebar/tool list (`renderToolList`,
-`renderFavoritesSidebar`), editor (`renderEditor`, `renderGeneratorEditor` +
+`renderFavoritesSidebar`), task-centered Home (`renderHome`), editor (`renderEditor`, `renderGeneratorEditor` +
 `renderGeneratorForm` + `renderGeneratorResult` for generators, `renderAbout` for
 the About rail), blast banner (`renderBlastBanner`), inspector
 (`renderInspector`), STIG panel (`renderStigPanel`, writing both the on-screen
@@ -444,7 +444,7 @@ rather than inflated (Section 23).
 
 ## 13. Ansible Generators
 
-The activity rail's **Ansible** item (`Ctrl+Alt+3`) is live. It uses the same
+The activity rail's **Ansible** item (`Ctrl+Alt+4`) is live. It uses the same
 generator registry and renderer as the Command Builder, filtered to the Ansible
 tool category. Three entries generate a playbook plus its invocation, an
 inventory plus `ansible-inventory --graph`, and an `ansible.cfg` plus
@@ -471,7 +471,7 @@ line exactly with the operator values that were supplied.
 
 ## 14. Git Command Generator
 
-The activity rail's **Git** item (`Ctrl+Alt+4`) is live. It renders the existing
+The activity rail's **Git** item (`Ctrl+Alt+5`) is live. It renders the existing
 static Git catalog together with eight guided forms for clone, branch, merge,
 rebase, annotated tag creation, bounded log review, bisect startup, and
 lost-commit recovery. The forms use the same declarative command assembler and

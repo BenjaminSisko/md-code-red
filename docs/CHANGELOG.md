@@ -4,18 +4,44 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased -- v1.0.0-alpha.6-dev
 
+### Added -- Guided storage inspection
+
+- Added a deterministic `lsblk` guided form with curated capacity,
+  filesystem, topology, and LVM-oriented column sets. Every preset keeps
+  `NAME` first so the result remains a dependency tree on RHEL 7-10.
+- RHEL 7/8 receive the compatible singular `MOUNTPOINT` presets. RHEL 9/10
+  additionally offer `MOUNTPOINTS`, which reports every mount location for a
+  multiply mounted device.
+- Added all-release golden commands, a release-specific `-o` syntax policy,
+  hostile-input and enum-branch coverage, and focused assembly tests for the
+  benchmark command.
+
 ### Changed -- Responsive operations-console UX
 
+- Reorganized the entry experience around a task-centered Home view with common
+  RHEL outcomes, working modes, learning paths, favorites, recent work, and an
+  explicit boundary between the reviewed catalog and the mined Reference Library.
+- Reworked guided builders into Configure, Review, and Verify stages. Wide screens
+  keep the generated command and trust signals beside the fields; narrow screens
+  place command review before the form. Detailed field teaching and the complete
+  operational runbook now open on demand.
+- Added a trust bar with plain-language Read only, Changes system, or Destructive
+  status, selected RHEL release, host-verification state, and required privilege.
+  The primary action is now labeled **Copy command**.
 - Added an always-visible **Search all** control for tools, commands, STIGs,
   CCIs, and NIST controls, without changing the existing keyboard shortcuts.
 - Added visible **Navigator** and **Inspector** controls whose pressed state
   reports whether each panel is open.
 - Reworked the layout below 720 pixels into a single-column reading order with
-  a horizontally scrollable, sticky activity rail and larger touch targets.
+  wrapping sticky navigation, no horizontal navigation scroll, and larger targets.
 - Fixed the tablet layout so hiding the inspector also removes its empty row.
 - Added a keyboard skip link, clearer product identity, stronger command-title
   hierarchy, and focused industrial typography while preserving the offline,
   zero-asset, single-file design.
+- Preserved focus across panel and theme rerenders, restored search focus to its
+  real opener, added combobox/listbox relationships to Search, constrained focus
+  inside the evidence dialog, added non-color pressed-state text, and separated
+  brand red from the destructive-operation token.
 - Archived the immutable alpha.5 HTML, SHA-256 sidecar, and provenance manifest
   before starting alpha.6 development.
 

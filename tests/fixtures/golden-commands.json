@@ -123,6 +123,22 @@
     "10": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
    }
   },
+  "gen-lsblk-inspect-storage": {
+   "pins": "-o is a short option and takes its curated column list as the next shell word. NAME stays first so lsblk preserves dependency-tree output on RHEL 7-10; MOUNTPOINT is the all-release oracle while the MOUNTPOINTS enum branch is gated to RHEL 9/10.",
+   "values": {
+    "columns": "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT"
+   },
+   "blast": "green",
+   "flags": [
+    "-o"
+   ],
+   "commands": {
+    "7": "lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT'",
+    "8": "lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT'",
+    "9": "lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT'",
+    "10": "lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT'"
+   }
+  },
   "gen-pvcreate-initialize": {
    "pins": "the block-device path is a validated absolute positional argument",
    "values": {

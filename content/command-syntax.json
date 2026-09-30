@@ -2,7 +2,7 @@
   "_meta": {
     "authority_rule": "Every release row names the concrete manual/capture and anchored syntax facts it asserts.",
     "purpose": "Release-specific per-tool structural grammar for Q26. Each release row is loaded independently; no option union across releases.",
-    "updated_on": "2026-09-22"
+    "updated_on": "2026-09-30"
   },
   "tools": {
     "ansible": {
@@ -4534,8 +4534,8 @@
     "lsblk": {
       "10": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root operands 0..unbounded",
-          "source": "man lsblk(8)"
+          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root option -o takes_arg=true; NAME output column preserves tree hierarchy; lsblk root operands 0..unbounded",
+          "source": "content-src/raw/redhat/rhel10.candidates.jsonl"
         },
         "captured_options": true,
         "root": {
@@ -4544,13 +4544,14 @@
             "min": 0
           },
           "options": {
-            "-f": false
+            "-f": false,
+            "-o": true
           }
         }
       },
       "7": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root operands 0..unbounded",
+          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root option -o takes_arg=true; NAME output column preserves tree hierarchy; lsblk root operands 0..unbounded",
           "source": "man lsblk(8)"
         },
         "captured_options": true,
@@ -4560,14 +4561,15 @@
             "min": 0
           },
           "options": {
-            "-f": false
+            "-f": false,
+            "-o": true
           }
         }
       },
       "8": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root operands 0..unbounded",
-          "source": "man lsblk(8)"
+          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root option -o takes_arg=true; NAME output column preserves tree hierarchy; lsblk root operands 0..unbounded",
+          "source": "content-src/raw/redhat/rhel8.candidates.jsonl"
         },
         "captured_options": true,
         "root": {
@@ -4576,14 +4578,15 @@
             "min": 0
           },
           "options": {
-            "-f": false
+            "-f": false,
+            "-o": true
           }
         }
       },
       "9": {
         "authority": {
-          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root operands 0..unbounded",
-          "source": "man lsblk(8)"
+          "anchor": "SYNOPSIS/OPTIONS: lsblk root option -f takes_arg=false; lsblk root option -o takes_arg=true; NAME output column preserves tree hierarchy; lsblk root operands 0..unbounded",
+          "source": "content-src/raw/redhat/rhel9.candidates.jsonl"
         },
         "captured_options": true,
         "root": {
@@ -4592,7 +4595,8 @@
             "min": 0
           },
           "options": {
-            "-f": false
+            "-f": false,
+            "-o": true
           }
         }
       }

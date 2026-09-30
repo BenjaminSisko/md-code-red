@@ -38,7 +38,7 @@ class CommandSyntaxOracleTests(unittest.TestCase):
     cmd=row['commands'].get(v)
     if cmd is None:continue
     checks+=1;self.assertEqual([],syntax_errors(cmd,v,self.grammars,self.binary(byid[eid])),(eid,v,cmd))
-  self.assertEqual(169,checks)
+  self.assertEqual(173,checks)
  def test_real_operators_split_but_quoted_and_escaped_operators_are_operands(self):
   parts,errs=split_invocations("printf '|' \\| '&&' ';' && printf done")
   self.assertFalse(errs);self.assertEqual(2,len(parts));self.assertEqual(['printf','|','|','&&',';'],[x['text'] for x in parts[0]])

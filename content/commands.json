@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified \u2014 see man page'. The extractor and this file never guess.",
-  "entry_count": 199
+  "entry_count": 200
  },
  "categories": [
   "firewall-cmd",
@@ -770,6 +770,58 @@
      "capture": "tests/captures/10/gen-journalctl-unit-logs.json"
     }
    }
+  },
+  {
+   "id": "gen-lsblk-inspect-storage",
+   "tool": "lsblk",
+   "category": "filesystem",
+   "intent": "Inspect block-device hierarchy with a curated capacity, filesystem, topology, or LVM-oriented column set",
+   "fields": [
+    {
+     "name": "columns",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "NAME,TYPE,SIZE,MOUNTPOINT",
+      "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT",
+      "NAME,KNAME,PKNAME,TYPE,TRAN,SIZE,MOUNTPOINT",
+      {
+       "value": "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS",
+       "versions": [
+        "9",
+        "10"
+       ]
+      }
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "lsblk"
+    },
+    {
+     "flag": "-o",
+     "field": "columns"
+    }
+   ],
+   "verify": "Confirm the output includes the selected columns and that the NAME tree shows the expected disks, partitions, device-mapper or LVM children, filesystems, sizes and mount points. Cross-check LVM-specific questions with pvs, vgs and lvs before making storage changes.",
+   "undo": "Nothing to undo -- lsblk reads block-device metadata and changes nothing on the host.",
+   "blast": "green",
+   "source": {
+    "id": "src-lsblk-guided-rhel",
+    "title": "Red Hat RHEL 8 storage-guide lsblk custom-column example, cross-checked against pinned RHEL 9/10 block-device checks",
+    "url_or_man": "content-src/raw/redhat/rhel8.candidates.jsonl#L782",
+    "version": "RHEL 7/8 use MOUNTPOINT; RHEL 9 V2R9 and RHEL 10 V1R2 show MOUNTPOINTS",
+    "retrieved_on": "2026-09-30",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
+   "notes": "Every preset keeps NAME first, so lsblk preserves the parent-child device tree while -o fixes the visible columns. Use NAME,TYPE,SIZE,MOUNTPOINT for a capacity view; add FSTYPE for filesystems and LVM/device-mapper context; use KNAME,PKNAME and TRAN for parent and transport topology. RHEL 7 and 8 expose the compatible singular MOUNTPOINT presets. RHEL 9 and 10 also offer MOUNTPOINTS so a device mounted in more than one place can show every mount point. This is an inspection command only; use pvs, vgs and lvs to confirm LVM state before changing it."
   },
   {
    "id": "gen-pvcreate-initialize",

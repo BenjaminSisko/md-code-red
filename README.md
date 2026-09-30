@@ -12,15 +12,26 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 **Current version:** v1.0.0-alpha.6-dev (development build, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-22
+**Last built:** 2026-09-30
 
 ## Recent changes
 
-- **2026-09-30** -- **Responsive operations-console UX.** Adds an always-visible
-  global search control, visible navigator and inspector toggles, a keyboard skip
-  link, clearer product identity and command hierarchy, and a true single-column
-  layout for narrow screens. Tablet layouts now reclaim the inspector row when
-  that panel is hidden. The released alpha.5 artifact remains archived unchanged.
+- **2026-09-30** -- **Guided storage inspection.** Adds an all-release `lsblk`
+  builder with curated capacity, filesystem, parent-topology, and LVM-oriented
+  column sets. Every preset keeps `NAME` first to preserve the device tree;
+  RHEL 7/8 use the compatible `MOUNTPOINT` column, while RHEL 9/10 also offer
+  `MOUNTPOINTS` for devices mounted in more than one place. The catalog now
+  contains 200 entries across 102 tools: 44 guided generators and 156 static
+  entries.
+
+- **2026-09-30** -- **Task-centered operations-console UX.** Adds Home with
+  common RHEL outcomes, working modes, learning starts, favorites, and recent
+  work; separates reviewed Build content from the mined Reference Library; and
+  presents guided tasks as Configure, Review, and Verify with a persistent
+  command/trust area. The responsive shell also adds global search, visible
+  navigator and inspector toggles, focus restoration, dialog containment, a
+  keyboard skip link, and single-column narrow-screen flow without horizontal
+  navigation scrolling. The released alpha.5 artifact remains archived unchanged.
 
 - **2026-09-22** -- **Administrator and instructor feedback release.** Corrects
   firewalld, NetworkManager, package, service, LVM, cron, and configuration
