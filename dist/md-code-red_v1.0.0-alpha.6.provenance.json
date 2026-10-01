@@ -1,8 +1,8 @@
 {
  "artifact": {
-  "bytes": 8897770,
-  "filename": "md-code-red_v1.0.0-alpha.6-dev.html",
-  "sha256": "f0f6b3722cf9a1dc7289a58049d2e51dec31e74bfbcc2834c54ca64e077459eb"
+  "bytes": 8895469,
+  "filename": "md-code-red_v1.0.0-alpha.6.html",
+  "sha256": "e25e88a7ced014aa45273bd865a27d8860aa56126b03e1867ca7d0cadd12c1e9"
  },
  "build_date": "2026-09-30",
  "capture_count": 5,
@@ -15,7 +15,7 @@
   "zip_sha256": "077cbb6d2ae5f8fdbaaf416d87a34a8621767cdba490f3283feb0c5c35892700",
   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CCI_List.zip"
  },
- "content_fingerprint": "004b46f2309284786ddaf606a60e08fdea6acc1954ca4525ac47bda1dc3349d6",
+ "content_fingerprint": "327324da688bf7c04bad4952832671958f16d64824c7e5839166397422a4557e",
  "flag_coverage_baseline": {
   "accepted_by": "Milo Vance, Toolkit Systems Engineer \u2014 under condition E5 of Marcus Reed's D4 review",
   "accepted_on": "2026-09-17",
@@ -64,7 +64,7 @@
  "git_commit": "TAG_COMMIT_PLACEHOLDER",
  "receipt_count": 18,
  "review_lineage": {
-  "change_record": "docs/CHANGELOG.md -- heading for v1.0.0-alpha.6-dev",
+  "change_record": "docs/CHANGELOG.md -- heading for v1.0.0-alpha.6",
   "governance_baseline": {
    "adr": "ADR-001-engine-and-content, section 9, 2026-09-18",
    "gate3_qa_py": "ENG-2026-09-18-001",
@@ -75,12 +75,12 @@
    "ter": "TER-v1.0.0-alpha-candidate-01abbc3-2026-09-18"
   },
   "independent_review": "Exact-head regression, security, and content review must be recorded for this version before publication; this manifest does not itself assert that those reviews passed.",
-  "release_version": "v1.0.0-alpha.6-dev",
+  "release_version": "v1.0.0-alpha.6",
   "required_release_evidence": [
-   "docs/BQP_SUMMARY_v1.0.0-alpha.6-dev.md",
-   "docs/QA_REPORT_v1.0.0-alpha.6-dev.md",
-   "docs/SECURITY_REVIEW_v1.0.0-alpha.6-dev.md",
-   "docs/RELEASE_REPORT_v1.0.0-alpha.6-dev.md"
+   "docs/BQP_SUMMARY_v1.0.0-alpha.6.md",
+   "docs/QA_REPORT_v1.0.0-alpha.6.md",
+   "docs/SECURITY_REVIEW_v1.0.0-alpha.6.md",
+   "docs/RELEASE_REPORT_v1.0.0-alpha.6.md"
   ]
  },
  "roster": [
@@ -150,5 +150,5 @@
   "node": "v22.23.2",
   "python3": "3.14.6"
  },
- "version": "v1.0.0-alpha.6-dev"
+ "version": "v1.0.0-alpha.6"
 }

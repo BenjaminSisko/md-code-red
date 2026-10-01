@@ -1,5 +1,5 @@
 /*
- * Full rendered-UI audit for MD CODE RED v1.0.0-alpha.6-dev.
+ * Full rendered-UI audit for MD CODE RED v1.0.0-alpha.6.
  *
  * Prerequisites:
  *   python3 -m http.server 8878 --bind 127.0.0.1
@@ -16,7 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const repo = process.argv[2] || process.cwd();
-const baseUrl = process.argv[3] || 'http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6-dev.html';
+const baseUrl = process.argv[3] || 'http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html';
 const cdpPort = Number(process.argv[4] || 9232);
 const commandsDoc = JSON.parse(fs.readFileSync(path.join(repo,'content/commands.json'),'utf8'));
 const toolsDoc = JSON.parse(fs.readFileSync(path.join(repo,'content/tools.json'),'utf8'));
@@ -87,7 +87,7 @@ await evaluate(`(()=>{window.__qa={
 };return true})()`);
 
 const boot=await evaluate(`(()=>({title:document.title,h1:document.querySelectorAll('h1').length,home:document.querySelector('#editor-card h2')?.textContent,rail:document.querySelector('#rail [aria-current="true"]')?.getAttribute('data-rail'),scripts:document.scripts.length,islands:document.querySelectorAll('script[type="application/json"]').length,scrollWidth:document.documentElement.scrollWidth,innerWidth}))()`);
-if(boot.title.includes('alpha.6-dev')&&boot.home==='What do you need to do?'&&boot.rail==='favorites') pass('TC-BOOT-001','Boot','App opens to task-centered Home',JSON.stringify(boot)); else fail('TC-BOOT-001','Boot','App opens to task-centered Home','alpha.6 Home/favorites',JSON.stringify(boot),'Blocker');
+if(boot.title.includes('alpha.6')&&boot.home==='What do you need to do?'&&boot.rail==='favorites') pass('TC-BOOT-001','Boot','App opens to task-centered Home',JSON.stringify(boot)); else fail('TC-BOOT-001','Boot','App opens to task-centered Home','alpha.6 Home/favorites',JSON.stringify(boot),'Blocker');
 if(boot.h1===1) pass('TC-A11Y-001','Accessibility','Exactly one h1 is exposed',boot.h1); else fail('TC-A11Y-001','Accessibility','Exactly one h1 is exposed',1,boot.h1,'Major');
 if(boot.scrollWidth<=boot.innerWidth) pass('TC-LAYOUT-001','Layout','Desktop boot has no horizontal overflow',`${boot.scrollWidth}/${boot.innerWidth}`); else fail('TC-LAYOUT-001','Layout','Desktop boot has no horizontal overflow',`<=${boot.innerWidth}`,boot.scrollWidth,'Major');
 record('TC-PERF-001','Performance','Initial page navigation and render','PASS','informational',`${navMs} ms`);
@@ -320,7 +320,7 @@ if(exceptions.length===0&&consoleErrors.length===0)pass('TC-CONSOLE-001','Reliab
 
 const summary={total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length,bySeverity:{}};
 for(const r of results.filter(x=>x.status==='FAIL'))summary.bySeverity[r.severity]=(summary.bySeverity[r.severity]||0)+1;
-const output={meta:{tool:'MD CODE RED',version:'v1.0.0-alpha.6-dev',date:'2026-09-30',browser:'Google Chrome headless via CDP',url:baseUrl,commit:process.env.AUDIT_COMMIT||'',entries:entries.length,generators:entries.filter(e=>Object.hasOwn(e,'template')).length,staticEntries:entries.filter(e=>!Object.hasOwn(e,'template')).length},summary,exceptions,consoleErrors,results};
+const output={meta:{tool:'MD CODE RED',version:'v1.0.0-alpha.6',date:'2026-09-30',browser:'Google Chrome headless via CDP',url:baseUrl,commit:process.env.AUDIT_COMMIT||'',entries:entries.length,generators:entries.filter(e=>Object.hasOwn(e,'template')).length,staticEntries:entries.filter(e=>!Object.hasOwn(e,'template')).length},summary,exceptions,consoleErrors,results};
 fs.writeFileSync('/tmp/mdcr_functional_audit_results.json',JSON.stringify(output,null,2));
 console.log(JSON.stringify(summary));
 ws.close();

@@ -2,7 +2,7 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
-## Unreleased -- v1.0.0-alpha.6-dev
+## v1.0.0-alpha.6 - 2026-09-30
 
 ### Fixed -- Full functional QA findings
 
