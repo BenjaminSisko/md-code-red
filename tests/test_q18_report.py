@@ -171,9 +171,9 @@ class TheGateItselfDoesNotCrash(unittest.TestCase):
     """End to end, the way Al reproduced it: a harness that exits 0 printing `{}`."""
 
     def setUp(self):
-        if not qa.find_artifact():
+        self.ctx = qa.build_ctx_if_current()
+        if not self.ctx:
             self.skipTest("no dist/ artifact — run python3 build.py first")
-        self.ctx = qa.build_ctx()
         self.orig = qa.subprocess.run
 
     def tearDown(self):

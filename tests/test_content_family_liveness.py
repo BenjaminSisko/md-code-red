@@ -30,10 +30,9 @@ import qa  # noqa: E402
 
 
 def _real_ctx():
-    artifact = qa.find_artifact()
-    if not artifact:
+    ctx = qa.build_ctx_if_current()
+    if not ctx:
         return None
-    ctx = qa.build_ctx()
     qa.load_sources(ctx)
     return ctx
 

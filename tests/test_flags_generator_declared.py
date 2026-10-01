@@ -30,10 +30,9 @@ BOGUS_GENERATOR = "extract/extract_rhel_flags.py"  # AL-GATE3-009: never existed
 
 
 def _real_ctx():
-    artifact = qa.find_artifact()
-    if not artifact:
+    ctx = qa.build_ctx_if_current()
+    if not ctx:
         return None
-    ctx = qa.build_ctx()
     qa.load_sources(ctx)
     return ctx
 

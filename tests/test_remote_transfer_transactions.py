@@ -25,15 +25,19 @@ class RemoteTransferTransactionTests(unittest.TestCase):
         self.tmp=Path(tempfile.mkdtemp(prefix='mdcr-remote-txn-'))
         fakebin=self.tmp/'bin'; fakebin.mkdir()
         ssh=fakebin/'ssh'
-        ssh.write_text("""#!/bin/sh
-set -eu
-host=$1
-shift
-[ "$1" = "--" ]
-shift
+        ssh.write_text("""#!/usr/bin/env python3
+import os, subprocess, sys
+assert sys.argv[2]=='--'
 # OpenSSH joins the remaining argv with spaces and the remote login shell
-# parses the result. Keep stdin intact so `sh -s` receives the heredoc.
-exec /bin/sh -c "$*"
+# parses the result. Pass the pipe through explicitly; a background process
+# launched by a POSIX shell would otherwise inherit /dev/null as stdin.
+command=' '.join(sys.argv[3:])
+pidfile=os.environ.get('MDCR_TEST_REMOTE_PID_FILE')
+if pidfile:
+    child=subprocess.Popen(['/bin/sh','-c',command],stdin=sys.stdin)
+    open(pidfile,'w').write(str(child.pid)+'\\n')
+    raise SystemExit(child.wait())
+os.execv('/bin/sh',['sh','-c',command])
 """)
         ssh.chmod(0o755)
         stat_cmd=fakebin/'stat'
@@ -44,12 +48,13 @@ path=os.path.abspath(sys.argv[-1])
 st=os.stat(path)
 uid=st.st_uid
 bad=os.environ.get('MDCR_TEST_BAD_OWNER_PATH','')
-if bad and path.startswith(os.path.abspath(bad)): uid+=1
+if bad and path==os.path.abspath(bad): uid+=1
 mode=format(stat.S_IMODE(st.st_mode),'o')
 pause=os.environ.get('MDCR_TEST_SIGNAL_TXN','')
-if pause and path==os.path.abspath(pause):
-    open(pause+'.ready','w').close()
-    time.sleep(30)
+if pause and path==os.path.abspath(pause) and fmt=='%u':
+    open(os.environ['MDCR_TEST_SIGNAL_READY'],'w').close()
+    release=os.environ['MDCR_TEST_SIGNAL_RELEASE']
+    while not os.path.exists(release): time.sleep(0.01)
 if fmt=='%u:%a': print(str(uid)+':'+mode)
 elif fmt=='%u': print(uid)
 elif fmt=='%a': print(mode)
@@ -67,6 +72,25 @@ if race and target==os.path.abspath(race):
 os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
 """)
         mkdir_cmd.chmod(0o755)
+        mv_cmd=fakebin/'mv'
+        mv_cmd.write_text("""#!/usr/bin/env python3
+import os, sys
+args=sys.argv[1:]
+no_target_directory='-T' in args
+words=[word for word in args if word not in ('-T','--')]
+race=os.environ.get('MDCR_TEST_RACE_RECOVERY_TARGET','')
+outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
+if race and len(words)==2 and words[0].endswith('/before') and os.path.abspath(words[1])==os.path.abspath(race):
+    if not os.path.lexists(race): os.symlink(outside,race,target_is_directory=True)
+if no_target_directory and len(words)==2:
+    source,destination=words
+    if os.path.islink(destination): os.unlink(destination)
+    elif os.path.lexists(destination): raise SystemExit(1)
+    os.rename(source,destination)
+    raise SystemExit(0)
+os.execv('/bin/mv',['mv']+args)
+""")
+        mv_cmd.chmod(0o755)
         self.env=os.environ.copy()
         self.env['PATH']=str(fakebin)+os.pathsep+self.env.get('PATH','')
 
@@ -104,8 +128,7 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
 
     def start_command(self, command):
         return subprocess.Popen(command,shell=True,executable='/bin/sh',env=self.env,
-                                text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                                start_new_session=True)
+                                text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
     def test_scp_existing_file_is_restored_and_transaction_removed(self):
         target=self.tmp/'config.yml'; target.write_text('before\n')
@@ -182,17 +205,95 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         self.assertFalse(self.tmp.joinpath('link-tree.mdcr-rsync.txn').exists())
         self.assertEqual((real/'old').read_text(),'before\n')
 
-    def test_recovery_refuses_transaction_with_foreign_owner(self):
-        target=self.tmp/'config.yml'; target.write_text('before\n')
-        self.run_command(self.command('scp-secure-copy','preflight',target))
-        txn=self.tmp/'config.yml.mdcr-scp.txn'
-        target.write_text('after\n')
-        self.env['MDCR_TEST_BAD_OWNER_PATH']=str(txn)
-        result=self.run_command(self.command('scp-secure-copy','recover',target),check=False)
-        self.assertNotEqual(result.returncode,0)
-        self.assertIn('no trusted SCP transaction',result.stderr)
-        self.assertEqual(target.read_text(),'after\n')
-        self.assertTrue(txn.exists())
+    def test_recovery_and_finalize_refuse_each_forged_owner_path(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            for action in ('recover','finalize'):
+                for forged,diagnostic in (
+                        ('txn',f'no trusted {prefix} transaction for'),
+                        ('state',f'no trusted {prefix} transaction state for')):
+                    with self.subTest(entry=entry_id,action=action,forged=forged):
+                        stem=f'{prefix.lower()}-{action}-{forged}'
+                        target=self.tmp/stem
+                        if is_dir:
+                            target.mkdir(); (target/'old').write_text('before\n')
+                        else:
+                            target.write_text('before\n')
+                        self.run_command(self.command(entry_id,'preflight',target,stem+'.src'))
+                        txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                        self.env['MDCR_TEST_BAD_OWNER_PATH']=str(txn if forged=='txn' else txn/'state')
+                        result=self.run_command(self.command(entry_id,action,target,stem+'.src'),check=False)
+                        self.assertNotEqual(result.returncode,0)
+                        self.assertIn(diagnostic,result.stderr)
+                        self.assertTrue(txn.exists())
+                        self.env.pop('MDCR_TEST_BAD_OWNER_PATH',None)
+
+    def test_preflight_refuses_each_forged_owner_path_with_specific_diagnostic(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            for forged,diagnostic in (
+                    ('txn',f'no trusted {prefix} transaction for'),
+                    ('state',f'untrusted {prefix} transaction state')):
+                with self.subTest(entry=entry_id,forged=forged):
+                    stem=f'{prefix.lower()}-preflight-{forged}'
+                    target=self.tmp/stem
+                    if is_dir:
+                        target.mkdir(); (target/'old').write_text('before\n')
+                    else:
+                        target.write_text('before\n')
+                    txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                    self.env['MDCR_TEST_BAD_OWNER_PATH']=str(txn if forged=='txn' else txn/'state')
+                    result=self.run_command(self.command(entry_id,'preflight',target,stem+'.src'),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn(diagnostic,result.stderr)
+                    self.assertFalse(txn.exists(),'EXIT cleanup must remove the rejected transaction')
+                    self.env.pop('MDCR_TEST_BAD_OWNER_PATH',None)
+
+    def test_missing_state_and_backup_have_specific_recovery_diagnostics(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            for action in ('recover','finalize'):
+                with self.subTest(entry=entry_id,action=action,missing='state'):
+                    target=self.tmp/f'{prefix.lower()}-{action}-missing-state'
+                    if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                    else: target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                    (txn/'state').unlink()
+                    result=self.run_command(self.command(entry_id,action,target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn(f'no trusted {prefix} transaction state for',result.stderr)
+                    self.assertTrue(txn.exists())
+            with self.subTest(entry=entry_id,missing='before'):
+                target=self.tmp/f'{prefix.lower()}-missing-before'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                self.run_command(self.command(entry_id,'preflight',target))
+                txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                if (txn/'before').is_dir(): shutil.rmtree(txn/'before')
+                else: (txn/'before').unlink()
+                result=self.run_command(self.command(entry_id,'recover',target),check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('trusted saved',result.stderr)
+                self.assertTrue(txn.exists())
+
+    def test_foreign_owned_saved_content_inside_trusted_transaction_is_recoverable(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            with self.subTest(entry=entry_id):
+                target=self.tmp/f'{prefix.lower()}-foreign-backup'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                self.env['MDCR_TEST_BAD_OWNER_PATH']=str(txn/'before')
+                self.run_command(self.command(entry_id,'preflight',target))
+                if is_dir: (target/'old').write_text('after\n')
+                else: target.write_text('after\n')
+                self.run_command(self.command(entry_id,'recover',target))
+                if is_dir: self.assertEqual((target/'old').read_text(),'before\n')
+                else: self.assertEqual(target.read_text(),'before\n')
+                self.assertFalse(txn.exists())
+                self.env.pop('MDCR_TEST_BAD_OWNER_PATH',None)
 
     def test_atomic_transaction_mkdir_refuses_midflight_race(self):
         target=self.tmp/'config.yml'; target.write_text('before\n')
@@ -220,20 +321,61 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         self.assertIn('symlinked transaction parent',result.stderr)
         self.assertFalse(real.joinpath('config.yml.mdcr-scp.txn').exists())
 
-    def test_sigterm_cleans_transaction_and_returns_failure(self):
-        target=self.tmp/'config.yml'; target.write_text('before\n')
-        txn=self.tmp/'config.yml.mdcr-scp.txn'
-        self.env['MDCR_TEST_SIGNAL_TXN']=str(txn)
-        proc=self.start_command(self.command('scp-secure-copy','preflight',target))
-        ready=Path(str(txn)+'.ready')
-        deadline=time.monotonic()+5
-        while not ready.exists() and proc.poll() is None and time.monotonic()<deadline:
-            time.sleep(0.02)
-        self.assertTrue(ready.exists(),'preflight never reached its armed transaction')
-        os.killpg(proc.pid,signal.SIGTERM)
-        _out,_err=proc.communicate(timeout=5)
-        self.assertNotEqual(proc.returncode,0)
-        self.assertFalse(txn.exists())
+    def test_recovery_replaces_a_raced_symlink_instead_of_following_it(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                target=self.tmp/f'{prefix}-race-target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                self.run_command(self.command(entry_id,'preflight',target))
+                if is_dir: (target/'old').write_text('after\n')
+                else: target.write_text('after\n')
+                outside=self.tmp/f'{prefix}-outside'; outside.mkdir()
+                self.env['MDCR_TEST_RACE_RECOVERY_TARGET']=str(target)
+                self.env['MDCR_TEST_RACE_RECOVERY_OUTSIDE']=str(outside)
+                result=self.run_command(self.command(entry_id,'recover',target),check=False)
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertFalse(target.is_symlink())
+                self.assertEqual(list(outside.iterdir()),[])
+                if is_dir: self.assertEqual((target/'old').read_text(),'before\n')
+                else: self.assertEqual(target.read_text(),'before\n')
+                self.env.pop('MDCR_TEST_RACE_RECOVERY_TARGET',None)
+                self.env.pop('MDCR_TEST_RACE_RECOVERY_OUTSIDE',None)
+
+    def test_each_signal_cleans_each_remote_transaction_and_fails_pipeline(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            for sig in (signal.SIGHUP,signal.SIGINT,signal.SIGTERM):
+                with self.subTest(entry=entry_id,signal=sig.name):
+                    stem=f'{prefix}-{sig.name.lower()}'
+                    target=self.tmp/stem
+                    if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                    else: target.write_text('before\n')
+                    txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                    ready=self.tmp/f'{stem}.ready'; release=self.tmp/f'{stem}.release'; pidfile=self.tmp/f'{stem}.pid'
+                    self.env.update({
+                        'MDCR_TEST_SIGNAL_TXN':str(txn/'state'),
+                        'MDCR_TEST_SIGNAL_READY':str(ready),
+                        'MDCR_TEST_SIGNAL_RELEASE':str(release),
+                        'MDCR_TEST_REMOTE_PID_FILE':str(pidfile),
+                    })
+                    command=self.command(entry_id,'preflight',target,stem+'.src')
+                    self.assertIn("'trap '\"'\"'exit 1'\"'\"' HUP INT TERM'",command)
+                    self.assertIn('trap cleanup EXIT',command)
+                    proc=self.start_command(command)
+                    deadline=time.monotonic()+5
+                    while (not ready.exists() or not pidfile.exists()) and proc.poll() is None and time.monotonic()<deadline:
+                        time.sleep(0.01)
+                    self.assertTrue(ready.exists(),'preflight never reached final state validation')
+                    self.assertTrue(pidfile.exists(),'ssh wrapper did not record the remote shell pid')
+                    os.kill(int(pidfile.read_text().strip()),sig)
+                    release.touch()
+                    _out,err=proc.communicate(timeout=5)
+                    self.assertNotEqual(proc.returncode,0,err)
+                    self.assertFalse(txn.exists())
+                    for key in ('MDCR_TEST_SIGNAL_TXN','MDCR_TEST_SIGNAL_READY','MDCR_TEST_SIGNAL_RELEASE','MDCR_TEST_REMOTE_PID_FILE'):
+                        self.env.pop(key,None)
 
 
 if __name__=='__main__':

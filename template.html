@@ -3335,8 +3335,10 @@ function operationalPlan(entry,res){
     item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
     if(item.command) preCopy.push(bindInstructionCommand(item.command,values));
   }
-  var verify=bindInstructionCommand(entry.verify||"No curated verification step.",values);
-  var recover=bindInstructionCommand(entry.undo||"No curated recovery step.",values);
+  var authoredVerify=entry.verify||"No curated verification step.";
+  var authoredRecover=entry.undo||"No curated recovery step.";
+  var verify=bindInstructionCommand(authoredVerify,values);
+  var recover=bindInstructionCommand(authoredRecover,values);
   /* Displayed runbook prose is useful guidance, but it is not automatically a
      shell program. Only authored command fields and the transaction scripts
      carrying a closed MDCR marker are offered to the clipboard. */
@@ -3346,9 +3348,11 @@ function operationalPlan(entry,res){
     var start=String(text).lastIndexOf("printf",marker);
     return start<0?null:String(text).slice(start);
   }
+  var verifyScript=markedScript(authoredVerify),recoverScript=markedScript(authoredRecover);
   return {preflight:pre.join("\n"),run:res.command,verify:verify,recover:recover,
           copy:{preflight:preCopy.length?preCopy.join("\n"):null,run:res.command,
-                verify:markedScript(verify),recover:markedScript(recover)}};
+                verify:verifyScript===null?null:bindInstructionCommand(verifyScript,values),
+                recover:recoverScript===null?null:bindInstructionCommand(recoverScript,values)}};
 }
 function instructionIsBound(text){
   /* Hyphenated and plain-English placeholders previously escaped the narrow
@@ -6270,9 +6274,10 @@ document.addEventListener("input",function(ev){
 document.addEventListener("change",onFieldChange);
 
 /* ============ keyboard controller — primary delegated shortcut table ============ */
-/* UI spec §5. Application shortcuts live in KEYMAP. A separate, narrowly
-   scoped keydown handler below gives keyboard activation to code lines and
-   clipboard buttons without duplicating shortcut behavior. */
+/* UI spec §5. Application shortcuts live in KEYMAP. The earlier, narrowly
+   scoped keydown handler gives explicit keyboard activation to clipboard and
+   runbook-copy buttons. Contextual code-line activation stays in this primary
+   controller, ahead of the global shortcut table. */
 function isTypingTarget(node){
   if(!node||!node.tagName) return false;
   var tag=node.tagName.toLowerCase();

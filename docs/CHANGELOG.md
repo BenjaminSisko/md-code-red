@@ -10,16 +10,20 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   Preflight now copies only authored commands, and Verify/Recover copy only
   closed transaction scripts. Red-rated evidence and plan copying share the
   exact-command acknowledgement gate.
-- Exit nonzero and clean partial remote transactions on HUP, INT, or TERM;
-  explicitly refuse symlinked transaction parents; and allow `cp -a` to
-  preserve the saved target owner inside the trusted mode-`0700` directory.
-- Resolve NetworkManager names and UUIDs with forced string comparison, report
-  zero and multiple matches, and test missing, duplicate, numeric-looking, and
-  forged-owner cases through the shipped binder.
+- Exit nonzero and clean partial SCP, rsync, and NetworkManager transactions on
+  HUP, INT, or TERM; explicitly refuse symlinked transaction parents; and allow
+  `cp -a` to preserve the saved target owner inside the trusted mode-`0700`
+  directory. The execution suite signals the generated shell itself at the last
+  state validation for all nine workflow/signal combinations.
+- Resolve NetworkManager names and UUIDs with forced string comparison, suppress
+  paging while recording the current profile, report zero and multiple matches,
+  and test missing, duplicate, numeric-looking, and path-specific forged-owner
+  cases through the shipped binder.
 - Bind instruction placeholders once so operator values cannot become a second
-  template pass. Fake-SSH transaction tests now obtain their runnable scripts
-  from the app's `operationalPlan()` output and include a real SIGTERM cleanup
-  test.
+  template pass, and identify runnable Verify/Recover markers in authored text
+  before substitution so a form value cannot manufacture a clipboard script.
+  Fake-SSH transaction tests obtain their runnable scripts from the app's
+  `operationalPlan()` output.
 - Quote form values separately for runnable runbook commands, including ordinary
   NetworkManager names with spaces. Static-address recovery now resolves exactly
   one documented FILENAME/NAME/UUID row, atomically creates its transaction under
@@ -28,7 +32,18 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 - Create SCP and rsync transactions atomically at mode `0700`, validate their
   ownership before recovery or finalization, and refuse writable non-sticky
   transaction parents. Recovery can no longer trust a directory created by a
-  different remote user.
+  different remote user. Recovery uses `mv -T` and an adversarial test plants a
+  symlink between its two moves to prove saved content replaces the link instead
+  of being redirected through it.
+- Exercise transaction ownership one path at a time for Preflight, Recover, and
+  Finalize, including missing state files and the positive case where preserved
+  content has a different owner inside a trusted transaction directory.
+- Drive clipboard buttons with native Enter and Space text events and assert
+  exactly one DOM click and one clipboard write. Red runbook steps are verified
+  disabled before acknowledgement and enabled afterward.
+- Derive documentation counts inside the browser audit when `AUDIT_*` variables
+  are omitted, and let source-level unit discovery skip stale artifact-backed
+  checks without weakening the release gate's stale-build refusal.
 - Preserve keyboard focus after clipboard actions, require the mobile STIG test
   to observe a closed search palette, and replace the unsafe all-steps clipboard
   action with explicit step-by-step guidance that keeps Recover separate.

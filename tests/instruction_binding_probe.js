@@ -32,6 +32,11 @@ let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',x=>input+
     const res=scoped.assembleCommand(entry,request.version||'8',state.formValues,{patterns});
     if(!res)throw new Error('entry did not assemble');
     process.stdout.write(JSON.stringify({plan:scoped.operationalPlan(entry,res),command:res.command})+'\n');
+  }else if(request.plan_entry){
+    const state={formValues:request.values||{}};
+    const scoped=new Function('DATASETS','STATE','"use strict";\n'+assembler+'\n'+instructionFor+'\n'+binding+'\n'+operationalPlan+'\nreturn {operationalPlan};')({INSTRUCTIONAL:instructional},state);
+    const res={command:request.command||'true'};
+    process.stdout.write(JSON.stringify({plan:scoped.operationalPlan(request.plan_entry,res)})+'\n');
   }else{
     process.stdout.write(JSON.stringify({bound:runtime.bindInstructionCommand(request.text,request.values)})+'\n');
   }

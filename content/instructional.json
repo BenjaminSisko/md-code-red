@@ -1033,7 +1033,7 @@
    },
    "preflight": [
     {
-     "command": "nmcli connection show <con>",
+     "command": "PAGER=cat nmcli connection show <con>",
      "text": "Record the complete current profile settings without exporting unsupported non-VPN formats."
     },
     {

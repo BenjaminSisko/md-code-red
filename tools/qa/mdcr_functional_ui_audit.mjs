@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 
 const repo = process.argv[2] || process.cwd();
 const baseUrl = process.argv[3] || 'http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html';
@@ -30,6 +31,32 @@ const toolsDoc = JSON.parse(fs.readFileSync(path.join(repo,'content/tools.json')
 const golden = JSON.parse(fs.readFileSync(path.join(repo,'tests/fixtures/golden-commands.json'),'utf8'));
 const tools = new Map(toolsDoc.tools.map(t=>[t.id,t]));
 const entries = commandsDoc.entries;
+
+function checkedCommand(command,args){
+  const run=spawnSync(command,args,{cwd:repo,encoding:'utf8',maxBuffer:32*1024*1024});
+  if(run.status!==0)throw new Error(`Audit prerequisite failed: ${command} ${args.join(' ')}\n${run.stderr||run.stdout}`);
+  return run.stdout.trim();
+}
+function positiveEnv(name){
+  if(!process.env[name])return 0;
+  const value=Number(process.env[name]);
+  if(!Number.isInteger(value)||value<=0)throw new Error(`${name} must be a positive integer`);
+  return value;
+}
+const suppliedUnit=positiveEnv('AUDIT_UNIT_TESTS');
+const suppliedHostile=positiveEnv('AUDIT_HOSTILE_CHECKS');
+const suppliedPipeline=positiveEnv('AUDIT_PIPELINE_CHECKS');
+const discoveredUnit=suppliedUnit||Number(checkedCommand('python3',['-c',"import unittest; print(unittest.defaultTestLoader.discover('tests').countTestCases())"]));
+let discoveredHostile=suppliedHostile,discoveredPipeline=suppliedPipeline;
+if(!discoveredHostile||!discoveredPipeline){
+  const harness=JSON.parse(checkedCommand(process.execPath,[path.join(repo,'tests/hostile_harness.js'),artifactPath,'--json']));
+  if(harness.failures?.length)throw new Error(`Hostile harness reported failures: ${harness.failures.join('; ')}`);
+  discoveredHostile=discoveredHostile||Number(harness.checks);
+  discoveredPipeline=discoveredPipeline||Number(harness.pipeline_checks);
+}
+if(!Number.isInteger(discoveredUnit)||discoveredUnit<=0||!Number.isInteger(discoveredHostile)||discoveredHostile<=0||!Number.isInteger(discoveredPipeline)||discoveredPipeline<=0){
+  throw new Error(`Unable to derive audit suite counts: unit=${discoveredUnit}, hostile=${discoveredHostile}, pipeline=${discoveredPipeline}`);
+}
 
 const pages = await (await fetch(`http://127.0.0.1:${cdpPort}/json/list`)).json();
 const page = pages.find(p=>p.type==='page');
@@ -72,7 +99,8 @@ async function typeCharacters(selector,text){
   return evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});return {value:e?.value||'',active:document.activeElement?.id||document.activeElement?.getAttribute('data-pipe-field')||document.activeElement?.getAttribute('data-field')||document.activeElement?.tagName||'',focused:document.activeElement===e,paletteHidden:document.querySelector('#palette')?.hidden}})()`);
 }
 async function pressKey(key,code=key){
-  await send('Input.dispatchKeyEvent',{type:'keyDown',key,code});
+  const text=(key==='Enter')?'\r':(key===' '?' ':undefined);
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,...(text===undefined?{}:{text,unmodifiedText:text})});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key,code});
 }
 async function pressNativeEnter(){
@@ -246,16 +274,18 @@ if(gutterStart!==null&&gutterEnd===gutterStart)pass('TC-A11Y-FOCUS-003','Accessi
 // Clipboard and evidence workflow on the completed safe grep generator.
 await evaluate(`__qa.open('builder','grep','grep-search-text','8',${JSON.stringify(grepEntry.intent)})`);
 for(const [name,value] of Object.entries(grepValues))await evaluate(`__qa.set('[data-field="'+CSS.escape(${JSON.stringify(name)})+'"]',${JSON.stringify(value)})`);
-await evaluate(`(()=>{window.__copied='';window.__copyCalls=0;document.execCommand=(name)=>{if(name==='copy'){window.__copyCalls++;window.__copied=document.querySelector('textarea')?.value||'';return true}return false};return true})()`);
+await evaluate(`(()=>{window.__copied='';window.__copyCalls=0;window.__copyButtonClicks={copy:0,comment:0};document.execCommand=(name)=>{if(name==='copy'){window.__copyCalls++;window.__copied=document.querySelector('textarea')?.value||'';return true}return false};document.querySelector('[data-action="copy"]').addEventListener('click',()=>window.__copyButtonClicks.copy++);document.querySelector('[data-action="copy-comment"]').addEventListener('click',()=>window.__copyButtonClicks.comment++);return true})()`);
 await evaluate(`document.querySelector('[data-action="copy"]').focus()`);
 await pressKey('Enter','Enter');
 await delay(20);
-let copyState=await evaluate(`(()=>({clipboard:window.__copied,calls:window.__copyCalls,focus:document.activeElement?.getAttribute('data-action')||'',body:document.activeElement===document.body}))()`);
+let copyState=await evaluate(`(()=>({clipboard:window.__copied,calls:window.__copyCalls,clicks:window.__copyButtonClicks.copy,focus:document.activeElement?.getAttribute('data-action')||'',body:document.activeElement===document.body}))()`);
 let clipboard=copyState.clipboard;
-if(clipboard===grepExpected&&copyState.calls===1&&copyState.focus==='copy'&&!copyState.body)pass('TC-COPY-001','Clipboard','One keyboard activation writes the exact command once and retains focus',JSON.stringify(copyState));else fail('TC-COPY-001','Clipboard','One keyboard activation writes the exact command once and retains focus','one copy call, exact command, and focus on Copy',JSON.stringify(copyState),'Critical');
-await evaluate(`document.querySelector('[data-action="copy-comment"]').click()`);await delay(20);
-clipboard=await evaluate(`window.__copied`);
-if(clipboard.includes('# intent:')&&clipboard.trim().endsWith(grepExpected))pass('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command',clipboard.slice(0,180));else fail('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command','comment header + exact command',clipboard.slice(0,300),'Critical');
+if(clipboard===grepExpected&&copyState.calls===1&&copyState.clicks===1&&copyState.focus==='copy'&&!copyState.body)pass('TC-COPY-001','Clipboard','Native Enter activation produces one click and one exact clipboard write while retaining focus',JSON.stringify(copyState));else fail('TC-COPY-001','Clipboard','Native Enter activation produces one click and one exact clipboard write while retaining focus','one button click, one copy call, exact command, and focus on Copy',JSON.stringify(copyState),'Critical');
+await evaluate(`(()=>{window.__copied='';window.__copyCalls=0;document.querySelector('[data-action="copy-comment"]').focus()})()`);
+await pressKey(' ','Space');await delay(20);
+const commentCopyState=await evaluate(`(()=>({clipboard:window.__copied,calls:window.__copyCalls,clicks:window.__copyButtonClicks.comment,focus:document.activeElement?.getAttribute('data-action')||''}))()`);
+clipboard=commentCopyState.clipboard;
+if(commentCopyState.calls===1&&commentCopyState.clicks===1&&commentCopyState.focus==='copy-comment'&&clipboard.includes('# intent:')&&clipboard.trim().endsWith(grepExpected))pass('TC-COPY-002','Clipboard','Native Space activation produces one click and one commented clipboard write',JSON.stringify({...commentCopyState,clipboard:clipboard.slice(0,180)}));else fail('TC-COPY-002','Clipboard','Native Space activation produces one click and one commented clipboard write','one button click, one copy call, comment header + exact command',JSON.stringify({...commentCopyState,clipboard:clipboard.slice(0,300)}),'Critical');
 // A field blur fires change between pointer down and pointer up. This must be
 // idempotent so the first real click reaches the same button node and the old
 // success toast cannot describe a changed command.
@@ -464,10 +494,12 @@ const rsyncEntry=entries.find(e=>e.id==='rsync-sync-files');
 await evaluate(`__qa.open('builder','rsync','rsync-sync-files','8',${JSON.stringify(rsyncEntry.intent)});__qa.set('[data-field="source"]','/srv/dotfiles/.config');__qa.set('[data-field="destination"]','alice@server.example.test:/home/alice/.config')`);
 const rsyncPlan=await evaluate(`(()=>({text:document.querySelector('#gen-result .opplan')?.textContent||'',risk:document.querySelector('#gen-result .risk-red')?.textContent||''}))()`);
 if(rsyncPlan.text.includes('sh -s --')&&rsyncPlan.text.includes('MDCR_RSYNC_PREFLIGHT')&&rsyncPlan.text.includes('txn=$target.mdcr-rsync.txn')&&rsyncPlan.text.includes('owner=$(id -u)')&&rsyncPlan.text.includes('mkdir -m 0700 -- "$txn"')&&rsyncPlan.text.includes('stat -c')&&rsyncPlan.text.includes('writable without sticky protection')&&rsyncPlan.text.includes('symlinked rsync')&&rsyncPlan.text.includes('symlinked transaction parent')&&rsyncPlan.text.includes('trap cleanup EXIT')&&rsyncPlan.text.includes('HUP INT TERM')&&!rsyncPlan.text.includes('trap cleanup EXIT HUP INT TERM')&&rsyncPlan.text.includes('insufficient free space')&&rsyncPlan.text.includes('MDCR_RSYNC_RECOVER')&&rsyncPlan.text.includes('MDCR_RSYNC_FINALIZE')&&!rsyncPlan.text.includes('<remote_')&&rsyncPlan.risk.includes('Destructive'))pass('TC-RUNBOOK-REMOTE-002','Runbook','Rsync renders an atomic owner-validated, capacity-checked transaction and remains red',JSON.stringify({risk:rsyncPlan.risk,text:rsyncPlan.text.slice(0,900)}));else fail('TC-RUNBOOK-REMOTE-002','Runbook','Rsync renders an atomic owner-validated, capacity-checked transaction and remains red','bound transaction protocol, owner/mode validation, unsafe/symlinked-parent/capacity refusal, separate failing signal trap, recover/finalize, red risk',JSON.stringify({risk:rsyncPlan.risk,text:rsyncPlan.text.slice(0,2000)}),'Critical');
+const rsyncPlanGate=await evaluate(`(()=>{const ack=document.querySelector('[data-action="ack"]');const before=[...document.querySelectorAll('[data-plan-step]')].map(x=>({step:x.getAttribute('data-plan-step'),disabled:x.disabled}));if(ack)ack.click();const after=[...document.querySelectorAll('[data-plan-step]')].map(x=>({step:x.getAttribute('data-plan-step'),disabled:x.disabled}));return {ack:!!ack,before,after}})()`);
+if(rsyncPlanGate.ack&&rsyncPlanGate.before.length===4&&rsyncPlanGate.before.every(x=>x.disabled)&&rsyncPlanGate.after.length===4&&rsyncPlanGate.after.every(x=>!x.disabled))pass('TC-RUNBOOK-RED-GATE-001','Runbook','Every runnable red runbook step is disabled before acknowledgement and enabled after it',JSON.stringify(rsyncPlanGate));else fail('TC-RUNBOOK-RED-GATE-001','Runbook','Every runnable red runbook step is disabled before acknowledgement and enabled after it','red acknowledgement present; four disabled before; four enabled after',JSON.stringify(rsyncPlanGate),'Critical');
 const nmcliEntry=entries.find(e=>e.id==='gen-nmcli-static-ipv4');
 await evaluate(`__qa.open('builder','nmcli','gen-nmcli-static-ipv4','8',${JSON.stringify(nmcliEntry.intent)});__qa.set('[data-field="con"]','Wired connection 1');__qa.set('[data-field="ifname"]','eth0');__qa.set('[data-field="address"]','192.168.1.50/24');__qa.set('[data-field="gateway"]','192.168.1.1')`);
 const nmcliPlan=await evaluate(`document.querySelector('#gen-result .opplan')?.textContent||''`);
-if(nmcliPlan.includes("nmcli connection show 'Wired connection 1'")&&nmcliPlan.includes("sudo sh -s -- 'Wired connection 1'")&&nmcliPlan.includes('FILENAME,NAME,UUID')&&nmcliPlan.includes('/var/lib/md-code-red')&&nmcliPlan.includes('install -d -m 0700 -o 0 -g 0')&&nmcliPlan.includes('stat -c')&&nmcliPlan.includes('mkdir -m 0700 -- "$txn"')&&nmcliPlan.includes('nmcli connection up "$con"')&&nmcliPlan.includes('MDCR_NMCLI_RECOVER')&&nmcliPlan.includes('MDCR_NMCLI_FINALIZE')&&!nmcliPlan.includes('/var/tmp/mdcr-nmcli-static-ipv4.txn')&&!nmcliPlan.includes('connection show Wired connection 1'))pass('TC-RUNBOOK-NMCLI-001','Runbook','NetworkManager runbook quotes a space-bearing name and uses a validated root-owned transaction',nmcliPlan.slice(0,1100));else fail('TC-RUNBOOK-NMCLI-001','Runbook','NetworkManager runbook quotes a space-bearing name and uses a validated root-owned transaction','quoted name, documented list fields, root-owned mode-0700 state, atomic transaction, recover/finalize/reactivate',nmcliPlan.slice(0,2200),'Critical');
+if(nmcliPlan.includes("PAGER=cat nmcli connection show 'Wired connection 1'")&&nmcliPlan.includes("sudo sh -s -- 'Wired connection 1'")&&nmcliPlan.includes('FILENAME,NAME,UUID')&&nmcliPlan.includes('/var/lib/md-code-red')&&nmcliPlan.includes('install -d -m 0700 -o 0 -g 0')&&nmcliPlan.includes('stat -c')&&nmcliPlan.includes('mkdir -m 0700 -- "$txn"')&&nmcliPlan.includes('nmcli connection up "$con"')&&nmcliPlan.includes('MDCR_NMCLI_RECOVER')&&nmcliPlan.includes('MDCR_NMCLI_FINALIZE')&&!nmcliPlan.includes('/var/tmp/mdcr-nmcli-static-ipv4.txn')&&!nmcliPlan.includes('connection show Wired connection 1'))pass('TC-RUNBOOK-NMCLI-001','Runbook','NetworkManager runbook quotes a space-bearing name, suppresses paging, and uses a validated root-owned transaction',nmcliPlan.slice(0,1100));else fail('TC-RUNBOOK-NMCLI-001','Runbook','NetworkManager runbook quotes a space-bearing name, suppresses paging, and uses a validated root-owned transaction','PAGER=cat, quoted name, documented list fields, root-owned mode-0700 state, atomic transaction, recover/finalize/reactivate',nmcliPlan.slice(0,2200),'Critical');
 const usermod=entries.find(e=>e.id==='r-usermod-ag');
 await evaluate(`__qa.open('builder','usermod','r-usermod-ag','8',${JSON.stringify(usermod.intent)})`);
 await evaluate(`__qa.set('[data-field="groups"]','docker');__qa.set('[data-field="username"]','bob')`);
@@ -511,12 +543,12 @@ const testPlan=fs.readFileSync(path.join(repo,'docs/TEST_PLAN.md'),'utf8');
 const architecture=fs.readFileSync(path.join(repo,'docs/ARCHITECTURE_BIBLE.md'),'utf8');
 const redCount=entries.filter(e=>e.blast==='red').length;
 if(redCount>0&&testPlan.includes('no entry in this shipped build is rated\nred'))fail('TC-DOCS-001','Documentation','Test plan accurately describes observable red-rated content',`${redCount} red-rated entries and current generator counts`,'Claims no entry is red; also retains pre-alpha.6 generator/check counts','Major');else pass('TC-DOCS-001','Documentation','Test plan accurately describes observable red-rated content',`${redCount} red entries`);
-const auditUnit=Number(process.env.AUDIT_UNIT_TESTS||0);
-const auditHostile=Number(process.env.AUDIT_HOSTILE_CHECKS||0);
-const auditPipeline=Number(process.env.AUDIT_PIPELINE_CHECKS||0);
+const auditUnit=discoveredUnit;
+const auditHostile=discoveredHostile;
+const auditPipeline=discoveredPipeline;
 const fmt=n=>n.toLocaleString('en-US');
 const docsCountsOk=auditUnit>0&&auditHostile>0&&auditPipeline>0&&architecture.includes(`${fmt(auditUnit)} unittest cases and ${fmt(auditHostile)} harness checks`)&&testPlan.includes(`${fmt(auditPipeline)} hostile-vector checks`);
-if(docsCountsOk)pass('TC-DOCS-002','Documentation','Architecture and test-plan counts match the suite values supplied to this audit',`${fmt(auditUnit)} unit; ${fmt(auditHostile)} hostile; ${fmt(auditPipeline)} pipeline`);else fail('TC-DOCS-002','Documentation','Architecture and test-plan counts match the suite values supplied to this audit','AUDIT_* counts present and exact values in docs',JSON.stringify({auditUnit,auditHostile,auditPipeline,architectureHas:auditUnit>0&&auditHostile>0?architecture.includes(`${fmt(auditUnit)} unittest cases and ${fmt(auditHostile)} harness checks`):false,testPlanHas:auditPipeline>0?testPlan.includes(`${fmt(auditPipeline)} hostile-vector checks`):false}),'Minor');
+if(docsCountsOk)pass('TC-DOCS-002','Documentation','Architecture and test-plan counts match the live suite totals derived by this audit',`${fmt(auditUnit)} unit; ${fmt(auditHostile)} hostile; ${fmt(auditPipeline)} pipeline`);else fail('TC-DOCS-002','Documentation','Architecture and test-plan counts match the live suite totals derived by this audit','derived counts present and exact values in docs',JSON.stringify({auditUnit,auditHostile,auditPipeline,architectureHas:architecture.includes(`${fmt(auditUnit)} unittest cases and ${fmt(auditHostile)} harness checks`),testPlanHas:testPlan.includes(`${fmt(auditPipeline)} hostile-vector checks`)}),'Minor');
 
 // Console/runtime health and memory/performance observations.
 const perf=await evaluate(`(()=>({heap:performance.memory?performance.memory.usedJSHeapSize:null,resources:performance.getEntriesByType('resource').length,nav:performance.getEntriesByType('navigation')[0]?{dom:performance.getEntriesByType('navigation')[0].domContentLoadedEventEnd,load:performance.getEntriesByType('navigation')[0].loadEventEnd}:null}))()`);

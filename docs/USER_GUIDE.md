@@ -231,8 +231,8 @@ All three exercise the confirmation flow with real catalog content.
    directory whose final writes cannot be known in advance, or a destructive
    `xargs` child. It opens a red bordered
    banner above the command: **"Destructive operation -- review before running,"**
-   naming every reason and, for a pipeline, its stage. **Copy** and **Copy with comment** are
-   command, runbook command steps, generated files, and evidence text are
+   naming every reason and, for a pipeline, its stage. **Copy**, **Copy with comment**,
+   runbook command steps, generated files, and evidence text are
    disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
    have reviewed this command."** The banner is evaluated over the *entire*
    clipboard payload, including the comment header, not just the command line --
@@ -388,9 +388,12 @@ while the navigator, command workspace, inspector, and status appear in that
 reading order. Keyboard users can press `Tab` once from the top of the document
 to reveal **Skip to command workspace**.
 
-No mouse is required. Every binding below comes from one table in the app script
-(`KEYMAP`) read by one delegated `keydown` listener, so what this page says and what
-the tool does cannot drift apart without the table changing.
+No mouse is required. Every global binding below comes from one table in the app
+script (`KEYMAP`) read by the primary delegated `keydown` listener, so what this
+page says and what the tool does cannot drift apart without the table changing.
+Contextual palette and command-line keys are handled by that primary listener. A
+separate delegated listener gives the clipboard and runbook-copy buttons explicit,
+single-fire Enter and Space activation.
 
 | Action | Binding | Notes |
 |---|---|---|

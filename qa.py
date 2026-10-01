@@ -4077,6 +4077,21 @@ def build_ctx():
     return ctx
 
 
+def build_ctx_if_current():
+    """Return a loaded artifact context only when the tracked artifact is current.
+
+    Source-level unittest discovery intentionally runs before ``build.py`` in
+    CI. A Git checkout can assign source files mtimes after the tracked artifact,
+    and an edited tree is expected to do so. Artifact-backed unit tests use this
+    helper to skip until the build step instead of calling ``build_ctx()`` and
+    letting its release-gate ``SystemExit`` abort the entire source test suite.
+    The release gate itself continues to call ``build_ctx()`` and fail closed.
+    """
+    if not find_artifact() or dist_integrity_failures():
+        return None
+    return build_ctx()
+
+
 def load_sources(ctx):
     pin_f, pin_d = verify_pins()
     ctx["pin_failures"], ctx["pin_details"] = pin_f, pin_d
