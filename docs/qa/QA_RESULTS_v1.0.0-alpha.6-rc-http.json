@@ -4,15 +4,15 @@
     "version": "v1.0.0-alpha.6",
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
-    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html?rc=fe2c6d8230e59f18d3a6a6ef92be0b707990799f",
-    "commit": "fe2c6d8230e59f18d3a6a6ef92be0b707990799f",
+    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html?rc=19274c4f99a6a9b73ffd504d2bc2053957453a45",
+    "commit": "19274c4f99a6a9b73ffd504d2bc2053957453a45",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
   },
   "summary": {
-    "total": 878,
-    "pass": 878,
+    "total": 889,
+    "pass": 889,
     "fail": 0,
     "bySeverity": {}
   },
@@ -52,7 +52,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1211 ms",
+      "actual": "1210 ms",
       "severity": ""
     },
     {
@@ -7319,12 +7319,30 @@
       "severity": ""
     },
     {
+      "id": "TC-INPUT-KEYBOARD-MATRIX",
+      "area": "Input",
+      "description": "Every guided text control accepts character-by-character CDP input while retaining focus",
+      "status": "PASS",
+      "expected": "",
+      "actual": "109 controls; zero exceptions",
+      "severity": ""
+    },
+    {
       "id": "TC-TASK-GREP-001",
       "area": "Task completion",
       "description": "Build a flagged grep search for “laundry”",
       "status": "PASS",
       "expected": "",
       "actual": "{\"command\":\"grep -r -n -i 'laundry' '/etc'\",\"fields\":5,\"flagControls\":5}",
+      "severity": ""
+    },
+    {
+      "id": "TC-A11Y-FOCUS-003",
+      "area": "Accessibility",
+      "description": "Keyboard line selection retains focus after the command review re-renders",
+      "status": "PASS",
+      "expected": "",
+      "actual": "line 0",
       "severity": ""
     },
     {
@@ -7366,10 +7384,10 @@
     {
       "id": "TC-STATE-001",
       "area": "State",
-      "description": "Favorite and recent work appear on Home and persist by ID",
+      "description": "Favorite persists by ID and its partial re-render retains focus",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"home\":\"What do you need to do?\",\"fav\":true,\"recent\":true,\"stored\":\"{\\\"schema\\\":1,\\\"data\\\":[\\\"grep-search-text\\\"]}\"}",
+      "actual": "{\"home\":\"What do you need to do?\",\"fav\":true,\"recent\":true,\"stored\":\"{\\\"schema\\\":1,\\\"data\\\":[\\\"grep-search-text\\\"]}\",\"favFocus\":true}",
       "severity": ""
     },
     {
@@ -7379,6 +7397,15 @@
       "status": "PASS",
       "expected": "",
       "actual": "{\"home\":\"What do you need to do?\",\"version\":\"8\",\"body\":true}",
+      "severity": ""
+    },
+    {
+      "id": "TC-A11Y-CONTRAST-001",
+      "area": "Accessibility",
+      "description": "Rendered primary and pressed controls meet normal-text contrast",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"primary\":8.249323856125582,\"pressed\":6.187487282334682}",
       "severity": ""
     },
     {
@@ -7400,6 +7427,15 @@
       "severity": ""
     },
     {
+      "id": "TC-A11Y-FOCUS-002",
+      "area": "Accessibility",
+      "description": "Activating a palette command moves focus to the opened task heading",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"hit\":true,\"hidden\":true,\"focused\":true,\"active\":\"tasktitle\",\"title\":\"Prove the systemd journal is running before trusting anything journalctl prints\",\"options\":[\"journalctl / systemd-journaldTool · journalctl\",\"Prove the systemd journal is running before trusting anything journalctl printsCommand · journalctl\",\"Read the systemd journal, filtered by unit, minimum priority and time windowCommand · journalctl\",\"Read the logs for one serviceCommand · journalctl\",\"See every error since the last bootCommand · journalctl\",\"Reclaim journal disk space once, retaining at most 500M of the oldest archived journal dataCommand · journalctl\",\"journalctl -f -u apacheReference · RHEL 8 · journalctl\",\"journalctl -k -b -1Reference · RHEL 8 · journalctl\",\"journalctl /usr/bin/dbus-daemonReference · RHEL 8 · journalctl\",\"journalctl [OPTIONS...] [MATCHES...]Reference · RHEL 8 · journalctl\",\"journalctl _SYSTEMD_CGROUP=/user.slice/user-42.slice/session-c1.scopeReference · RHEL 8 · journalctl\",\"journalctl _SYSTEMD_UNIT=avahi-daemon.serviceReference · RHEL 8 · journalctl\"]}",
+      "severity": ""
+    },
+    {
       "id": "TC-SEARCH-TOOLCOMMAND",
       "area": "Search",
       "description": "tool/command query returns a relevant result",
@@ -7414,7 +7450,7 @@
       "description": "STIG query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon -- requires root: sshd_config is not world-readable on a STIG'd hostCommand · sshd | sudo update-crypto-policies --set FIPS:STIGReference · RHEL 8 · update-crypto-policies | auditctl -R /usr/share/audit/sample-rules/30-stig.rulesReference · RHEL 8 · auditctl | cp 10-base-config.rules 30-stig.rules 31-privileged.rules 99-finalize.rules /etc/audit/rules.d/Reference · RHEL 8 · cp",
+      "actual": "RHEL 8 must be a vendor-supported release.STIG · RHEL 8 | sudo cat /etc/redhat-releaseReference · RHEL 8 · cat | echo $(printf '0x%X' $(( 0x00100020 | 0x00100001 | 0x00100080 )))Reference · RHEL 8 · echo | echo 0x4020400100000000 >Reference · RHEL 7 · echo",
       "severity": ""
     },
     {
@@ -7492,10 +7528,10 @@
     {
       "id": "TC-REF-002",
       "area": "Reference",
-      "description": "Reference acknowledgement unlocks copy",
+      "description": "Reference acknowledgement unlocks copy and retains focus",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"enabled\":true,\"evidence\":false}",
+      "actual": "{\"enabled\":true,\"evidence\":false,\"focused\":true}",
       "severity": ""
     },
     {
@@ -7531,7 +7567,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 3e1282a01d1429ab25d9e0da353c709c629e2081f4f4e19687cc8a27093df3\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea00390192242\"}",
       "severity": ""
     },
     {
@@ -7544,12 +7580,21 @@
       "severity": ""
     },
     {
-      "id": "TC-PIPE-WRITE-001",
+      "id": "TC-PIPE-KEYBOARD-001",
       "area": "Pipeline",
-      "description": "A sensitive shell-startup write is visibly red and keeps root privilege in evidence",
+      "description": "Pipeline path accepts character-by-character CDP input without losing focus or throwing",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 3e1282a01d1429ab25d9e0da353c709c629e2081f4f4e19687cc8a27093df3b1\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"typedTarget\":{\"value\":\"/tmp/x.log\",\"active\":\"pipetgt-2\",\"focused\":true,\"paletteHidden\":true},\"typedTargetState\":{\"status\":\"Nothing to export — select a command or a STIG rule first.RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"command\":\"journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot | systemctl 'start' 'sshd.service' > '/tmp/x.log'\",\"paletteHidden\":true}}",
+      "severity": ""
+    },
+    {
+      "id": "TC-PIPE-WRITE-001",
+      "area": "Pipeline",
+      "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class).File write target — The composed command writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"Nothing to export — select a command or a STIG rule first.RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7558,7 +7603,25 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 3e1282a01d1429ab25d9e0da353c709c629e2081f4f4e19687cc8a27093df3b1\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225\nVerification (RHEL 8): Composed — not host-verified — the",
+      "severity": ""
+    },
+    {
+      "id": "TC-PIPE-CONTROL-002",
+      "area": "Pipeline",
+      "description": "A standalone searched STIG remains readable while pipeline export stays identity-free",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"editor\":\"RHEL-08-010000Opened from search. The check text, fix text and control mapping are in the Inspector panel on the right — this rule has no command in this build's catalog to assembl\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea00390192242\"}",
+      "severity": ""
+    },
+    {
+      "id": "TC-PIPE-KEYBOARD-002",
+      "area": "Pipeline",
+      "description": "xargs controls retain focus and accept character-by-character batch size input",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"xargsSetup\":{\"kept\":true,\"field\":true},\"typedMax\":{\"value\":\"25\",\"active\":\"pipen-1\",\"focused\":true,\"paletteHidden\":true}}",
       "severity": ""
     },
     {
@@ -7567,7 +7630,7 @@
       "description": "Pipeline Clear action removes all stages",
       "status": "PASS",
       "expected": "",
-      "actual": "PipelineThis entry cannot be a pipeline stage. Its command is a quoted vendor string, and joining two of those would produce a command the vendor never published while the citation",
+      "actual": "",
       "severity": ""
     },
     {
@@ -7618,10 +7681,19 @@
     {
       "id": "TC-RUNBOOK-001",
       "area": "Runbook",
-      "description": "Process preflight binds the current PID",
+      "description": "Process preflight binds a PID entered with real keystrokes",
       "status": "PASS",
       "expected": "",
-      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nRecheck the process owner and command immediately before sending the signal.\nps -p 54321 -o pid,user,comm,argsCopy PreflightRunki",
+      "actual": "{\"typed\":{\"value\":\"54321\",\"active\":\"genf-kill-send-signal-pid\",\"focused\":true,\"paletteHidden\":true},\"plan\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecheck the process owner and command immediately before sending the signal.\\nps -p 54321 -o pid,user,comm,argsCopy PreflightRunki\"}",
+      "severity": ""
+    },
+    {
+      "id": "TC-A11Y-LIVE-002",
+      "area": "Accessibility",
+      "description": "The first completion of a single-field form announces that the command is ready",
+      "status": "PASS",
+      "expected": "",
+      "actual": "Command ready. Review the generated command before copying.",
       "severity": ""
     },
     {
@@ -7631,6 +7703,33 @@
       "status": "PASS",
       "expected": "",
       "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nReview and save the exact uncommitted changes before discarding them.\ngit diff -- config/prod.ymlCopy PreflightRungit --literal-pathspecs checkout --",
+      "severity": ""
+    },
+    {
+      "id": "TC-BLAST-ACK-001",
+      "area": "Safety",
+      "description": "A red acknowledgement is invalidated when the command changes",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"gitAck\":{\"enabled\":true,\"focused\":true},\"gitEdited\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlx'\"}}",
+      "severity": ""
+    },
+    {
+      "id": "TC-A11Y-CONTRAST-002",
+      "area": "Accessibility",
+      "description": "The light-theme destructive warning heading meets normal-text contrast",
+      "status": "PASS",
+      "expected": "",
+      "actual": "5.551217205050123",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-DOWNLOAD-001",
+      "area": "Runbook",
+      "description": "Download recovery preserves a pre-existing output before offering removal",
+      "status": "PASS",
+      "expected": "",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nIf the output path exists, preserve it at /tmp/pkg.rpm.mdcr-before-download before downloading.\nif [ -e /tmp/pkg.rpm ]; then test ! -e /tmp/pkg.rpm.mdcr-before-download && cp -a -- /tmp/pkg.rpm /tmp/pkg.rpm.mdcr-before-download; fiCopy PreflightRuncurl -s -S -o '/tmp/pkg.rpm' 'https://example.invalid/pkg.rpm'Copy RunVerifyThe expected HTTP status is returned and, for a download, the output file's size/chec",
       "severity": ""
     },
     {
@@ -7900,7 +7999,7 @@
       "description": "Architecture and test-plan counts match the suite values supplied to this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "427 unit; 145,345 hostile; 23,032 pipeline",
+      "actual": "429 unit; 145,345 hostile; 23,032 pipeline",
       "severity": ""
     },
     {
@@ -7909,7 +8008,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":48494445,\"resources\":0,\"nav\":{\"dom\":54.699999928474426,\"load\":56.5}}",
+      "actual": "{\"heap\":6120938,\"resources\":0,\"nav\":{\"dom\":37.5,\"load\":40.5}}",
       "severity": ""
     },
     {

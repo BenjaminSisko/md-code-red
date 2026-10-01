@@ -19,13 +19,21 @@ This candidate adds or strengthens the following security properties:
   uses `-s` and accepts only a local source plus validated remote destination.
 - Curl, wget, SCP, and rsync destination fields are classified as write targets.
   Execution sinks are refused, protected system and sensitive user startup or
-  authentication targets are red, and other writes are at least yellow.
+  authentication targets are red, remote directory destinations are red, and
+  other writes are at least yellow. RHEL usrmerge aliases (`/bin`, `/sbin`,
+  `/lib`, and `/lib64`) classify like their `/usr` targets.
 - Instructional preflight, verify, and recovery commands bind the operator's
   actual inputs. Schema validation refuses hardcoded non-enum examples, and
   unresolved recovery state stays disabled.
 - Composed pipelines have their own not-host-verified state and evidence context.
   They do not borrow one stage's receipt, verification label, or STIG identity;
-  each displayed flag names its source stage and tool.
+  each displayed flag names its source stage and tool. Target-specific and
+  destructive-child reasons survive composition and appear in the red banner.
+- A destructive acknowledgement is bound to the current command. Any field,
+  pipeline, operator, or release change clears it and disables Copy again.
+- Download runbooks preserve an existing destination before transfer and only
+  recommend removal when the destination was created by that run. SCP is
+  explicitly local-to-remote, and rsync recovery does not prescribe `--delete`.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
   host-verified; the command cannot keep a receipt merely because its entry and
@@ -36,9 +44,11 @@ This candidate adds or strengthens the following security properties:
   23,032 pipeline checks, 717 pipeline-oracle comparisons, and 232 one-stage
   invariants.
 - The final standalone and HTTP rendered-browser audits each produced zero
-  exceptions and zero console errors across 878 assertions, including
-  composed-command trust, incomplete pipelines, receipt binding, status-bar
-  refresh, runbook binding, and Home-route regressions.
+  exceptions and zero console errors across 889 assertions, including 109
+  guided text controls entered character by character, pipeline redirect and
+  xargs input, composed-command trust, acknowledgement invalidation, incomplete
+  pipelines, receipt binding, status refresh, contrast, focus, runbook binding,
+  and Home-route regressions.
 - The standalone artifact loaded zero network resources. Q2 found no external
   script, stylesheet, image, media, font, fetch, XHR, WebSocket, beacon,
   dynamic import, or CDN path.
