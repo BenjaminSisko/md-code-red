@@ -27,6 +27,12 @@ hostile harness must also pass with zero failures
 The harness reports its current check count; documentation does not pin that
 implementation-dependent number.
 
+The release browser audit runs twice against the same built bytes: once by
+opening the standalone HTML directly with `file://`, which is the primary
+delivery contract, and once through a local HTTP server to catch origin- and
+transport-dependent behavior. A pass in one mode is not reported as a pass in
+the other; both machine-readable records are retained under `docs/qa/`.
+
 **The pipeline composer (CR-T-31)** is gated by the same suite and is documented
 in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
 what runs on every build: 23,032 hostile-vector checks into every field of every

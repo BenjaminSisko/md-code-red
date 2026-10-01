@@ -21,6 +21,13 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 - Give composed pipelines their own verification state, evidence context, and
   flag provenance. A composed command is labeled "not host-verified" and never
   borrows an individual stage's execution receipt or STIG identity.
+- Bind every verification receipt to its exact captured command. Editing a
+  generator field now removes the Verified label in both the Inspector and
+  status bar until the command again matches the reviewed bytes.
+- Rate every ordinary local or remote file destination as a write, and rate
+  shell startup, SSH authorization, and user-service destinations destructive.
+  Pipeline evidence now preserves composed privilege and names the stage and
+  tool that supplied each flag.
 - Corrected Home package routing, light-theme text and focus contrast, live
   result announcements, and the documented default release. Added executable
   runtime, optional-field, runbook-binding, pipeline-trust, and Home-route

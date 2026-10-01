@@ -17,23 +17,28 @@ This candidate adds or strengthens the following security properties:
 - SSH, SCP, rsync, URL, Git path, shell-variable, and PID values use
   purpose-specific closed grammars. SSH emits the username through `-l`; rsync
   uses `-s` and accepts only a local source plus validated remote destination.
-- Curl and wget output fields are classified as write targets. Execution sinks
-  are refused, protected system targets are red, and other writes are at least
-  yellow.
+- Curl, wget, SCP, and rsync destination fields are classified as write targets.
+  Execution sinks are refused, protected system and sensitive user startup or
+  authentication targets are red, and other writes are at least yellow.
 - Instructional preflight, verify, and recovery commands bind the operator's
   actual inputs. Schema validation refuses hardcoded non-enum examples, and
   unresolved recovery state stays disabled.
 - Composed pipelines have their own not-host-verified state and evidence context.
   They do not borrow one stage's receipt, verification label, or STIG identity;
   each displayed flag names its source stage and tool.
+- Generator receipts include the exact reviewed `command_as_run`. Changing any
+  field immediately changes both the Inspector and status bar to Not
+  host-verified; the command cannot keep a receipt merely because its entry and
+  RHEL release match.
 - The hostile-input harness executes 145,345 checks over all 34 field types,
   every generator field, multi-stage pipelines, redirect targets, file
   generators, quoting domains, and positive controls; zero failed. This includes
   23,032 pipeline checks, 717 pipeline-oracle comparisons, and 232 one-stage
   invariants.
-- The final rendered-browser audit produced zero exceptions and zero console
-  errors across 873 assertions, including composed-command trust, incomplete
-  pipeline, runbook-binding, and Home-route regressions.
+- The final standalone and HTTP rendered-browser audits each produced zero
+  exceptions and zero console errors across 878 assertions, including
+  composed-command trust, incomplete pipelines, receipt binding, status-bar
+  refresh, runbook binding, and Home-route regressions.
 - The standalone artifact loaded zero network resources. Q2 found no external
   script, stylesheet, image, media, font, fetch, XHR, WebSocket, beacon,
   dynamic import, or CDN path.

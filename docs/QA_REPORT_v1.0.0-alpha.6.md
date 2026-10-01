@@ -11,15 +11,18 @@ The detailed rendered-browser record is available in
 [`docs/qa/QA_REPORT_v1.0.0-alpha.6-rc.html`](qa/QA_REPORT_v1.0.0-alpha.6-rc.html)
 and its machine-readable companion
 [`docs/qa/QA_RESULTS_v1.0.0-alpha.6-rc.json`](qa/QA_RESULTS_v1.0.0-alpha.6-rc.json).
+The same audit was also run through the local HTTP delivery path; that record is
+[`docs/qa/QA_RESULTS_v1.0.0-alpha.6-rc-http.json`](qa/QA_RESULTS_v1.0.0-alpha.6-rc-http.json).
 
 | Check | Result |
 |---|---|
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 424 tests |
+| Python unit suite | PASS; 427 tests |
 | Hostile-input harness | PASS; 145,345 checks, zero failures |
-| Rendered-browser audit | PASS; 873 of 873 assertions, zero runtime exceptions, zero console errors |
+| Standalone rendered-browser audit | PASS; 878 of 878 assertions, zero runtime exceptions, zero console errors |
+| HTTP rendered-browser audit | PASS; 878 of 878 assertions, zero runtime exceptions, zero console errors |
 | Entry/release matrix | PASS; all 200 entries across RHEL 7, 8, 9, and 10 |
 | Responsive layouts | PASS; 320, 390, 768, 1024, and 1440 pixel widths |
 | Standalone file delivery | PASS; zero network resources, no overflow, editable grep result exact |
@@ -35,7 +38,8 @@ generators and 142 static entries. The audit exercised navigation, search,
 clipboard payloads, evidence export, persisted state, reference acknowledgement,
 generated files, invalid input, task routes, responsive reading order, pipeline
 composition, composed-command verification state, incomplete pipelines, Home
-package routing, and value-bound runbooks. The user-reported grep task produced
+package routing, exact receipt binding, form-driven status-bar refresh, and
+value-bound runbooks. The user-reported grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 
 Known evidence limits remain visible: RHEL 7 and RHEL 9 have no independently

@@ -4,7 +4,7 @@
     "version": "v1.0.0-alpha.6",
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
-    "url": "file:///tmp/md-code-red-ux.qIMM6w/dist/md-code-red_v1.0.0-alpha.6.html",
+    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html?rc=fe2c6d8230e59f18d3a6a6ef92be0b707990799f",
     "commit": "fe2c6d8230e59f18d3a6a6ef92be0b707990799f",
     "entries": 200,
     "generators": 58,
@@ -52,7 +52,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1218 ms",
+      "actual": "1211 ms",
       "severity": ""
     },
     {
@@ -7909,7 +7909,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":10000000,\"resources\":0,\"nav\":{\"dom\":38.199999928474426,\"load\":39.699999928474426}}",
+      "actual": "{\"heap\":48494445,\"resources\":0,\"nav\":{\"dom\":54.699999928474426,\"load\":56.5}}",
       "severity": ""
     },
     {
