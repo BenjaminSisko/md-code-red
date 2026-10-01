@@ -13,6 +13,11 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   rejects inline/property handlers, synthetic activation APIs, common `KEYMAP`
   mutations, nonliteral key arrays, and whitespace/quoted-property variations;
   its documentation states the exact source forms it checks.
+- Refresh the merge-and-stamp evidence after provenance hardening and extend the
+  keyboard guard across template-literal keys, spread/concatenated arrays,
+  post-declaration `KEYMAP` writes, mixed-case inline handlers, and direct,
+  bracketed, spaced, or call/apply click forms. Release documentation now avoids
+  a stale numeric review count.
 - Keep post-merge provenance stamping compatible with release readiness while
   allowing only the now-knowable `git_commit` field to differ from the reviewed
   placeholder manifest. The stamp must be committed, name an ancestor of the

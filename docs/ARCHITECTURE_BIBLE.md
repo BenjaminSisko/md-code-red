@@ -439,9 +439,11 @@ Space activation. A full-template structural test requires the only literal
 keyboard-event registration to be that `keydown` listener; it rejects literal
 `keyup`/`keypress`, inline/property/setAttribute/object-assignment, and Function
 call/apply registration forms. The shell may not synthesize click/dispatch
-activation, extend `KEYMAP` with mutation methods, or use nonliteral key arrays;
+activation through direct, bracketed, or call/apply click forms. Outside comments,
+`KEYMAP` may appear only in its declaration, length check, and indexed read, and
+every declared key array may contain only quoted string literals;
 the approved handler also may not directly route copy actions. Literal
-Enter/Space bindings are rejected in the declared table. These are source-shape
+Enter/Space bindings, including template-literal values, are rejected in the declared table. These are source-shape
 guards for the named forms, not a call-graph analysis or proof against
 arbitrarily obfuscated JavaScript. Every focusable
 control shows a visible focus ring (`:focus`/`:focus-visible`, never removed

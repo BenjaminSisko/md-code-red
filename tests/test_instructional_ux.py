@@ -70,12 +70,12 @@ class InstructionalSchemaTests(unittest.TestCase):
 
     def assert_keyboard_contract(self,template):
         event_literals=list(re.finditer(
-            r'([\'\"`])(keydown|keyup|keypress)\1',template))
-        self.assertEqual([match.group(2) for match in event_literals],['keydown'],
+            r'([\'\"`])(keydown|keyup|keypress)\1',template,re.IGNORECASE))
+        self.assertEqual([match.group(2).lower() for match in event_literals],['keydown'],
                          'the complete shell must have one literal keydown registration and no keyup/keypress registration')
         self.assertEqual(template.count('document.addEventListener("keydown"'),1)
         self.assertNotRegex(
-            template,r'onkey(?:down|up|press)',
+            template,re.compile(r'onkey(?:down|up|press)',re.IGNORECASE),
             'inline, property, setAttribute, and object-assignment keyboard handlers are forbidden',
         )
         self.assertNotRegex(
@@ -83,16 +83,21 @@ class InstructionalSchemaTests(unittest.TestCase):
             r'addEventListener(?:\.|\[\s*([\'\"`]))(?:call|apply)',
             'keyboard handlers may not be registered through Function.call/apply',
         )
-        self.assertNotRegex(
-            template,
-            r'KEYMAP\s*(?:\.\s*(?:push|unshift|splice)\b|\[\s*([\'\"`])(?:push|unshift|splice)\1\s*\])',
-            'the checked KEYMAP declaration may not be extended later',
+        code_without_comments=re.sub(r'/\*.*?\*/|//[^\r\n]*','',template,flags=re.DOTALL)
+        self.assertEqual(
+            len(re.findall(r'\bKEYMAP\b',code_without_comments)),3,
+            'KEYMAP may appear only in its declaration, length check, and indexed read',
         )
-        for forbidden in ('dispatchEvent','MouseEvent','.click('):
+        for forbidden in ('dispatchEvent','MouseEvent'):
             self.assertNotIn(
                 forbidden,template,
                 'the shell may not synthesize activation through '+forbidden,
             )
+        self.assertNotRegex(
+            template,
+            r'(?:\.\s*click\s*\(|\[\s*([\'\"`])click\1\s*\]\s*\(|\bclick\s*\.\s*(?:call|apply)\b)',
+            'the shell may not call click through direct, bracketed, or call/apply forms',
+        )
         start=template.index('document.addEventListener("keydown"')
         end=template.index('/* ============ boot ============ */',start)
         handler=template[start:end]
@@ -108,15 +113,23 @@ class InstructionalSchemaTests(unittest.TestCase):
         key_properties=list(re.finditer(
             r'(?<![\w$])(?:(?:[\'\"]keys[\'\"])|keys)\s*:',keymap))
         literal_key_properties=list(re.finditer(
-            r'(?<![\w$])(?:(?:[\'\"]keys[\'\"])|keys)\s*:\s*\[([^\]]*)\]',
+            r'(?<![\w$])(?:(?:[\'\"]keys[\'\"])|keys)\s*:\s*\[([^\]]*)\]\s*(?=,)',
             keymap,re.DOTALL))
         self.assertEqual(
             len(key_properties),len(literal_key_properties),
             'every KEYMAP keys property must remain a directly inspectable array literal',
         )
         key_values=[]
+        literal_string=re.compile(
+            r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|`(?:\\.|[^`\\])*`')
         for match in literal_key_properties:
-            key_values.extend(value for _quote,value in re.findall(r'([\'\"])(.*?)\1',match.group(1)))
+            contents=match.group(1)
+            residual=literal_string.sub('',contents)
+            self.assertRegex(
+                residual,r'^\s*(?:,\s*)*$',
+                'KEYMAP arrays may contain only directly inspectable string literals',
+            )
+            key_values.extend(value.group(0)[1:-1] for value in literal_string.finditer(contents))
         self.assertNotIn('Enter',key_values,'Enter must remain native outside contextual overlay handling')
         self.assertNotIn(' ',key_values,'Space must remain native outside contextual gutter handling')
 
@@ -154,6 +167,28 @@ class InstructionalSchemaTests(unittest.TestCase):
                 boot,'Object.assign(document.body,{onkeydown:function(){doCopy();}});\n'+boot),
             'helper synthetic click':self.template.replace(
                 boot,'function badHelper(e){e.target.click();}\n'+boot),
+            'template literal key':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-template-key",keys:[`Enter`],mods:"none",whenTyping:true,run:function(){}},',1),
+            'spread key array':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-spread",keys:[...BAD_KEYS],mods:"none",whenTyping:true,run:function(){}},',1),
+            'concatenated key array':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-concat",keys:[].concat(BAD_KEYS),mods:"none",whenTyping:true,run:function(){}},',1),
+            'indexed KEYMAP assignment':self.template.replace(
+                boot,'KEYMAP[KEYMAP.length]={id:"bad-index",keys:["Enter"]};\n'+boot),
+            'KEYMAP concat assignment':self.template.replace(
+                boot,'KEYMAP=KEYMAP.concat([{id:"bad-concat",keys:["Enter"]}]);\n'+boot),
+            'prototype KEYMAP mutation':self.template.replace(
+                boot,'Array.prototype.push.call(KEYMAP,{id:"bad-proto",keys:["Enter"]});\n'+boot),
+            'nested KEYMAP key mutation':self.template.replace(
+                boot,'KEYMAP[0].keys.push("Enter");\n'+boot),
+            'mixed-case inline onKeyUp':self.template.replace(
+                boot,'<button onKeyUp="doCopy()">bad</button>\n'+boot),
+            'bracket click':self.template.replace(
+                boot,'function badBracket(e){e.target["click"]();}\n'+boot),
+            'spaced click':self.template.replace(
+                boot,'function badSpaced(e){e.target.click ();}\n'+boot),
+            'prototype click call':self.template.replace(
+                boot,'function badProto(e){HTMLElement.prototype.click.call(e.target);}\n'+boot),
         }
         for name,mutant in mutants.items():
             with self.subTest(mutant=name),self.assertRaises(AssertionError):

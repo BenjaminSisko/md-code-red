@@ -41,7 +41,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Pipeline hostile-input checks | PASS; 27,652 checks plus 232 one-stage invariants |
 | Real reference-export snapshot | PASS after deliberate date and fingerprint refresh |
 | Generated release facts | PASS; current against source data |
-| Post-merge stamp simulation | PASS; committed ancestor stamp, 480 of 480 unit tests, Q1-Q26 + JS, clean post-build tree |
+| Post-merge stamp simulation | PASS; disposable merge `1e96531d84e62c40f1bd20d2c349554eb030bdd2` contains reviewed implementation `3e5c95402e7349a9ad7f6be233673728e301410d`; committed stamp `f25279d5eef6ba9d563344cac5f49ba1c0cf26e7`, 480 of 480 unit tests, Q1-Q26 + JS, clean post-build tree |
 | `git diff --check` | PASS |
 
 The candidate contains 200 curated entries across 102 tools: 58 guided
@@ -96,9 +96,10 @@ marker in that payload, and counts exactly one keyboard activation and one
 clipboard write. Its structural companion scans the complete shell and permits
 one literal delegated `keydown` listener, rejects literal `keyup`/`keypress`,
 inline/property/setAttribute/object-assignment and call/apply registration forms,
-forbids synthetic click/dispatch APIs throughout the shell, rejects common
-`KEYMAP` mutation forms and nonliteral key arrays, and excludes literal Enter and
-Space from the declared global shortcut table. It is a source-shape check for
+forbids direct, bracketed, and call/apply synthetic click/dispatch APIs throughout
+the shell, restricts `KEYMAP` identifiers to the declaration and two approved
+reads, requires quoted string literals in each declared key array, and excludes
+Enter and Space in single-, double-, or template-literal form. It is a source-shape check for
 those named forms, not a JavaScript call-graph proof. Forgejo CI builds the HTML
 before test discovery but preserves the
 committed, release-workstation provenance rather than dirtying protected

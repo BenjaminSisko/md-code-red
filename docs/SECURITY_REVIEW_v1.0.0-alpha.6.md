@@ -117,11 +117,14 @@ This candidate adds or strengthens the following security properties:
   candidate provenance untouched because that manifest intentionally records
   the release workstation toolchain; regenerating it with runner-specific
   Python or Node versions would dirty the protected evidence before tests run.
-- The post-merge release simulation stamped the candidate SHA into provenance,
-  committed that one-field change with the released-status report, rebuilt the
-  identical HTML, and passed all 480 unit tests plus Q1-Q26 + JS. The readiness
-  gate rejects an uncommitted stamp, a non-ancestor SHA, toolchain drift, or any
-  semantic manifest change beyond `git_commit`.
+- The refreshed post-merge release simulation created disposable no-ff merge
+  `1e96531d84e62c40f1bd20d2c349554eb030bdd2`, which contains reviewed
+  implementation `3e5c95402e7349a9ad7f6be233673728e301410d`, stamped that merge into
+  provenance, committed the one-field change as `f25279d5eef6ba9d563344cac5f49ba1c0cf26e7`
+  with the released-status report, rebuilt the identical HTML, and passed all
+  480 unit tests plus Q1-Q26 + JS. The readiness gate rejects an uncommitted
+  stamp, a noncommit or stale/nonancestor SHA, noncanonical JSON, toolchain
+  drift, or any manifest change beyond `git_commit`.
 
 The candidate remains unsigned because no authorized publisher identity is
 provisioned. SHA-256 detects changed bytes but does not authenticate a publisher.

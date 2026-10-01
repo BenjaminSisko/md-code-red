@@ -11,8 +11,8 @@ Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeli
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
 offline, provenance-backed RHEL command catalog. It closes the complete
-functional audit and addresses the findings recorded by thirteen independent
-Claude Opus release reviews, including real-input, risk-label, validation,
+functional audit and addresses the findings recorded in the preserved
+independent Claude Opus review history, including real-input, risk-label, validation,
 safety-reason, focus, contrast, and recovery findings. The final exact-head
 review remains a separate gate.
 
@@ -87,19 +87,21 @@ recorded two informational performance observations in both its standalone
 `file://` delivery mode and a local HTTP delivery, with no exceptions or console
 errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
-through thirteenth independent Opus review records are preserved in
-`docs/design/`, including the eighth-review PASS, the ninth-review HOLD, and
-the tenth-, eleventh-, twelfth-, and thirteenth-review HOLDs. This candidate closes their
+prior independent Opus review records are preserved in `docs/design/`, including
+the eighth- and fourteenth-review PASS reports and the intervening HOLD reports.
+This candidate closes their
 transaction, signal, trust-check, native-keyboard, bounded-failure, exact
 clipboard, CI toolchain, write-through-link, fail-closed recovery,
 release-integrity, and operator-guidance findings. Exact-head independent
 review runs only after this evidence is committed.
 
-A separate post-merge simulation stamped this candidate SHA into the manifest,
-changed the release report to released state, committed both files, rebuilt the
-same HTML, and passed 480 of 480 unit tests plus Q1-Q26 + JS from the resulting
-tree. The stamped manifest retained the reviewed release-workstation toolchain
-and every semantic field other than `git_commit`.
+A refreshed post-merge simulation created disposable no-ff merge
+`1e96531d84e62c40f1bd20d2c349554eb030bdd2`, containing implementation
+`3e5c95402e7349a9ad7f6be233673728e301410d` and candidate
+`4e5c2887a71e20ee49ae3ac27a7403566c29bbcd`. Stamp commit
+`f25279d5eef6ba9d563344cac5f49ba1c0cf26e7` changed only canonical
+`git_commit` plus the released-status report, rebuilt the same HTML, and passed
+480 of 480 unit tests plus Q1-Q26 + JS with a clean tree.
 
 Publication does not establish deployment, receiving-host acceptance, or command
 execution. The release must remain labeled lab-only and unsigned. After merge,
