@@ -1,8 +1,8 @@
 {
  "artifact": {
-  "bytes": 8913823,
+  "bytes": 8922170,
   "filename": "md-code-red_v1.0.0-alpha.6.html",
-  "sha256": "69ec4e6bcce72fc1ad4c05f632702120b4d983527a93d6c917da372c6568d18c"
+  "sha256": "fa9e08f011aee4fe197cae0af55ca6018bdf6f05b219a17655b2c68fc4f54851"
  },
  "build_date": "2026-10-01",
  "capture_count": 5,
@@ -15,7 +15,7 @@
   "zip_sha256": "077cbb6d2ae5f8fdbaaf416d87a34a8621767cdba490f3283feb0c5c35892700",
   "zip_url": "https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/U_CCI_List.zip"
  },
- "content_fingerprint": "e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225",
+ "content_fingerprint": "ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0",
  "flag_coverage_baseline": {
   "accepted_by": "Milo Vance, Toolkit Systems Engineer \u2014 under condition E5 of Marcus Reed's D4 review",
   "accepted_on": "2026-09-17",

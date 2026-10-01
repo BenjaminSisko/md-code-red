@@ -4,15 +4,15 @@
     "version": "v1.0.0-alpha.6",
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
-    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html?rc=19274c4f99a6a9b73ffd504d2bc2053957453a45",
-    "commit": "19274c4f99a6a9b73ffd504d2bc2053957453a45",
+    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
+    "commit": "be95fe8eb99090eeca52049fddea6f8905e82636",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
   },
   "summary": {
-    "total": 889,
-    "pass": 889,
+    "total": 893,
+    "pass": 893,
     "fail": 0,
     "bySeverity": {}
   },
@@ -52,7 +52,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1210 ms",
+      "actual": "1211 ms",
       "severity": ""
     },
     {
@@ -7319,6 +7319,15 @@
       "severity": ""
     },
     {
+      "id": "TC-RISK-LABEL-001",
+      "area": "Safety",
+      "description": "Rendered risk labels distinguish state-changing commands from low-impact commands",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"cpRisk\":{\"text\":\"Changes systemRHEL 8Not host-verifiedsame as RHEL 7\",\"yellow\":true},\"lsRisk\":{\"text\":\"Low impactRHEL 8Not host-verifiedsame as RHEL 7\",\"green\":true}}",
+      "severity": ""
+    },
+    {
       "id": "TC-INPUT-KEYBOARD-MATRIX",
       "area": "Input",
       "description": "Every guided text control accepts character-by-character CDP input while retaining focus",
@@ -7361,6 +7370,24 @@
       "status": "PASS",
       "expected": "",
       "actual": "# MD CODE RED v1.0.0-alpha.6 — RHEL 8\n# intent: Find which lines, or which files, contain a pattern instead of reading everything by eye\n# blast: green\ngrep -r -n -i 'laundry' '/et",
+      "severity": ""
+    },
+    {
+      "id": "TC-COPY-POINTER-001",
+      "area": "Clipboard",
+      "description": "One real pointer click after typing copies the newly displayed command and refreshes status",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"clipboard\":\"grep -r -n -i 'laundry-new' '/etc'\",\"command\":\"grep -r -n -i 'laundry-new' '/etc'\",\"toast\":\"Copied to clipboard — RHEL 8\"}",
+      "severity": ""
+    },
+    {
+      "id": "TC-A11Y-FOCUS-004",
+      "area": "Accessibility",
+      "description": "Tab after typing in the last field advances to the next control",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"body\":false,\"tag\":\"DIV\",\"action\":\"\",\"field\":\"\"}",
       "severity": ""
     },
     {
@@ -7409,12 +7436,21 @@
       "severity": ""
     },
     {
+      "id": "TC-A11Y-CONTRAST-003",
+      "area": "Accessibility",
+      "description": "Rendered placeholder text meets normal-text contrast in both themes",
+      "status": "PASS",
+      "expected": "",
+      "actual": "[{\"theme\":\"light\",\"ratio\":5.59537064042819,\"color\":\"rgb(83, 101, 125)\",\"background\":\"rgb(246, 248, 250)\"},{\"theme\":\"dark\",\"ratio\":7.54113370301418,\"color\":\"rgb(161, 161, 170)\",\"background\":\"rgb(10, 14, 21)\"}]",
+      "severity": ""
+    },
+    {
       "id": "TC-CONTROLS-001",
       "area": "Controls",
       "description": "Theme, Navigator, and Inspector update while preserving focus",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"title\":\"What do you need to do?\",\"copy\":false,\"theme\":\"dark\",\"sidebar\":\"off\",\"inspector\":\"on\",\"themeFocus\":true,\"sideFocus\":true,\"inspFocus\":true}",
+      "actual": "{\"title\":\"What do you need to do?\",\"copy\":false,\"theme\":\"light\",\"sidebar\":\"off\",\"inspector\":\"on\",\"themeFocus\":true,\"sideFocus\":true,\"inspFocus\":true}",
       "severity": ""
     },
     {
@@ -7546,10 +7582,10 @@
     {
       "id": "TC-PIPE-001",
       "area": "Pipeline",
-      "description": "A guided command can be added as stage 1",
+      "description": "The first real Add-to-pipeline click after typing creates stage 1",
       "status": "PASS",
       "expected": "",
-      "actual": "Pipeline — 1 of 8 stagesStage 1 — editinggreenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveAdd current command as a stageAdd a redirectionClear pipel",
+      "actual": "{\"typed\":{\"value\":\"sshd.servicex\",\"active\":\"genf-gen-journalctl-unit-logs-unit\",\"focused\":true,\"paletteHidden\":true},\"panel\":\"Pipeline — 1 of 8 stagesStage 1 — editinggreenjournalctl --no-pager --unit='sshd.servicex' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveAdd current command as a stageAdd a redirectionClear pipe\"}",
       "severity": ""
     },
     {
@@ -7558,7 +7594,7 @@
       "description": "A second guided command can be added and composed",
       "status": "PASS",
       "expected": "",
-      "actual": "Pipeline — 2 of 8 stagesStage 1greenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveStage 2 — editingyellowjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next comm",
+      "actual": "Pipeline — 2 of 8 stagesStage 1greenjournalctl --no-pager --unit='sshd.servicex' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveStage 2 — editingyellowjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next com",
       "severity": ""
     },
     {
@@ -7567,7 +7603,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea00390192242\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103\"}",
       "severity": ""
     },
     {
@@ -7585,7 +7621,7 @@
       "description": "Pipeline path accepts character-by-character CDP input without losing focus or throwing",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"typedTarget\":{\"value\":\"/tmp/x.log\",\"active\":\"pipetgt-2\",\"focused\":true,\"paletteHidden\":true},\"typedTargetState\":{\"status\":\"Nothing to export — select a command or a STIG rule first.RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"command\":\"journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot | systemctl 'start' 'sshd.service' > '/tmp/x.log'\",\"paletteHidden\":true}}",
+      "actual": "{\"typedTarget\":{\"value\":\"/tmp/x.log\",\"active\":\"pipetgt-2\",\"focused\":true,\"paletteHidden\":true},\"typedTargetState\":{\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"command\":\"journalctl --no-pager --unit='sshd.servicex' --priority='err' --since='today' --boot | systemctl 'start' 'sshd.service' > '/tmp/x.log'\",\"paletteHidden\":true}}",
       "severity": ""
     },
     {
@@ -7594,7 +7630,7 @@
       "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class).File write target — The composed command writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"Nothing to export — select a command or a STIG rule first.RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7603,16 +7639,16 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0\nVerification (RHEL 8): Composed — not host-verified — the",
       "severity": ""
     },
     {
       "id": "TC-PIPE-CONTROL-002",
       "area": "Pipeline",
-      "description": "A standalone searched STIG remains readable while pipeline export stays identity-free",
+      "description": "A standalone searched STIG is visibly on-screen while pipeline export stays identity-free",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"editor\":\"RHEL-08-010000Opened from search. The check text, fix text and control mapping are in the Inspector panel on the right — this rule has no command in this build's catalog to assembl\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea00390192242\"}",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103\"}",
       "severity": ""
     },
     {
@@ -7648,7 +7684,7 @@
       "description": "A receipt is bound to the exact captured generator command",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"exact\":\"RHEL 8VerifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Dark\",\"changed\":\"RHEL 8Not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Dark\"}",
+      "actual": "{\"exact\":\"RHEL 8VerifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Light\",\"changed\":\"RHEL 8Not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Light\"}",
       "severity": ""
     },
     {
@@ -7657,7 +7693,7 @@
       "description": "Command completion uses a concise dedicated live region",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"status\":\"RHEL 8VerifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Dark\",\"inspector\":\"VerificationVerified this exact command was verified by Riley Park on 2026-09-18 (defiant-rhel8)Flag by flag--no-pagerunverified — see man page--unitunverified — see man page--priorityunverified — see man page--sinceunverified — see man page--bootunverified — see man pageSourcejournalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10) — RHEL 8 — content-src/raw/rhel8/journalctl.man.txt (retrieved 2026-09-17)Read next: man 1 journalctlMan section 1 identifies the documentation class. Open it with man 1 journalctl and search inside the page with /--no-pager.RHEL release comparisonReleaseExact commandEvidenceWhy changed7journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootNot host-verifiedNo release-specific rationale recorded.8journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootVerifiedNo release-specific rationale recorded.9journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootNot host-verifiedNo release-specific rationale recorded.10journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootVerifiedNo release-specific rationale recorded.\",\"live\":\"polite\",\"atomic\":\"true\",\"resultLive\":null}",
+      "actual": "{\"status\":\"RHEL 8VerifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OnInspector: OffTheme: Light\",\"inspector\":\"VerificationVerified this exact command was verified by Riley Park on 2026-09-18 (defiant-rhel8)Flag by flag--no-pagerunverified — see man page--unitunverified — see man page--priorityunverified — see man page--sinceunverified — see man page--bootunverified — see man pageSourcejournalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10) — RHEL 8 — content-src/raw/rhel8/journalctl.man.txt (retrieved 2026-09-17)Read next: man 1 journalctlMan section 1 identifies the documentation class. Open it with man 1 journalctl and search inside the page with /--no-pager.RHEL release comparisonReleaseExact commandEvidenceWhy changed7journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootNot host-verifiedNo release-specific rationale recorded.8journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootVerifiedNo release-specific rationale recorded.9journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootNot host-verifiedNo release-specific rationale recorded.10journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootVerifiedNo release-specific rationale recorded.\",\"live\":\"polite\",\"atomic\":\"true\",\"resultLive\":null}",
       "severity": ""
     },
     {
@@ -7708,10 +7744,10 @@
     {
       "id": "TC-BLAST-ACK-001",
       "area": "Safety",
-      "description": "A red acknowledgement is invalidated when the command changes",
+      "description": "The first real acknowledgement click after typing works, and a later edit invalidates it",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"gitAck\":{\"enabled\":true,\"focused\":true},\"gitEdited\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlx'\"}}",
+      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
       "severity": ""
     },
     {
@@ -7999,7 +8035,7 @@
       "description": "Architecture and test-plan counts match the suite values supplied to this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "429 unit; 145,345 hostile; 23,032 pipeline",
+      "actual": "431 unit; 165,361 hostile; 26,992 pipeline",
       "severity": ""
     },
     {
@@ -8008,7 +8044,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":6120938,\"resources\":0,\"nav\":{\"dom\":37.5,\"load\":40.5}}",
+      "actual": "{\"heap\":6225437,\"resources\":0,\"nav\":{\"dom\":41.09999990463257,\"load\":43.199999928474426}}",
       "severity": ""
     },
     {

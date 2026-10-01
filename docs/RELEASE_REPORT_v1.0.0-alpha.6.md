@@ -23,7 +23,7 @@ review remains a separate gate.
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
 | Verification | Q1-Q26 + JS; 431 unit tests; 165,361 hostile checks; 893 browser assertions in each of standalone and HTTP modes |
-| Implementation source | Pending exact review-fix commit |
+| Implementation source | `be95fe8eb99090eeca52049fddea6f8905e82636` |
 
 The release adds or changes:
 
@@ -51,7 +51,8 @@ The release adds or changes:
 
 The final candidate passed 893 of 893 rendered-browser assertions in both its
 standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
-or console errors. The first through fourth independent Opus reviews and
+or console errors. Two consecutive clean builds produced the same 8,922,170-byte
+artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first through fourth independent Opus reviews and
 their HOLD findings are preserved in `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD.md` and
 `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_2.md`, and
 `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_3.md`, and
