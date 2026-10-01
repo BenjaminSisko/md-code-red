@@ -18,6 +18,10 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   post-declaration `KEYMAP` writes, mixed-case inline handlers, and direct,
   bracketed, spaced, or call/apply click forms. Release documentation now avoids
   a stale numeric review count.
+- Make the keyboard guard's identifier check string- and comment-aware, retain
+  exact declaration/length/index span checks, keep explicit mutation-method
+  bans, require one ordinary literal `keys` array per binding, and reject escaped
+  key names or later binding-array mutation.
 - Keep post-merge provenance stamping compatible with release readiness while
   allowing only the now-knowable `git_commit` field to differ from the reviewed
   placeholder manifest. The stamp must be committed, name an ancestor of the

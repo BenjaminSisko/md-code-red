@@ -17,6 +17,42 @@ def load(name):
         return json.load(fh)
 
 
+def code_without_comments_or_strings(source):
+    """Mask comments and string bodies while preserving code offsets/newlines."""
+    out=[]
+    state='code'
+    quote=''
+    i=0
+    while i<len(source):
+        char=source[i]
+        following=source[i+1] if i+1<len(source) else ''
+        if state=='code':
+            if char=='/' and following=='/':
+                out.extend((' ',' ')); i+=2; state='line-comment'; continue
+            if char=='/' and following=='*':
+                out.extend((' ',' ')); i+=2; state='block-comment'; continue
+            if char in ('\'', '"', '`'):
+                out.append(' '); i+=1; state='string'; quote=char; continue
+            out.append(char); i+=1; continue
+        if state=='line-comment':
+            if char in ('\r','\n'):
+                out.append(char); state='code'
+            else:
+                out.append(' ')
+            i+=1; continue
+        if state=='block-comment':
+            if char=='*' and following=='/':
+                out.extend((' ',' ')); i+=2; state='code'; continue
+            out.append(char if char in ('\r','\n') else ' '); i+=1; continue
+        if char=='\\' and following:
+            out.extend((' ',' ')); i+=2; continue
+        out.append(char if char in ('\r','\n') else ' ')
+        i+=1
+        if char==quote:
+            state='code'; quote=''
+    return ''.join(out)
+
+
 class InstructionalSchemaTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -83,10 +119,25 @@ class InstructionalSchemaTests(unittest.TestCase):
             r'addEventListener(?:\.|\[\s*([\'\"`]))(?:call|apply)',
             'keyboard handlers may not be registered through Function.call/apply',
         )
-        code_without_comments=re.sub(r'/\*.*?\*/|//[^\r\n]*','',template,flags=re.DOTALL)
+        keyboard_code=code_without_comments_or_strings(template)
         self.assertEqual(
-            len(re.findall(r'\bKEYMAP\b',code_without_comments)),3,
+            len(re.findall(r'\bKEYMAP\b',keyboard_code)),3,
             'KEYMAP may appear only in its declaration, length check, and indexed read',
+        )
+        for approved in ('var KEYMAP=[','KEYMAP.length','KEYMAP[i]'):
+            self.assertEqual(
+                keyboard_code.count(approved),1,
+                'the exact approved KEYMAP span must appear once: '+approved,
+            )
+        self.assertNotRegex(
+            template,
+            r'KEYMAP\s*(?:\.\s*(?:push|unshift|splice)\b|\[\s*([\'\"`])(?:push|unshift|splice)\1\s*\])',
+            'KEYMAP mutation methods are forbidden even near comment-like string text',
+        )
+        self.assertNotRegex(
+            template,
+            r'(?:\.\s*keys|\[\s*([\'\"`])keys\1\s*\])\s*\.\s*(?:push|unshift|splice|pop|shift|sort|reverse|copyWithin|fill)\b',
+            'a binding key array may not be mutated after declaration',
         )
         for forbidden in ('dispatchEvent','MouseEvent'):
             self.assertNotIn(
@@ -119,6 +170,11 @@ class InstructionalSchemaTests(unittest.TestCase):
             len(key_properties),len(literal_key_properties),
             'every KEYMAP keys property must remain a directly inspectable array literal',
         )
+        binding_count=len(re.findall(r'\{\s*id\s*:',keymap))
+        self.assertEqual(
+            binding_count,len(literal_key_properties),
+            'every KEYMAP binding must declare one ordinary keys array property',
+        )
         key_values=[]
         literal_string=re.compile(
             r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|`(?:\\.|[^`\\])*`')
@@ -129,7 +185,10 @@ class InstructionalSchemaTests(unittest.TestCase):
                 residual,r'^\s*(?:,\s*)*$',
                 'KEYMAP arrays may contain only directly inspectable string literals',
             )
-            key_values.extend(value.group(0)[1:-1] for value in literal_string.finditer(contents))
+            for value in literal_string.finditer(contents):
+                raw=value.group(0)[1:-1]
+                self.assertNotIn('\\',raw,'KEYMAP key literals may not hide escapes')
+                key_values.append(raw)
         self.assertNotIn('Enter',key_values,'Enter must remain native outside contextual overlay handling')
         self.assertNotIn(' ',key_values,'Space must remain native outside contextual gutter handling')
 
@@ -189,6 +248,20 @@ class InstructionalSchemaTests(unittest.TestCase):
                 boot,'function badSpaced(e){e.target.click ();}\n'+boot),
             'prototype click call':self.template.replace(
                 boot,'function badProto(e){HTMLElement.prototype.click.call(e.target);}\n'+boot),
+            'shorthand keys property':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-shorthand",keys,mods:"none",whenTyping:true,run:function(){}},',1),
+            'computed keys property':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-computed",["keys"]:["Enter"],mods:"none",whenTyping:true,run:function(){}},',1),
+            'keys getter':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-getter",get keys(){return ["Enter"]},mods:"none",whenTyping:true,run:function(){}},',1),
+            'escaped Enter':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-escaped-enter",keys:["\\u0045nter"],mods:"none",whenTyping:true,run:function(){}},',1),
+            'escaped Space':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-escaped-space",keys:["\\x20"],mods:"none",whenTyping:true,run:function(){}},',1),
+            'nested binding mutation':self.template.replace(
+                boot,'var s="https://example.invalid//"; b.keys.push("Enter");\n'+boot),
+            'count-preserving mutation':self.template.replace(
+                'KEYMAP.length','KEYMAP.push({id:"bad-count",keys:["Enter"]})',1),
         }
         for name,mutant in mutants.items():
             with self.subTest(mutant=name),self.assertRaises(AssertionError):

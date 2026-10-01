@@ -86,9 +86,9 @@ The final candidate passed all 896 pass/fail rendered-browser assertions and
 recorded two informational performance observations in both its standalone
 `file://` delivery mode and a local HTTP delivery, with no exceptions or console
 errors. Two consecutive builds produced the same 8,944,791-byte
-artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
-prior independent Opus review records are preserved in `docs/design/`, including
-the eighth- and fourteenth-review PASS reports and the intervening HOLD reports.
+artifact, SHA-256 sidecar, and provenance manifest byte for byte. Prior
+independent Opus review records are preserved in `docs/design/`, including the
+eighth-, fourteenth-, and fifteenth-review PASS reports and the intervening HOLD reports.
 This candidate closes their
 transaction, signal, trust-check, native-keyboard, bounded-failure, exact
 clipboard, CI toolchain, write-through-link, fail-closed recovery,
