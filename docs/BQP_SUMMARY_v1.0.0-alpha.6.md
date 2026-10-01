@@ -12,7 +12,7 @@ The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
 The resulting bytes also match the artifact committed with implementation
-source `11b167159cb2246004e5f457df6f0c155d1c32cb`.
+source `3e5c95402e7349a9ad7f6be233673728e301410d`.
 
 | Item | Result |
 |---|---|
@@ -27,7 +27,7 @@ source `11b167159cb2246004e5f457df6f0c155d1c32cb`.
 | Forgejo CI candidate build | PASS; Python 3.12 rebuild leaves HTML and sidecar clean while preserving committed toolchain-specific provenance for release-readiness checks |
 | Post-merge stamp simulation | PASS; a committed `git_commit=c97a614b39fb8edf14e411b79dc32864fdf46a47` manifest and released-status report passed all 480 tests and Q1-Q26 + JS while preserving every other manifest field |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
+| Implementation source | `3e5c95402e7349a9ad7f6be233673728e301410d` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,

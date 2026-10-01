@@ -25,7 +25,7 @@ review remains a separate gate.
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
 | Verification | Q1-Q26 + JS; 480 unit tests; 168,697 hostile checks; 896 pass/fail browser assertions plus 2 performance observations in each of standalone and HTTP modes |
-| Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
+| Implementation source | `3e5c95402e7349a9ad7f6be233673728e301410d` |
 
 The release adds or changes:
 
