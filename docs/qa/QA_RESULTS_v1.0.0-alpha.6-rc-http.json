@@ -5,14 +5,17 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "95c9d9ebf05d9cb9aad294d26a388b9ffb708f6b",
+    "commit": "eda403cfb6f08d2642c02f4b50d96770b4bc2a47",
+    "artifactBytes": 8933228,
+    "artifactSha256": "241ffd0cf0942d13c4a38509a31adf24849c86090fdf3f54e9daee78f19b81da",
+    "contentFingerprint": "26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e8b",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
   },
   "summary": {
-    "total": 896,
-    "pass": 896,
+    "total": 897,
+    "pass": 897,
     "fail": 0,
     "bySeverity": {}
   },
@@ -52,7 +55,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1212 ms",
+      "actual": "1218 ms",
       "severity": ""
     },
     {
@@ -7564,10 +7567,10 @@
     {
       "id": "TC-REF-002",
       "area": "Reference",
-      "description": "Reference acknowledgement unlocks copy and retains focus",
+      "description": "Reference acknowledgement unlocks copy, and revocation clears stale success state",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"enabled\":true,\"evidence\":false,\"focused\":true}",
+      "actual": "{\"ack\":{\"enabled\":true,\"evidence\":false,\"focused\":true},\"copied\":\"Copied — vendor reference text, not host-verified\",\"cleared\":{\"toast\":\"\",\"disabled\":true,\"checked\":false}}",
       "severity": ""
     },
     {
@@ -7603,7 +7606,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e\"}",
       "severity": ""
     },
     {
@@ -7630,7 +7633,7 @@
       "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e8b\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7639,7 +7642,7 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e8b\nVerification (RHEL 8): Composed — not host-verified — the",
       "severity": ""
     },
     {
@@ -7648,7 +7651,7 @@
       "description": "A standalone searched STIG is visibly on-screen while pipeline export stays identity-free",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9\"}",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e\"}",
       "severity": ""
     },
     {
@@ -7672,10 +7675,10 @@
     {
       "id": "TC-STIG-SELECT-001",
       "area": "Accessibility",
-      "description": "A searched STIG linked to a command opens with a visible Inspector",
+      "description": "A searched STIG linked to a command opens visibly and focused at 390px",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"found\":true,\"id\":\"RHEL-08-040101\",\"inspector\":\"on\",\"visible\":true,\"text\":\"STIG RHEL-08-040101, Category IICCI-002314NIST AC-17 (1)A firewall must be active on RHEL 8.Check textVerify that \\\"firewalld\\\" is active with the following commands:\\n\\n$ sudo systemctl is-active firewalld\\n\\nactive\\n\\nIf the \\\"firewalld\\\" package is not \\\"active\\\", ask the System Administrator if another firewall is installed. If no firewall is installed and active this is a finding.Fix textConfigure \\\"firewalld\\\" to protect the operating system with the following command:\\n\\n$ sudo systemctl enable firewalldExpected compliant output (captured)active\",\"title\":\"Prove the host firewall is running before claiming the boundary control is in place\"}",
+      "actual": "{\"found\":true,\"id\":\"RHEL-08-040101\",\"inspector\":\"on\",\"visible\":true,\"focused\":true,\"text\":\"STIG RHEL-08-040101, Category IICCI-002314NIST AC-17 (1)A firewall must be active on RHEL 8.Check textVerify that \\\"firewalld\\\" is active with the following commands:\\n\\n$ sudo systemctl is-active firewalld\\n\\nactive\\n\\nIf the \\\"firewalld\\\" package is not \\\"active\\\", ask the System Administrator if another firewall is installed. If no firewall is installed and active this is a finding.Fix textConfigure \\\"firewalld\\\" to protect the operating system with the following command:\\n\\n$ sudo systemctl enable firewalldExpected compliant output (captured)active\",\"title\":\"Prove the host firewall is running before claiming the boundary control is in place\",\"rect\":{\"top\":322.671875,\"bottom\":520.953125},\"innerHeight\":844}",
       "severity": ""
     },
     {
@@ -7729,7 +7732,7 @@
       "description": "Process preflight binds a PID entered with real keystrokes",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"typed\":{\"value\":\"54321\",\"active\":\"genf-kill-send-signal-pid\",\"focused\":true,\"paletteHidden\":true},\"plan\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecheck the process owner and command immediately before sending the signal.\\nps -p 54321 -o pid,user,comm,argsCopy PreflightRunki\"}",
+      "actual": "{\"typed\":{\"value\":\"54321\",\"active\":\"genf-kill-send-signal-pid\",\"focused\":true,\"paletteHidden\":true},\"plan\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecheck the process owner and command immediately before sending the signal.\\nps -p '54321' -o pid,user,comm,argsCopy PreflightRun\"}",
       "severity": ""
     },
     {
@@ -7744,19 +7747,19 @@
     {
       "id": "TC-RUNBOOK-002",
       "area": "Runbook",
-      "description": "Destructive Git preflight binds the current path",
+      "description": "Destructive Git preflight binds the current path as one quoted word",
       "status": "PASS",
       "expected": "",
-      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nReview and save the exact uncommitted changes before discarding them.\ngit diff -- config/prod.ymlCopy PreflightRungit --literal-pathspecs checkout --",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nReview and save the exact uncommitted changes before discarding them.\ngit diff -- 'config/prod.yml'Copy PreflightRungit --literal-pathspecs checkout ",
       "severity": ""
     },
     {
       "id": "TC-BLAST-ACK-001",
       "area": "Safety",
-      "description": "The first real acknowledgement click after typing works, clears stale status, and a later edit invalidates it",
+      "description": "Acknowledgement revocation and later edits clear real copy-success state",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true,\"toast\":\"\"},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
+      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true,\"toast\":\"\"},\"gitCopiedToast\":\"Copied to clipboard — RHEL 8\",\"gitUnacked\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\"},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\",\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
       "severity": ""
     },
     {
@@ -7774,34 +7777,43 @@
       "description": "Download recovery preserves a pre-existing output before offering removal",
       "status": "PASS",
       "expected": "",
-      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nIf the output path exists, preserve it at /tmp/pkg.rpm.mdcr-before-download before downloading.\nif [ -e /tmp/pkg.rpm ]; then test ! -e /tmp/pkg.rpm.mdcr-before-download && cp -a -- /tmp/pkg.rpm /tmp/pkg.rpm.mdcr-before-download; fiCopy PreflightRuncurl -s -S -o '/tmp/pkg.rpm' 'https://example.invalid/pkg.rpm'Copy RunVerifyThe expected HTTP status is returned and, for a download, the output file's size/chec",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nIf the output path exists, preserve it at /tmp/pkg.rpm.mdcr-before-download before downloading.\nif [ -e '/tmp/pkg.rpm' ]; then test ! -e '/tmp/pkg.rpm'.mdcr-before-download && cp -a -- '/tmp/pkg.rpm' '/tmp/pkg.rpm'.mdcr-before-download; fiCopy PreflightRuncurl -s -S -o '/tmp/pkg.rpm' 'https://example.invalid/pkg.rpm'Copy RunVerifyThe expected HTTP status is returned and, for a download, the output file's s",
       "severity": ""
     },
     {
       "id": "TC-RUNBOOK-REMOTE-001",
       "area": "Runbook",
-      "description": "SCP renders a bound transaction preflight, recovery, and finalization protocol",
+      "description": "SCP renders a bound transaction with symlink refusal, recovery, and finalization",
       "status": "PASS",
       "expected": "",
-      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nCreate one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Existing or partial transaction state is refused.\nprintf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'target=$1' 'if [ -d \"$target\" ]; then target=$target/$2; fi' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished SCP transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nCreate one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Symlinked targets and existing or partial transaction state are refused.\nprintf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ ",
       "severity": ""
     },
     {
       "id": "TC-RUNBOOK-REMOTE-002",
       "area": "Runbook",
-      "description": "Rsync renders a bound capacity-checked transaction protocol and an ambiguous directory source is red",
+      "description": "Rsync renders a symlink-refusing, capacity-checked transaction and an ambiguous source is red",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"risk\":\"Destructive\",\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRun the assembled command with Dry run selected and review every listed change before clearing it.\\nCreate one atomic remote transaction containing the destination tree or an absent-state record. Existing transaction state and insufficient rollback capacity are refused.\\nprintf '%s\\\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'target=$1' 'txn=$target.mdcr-rsync.txn' 'preparing=$txn.preparing' 'if [ -e \\\"$txn\\\" ] || [ -L \\\"$txn\\\" ] || [ -e \\\"$preparing\\\" ] || [ -L \\\"$preparing\\\" ]; then' '  printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' \\\"Refusing: an unfinished rsync transaction exists at $txn\\\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \\\"$prepar\"}",
+      "actual": "{\"risk\":\"Destructive\",\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRun the assembled command with Dry run selected and review every listed change before clearing it.\\nCreate one atomic remote transaction containing the destination tree or an absent-state record. Symlinked targets, existing transaction state, and insufficient rollback capacity are refused.\\nprintf '%s\\\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \\\"$target\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync target'\\\"'\\\"' >&2; exit 1; }' 'txn=$tar\"}",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-NMCLI-001",
+      "area": "Runbook",
+      "description": "NetworkManager runbook quotes a space-bearing name and uses an external profile transaction",
+      "status": "PASS",
+      "expected": "",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nRecord the complete current profile settings without exporting unsupported non-VPN formats.\nnmcli connection show 'Wired connection 1'\nResolve exactly one name or UUID through the RHEL-documented FILENAME,NAME,UUID listing, then preserve the actual profile in a root-only transaction outside NetworkManager profile directories.\nprintf '%s\\n' '# MDCR_NMCLI_PREFLIGHT' 'set -eu' 'umask 077' txn=/var/tmp/mdcr-nmcli-static-ipv4.txn 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: an unfinished NetworkManager transaction exists'\"'\"' >&2' '  exit 1' fi 'con=$1' 'record=$(nmcli -g FILENAME,NAME,UUID connection show | awk -F: -v n=\"$con\" '\"'\"'$2 == n || $3 == n { count++; value=$1 } END { if (count == 1) ",
       "severity": ""
     },
     {
       "id": "TC-RUNBOOK-003",
       "area": "Runbook",
-      "description": "User/group guidance binds current values and blocks unresolved recovery",
+      "description": "User/group guidance quotes current values and blocks unresolved recovery",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecord the complete current group list before making the change.\\nid bobCopy PreflightRunusermod -a -G 'docker' 'bob'Copy RunVerify`id bob` shows docker plus all previously recorded supplementary groups.Copy VerifyRecoverRestore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> bob`.Copy is unavailable because this guidance still contains an unresolved placeholder.Copy RecoverCopy complete plan\",\"recoverDisabled\":true}",
+      "actual": "{\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecord the complete current group list before making the change.\\nid 'bob'Copy PreflightRunusermod -a -G 'docker' 'bob'Copy RunVerify`id 'bob'` shows 'docker' plus all previously recorded supplementary groups.Copy VerifyRecoverRestore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> 'bob'`.Copy is unavailable because this guidance still contains an unresolved placeholder.Copy RecoverCopy complete plan\",\"recoverDisabled\":true}",
       "severity": ""
     },
     {
@@ -8062,7 +8074,7 @@
       "description": "Architecture and test-plan counts match the suite values supplied to this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "439 unit; 168,697 hostile; 27,652 pipeline",
+      "actual": "443 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8071,7 +8083,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":6268542,\"resources\":0,\"nav\":{\"dom\":61.299999952316284,\"load\":64}}",
+      "actual": "{\"heap\":6264487,\"resources\":0,\"nav\":{\"dom\":43.300000071525574,\"load\":45.700000047683716}}",
       "severity": ""
     },
     {

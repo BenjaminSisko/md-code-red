@@ -6,6 +6,8 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
+Verification totals: 443 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
 explicit acknowledgement for destructive operations. Q2, Q17-Q19, Q21-Q26,
@@ -21,8 +23,10 @@ This candidate adds or strengthens the following security properties:
   local path; command-running `ext::` transports are refused.
 - Curl, wget, SCP, and rsync destination fields are classified as write targets.
   Execution sinks are refused, protected system and sensitive user startup or
-  authentication targets are red, possible SCP directory destinations and every
-  rsync remote write are red, and other writes are at least yellow. RHEL usrmerge
+  authentication targets are red. SCP rates the validated path plus source
+  basename and may conservatively remain yellow when the remote host alone can
+  reveal directory semantics; every rsync remote write is red. Other writes are
+  at least yellow. RHEL usrmerge
   aliases (`/bin`, `/sbin`,
   `/lib`, and `/lib64`), `/var/run`, and `/etc/rc0.d` through `/etc/rc6.d`
   classify like their real targets.
@@ -35,9 +39,10 @@ This candidate adds or strengthens the following security properties:
   destructive-child reasons survive composition and appear in the red banner.
 - A destructive acknowledgement is bound to the current command. Any field,
   pipeline, operator, or release change clears it and disables Copy again.
-- SCP and rsync use single-stdin remote transaction scripts whose argument
-  binding was executed through a fake SSH transport that reproduces OpenSSH's
-  joined remote-command semantics. Preflight refuses stale transaction state,
+- SCP and rsync use single-stdin remote transaction scripts whose exact app-bound
+  strings execute through a fake SSH transport that reproduces OpenSSH's joined
+  remote-command semantics. Preflight refuses symlink targets, remote dot
+  segments, and stale transaction state,
   atomically publishes either a complete backup or an `absent` record, and rsync
   checks capacity for two copies plus a margin. Recovery restores through an
   `after` path or removes a created target only when recorded state proves it was
@@ -53,8 +58,10 @@ This candidate adds or strengthens the following security properties:
   27,652 pipeline checks, 741 pipeline-oracle comparisons, and 232 one-stage
   invariants.
 - The final standalone and HTTP rendered-browser audits each produced zero
-  exceptions and zero console errors across 893 assertions, including 109
-  guided text controls entered with real CDP key-down/key-up pairs, first-click
+  exceptions and zero console errors across 897 assertions. Their JSON metadata
+  binds each run to the artifact byte count, SHA-256, and content fingerprint.
+  The coverage includes 109 guided text controls entered with real CDP
+  key-down/key-up pairs, first-click
   pointer coverage after edits, stale-toast invalidation, pipeline redirect and
   xargs input, composed-command trust, acknowledgement invalidation, incomplete
   pipelines, receipt binding, status refresh, placeholder contrast, focus, visible
