@@ -5,10 +5,10 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "4d61c901001f631690954d4bdb8f345d9c33742a",
-    "artifactBytes": 8944842,
-    "artifactSha256": "bd419fffba2e2c1c7a2218c0a550bf6eda368619315b7f54d6a91207887a06aa",
-    "contentFingerprint": "98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c358",
+    "commit": "05b96e5c74c7de5b3795df5e1ee9fa87b28583b8",
+    "artifactBytes": 8944791,
+    "artifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
+    "contentFingerprint": "871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
@@ -55,7 +55,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1216 ms",
+      "actual": "1218 ms",
       "severity": ""
     },
     {
@@ -7606,7 +7606,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c3\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e11\"}",
       "severity": ""
     },
     {
@@ -7633,7 +7633,7 @@
       "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c358\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7642,7 +7642,7 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c358\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a\nVerification (RHEL 8): Composed — not host-verified — the",
       "severity": ""
     },
     {
@@ -7651,7 +7651,7 @@
       "description": "A standalone searched STIG is visibly on-screen while pipeline export stays identity-free",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c3\"}",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e11\"}",
       "severity": ""
     },
     {
@@ -7801,10 +7801,10 @@
     {
       "id": "TC-RUNBOOK-RED-GATE-001",
       "area": "Runbook",
-      "description": "Every runnable red runbook step is disabled before acknowledgement and enabled after it",
+      "description": "Red runbook steps stay disabled before acknowledgement and Space copies Recover exactly once afterward",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"ack\":true,\"before\":[{\"step\":\"preflight\",\"disabled\":true},{\"step\":\"run\",\"disabled\":true},{\"step\":\"verify\",\"disabled\":true},{\"step\":\"recover\",\"disabled\":true}],\"after\":[{\"step\":\"preflight\",\"disabled\":false},{\"step\":\"run\",\"disabled\":false},{\"step\":\"verify\",\"disabled\":false},{\"step\":\"recover\",\"disabled\":false}]}",
+      "actual": "{\"rsyncPlanGate\":{\"ack\":true,\"before\":[{\"step\":\"preflight\",\"disabled\":true},{\"step\":\"run\",\"disabled\":true},{\"step\":\"verify\",\"disabled\":true},{\"step\":\"recover\",\"disabled\":true}],\"after\":[{\"step\":\"preflight\",\"disabled\":false},{\"step\":\"run\",\"disabled\":false},{\"step\":\"verify\",\"disabled\":false},{\"step\":\"recover\",\"disabled\":false}],\"recoverFocused\":true},\"rsyncPlanCopy\":{\"calls\":1,\"clicks\":1,\"clipboard\":\"printf '%s\\\\n' '# MDCR_RSYNC_RECOVER' 'set -eu' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' \",\"focus\":\"recover\"}}",
       "severity": ""
     },
     {
@@ -8083,7 +8083,7 @@
       "description": "Architecture and test-plan counts match the live suite totals derived by this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "465 unit; 168,697 hostile; 27,652 pipeline",
+      "actual": "470 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8092,7 +8092,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":6252560,\"resources\":0,\"nav\":{\"dom\":46.89999997615814,\"load\":49.09999990463257}}",
+      "actual": "{\"heap\":32196429,\"resources\":0,\"nav\":{\"dom\":38.89999997615814,\"load\":41.700000047683716}}",
       "severity": ""
     },
     {

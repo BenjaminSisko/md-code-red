@@ -6,12 +6,12 @@ last_verified: 2026-10-01
 
 # Release Report -- v1.0.0-alpha.6
 
-Verification totals: 465 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
 offline, provenance-backed RHEL command catalog. It closes the complete
-functional audit and addresses the findings recorded by nine independent
+functional audit and addresses the findings recorded by ten independent
 Claude Opus release reviews, including real-input, risk-label, validation,
 safety-reason, focus, contrast, and recovery findings. The final exact-head
 review remains a separate gate.
@@ -19,13 +19,13 @@ review remains a separate gate.
 | Release fact | Candidate value |
 |---|---|
 | Version / date | `v1.0.0-alpha.6` / 2026-10-01 |
-| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,842 bytes |
-| Artifact SHA-256 | `bd419fffba2e2c1c7a2218c0a550bf6eda368619315b7f54d6a91207887a06aa` |
-| Content fingerprint | `98974cb6efa8bf67c42e4869c03c3d9e5ae35b5d6631500cdeda1a35b418c358` |
+| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
+| Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
+| Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 465 unit tests; 168,697 hostile checks; 898 browser assertions in each of standalone and HTTP modes |
-| Implementation source | `4d61c901001f631690954d4bdb8f345d9c33742a` |
+| Verification | Q1-Q26 + JS; 470 unit tests; 168,697 hostile checks; 898 browser assertions in each of standalone and HTTP modes |
+| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
 
 The release adds or changes:
 
@@ -59,12 +59,13 @@ The release adds or changes:
 
 The final candidate passed 898 of 898 rendered-browser assertions in both its
 standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
-or console errors. Two consecutive builds produced the same 8,944,842-byte
+or console errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
-through ninth independent Opus review records are preserved in `docs/design/`,
-including the eighth-review PASS and the ninth-review HOLD whose blockers this
-candidate closes. Exact-head independent review runs only after this evidence is
-committed.
+through tenth independent Opus review records are preserved in
+`docs/design/`, including the eighth-review PASS, the ninth-review HOLD, and
+the tenth-review HOLD whose transaction, signal, trust-check, native-keyboard,
+and evidence findings this candidate closes. Exact-head independent review runs
+only after this evidence is committed.
 
 Publication does not establish deployment, receiving-host acceptance, or command
 execution. The release must remain labeled lab-only and unsigned. After merge,

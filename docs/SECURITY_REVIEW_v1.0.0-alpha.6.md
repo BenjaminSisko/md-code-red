@@ -6,13 +6,20 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 465 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
 explicit acknowledgement for destructive operations. Q2, Q17-Q19, Q21-Q26,
 the full unit suite, the hostile-input harness, and the rendered-browser runtime
 audit pass against the final artifact.
+
+| Traceability fact | Candidate value |
+|---|---|
+| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
+| Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
+| Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
+| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
 
 This candidate adds or strengthens the following security properties:
 
@@ -49,8 +56,10 @@ This candidate adds or strengthens the following security properties:
   writes the owner-validated state file last. A preserved backup owner is safe
   because access is controlled by the trusted mode-`0700` parent. Rsync
   checks capacity for two copies plus a margin. Recovery restores through an
-  `after` path or removes a created target only when recorded state proves it was
-  absent; explicit finalization clears the transaction. SCP remains
+  `after` path, uses GNU `mv -T`, and makes a bounded retry after removing a
+  raced symlink so a directory backup replaces the link without following it.
+  A created target is removed only when recorded state proves it was absent;
+  explicit finalization clears the transaction. SCP remains
   local-to-remote, and rsync recovery does not prescribe `--delete`.
 - NetworkManager rollback state is atomically created under root-owned mode-0700
   `/var/lib/md-code-red`. Preflight, Recover, and Finalize reject symlinked,

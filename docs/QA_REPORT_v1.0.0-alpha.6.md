@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # QA Report -- v1.0.0-alpha.6
 
-Verification totals: 465 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The final candidate completed the full verification sequence on 2026-10-01.
 The detailed rendered-browser record is available in
@@ -16,12 +16,19 @@ and its machine-readable companion
 The same audit was also run through the local HTTP delivery path; that record is
 [`docs/qa/QA_RESULTS_v1.0.0-alpha.6-rc-http.json`](qa/QA_RESULTS_v1.0.0-alpha.6-rc-http.json).
 
+| Traceability fact | Candidate value |
+|---|---|
+| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
+| Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
+| Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
+| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
+
 | Check | Result |
 |---|---|
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 465 tests |
+| Python unit suite | PASS; 470 tests |
 | Hostile-input harness | PASS; 168,697 checks, zero failures |
 | Standalone rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
 | HTTP rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
@@ -59,13 +66,14 @@ argument joining, and exercises existing-target restore, directory-target
 resolution, absent-target recovery, stale-state refusal, rsync tree restore,
 transaction finalization, SCP/rsync symlink refusal, atomic race handling,
 foreign-owner refusal, unsafe shared-parent refusal, explicit symlinked-parent
-refusal, raced-symlink replacement, and nonzero HUP, INT, and TERM cleanup for
-both transfer methods. The NetworkManager execution matrix proves a
+refusal, GNU `mv -T` behavior, bounded raced-symlink replacement before and
+after removal, and exact status-1 HUP, INT, and TERM cleanup for both transfer
+methods. The NetworkManager execution matrix proves a
 space-bearing connection name backs up and restores the actual
 profile, while missing/duplicate/numeric-looking names and pre-existing,
 symlinked, raced, incorrectly permissioned, or forged-owner transaction state
-are handled through the app-bound command. It also exercises nonzero HUP, INT,
-and TERM cleanup. The user-reported
+are handled through the app-bound command. It also exercises exact status-1
+HUP, INT, and TERM cleanup. The user-reported
 grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 
