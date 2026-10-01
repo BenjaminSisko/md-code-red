@@ -5,7 +5,7 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "2e181c84c0a8621c33dd3fc8d76b0a0917135930",
+    "commit": "5b868f10eec73bf6207113f56c41d42eb6802b1d",
     "artifactBytes": 8944791,
     "artifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
     "contentFingerprint": "871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a",
@@ -55,7 +55,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1219 ms",
+      "actual": "1213 ms",
       "severity": ""
     },
     {
@@ -8083,7 +8083,7 @@
       "description": "Architecture and test-plan counts match the live suite totals derived by this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "477 unit; 168,697 hostile; 27,652 pipeline",
+      "actual": "480 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8092,7 +8092,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":6296662,\"resources\":0,\"nav\":{\"dom\":51,\"load\":52.89999997615814}}",
+      "actual": "{\"heap\":6295254,\"resources\":0,\"nav\":{\"dom\":55.5,\"load\":56.800000071525574}}",
       "severity": ""
     },
     {

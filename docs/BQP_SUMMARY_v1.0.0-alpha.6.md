@@ -6,13 +6,13 @@ last_verified: 2026-10-01
 
 # Build Quality Protocol Summary -- v1.0.0-alpha.6
 
-Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
 The resulting bytes also match the artifact committed with implementation
-source `2e181c84c0a8621c33dd3fc8d76b0a0917135930`.
+source `5b868f10eec73bf6207113f56c41d42eb6802b1d`.
 
 | Item | Result |
 |---|---|
@@ -24,8 +24,9 @@ source `2e181c84c0a8621c33dd3fc8d76b0a0917135930`.
 | Build identity | MD CODE RED `v1.0.0-alpha.6`, built 2026-10-01, UNCLASSIFIED |
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
+| Forgejo CI candidate build | PASS; Python 3.12 rebuild leaves HTML and sidecar clean while preserving committed toolchain-specific provenance for release-readiness checks |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
+| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,

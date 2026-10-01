@@ -6,12 +6,12 @@ last_verified: 2026-10-01
 
 # Release Report -- v1.0.0-alpha.6
 
-Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
 offline, provenance-backed RHEL command catalog. It closes the complete
-functional audit and addresses the findings recorded by eleven independent
+functional audit and addresses the findings recorded by twelve independent
 Claude Opus release reviews, including real-input, risk-label, validation,
 safety-reason, focus, contrast, and recovery findings. The final exact-head
 review remains a separate gate.
@@ -24,8 +24,8 @@ review remains a separate gate.
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 477 unit tests; 168,697 hostile checks; 898 browser assertions in each of standalone and HTTP modes |
-| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
+| Verification | Q1-Q26 + JS; 480 unit tests; 168,697 hostile checks; 898 browser assertions in each of standalone and HTTP modes |
+| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
 
 The release adds or changes:
 
@@ -64,17 +64,27 @@ The release adds or changes:
   uncommitted protected edits and extraction/CI changes, exact-version artifact
   selection, and recovery-refusal guidance that tells operators to preserve the
   rollback transaction while resolving its trust failure.
+- Fail-closed transfer coverage for an unremovable raced link, a planted
+  non-link directory, and exhaustion after three replants. Each SCP/rsync case
+  requires exact status 1, retained trusted rollback state, and an outside
+  directory containing only its original sentinel; targeted mutants prove the
+  guarded success and transaction-retention paths cannot silently regress.
+- CI preserves the committed candidate provenance while building the HTML
+  before unit discovery, full-shell keyboard-listener coverage prevents a late
+  synthetic copy handler, and the browser auditor retains distinct standalone
+  and HTTP result files.
 
 The final candidate passed 898 of 898 rendered-browser assertions in both its
 standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
 or console errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
-  through eleventh independent Opus review records are preserved in
+  through twelfth independent Opus review records are preserved in
 `docs/design/`, including the eighth-review PASS, the ninth-review HOLD, and
-the tenth- and eleventh-review HOLDs. This candidate closes their transaction,
-signal, trust-check, native-keyboard, bounded-failure, exact clipboard, CI,
-release-integrity, and operator-guidance findings. Exact-head independent review
-runs only after this evidence is committed.
+the tenth-, eleventh-, and twelfth-review HOLDs. This candidate closes their
+transaction, signal, trust-check, native-keyboard, bounded-failure, exact
+clipboard, CI toolchain, write-through-link, fail-closed recovery,
+release-integrity, and operator-guidance findings. Exact-head independent
+review runs only after this evidence is committed.
 
 Publication does not establish deployment, receiving-host acceptance, or command
 execution. The release must remain labeled lab-only and unsigned. After merge,

@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -19,7 +19,7 @@ audit pass against the final artifact.
 | Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
 | Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
-| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
+| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
 
 This candidate adds or strengthens the following security properties:
 
@@ -61,7 +61,14 @@ This candidate adds or strengthens the following security properties:
   A persistent attacker that replants the link after every removal reaches the
   bounded failure path: execution exits exactly 1 after six removals, retains
   `state`, `before`, and `after`, leaves the link in place, and does not touch a
-  sentinel behind it. Recover and Finalize independently refuse symlinked
+  sentinel behind it. The tests require the outside directory to contain only
+  that sentinel, preventing writes through the link from going unnoticed.
+  Additional SCP and rsync cases cover a link that cannot be removed, a planted
+  non-link directory, and an attacker that stops after three replants. They
+  require exact status 1 and retained rollback state; mutation controls prove
+  the link check, removal failure, retry exhaustion, outer failure, and
+  transaction-retention guards all fail closed. Recover and Finalize
+  independently refuse symlinked
   destinations and unsafe or symlinked transaction parents.
   A created target is removed only when recorded state proves it was absent;
   explicit finalization clears the transaction. SCP remains
@@ -102,6 +109,11 @@ This candidate adds or strengthens the following security properties:
 - The standalone artifact loaded zero network resources. Q2 found no external
   script, stylesheet, image, media, font, fetch, XHR, WebSocket, beacon,
   dynamic import, or CDN path.
+- Forgejo CI builds the deterministic HTML before discovering unit tests, so the
+  artifact-backed tests execute on a clean checkout. It leaves the committed
+  candidate provenance untouched because that manifest intentionally records
+  the release workstation toolchain; regenerating it with runner-specific
+  Python or Node versions would dirty the protected evidence before tests run.
 
 The candidate remains unsigned because no authorized publisher identity is
 provisioned. SHA-256 detects changed bytes but does not authenticate a publisher.
