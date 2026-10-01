@@ -68,6 +68,15 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertNotIn('This rail lands with its own task: STIG search',self.template)
         self.assertIn('el("palette-input").value="STIG"',self.template)
 
+    def test_native_copy_buttons_have_no_keyboard_retrigger_handler(self):
+        self.assertEqual(self.template.count('document.addEventListener("keydown"'),1)
+        start=self.template.index('document.addEventListener("keydown"')
+        end=self.template.index('/* ============ boot ============ */',start)
+        handler=self.template[start:end]
+        for forbidden in ('data-action', 'data-plan-step', 'doCopyPlanStep(', '.click('):
+            self.assertNotIn(forbidden,handler,
+                             'native buttons must keep browser Enter/Space semantics: '+forbidden)
+
     def test_generator_plan_placeholders_are_bindable_and_broadly_detected(self):
         placeholder=re.compile(r'<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}')
         special={'generated_rule_arg','previous_group_list','remote_identity',

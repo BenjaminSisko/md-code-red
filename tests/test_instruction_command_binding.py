@@ -38,10 +38,14 @@ class InstructionCommandBindingTests(unittest.TestCase):
         self.nmcli_log=self.tmp/'nmcli.log'
         fakebin=self.tmp/'bin'; fakebin.mkdir()
         (fakebin/'sudo').write_text("""#!/usr/bin/env python3
-import os, subprocess, sys
+import os, signal, subprocess, sys
 script=sys.stdin.read().replace('/var/lib/md-code-red',os.environ['MDCR_TEST_STATE_ROOT'])
 if os.environ.get('MDCR_TEST_REMOTE_PID_FILE'):
-    child=subprocess.Popen(sys.argv[1:],stdin=subprocess.PIPE,text=True)
+    def reset_signals():
+        for sig in (signal.SIGHUP,signal.SIGINT,signal.SIGTERM):
+            signal.signal(sig,signal.SIG_DFL)
+    child=subprocess.Popen(sys.argv[1:],stdin=subprocess.PIPE,text=True,
+                           preexec_fn=reset_signals)
     open(os.environ['MDCR_TEST_REMOTE_PID_FILE'],'w').write(str(child.pid)+'\\n')
     child.communicate(script)
     statusfile=os.environ.get('MDCR_TEST_REMOTE_STATUS_FILE')
@@ -220,12 +224,34 @@ fi
         self.assertIn('state root is not root-owned mode 0700',result.stderr)
 
     def test_nmcli_preflight_refuses_symlinked_state_root_before_install_follows_it(self):
-        outside=self.tmp/'outside-preflight-state'; outside.mkdir(mode=0o700)
+        outside=self.tmp/'outside-preflight-state'; outside.mkdir(mode=0o755)
         self.state_root.symlink_to(outside,target_is_directory=True)
         _,result=self.run_bound(self.preflight(),check=False)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('state root is not root-owned mode 0700',result.stderr)
+        self.assertEqual(outside.stat().st_mode & 0o777,0o755,
+                         'pre-install symlink guard must prevent chmod through the link')
         self.assertEqual(list(outside.iterdir()),[])
+
+    def test_nmcli_recover_and_finalize_refuse_mode_0755_state_root(self):
+        for action in ('undo','verify'):
+            with self.subTest(action=action):
+                self.reset_state(); self.make_complete_txn(); self.profile.write_text('after\n')
+                self.state_root.chmod(0o755)
+                _,result=self.run_bound(self.entries['gen-nmcli-static-ipv4'][action],check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('state root is not root-owned mode 0700',result.stderr)
+                self.assertTrue(self.txn.exists())
+                self.assertEqual(self.profile.read_text(),'after\n')
+
+    def test_nmcli_finalize_clears_complete_transaction_and_allows_next_preflight(self):
+        self.run_bound(self.preflight())
+        self.assertTrue(self.txn.exists())
+        _,result=self.run_bound(self.entries['gen-nmcli-static-ipv4']['verify'])
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertFalse(self.txn.exists())
+        self.run_bound(self.preflight())
+        self.assertTrue(self.txn.exists())
 
     def test_nmcli_recover_refuses_symlinked_or_different_resolved_profile(self):
         for mode in ('symlink','different'):

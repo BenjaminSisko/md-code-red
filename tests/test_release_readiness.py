@@ -127,13 +127,21 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertRegex(implementation_source,r"^[0-9a-f]{40}$")
         subprocess.run(["git","cat-file","-e",implementation_source+"^{commit}"],
                        cwd=REPO,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        protected=("template.html","content","build.py","qa.py","tools/qa","tests","dist")
+        protected=("template.html","content","extract","build.py","qa.py","tools/qa",
+                   "tests","dist",".forgejo/workflows")
         unchanged=subprocess.run(
             ["git","diff","--quiet",implementation_source+"..HEAD","--",*protected],
             cwd=REPO,
         )
         self.assertEqual(unchanged.returncode,0,
                          "implementation files changed after the browser-evidence commit")
+        working=subprocess.run(
+            ["git","status","--porcelain","--untracked-files=all","--",*protected],
+            cwd=REPO,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=True,
+        )
+        self.assertEqual(working.stdout,"",
+                         "protected implementation paths have uncommitted changes:\n"+
+                         working.stdout)
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
         suite=unittest.defaultTestLoader.discover(
             os.path.join(REPO,"tests"),pattern="test*.py")

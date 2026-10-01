@@ -8,6 +8,7 @@ dataset" is a measurement of the shipped JavaScript, not a re-implementation.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import unittest
@@ -25,10 +26,13 @@ def find_artifact():
     order (`python3 build.py && ... && python3 -m unittest discover`) means
     dist/ always exists by the time it runs.
     """
-    if not os.path.isdir(DIST):
-        return None
-    cands = sorted(f for f in os.listdir(DIST) if f.startswith("md-code-red_") and f.endswith(".html"))
-    return os.path.join(DIST, cands[-1]) if cands else None
+    with open(os.path.join(REPO,"build.py"),encoding="utf-8") as handle:
+        build = handle.read()
+    match = re.search(r'^APP_VERSION\s*=\s*"([^"]+)"',build,re.MULTILINE)
+    if not match:
+        raise AssertionError("build.py has no literal APP_VERSION")
+    artifact=os.path.join(DIST,"md-code-red_%s.html" % match.group(1))
+    return artifact if os.path.isfile(artifact) else None
 
 
 def run(target):

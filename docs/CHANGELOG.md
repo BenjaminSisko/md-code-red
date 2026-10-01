@@ -10,7 +10,7 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   Preflight now copies only authored commands, and Verify/Recover copy only
   closed transaction scripts. Red-rated evidence and plan copying share the
   exact-command acknowledgement gate.
-- Exit nonzero and clean partial SCP, rsync, and NetworkManager transactions on
+- Exit with status `1` and clean partial SCP, rsync, and NetworkManager transactions on
   HUP, INT, or TERM; explicitly refuse symlinked transaction parents; and allow
   `cp -a` to preserve the saved target owner inside the trusted mode-`0700`
   directory. The execution suite signals the generated shell itself at the last
@@ -34,15 +34,18 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   transaction parents. Recovery can no longer trust a directory created by a
   different remote user. Recovery uses real GNU `mv -T` plus a bounded
   symlink-removal retry for directory restores. Adversarial tests plant a link
-  both before the restore and again after removal to prove saved content replaces
-  the link without changing its target.
+  before the restore, once after removal, and persistently through the six total
+  bounded restore/rollback attempts. They prove that a normal race restores the
+  saved content while a persistent race exits `1`, preserves every transaction
+  artifact, leaves the outside sentinel unchanged, and cannot loop forever.
 - Exercise transaction ownership one path at a time for Preflight, Recover, and
   Finalize, including missing state files and the positive case where preserved
   content has a different owner inside a trusted transaction directory.
 - Drive clipboard buttons with native Enter and Space text events and assert
   exactly one DOM click and one clipboard write. Red runbook steps are verified
   disabled before acknowledgement; after acknowledgement, Space copies the
-  Recover script exactly once and retains focus.
+  exact isolated Recover script once, excludes Preflight and Finalize, and
+  retains focus.
 - Derive documentation counts inside the browser audit when `AUDIT_*` variables
   are omitted, and let source-level unit discovery skip stale artifact-backed
   checks without weakening the release gate's stale-build refusal.

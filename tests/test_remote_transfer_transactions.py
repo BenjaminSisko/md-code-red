@@ -26,7 +26,7 @@ class RemoteTransferTransactionTests(unittest.TestCase):
         fakebin=self.tmp/'bin'; fakebin.mkdir()
         ssh=fakebin/'ssh'
         ssh.write_text("""#!/usr/bin/env python3
-import os, subprocess, sys
+import os, signal, subprocess, sys
 assert sys.argv[2]=='--'
 # OpenSSH joins the remaining argv with spaces and the remote login shell
 # parses the result. Pass the pipe through explicitly; a background process
@@ -34,7 +34,11 @@ assert sys.argv[2]=='--'
 command=' '.join(sys.argv[3:])
 pidfile=os.environ.get('MDCR_TEST_REMOTE_PID_FILE')
 if pidfile:
-    child=subprocess.Popen(['/bin/sh','-c',command],stdin=sys.stdin)
+    def reset_signals():
+        for sig in (signal.SIGHUP,signal.SIGINT,signal.SIGTERM):
+            signal.signal(sig,signal.SIG_DFL)
+    child=subprocess.Popen(['/bin/sh','-c',command],stdin=sys.stdin,
+                           preexec_fn=reset_signals)
     open(pidfile,'w').write(str(child.pid)+'\\n')
     status=child.wait()
     statusfile=os.environ.get('MDCR_TEST_REMOTE_STATUS_FILE')
@@ -99,9 +103,15 @@ result=subprocess.run(['/bin/rm']+args)
 race=os.environ.get('MDCR_TEST_RACE_RECOVERY_TARGET','')
 outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
 marker=os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT','')
-if result.returncode==0 and marker and len(words)==1 and os.path.abspath(words[0])==os.path.abspath(race) and not os.path.exists(marker):
-    open(marker,'w').close()
-    os.symlink(outside,race,target_is_directory=True)
+always=os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT_ALWAYS')=='yes'
+countfile=os.environ.get('MDCR_TEST_RACE_RECOVERY_RM_COUNT','')
+if result.returncode==0 and len(words)==1 and race and os.path.abspath(words[0])==os.path.abspath(race):
+    if countfile:
+        count=int(open(countfile).read() or '0') if os.path.exists(countfile) else 0
+        open(countfile,'w').write(str(count+1))
+    if always or (marker and not os.path.exists(marker)):
+        if marker: open(marker,'w').close()
+        if not os.path.lexists(race): os.symlink(outside,race,target_is_directory=True)
 raise SystemExit(result.returncode)
 """)
         rm_cmd.chmod(0o755)
@@ -136,10 +146,10 @@ raise SystemExit(result.returncode)
         if not command: raise AssertionError('operationalPlan returned no runnable '+kind)
         return command
 
-    def run_command(self, command, check=True):
+    def run_command(self, command, check=True, timeout=None):
         return subprocess.run(command,shell=True,executable='/bin/sh',env=self.env,
                               text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                              check=check)
+                              check=check,timeout=timeout)
 
     def start_command(self, command):
         return subprocess.Popen(command,shell=True,executable='/bin/sh',env=self.env,
@@ -194,13 +204,19 @@ raise SystemExit(result.returncode)
         self.assertFalse((target/'new').exists())
         self.assertFalse(self.tmp.joinpath('tree.mdcr-rsync.txn').exists())
 
-    def test_finalize_discards_backup_and_allows_next_preflight(self):
-        target=self.tmp/'tree'; target.mkdir(); (target/'old').write_text('before\n')
-        preflight=self.command('rsync-sync-files','preflight',target)
-        self.run_command(preflight)
-        self.run_command(self.command('rsync-sync-files','finalize',target))
-        self.assertFalse(self.tmp.joinpath('tree.mdcr-rsync.txn').exists())
-        self.run_command(preflight)
+    def test_finalize_discards_each_backup_and_allows_next_preflight(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                target=self.tmp/f'{prefix}-finalize-positive'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                preflight=self.command(entry_id,'preflight',target)
+                self.run_command(preflight)
+                txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                self.run_command(self.command(entry_id,'finalize',target))
+                self.assertFalse(txn.exists())
+                self.run_command(preflight)
 
     def test_scp_symlinked_file_is_refused_before_backup(self):
         real=self.tmp/'real.conf'; real.write_text('before\n')
@@ -358,22 +374,90 @@ raise SystemExit(result.returncode)
         self.assertTrue(txn.is_dir())
         self.assertFalse((txn/'before').exists())
 
-    def test_transaction_refuses_writable_parent_without_sticky_bit(self):
-        shared=self.tmp/'shared'; shared.mkdir(mode=0o777); shared.chmod(0o777)
-        target=shared/'config.yml'; target.write_text('before\n')
-        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
-        self.assertNotEqual(result.returncode,0)
-        self.assertIn('writable without sticky protection',result.stderr)
-        self.assertFalse(shared.joinpath('config.yml.mdcr-scp.txn').exists())
+    def test_each_preflight_refuses_writable_parent_without_sticky_bit(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                shared=self.tmp/f'{prefix}-shared'; shared.mkdir(mode=0o777); shared.chmod(0o777)
+                target=shared/f'{prefix}-target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                result=self.run_command(self.command(entry_id,'preflight',target),check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('writable without sticky protection',result.stderr)
+                self.assertFalse(Path(str(target)+f'.mdcr-{prefix}.txn').exists())
 
-    def test_transaction_refuses_symlinked_parent_explicitly(self):
-        real=self.tmp/'real-parent'; real.mkdir()
-        link=self.tmp/'linked-parent'; link.symlink_to(real.name,target_is_directory=True)
-        target=link/'config.yml'; target.write_text('before\n')
-        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
-        self.assertNotEqual(result.returncode,0)
-        self.assertIn('symlinked transaction parent',result.stderr)
-        self.assertFalse(real.joinpath('config.yml.mdcr-scp.txn').exists())
+    def test_each_preflight_refuses_symlinked_parent_explicitly(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                real=self.tmp/f'{prefix}-real-parent'; real.mkdir()
+                link=self.tmp/f'{prefix}-linked-parent'; link.symlink_to(real.name,target_is_directory=True)
+                target=link/f'{prefix}-target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                result=self.run_command(self.command(entry_id,'preflight',target),check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('symlinked transaction parent',result.stderr)
+                self.assertFalse(Path(str(real/(f'{prefix}-target'))+f'.mdcr-{prefix}.txn').exists())
+
+    def test_recovery_and_finalize_refuse_symlinked_destination_without_touching_outside(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            for action in ('recover','finalize'):
+                with self.subTest(entry=entry_id,action=action):
+                    target=self.tmp/f'{prefix}-{action}-symlink-target'
+                    if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                    else: target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                    if target.is_dir(): shutil.rmtree(target)
+                    else: target.unlink()
+                    outside=self.tmp/f'{prefix}-{action}-outside'; outside.mkdir()
+                    sentinel=outside/'sentinel'; sentinel.write_text('do not touch\n')
+                    target.symlink_to(outside,target_is_directory=True)
+                    result=self.run_command(self.command(entry_id,action,target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn(f'symlinked {prefix}',result.stderr.lower())
+                    self.assertEqual(sentinel.read_text(),'do not touch\n')
+                    self.assertTrue(txn.exists())
+
+    def test_recovery_and_finalize_refuse_parent_that_becomes_unsafe(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            for action in ('recover','finalize'):
+                with self.subTest(entry=entry_id,action=action):
+                    parent=self.tmp/f'{prefix}-{action}-unsafe-parent'; parent.mkdir(mode=0o700)
+                    target=parent/'target'
+                    if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                    else: target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                    parent.chmod(0o777)
+                    result=self.run_command(self.command(entry_id,action,target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn('writable without sticky protection',result.stderr)
+                    self.assertTrue(txn.exists())
+
+    def test_recovery_and_finalize_refuse_parent_that_becomes_a_symlink(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            for action in ('recover','finalize'):
+                with self.subTest(entry=entry_id,action=action):
+                    parent=self.tmp/f'{prefix}-{action}-parent'; parent.mkdir(mode=0o700)
+                    target=parent/'target'
+                    if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                    else: target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    moved=self.tmp/f'{prefix}-{action}-moved-parent'
+                    parent.rename(moved)
+                    parent.symlink_to(moved.name,target_is_directory=True)
+                    linked_target=parent/'target'
+                    txn=Path(str(linked_target)+f'.mdcr-{prefix}.txn')
+                    result=self.run_command(self.command(entry_id,action,linked_target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn('symlinked transaction parent',result.stderr)
+                    self.assertTrue(txn.exists())
 
     def test_recovery_replaces_a_raced_symlink_instead_of_following_it(self):
         for entry_id,prefix,is_dir in (
@@ -386,6 +470,7 @@ raise SystemExit(result.returncode)
                 if is_dir: (target/'old').write_text('after\n')
                 else: target.write_text('after\n')
                 outside=self.tmp/f'{prefix}-outside'; outside.mkdir()
+                sentinel=outside/'sentinel'; sentinel.write_text('do not touch\n')
                 marker=self.tmp/f'{prefix}-mv-race.marker'
                 self.env['MDCR_TEST_RACE_RECOVERY_TARGET']=str(target)
                 self.env['MDCR_TEST_RACE_RECOVERY_OUTSIDE']=str(outside)
@@ -393,7 +478,7 @@ raise SystemExit(result.returncode)
                 result=self.run_command(self.command(entry_id,'recover',target),check=False)
                 self.assertEqual(result.returncode,0,result.stderr)
                 self.assertFalse(target.is_symlink())
-                self.assertEqual(list(outside.iterdir()),[])
+                self.assertEqual(sentinel.read_text(),'do not touch\n')
                 if is_dir: self.assertEqual((target/'old').read_text(),'before\n')
                 else: self.assertEqual(target.read_text(),'before\n')
                 self.env.pop('MDCR_TEST_RACE_RECOVERY_TARGET',None)
@@ -406,6 +491,7 @@ raise SystemExit(result.returncode)
         self.run_command(self.command('rsync-sync-files','preflight',target))
         (target/'old').write_text('after\n')
         outside=self.tmp/'rsync-replant-outside'; outside.mkdir()
+        sentinel=outside/'sentinel'; sentinel.write_text('do not touch\n')
         marker=self.tmp/'rsync-replant.marker'
         mv_marker=self.tmp/'rsync-replant-mv.marker'
         self.env.update({
@@ -419,8 +505,40 @@ raise SystemExit(result.returncode)
         self.assertTrue(marker.exists(),'rm wrapper did not replant the symlink')
         self.assertFalse(target.is_symlink())
         self.assertEqual((target/'old').read_text(),'before\n')
-        self.assertEqual(list(outside.iterdir()),[])
+        self.assertEqual(sentinel.read_text(),'do not touch\n')
         for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE','MDCR_TEST_RACE_RECOVERY_REPLANT','MDCR_TEST_RACE_RECOVERY_MV_MARKER'):
+            self.env.pop(key,None)
+
+    def test_rsync_recovery_persistent_replant_is_bounded_and_preserves_transaction(self):
+        target=self.tmp/'rsync-persistent-replant-target'
+        target.mkdir(); (target/'old').write_text('before\n')
+        self.run_command(self.command('rsync-sync-files','preflight',target))
+        txn=Path(str(target)+'.mdcr-rsync.txn')
+        (target/'old').write_text('after\n')
+        outside=self.tmp/'rsync-persistent-replant-outside'; outside.mkdir()
+        sentinel=outside/'sentinel'; sentinel.write_text('do not touch\n')
+        mv_marker=self.tmp/'rsync-persistent-replant-mv.marker'
+        countfile=self.tmp/'rsync-persistent-replant-rm.count'
+        self.env.update({
+            'MDCR_TEST_RACE_RECOVERY_TARGET':str(target),
+            'MDCR_TEST_RACE_RECOVERY_OUTSIDE':str(outside),
+            'MDCR_TEST_RACE_RECOVERY_REPLANT_ALWAYS':'yes',
+            'MDCR_TEST_RACE_RECOVERY_RM_COUNT':str(countfile),
+            'MDCR_TEST_RACE_RECOVERY_MV_MARKER':str(mv_marker),
+        })
+        result=self.run_command(self.command('rsync-sync-files','recover',target),
+                                check=False,timeout=5)
+        self.assertEqual(result.returncode,1,result.stderr)
+        self.assertTrue(target.is_symlink())
+        self.assertEqual(target.resolve(),outside.resolve())
+        self.assertEqual(sentinel.read_text(),'do not touch\n')
+        self.assertEqual(int(countfile.read_text()),6)
+        self.assertEqual((txn/'state').read_text(),'present\n')
+        self.assertTrue((txn/'before').is_dir())
+        self.assertTrue((txn/'after').is_dir())
+        for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE',
+                    'MDCR_TEST_RACE_RECOVERY_REPLANT_ALWAYS','MDCR_TEST_RACE_RECOVERY_RM_COUNT',
+                    'MDCR_TEST_RACE_RECOVERY_MV_MARKER'):
             self.env.pop(key,None)
 
     def test_each_signal_cleans_each_remote_transaction_and_fails_pipeline(self):

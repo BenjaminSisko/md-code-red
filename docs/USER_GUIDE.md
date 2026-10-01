@@ -172,6 +172,16 @@ remote filesystem has room for two copies plus a safety margin. Recover restores
 absent. After the operator accepts the verified result, the finalization command
 removes the transaction directory so the next transfer can begin.
 
+If Recover refuses, stop and keep the transaction directory. Do not run
+Finalize and do not delete `<target>.mdcr-scp.txn` or
+`<target>.mdcr-rsync.txn`. From a trusted console, inspect its `state`,
+`before`, and any `after` entry; resolve the reported symlink, owner, mode, or
+parent-directory problem; then retry the generated Recover step. A refusal is
+designed to preserve all rollback material rather than guess which path is
+safe. For NetworkManager, apply the same rule to
+`/var/lib/md-code-red/nmcli-static-ipv4.txn` and keep local or out-of-band
+access until the saved profile has been restored and reactivated.
+
 ### Journey 2: Build STIG evidence for an audit package
 
 1. Press `/` (when focus is not already in a text field) or `Ctrl+K` / `Cmd+K`
