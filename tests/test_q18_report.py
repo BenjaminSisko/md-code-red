@@ -173,7 +173,7 @@ class TheGateItselfDoesNotCrash(unittest.TestCase):
     def setUp(self):
         self.ctx = qa.build_ctx_if_current()
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         self.orig = qa.subprocess.run
 
     def tearDown(self):

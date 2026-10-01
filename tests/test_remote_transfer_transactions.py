@@ -36,7 +36,10 @@ pidfile=os.environ.get('MDCR_TEST_REMOTE_PID_FILE')
 if pidfile:
     child=subprocess.Popen(['/bin/sh','-c',command],stdin=sys.stdin)
     open(pidfile,'w').write(str(child.pid)+'\\n')
-    raise SystemExit(child.wait())
+    status=child.wait()
+    statusfile=os.environ.get('MDCR_TEST_REMOTE_STATUS_FILE')
+    if statusfile: open(statusfile,'w').write(str(status)+'\\n')
+    raise SystemExit(status)
 os.execv('/bin/sh',['sh','-c',command])
 """)
         ssh.chmod(0o755)
@@ -76,23 +79,35 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         mv_cmd.write_text("""#!/usr/bin/env python3
 import os, sys
 args=sys.argv[1:]
-no_target_directory='-T' in args
 words=[word for word in args if word not in ('-T','--')]
 race=os.environ.get('MDCR_TEST_RACE_RECOVERY_TARGET','')
 outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
-if race and len(words)==2 and words[0].endswith('/before') and os.path.abspath(words[1])==os.path.abspath(race):
+marker=os.environ.get('MDCR_TEST_RACE_RECOVERY_MV_MARKER','')
+if race and marker and not os.path.exists(marker) and len(words)==2 and words[0].endswith('/before') and os.path.abspath(words[1])==os.path.abspath(race):
+    open(marker,'w').close()
     if not os.path.lexists(race): os.symlink(outside,race,target_is_directory=True)
-if no_target_directory and len(words)==2:
-    source,destination=words
-    if os.path.islink(destination): os.unlink(destination)
-    elif os.path.lexists(destination): raise SystemExit(1)
-    os.rename(source,destination)
-    raise SystemExit(0)
-os.execv('/bin/mv',['mv']+args)
+real=os.environ['MDCR_TEST_REAL_MV']
+os.execv(real,[real]+args)
 """)
         mv_cmd.chmod(0o755)
+        rm_cmd=fakebin/'rm'
+        rm_cmd.write_text("""#!/usr/bin/env python3
+import os, subprocess, sys
+args=sys.argv[1:]
+words=[word for word in args if word not in ('-f','--')]
+result=subprocess.run(['/bin/rm']+args)
+race=os.environ.get('MDCR_TEST_RACE_RECOVERY_TARGET','')
+outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
+marker=os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT','')
+if result.returncode==0 and marker and len(words)==1 and os.path.abspath(words[0])==os.path.abspath(race) and not os.path.exists(marker):
+    open(marker,'w').close()
+    os.symlink(outside,race,target_is_directory=True)
+raise SystemExit(result.returncode)
+""")
+        rm_cmd.chmod(0o755)
         self.env=os.environ.copy()
         self.env['PATH']=str(fakebin)+os.pathsep+self.env.get('PATH','')
+        self.env['MDCR_TEST_REAL_MV']=shutil.which('gmv') or '/usr/bin/mv'
 
     def tearDown(self):
         shutil.rmtree(self.tmp,ignore_errors=True)
@@ -249,6 +264,24 @@ os.execv('/bin/mv',['mv']+args)
                     self.assertFalse(txn.exists(),'EXIT cleanup must remove the rejected transaction')
                     self.env.pop('MDCR_TEST_BAD_OWNER_PATH',None)
 
+    def test_recovery_and_finalize_refuse_mode_0755_transactions(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            for action in ('recover','finalize'):
+                with self.subTest(entry=entry_id,action=action):
+                    target=self.tmp/f'{prefix.lower()}-{action}-bad-mode'
+                    if is_dir:
+                        target.mkdir(); (target/'old').write_text('before\n')
+                    else:
+                        target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                    txn.chmod(0o755)
+                    result=self.run_command(self.command(entry_id,action,target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn(f'no trusted {prefix} transaction for',result.stderr)
+                    self.assertTrue(txn.exists())
+
     def test_missing_state_and_backup_have_specific_recovery_diagnostics(self):
         for entry_id,prefix,is_dir in (
                 ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
@@ -276,6 +309,27 @@ os.execv('/bin/mv',['mv']+args)
                 self.assertNotEqual(result.returncode,0)
                 self.assertIn('trusted saved',result.stderr)
                 self.assertTrue(txn.exists())
+
+    def test_recovery_refuses_each_preexisting_swap_shape(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','SCP',False),('rsync-sync-files','RSYNC',True)):
+            for swap_is_dir in (False,True):
+                with self.subTest(entry=entry_id,swap='directory' if swap_is_dir else 'file'):
+                    target=self.tmp/f'{prefix.lower()}-swap-{int(swap_is_dir)}'
+                    if is_dir:
+                        target.mkdir(); (target/'old').write_text('before\n')
+                    else:
+                        target.write_text('before\n')
+                    self.run_command(self.command(entry_id,'preflight',target))
+                    txn=Path(str(target)+f'.mdcr-{prefix.lower()}.txn')
+                    after=txn/'after'
+                    if swap_is_dir: after.mkdir()
+                    else: after.write_text('untrusted\n')
+                    result=self.run_command(self.command(entry_id,'recover',target),check=False)
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn('recovery swap already exists',result.stderr)
+                    self.assertTrue(target.exists())
+                    self.assertTrue((txn/'before').exists())
 
     def test_foreign_owned_saved_content_inside_trusted_transaction_is_recoverable(self):
         for entry_id,prefix,is_dir in (
@@ -332,8 +386,10 @@ os.execv('/bin/mv',['mv']+args)
                 if is_dir: (target/'old').write_text('after\n')
                 else: target.write_text('after\n')
                 outside=self.tmp/f'{prefix}-outside'; outside.mkdir()
+                marker=self.tmp/f'{prefix}-mv-race.marker'
                 self.env['MDCR_TEST_RACE_RECOVERY_TARGET']=str(target)
                 self.env['MDCR_TEST_RACE_RECOVERY_OUTSIDE']=str(outside)
+                self.env['MDCR_TEST_RACE_RECOVERY_MV_MARKER']=str(marker)
                 result=self.run_command(self.command(entry_id,'recover',target),check=False)
                 self.assertEqual(result.returncode,0,result.stderr)
                 self.assertFalse(target.is_symlink())
@@ -342,6 +398,30 @@ os.execv('/bin/mv',['mv']+args)
                 else: self.assertEqual(target.read_text(),'before\n')
                 self.env.pop('MDCR_TEST_RACE_RECOVERY_TARGET',None)
                 self.env.pop('MDCR_TEST_RACE_RECOVERY_OUTSIDE',None)
+                self.env.pop('MDCR_TEST_RACE_RECOVERY_MV_MARKER',None)
+
+    def test_rsync_recovery_retries_when_symlink_is_replanted_after_removal(self):
+        target=self.tmp/'rsync-replant-target'
+        target.mkdir(); (target/'old').write_text('before\n')
+        self.run_command(self.command('rsync-sync-files','preflight',target))
+        (target/'old').write_text('after\n')
+        outside=self.tmp/'rsync-replant-outside'; outside.mkdir()
+        marker=self.tmp/'rsync-replant.marker'
+        mv_marker=self.tmp/'rsync-replant-mv.marker'
+        self.env.update({
+            'MDCR_TEST_RACE_RECOVERY_TARGET':str(target),
+            'MDCR_TEST_RACE_RECOVERY_OUTSIDE':str(outside),
+            'MDCR_TEST_RACE_RECOVERY_REPLANT':str(marker),
+            'MDCR_TEST_RACE_RECOVERY_MV_MARKER':str(mv_marker),
+        })
+        result=self.run_command(self.command('rsync-sync-files','recover',target),check=False)
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue(marker.exists(),'rm wrapper did not replant the symlink')
+        self.assertFalse(target.is_symlink())
+        self.assertEqual((target/'old').read_text(),'before\n')
+        self.assertEqual(list(outside.iterdir()),[])
+        for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE','MDCR_TEST_RACE_RECOVERY_REPLANT','MDCR_TEST_RACE_RECOVERY_MV_MARKER'):
+            self.env.pop(key,None)
 
     def test_each_signal_cleans_each_remote_transaction_and_fails_pipeline(self):
         for entry_id,prefix,is_dir in (
@@ -353,12 +433,13 @@ os.execv('/bin/mv',['mv']+args)
                     if is_dir: target.mkdir(); (target/'old').write_text('before\n')
                     else: target.write_text('before\n')
                     txn=Path(str(target)+f'.mdcr-{prefix}.txn')
-                    ready=self.tmp/f'{stem}.ready'; release=self.tmp/f'{stem}.release'; pidfile=self.tmp/f'{stem}.pid'
+                    ready=self.tmp/f'{stem}.ready'; release=self.tmp/f'{stem}.release'; pidfile=self.tmp/f'{stem}.pid'; statusfile=self.tmp/f'{stem}.status'
                     self.env.update({
                         'MDCR_TEST_SIGNAL_TXN':str(txn/'state'),
                         'MDCR_TEST_SIGNAL_READY':str(ready),
                         'MDCR_TEST_SIGNAL_RELEASE':str(release),
                         'MDCR_TEST_REMOTE_PID_FILE':str(pidfile),
+                        'MDCR_TEST_REMOTE_STATUS_FILE':str(statusfile),
                     })
                     command=self.command(entry_id,'preflight',target,stem+'.src')
                     self.assertIn("'trap '\"'\"'exit 1'\"'\"' HUP INT TERM'",command)
@@ -372,9 +453,10 @@ os.execv('/bin/mv',['mv']+args)
                     os.kill(int(pidfile.read_text().strip()),sig)
                     release.touch()
                     _out,err=proc.communicate(timeout=5)
-                    self.assertNotEqual(proc.returncode,0,err)
+                    self.assertEqual(proc.returncode,1,err)
+                    self.assertEqual(statusfile.read_text().strip(),'1')
                     self.assertFalse(txn.exists())
-                    for key in ('MDCR_TEST_SIGNAL_TXN','MDCR_TEST_SIGNAL_READY','MDCR_TEST_SIGNAL_RELEASE','MDCR_TEST_REMOTE_PID_FILE'):
+                    for key in ('MDCR_TEST_SIGNAL_TXN','MDCR_TEST_SIGNAL_READY','MDCR_TEST_SIGNAL_RELEASE','MDCR_TEST_REMOTE_PID_FILE','MDCR_TEST_REMOTE_STATUS_FILE'):
                         self.env.pop(key,None)
 
 

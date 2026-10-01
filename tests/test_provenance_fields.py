@@ -154,7 +154,7 @@ class TheGateCatchesAMissingVersion(unittest.TestCase):
     def test_the_shipped_bundle_still_passes(self):
         ctx = qa.build_ctx_if_current()
         if not ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         self.assertEqual([], qa.gate_q3(ctx)[0],
                          "the real content bundle fails the strengthened provenance gate")
 

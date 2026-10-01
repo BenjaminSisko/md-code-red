@@ -44,6 +44,8 @@ if os.environ.get('MDCR_TEST_REMOTE_PID_FILE'):
     child=subprocess.Popen(sys.argv[1:],stdin=subprocess.PIPE,text=True)
     open(os.environ['MDCR_TEST_REMOTE_PID_FILE'],'w').write(str(child.pid)+'\\n')
     child.communicate(script)
+    statusfile=os.environ.get('MDCR_TEST_REMOTE_STATUS_FILE')
+    if statusfile: open(statusfile,'w').write(str(child.returncode)+'\\n')
     raise SystemExit(child.returncode)
 result=subprocess.run(sys.argv[1:],input=script,text=True)
 raise SystemExit(result.returncode)
@@ -51,9 +53,8 @@ raise SystemExit(result.returncode)
         (fakebin/'install').write_text("""#!/usr/bin/env python3
 import os, pathlib, sys
 target=pathlib.Path(sys.argv[-1])
-if target.is_symlink(): raise SystemExit(1)
 target.mkdir(parents=True,exist_ok=True)
-os.chmod(target,0o700)
+os.chmod(target.resolve(),0o700)
 """)
         (fakebin/'stat').write_text("""#!/usr/bin/env python3
 import os, stat, sys, time
@@ -218,6 +219,34 @@ fi
         self.assertNotEqual(result.returncode,0)
         self.assertIn('state root is not root-owned mode 0700',result.stderr)
 
+    def test_nmcli_preflight_refuses_symlinked_state_root_before_install_follows_it(self):
+        outside=self.tmp/'outside-preflight-state'; outside.mkdir(mode=0o700)
+        self.state_root.symlink_to(outside,target_is_directory=True)
+        _,result=self.run_bound(self.preflight(),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('state root is not root-owned mode 0700',result.stderr)
+        self.assertEqual(list(outside.iterdir()),[])
+
+    def test_nmcli_recover_refuses_symlinked_or_different_resolved_profile(self):
+        for mode in ('symlink','different'):
+            with self.subTest(mode=mode):
+                self.reset_state(); self.make_complete_txn(); self.profile.write_text('after\n')
+                if mode=='symlink':
+                    actual=self.profile_dir/'actual.nmconnection'; actual.write_text('outside\n')
+                    self.profile.unlink(); self.profile.symlink_to(actual.name)
+                    expected='expected one regular NetworkManager profile file'
+                else:
+                    other=self.profile_dir/'Other.nmconnection'; other.write_text('other\n')
+                    self.env['MDCR_TEST_PROFILE']=str(other)
+                    expected='connection now resolves to a different profile file'
+                _,result=self.run_bound(self.entries['gen-nmcli-static-ipv4']['undo'],check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn(expected,result.stderr)
+                self.assertTrue(self.txn.exists())
+                self.env['MDCR_TEST_PROFILE']=str(self.profile)
+                if self.profile.is_symlink():
+                    self.profile.unlink(); self.profile.write_text('before\n')
+
     def test_nmcli_preflight_reports_missing_and_duplicate_matches(self):
         for mode in ('missing','duplicate'):
             with self.subTest(mode=mode):
@@ -285,11 +314,13 @@ fi
                 ready=self.tmp/f'nmcli-{sig.name}.ready'
                 release=self.tmp/f'nmcli-{sig.name}.release'
                 pidfile=self.tmp/f'nmcli-{sig.name}.pid'
+                statusfile=self.tmp/f'nmcli-{sig.name}.status'
                 self.env.update({
                     'MDCR_TEST_SIGNAL_PATH':str(self.txn/'profile_path'),
                     'MDCR_TEST_SIGNAL_READY':str(ready),
                     'MDCR_TEST_SIGNAL_RELEASE':str(release),
                     'MDCR_TEST_REMOTE_PID_FILE':str(pidfile),
+                    'MDCR_TEST_REMOTE_STATUS_FILE':str(statusfile),
                 })
                 command=app_bind(self.preflight(),{'con':'Wired connection 1'})
                 self.assertIn("'trap '\"'\"'exit 1'\"'\"' HUP INT TERM'",command)
@@ -304,9 +335,10 @@ fi
                 os.kill(int(pidfile.read_text().strip()),sig)
                 release.touch()
                 _out,err=proc.communicate(timeout=5)
-                self.assertNotEqual(proc.returncode,0,err)
+                self.assertEqual(proc.returncode,1,err)
+                self.assertEqual(statusfile.read_text().strip(),'1')
                 self.assertFalse(self.txn.exists())
-                for key in ('MDCR_TEST_SIGNAL_PATH','MDCR_TEST_SIGNAL_READY','MDCR_TEST_SIGNAL_RELEASE','MDCR_TEST_REMOTE_PID_FILE'):
+                for key in ('MDCR_TEST_SIGNAL_PATH','MDCR_TEST_SIGNAL_READY','MDCR_TEST_SIGNAL_RELEASE','MDCR_TEST_REMOTE_PID_FILE','MDCR_TEST_REMOTE_STATUS_FILE'):
                     self.env.pop(key,None)
 
 

@@ -105,7 +105,7 @@ class TheGatesOnTheRealBundle(unittest.TestCase):
 
     def test_every_guarded_gate_still_passes_on_the_shipped_content(self):
         if not self.artifact:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         for gid, fn, _what in EMPTY_SET_GATES:
             with self.subTest(gate=gid):
                 out = fn(self.ctx)

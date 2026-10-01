@@ -103,6 +103,7 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertIsNotNone(fingerprint)
         fingerprint=fingerprint.group(1).decode("ascii")
         modes=[]
+        implementation_sources=[]
         for suffix in ("", "-http"):
             path=os.path.join(REPO,"docs","qa",
                               "QA_RESULTS_%s-rc%s.json" % (version,suffix))
@@ -118,7 +119,21 @@ class ReleaseReadinessTests(unittest.TestCase):
             self.assertEqual(result["consoleErrors"],[],path)
             self.assertTrue(all(row["status"]=="PASS" for row in result["results"]),path)
             modes.append({row["id"] for row in result["results"]})
+            implementation_sources.append(result["meta"].get("commit"))
         self.assertEqual(modes[0],modes[1],"browser modes did not run the same assertion IDs")
+        self.assertEqual(len(set(implementation_sources)),1,
+                         "browser modes name different implementation commits")
+        implementation_source=implementation_sources[0] or ""
+        self.assertRegex(implementation_source,r"^[0-9a-f]{40}$")
+        subprocess.run(["git","cat-file","-e",implementation_source+"^{commit}"],
+                       cwd=REPO,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        protected=("template.html","content","build.py","qa.py","tools/qa","tests","dist")
+        unchanged=subprocess.run(
+            ["git","diff","--quiet",implementation_source+"..HEAD","--",*protected],
+            cwd=REPO,
+        )
+        self.assertEqual(unchanged.returncode,0,
+                         "implementation files changed after the browser-evidence commit")
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
         suite=unittest.defaultTestLoader.discover(
             os.path.join(REPO,"tests"),pattern="test*.py")
@@ -144,6 +159,10 @@ class ReleaseReadinessTests(unittest.TestCase):
                 text.count(verification_line),1,
                 "%s lacks exactly one canonical verification-total line" % path,
             )
+            for expected in (format(len(blob),","),artifact_hash,fingerprint,
+                             implementation_source):
+                self.assertIn(expected,text,
+                              "%s is missing release traceability value %s" % (path,expected))
 
 
 if __name__ == "__main__":

@@ -125,7 +125,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `content-src/flag_coverage_baseline.json` | The dated, ratcheting acceptance baseline Q20 measures flag-dictionary completeness against. Expires 2026-09-25 (`docs/POAM.md`). | |
 | `content-src/raw/rhel<N>/*.man.txt` | Staged, git-ignored raw `man`/`--help` captures -- the source of record for licensing review and for Q14's paraphrase-collision check. Never read by `build.py`. | |
 | `content/checklists.json`, `dossier.json`, `drills.json`, `errors.json`, `letter.md`, `modules.json`, `rhel_flags.json`, `scars.json`, `snippets.json`, `trees.json`, `flags.json` | Present under `content/` but **absent from `build.py`'s `CONTENT` map** -- none of these reach the shipped artifact. Leftover from the Grey Beard Ansible fork (`modules.json`/`flags.json` are `extract_ansible_doc.py`'s own output). | See Section 23. |
-| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 465 unittest cases and 168,697 harness checks pass on this build. |
+| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 470 unittest cases and 168,697 harness checks pass on this build. |
 | `stig-src/` | The pinned DISA STIG/CCI zip sources and their SHA-256 sums -- the source of record `extract/parse_xccdf.py` reads from. | |
 | `NOTICE` | The per-family licensing derivation statement (public-domain vs. paraphrase-only, and where each family's raw source is staged). | |
 
@@ -433,10 +433,9 @@ implement the global shortcuts. `docs/USER_GUIDE.md`'s shortcut table is checked
 against this exact array, which is the only place a global binding can be added
 or changed. That listener also handles palette-local navigation (arrow keys,
 Enter, a `Tab` focus trap) and gutter-line activation ahead of the table because
-they are contextual to an open overlay or a specific element. A second, narrowly
-scoped delegated listener explicitly activates clipboard and runbook-copy buttons
-for Enter and Space while preventing the browser's native click from duplicating
-the action. Every focusable
+they are contextual to an open overlay or a specific element. Clipboard and
+runbook-copy controls use native button semantics for single-fire Enter and
+Space activation. Every focusable
 control shows a visible focus ring (`:focus`/`:focus-visible`, never removed
 without a replacement); the icon-only rail buttons reveal their text label on
 both focus and hover so a keyboard user reads the same word a mouse user does.

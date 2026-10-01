@@ -127,7 +127,7 @@ class TheAirGapCannotBeSpelledAround(unittest.TestCase):
     def test_the_whole_gate_fails_on_a_planted_call(self):
         ctx = qa.build_ctx_if_current()
         if not ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         self.assertEqual([], qa.gate_q2(ctx)[0], "Q2 fails on the real artifact")
         planted = '\nvar leak=window["fe"+"tch"];\n'
         # planted into everything Q2 reads, so the gate gets every chance it has
@@ -216,7 +216,7 @@ class AMarkerInACommentIsNotAFeature(unittest.TestCase):
     def test_the_whole_gate_fails_when_a_real_marker_is_demoted_to_a_comment(self):
         ctx = qa.build_ctx_if_current()
         if not ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         self.assertEqual([], qa.gate_q5(ctx)[0], "Q5 fails on the real artifact")
         ctx["html"] = ctx["html"].replace("function renderRail(", "function renderRail_MOVED(")
         ctx["html"] = ctx["html"].replace("</body>", "<!-- function renderRail( -->\n</body>")

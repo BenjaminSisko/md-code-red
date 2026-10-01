@@ -391,9 +391,9 @@ to reveal **Skip to command workspace**.
 No mouse is required. Every global binding below comes from one table in the app
 script (`KEYMAP`) read by the primary delegated `keydown` listener, so what this
 page says and what the tool does cannot drift apart without the table changing.
-Contextual palette and command-line keys are handled by that primary listener. A
-separate delegated listener gives the clipboard and runbook-copy buttons explicit,
-single-fire Enter and Space activation.
+Contextual palette and command-line keys are handled by that primary listener.
+Clipboard and runbook-copy buttons use native single-fire Enter and Space
+activation.
 
 | Action | Binding | Notes |
 |---|---|---|

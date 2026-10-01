@@ -32,15 +32,17 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 - Create SCP and rsync transactions atomically at mode `0700`, validate their
   ownership before recovery or finalization, and refuse writable non-sticky
   transaction parents. Recovery can no longer trust a directory created by a
-  different remote user. Recovery uses `mv -T` and an adversarial test plants a
-  symlink between its two moves to prove saved content replaces the link instead
-  of being redirected through it.
+  different remote user. Recovery uses real GNU `mv -T` plus a bounded
+  symlink-removal retry for directory restores. Adversarial tests plant a link
+  both before the restore and again after removal to prove saved content replaces
+  the link without changing its target.
 - Exercise transaction ownership one path at a time for Preflight, Recover, and
   Finalize, including missing state files and the positive case where preserved
   content has a different owner inside a trusted transaction directory.
 - Drive clipboard buttons with native Enter and Space text events and assert
   exactly one DOM click and one clipboard write. Red runbook steps are verified
-  disabled before acknowledgement and enabled afterward.
+  disabled before acknowledgement; after acknowledgement, Space copies the
+  Recover script exactly once and retains focus.
 - Derive documentation counts inside the browser audit when `AUDIT_*` variables
   are omitted, and let source-level unit discovery skip stale artifact-backed
   checks without weakening the release gate's stale-build refusal.

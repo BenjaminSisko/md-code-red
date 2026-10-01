@@ -6169,22 +6169,6 @@ document.addEventListener("click",function(ev){
   }
 });
 
-/* CDP, switch devices, and some assistive input paths do not always synthesize
-   a native button click from their key event. Make clipboard actions explicit
-   and prevent the browser default so real keyboards still activate exactly
-   once. copyText() restores the same button after its temporary textarea. */
-document.addEventListener("keydown",function(ev){
-  if(ev.key!=="Enter"&&ev.key!==" ") return;
-  var b=ev.target&&ev.target.closest?ev.target.closest(
-    "button[data-action=\"copy\"], button[data-action=\"copy-comment\"], button[data-action=\"copy-doc\"], "+
-    "button[data-action=\"ref-copy\"], button[data-action=\"ref-copy-comment\"], button[data-action=\"evidence-copy\"], "+
-    "button[data-plan-step]"
-  ):null;
-  if(!b||b.disabled) return;
-  ev.preventDefault();
-  b.click();
-});
-
 /* A line click or the red-blast ack checkbox only needs the RESULT re-drawn,
    not the whole region: for a generator entry a full renderEditor() would
    rebuild the field inputs from scratch (safe — they re-read STATE.formValues
@@ -6274,10 +6258,10 @@ document.addEventListener("input",function(ev){
 document.addEventListener("change",onFieldChange);
 
 /* ============ keyboard controller — primary delegated shortcut table ============ */
-/* UI spec §5. Application shortcuts live in KEYMAP. The earlier, narrowly
-   scoped keydown handler gives explicit keyboard activation to clipboard and
-   runbook-copy buttons. Contextual code-line activation stays in this primary
-   controller, ahead of the global shortcut table. */
+/* UI spec §5. Application shortcuts live in KEYMAP. Native button semantics
+   provide Enter and Space activation for copy controls. Contextual code-line
+   activation stays in this primary controller, ahead of the global shortcut
+   table. */
 function isTypingTarget(node){
   if(!node||!node.tagName) return false;
   var tag=node.tagName.toLowerCase();
