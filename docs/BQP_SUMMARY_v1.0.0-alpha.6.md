@@ -12,7 +12,7 @@ The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
 The resulting bytes also match the artifact committed with implementation
-source `5b868f10eec73bf6207113f56c41d42eb6802b1d`.
+source `11b167159cb2246004e5f457df6f0c155d1c32cb`.
 
 | Item | Result |
 |---|---|
@@ -26,7 +26,7 @@ source `5b868f10eec73bf6207113f56c41d42eb6802b1d`.
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Forgejo CI candidate build | PASS; Python 3.12 rebuild leaves HTML and sidecar clean while preserving committed toolchain-specific provenance for release-readiness checks |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
+| Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,

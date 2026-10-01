@@ -5,9 +5,11 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "file:///private/tmp/md-code-red-ux.qIMM6w/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "5b868f10eec73bf6207113f56c41d42eb6802b1d",
+    "commit": "11b167159cb2246004e5f457df6f0c155d1c32cb",
     "artifactBytes": 8944791,
     "artifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
+    "loadedArtifactBytes": 8944791,
+    "loadedArtifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
     "contentFingerprint": "871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a",
     "entries": 200,
     "generators": 58,
@@ -55,7 +57,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1205 ms",
+      "actual": "1208 ms",
       "severity": ""
     },
     {
@@ -8092,7 +8094,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":29400000,\"resources\":0,\"nav\":{\"dom\":65.60000002384186,\"load\":67.20000004768372}}",
+      "actual": "{\"heap\":29400000,\"resources\":0,\"nav\":{\"dom\":69.80000007152557,\"load\":71.60000002384186}}",
       "severity": ""
     },
     {

@@ -11,7 +11,7 @@ Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeli
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
 offline, provenance-backed RHEL command catalog. It closes the complete
-functional audit and addresses the findings recorded by twelve independent
+functional audit and addresses the findings recorded by thirteen independent
 Claude Opus release reviews, including real-input, risk-label, validation,
 safety-reason, focus, contrast, and recovery findings. The final exact-head
 review remains a separate gate.
@@ -25,7 +25,7 @@ review remains a separate gate.
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
 | Verification | Q1-Q26 + JS; 480 unit tests; 168,697 hostile checks; 896 pass/fail browser assertions plus 2 performance observations in each of standalone and HTTP modes |
-| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
+| Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
 
 The release adds or changes:
 
@@ -85,9 +85,9 @@ recorded two informational performance observations in both its standalone
 `file://` delivery mode and a local HTTP delivery, with no exceptions or console
 errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
-  through twelfth independent Opus review records are preserved in
+through thirteenth independent Opus review records are preserved in
 `docs/design/`, including the eighth-review PASS, the ninth-review HOLD, and
-the tenth-, eleventh-, and twelfth-review HOLDs. This candidate closes their
+the tenth-, eleventh-, twelfth-, and thirteenth-review HOLDs. This candidate closes their
 transaction, signal, trust-check, native-keyboard, bounded-failure, exact
 clipboard, CI toolchain, write-through-link, fail-closed recovery,
 release-integrity, and operator-guidance findings. Exact-head independent

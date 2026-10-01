@@ -19,7 +19,7 @@ audit pass against the final artifact.
 | Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
 | Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
-| Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
+| Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
 
 This candidate adds or strengthens the following security properties:
 
