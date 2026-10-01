@@ -68,24 +68,60 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertNotIn('This rail lands with its own task: STIG search',self.template)
         self.assertIn('el("palette-input").value="STIG"',self.template)
 
-    def test_native_copy_buttons_have_no_keyboard_retrigger_handler(self):
-        listeners=list(re.finditer(
-            r'\.addEventListener\(\s*([\'\"])(keydown|keyup)\1',self.template))
-        self.assertEqual([match.group(2) for match in listeners],['keydown'],
-                         'the complete shell must have one keydown listener and no keyup listener')
-        self.assertEqual(self.template.count('document.addEventListener("keydown"'),1)
-        self.assertNotRegex(self.template,r'\.onkey(?:down|up)\s*=')
+    def assert_keyboard_contract(self,template):
+        event_literals=list(re.finditer(
+            r'([\'\"`])(keydown|keyup|keypress)\1',template))
+        self.assertEqual([match.group(2) for match in event_literals],['keydown'],
+                         'the complete shell must have one literal keydown registration and no keyup/keypress registration')
+        self.assertEqual(template.count('document.addEventListener("keydown"'),1)
+        self.assertNotRegex(template,r'\.onkey(?:down|up|press)\s*=')
+        self.assertNotRegex(template,r'\[\s*([\'\"`])onkey(?:down|up|press)\1\s*\]\s*=')
         self.assertNotRegex(
-            self.template,
-            r'addEventListener\.call\([^,]+,\s*([\'\"])(?:keydown|keyup)\1',
-            'keyboard handlers may not be registered through Function.call',
+            template,
+            r'addEventListener(?:\.|\[\s*([\'\"`]))(?:call|apply)',
+            'keyboard handlers may not be registered through Function.call/apply',
         )
-        start=self.template.index('document.addEventListener("keydown"')
-        end=self.template.index('/* ============ boot ============ */',start)
-        handler=self.template[start:end]
-        for forbidden in ('data-action', 'data-plan-step', 'doCopyPlanStep(', '.click('):
+        start=template.index('document.addEventListener("keydown"')
+        end=template.index('/* ============ boot ============ */',start)
+        handler=template[start:end]
+        for forbidden in (
+            'data-action','data-plan-step','doCopyPlanStep(','doCopy(',
+            'copyText(','dispatchEvent','MouseEvent','.click(',
+            '["click"]',"['click']",
+        ):
             self.assertNotIn(forbidden,handler,
                              'native buttons must keep browser Enter/Space semantics: '+forbidden)
+        keymap=template[
+            template.index('var KEYMAP=['):template.index('];',template.index('var KEYMAP=['))+2
+        ]
+        key_values=[]
+        for match in re.finditer(r'keys:\[([^\]]*)\]',keymap):
+            key_values.extend(value for _quote,value in re.findall(r'([\'\"])(.*?)\1',match.group(1)))
+        self.assertNotIn('Enter',key_values,'Enter must remain native outside contextual overlay handling')
+        self.assertNotIn(' ',key_values,'Space must remain native outside contextual gutter handling')
+
+    def test_native_copy_buttons_have_no_keyboard_retrigger_handler(self):
+        self.assert_keyboard_contract(self.template)
+        boot='/* ============ boot ============ */'
+        listener='document.addEventListener("keydown",function(ev){'
+        keymap='var KEYMAP=['
+        mutants={
+            'late keypress':self.template.replace(
+                boot,'window.addEventListener("keypress",function(e){e.target.dispatchEvent(new MouseEvent("click"));});\n'+boot),
+            'template-literal keyup':self.template.replace(
+                boot,'window.addEventListener(`keyup`,function(e){e.target.click();});\n'+boot),
+            'computed listener':self.template.replace(
+                boot,'window["addEventListener"]("keyup",function(e){e.target.click();});\n'+boot),
+            'Function.apply listener':self.template.replace(
+                boot,'window.addEventListener.apply(window,["keyup",function(e){e.target.click();}]);\n'+boot),
+            'dispatch in approved handler':self.template.replace(
+                listener,listener+'\n  ev.target.dispatchEvent(new MouseEvent("click"));',1),
+            'Enter in KEYMAP':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-enter",keys:["Enter"],mods:"none",whenTyping:true,run:function(e){e.target.dispatchEvent(new MouseEvent("click"));}},',1),
+        }
+        for name,mutant in mutants.items():
+            with self.subTest(mutant=name),self.assertRaises(AssertionError):
+                self.assert_keyboard_contract(mutant)
 
     def test_generator_plan_placeholders_are_bindable_and_broadly_detected(self):
         placeholder=re.compile(r'<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}')

@@ -78,12 +78,16 @@ let nextId=1;
 const pending=new Map();
 const exceptions=[];
 const consoleErrors=[];
+let mainDocumentRequestId='';
 ws.onmessage=(event)=>{
   const msg=JSON.parse(event.data);
   if(msg.id&&pending.has(msg.id)){
     const p=pending.get(msg.id);pending.delete(msg.id);
     if(msg.error)p.reject(new Error(JSON.stringify(msg.error))); else p.resolve(msg.result);
     return;
+  }
+  if(msg.method==='Network.responseReceived'&&msg.params?.type==='Document'){
+    mainDocumentRequestId=msg.params.requestId||'';
   }
   if(msg.method==='Runtime.exceptionThrown') exceptions.push(msg.params.exceptionDetails?.exception?.description||msg.params.exceptionDetails?.text||'exception');
   if(msg.method==='Runtime.consoleAPICalled'&&['error','assert'].includes(msg.params.type)) consoleErrors.push(msg.params.args?.map(a=>a.value||a.description).join(' ')||msg.params.type);
@@ -139,13 +143,25 @@ function fail(id,area,description,expected,actual,severity='Major'){record(id,ar
 await send('Page.enable');
 await send('Runtime.enable');
 await send('Log.enable');
+await send('Network.enable');
 try{await send('Browser.grantPermissions',{origin:new URL(baseUrl).origin,permissions:['clipboardReadWrite','clipboardSanitizedWrite']});}catch{}
 try{await send('Storage.clearDataForOrigin',{origin:new URL(baseUrl).origin,storageTypes:'all'});}catch{}
 await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false,screenWidth:1440,screenHeight:1000});
 const navStart=Date.now();
-await send('Page.navigate',{url:baseUrl});
+const navigation=await send('Page.navigate',{url:baseUrl});
+if(navigation.errorText)throw new Error(`Navigation failed: ${navigation.errorText}`);
 await delay(1200);
 const navMs=Date.now()-navStart;
+if(!mainDocumentRequestId)throw new Error('CDP did not expose the loaded main-document response');
+const loadedDocument=await send('Network.getResponseBody',{requestId:mainDocumentRequestId});
+const loadedArtifactBytes=Buffer.from(
+  loadedDocument.body,loadedDocument.base64Encoded?'base64':'utf8');
+const loadedArtifactSha256=crypto.createHash('sha256').update(loadedArtifactBytes).digest('hex');
+if(!loadedArtifactBytes.equals(artifactBytes)){
+  throw new Error(
+    `Browser loaded ${loadedArtifactBytes.length} bytes (${loadedArtifactSha256}), `+
+    `but the audited dist artifact is ${artifactBytes.length} bytes (${artifactSha256})`);
+}
 await evaluate(`(()=>{window.__qa={
   click(sel){const e=document.querySelector(sel);if(!e)return false;e.click();return true},
   set(sel,value){const e=document.querySelector(sel);if(!e)return {ok:false,reason:'missing'};if(e.disabled)return {ok:false,reason:'disabled'};if(e.type==='checkbox'){e.checked=value==='yes'||value===true}else{e.value=String(value)}e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return {ok:true}},
@@ -573,7 +589,7 @@ if(exceptions.length===0&&consoleErrors.length===0)pass('TC-CONSOLE-001','Reliab
 
 const summary={total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length,bySeverity:{}};
 for(const r of results.filter(x=>x.status==='FAIL'))summary.bySeverity[r.severity]=(summary.bySeverity[r.severity]||0)+1;
-const output={meta:{tool:'MD CODE RED',version:'v1.0.0-alpha.6',date:'2026-10-01',browser:'Google Chrome headless via CDP',url:baseUrl,commit:process.env.AUDIT_COMMIT||'',artifactBytes:artifactBytes.length,artifactSha256,contentFingerprint,entries:entries.length,generators:entries.filter(e=>Object.hasOwn(e,'template')).length,staticEntries:entries.filter(e=>!Object.hasOwn(e,'template')).length},summary,exceptions,consoleErrors,results};
+const output={meta:{tool:'MD CODE RED',version:'v1.0.0-alpha.6',date:'2026-10-01',browser:'Google Chrome headless via CDP',url:baseUrl,commit:process.env.AUDIT_COMMIT||'',artifactBytes:artifactBytes.length,artifactSha256,loadedArtifactBytes:loadedArtifactBytes.length,loadedArtifactSha256,contentFingerprint,entries:entries.length,generators:entries.filter(e=>Object.hasOwn(e,'template')).length,staticEntries:entries.filter(e=>!Object.hasOwn(e,'template')).length},summary,exceptions,consoleErrors,results};
 fs.writeFileSync(outputPath,JSON.stringify(output,null,2));
 console.log(JSON.stringify(summary));
 ws.close();

@@ -6,6 +6,20 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Keep post-merge provenance stamping compatible with release readiness while
+  allowing only the now-knowable `git_commit` field to differ from the reviewed
+  placeholder manifest. The stamp must be committed, name an ancestor of the
+  release tree, and preserve the release-workstation toolchain and every other
+  manifest field.
+- Hash the main-document bytes Chrome actually loaded and compare them with the
+  audited artifact before a rendered-browser result can be recorded. Browser
+  evidence now distinguishes 896 pass/fail assertions from two informational
+  performance observations.
+- Extend the full-shell keyboard guard to literal `keypress`, template-literal
+  events, computed registrations, Function call/apply, dispatch-event routing,
+  and Enter/Space additions to the global shortcut table. Documentation now
+  describes the guard as a source-shape control rather than an obfuscation-proof
+  JavaScript parser.
 - Build the HTML before unit discovery in Forgejo CI so all artifact-backed
   tests execute, while preserving the committed candidate provenance instead
   of regenerating toolchain-specific bytes with the runner's Python and Node

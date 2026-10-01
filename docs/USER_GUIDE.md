@@ -181,9 +181,11 @@ designed to preserve all rollback material rather than guess which path is
 safe.
 
 If the transaction contains an `after` entry, Recover already moved the current
-target aside before it refused. A direct retry will correctly stop with
-`recovery swap already exists`. Have an administrator work on the remote host
-from a trusted console. After validating that the transaction directory is the
+target aside before it refused. A direct retry while a hostile target link is
+still present refuses that symlinked destination. After the link is removed, a
+retry while `after` remains stops with `recovery swap already exists`. Both are
+safe refusals. Have an administrator work on the remote host from a trusted
+console. After validating that the transaction directory is the
 expected owner and mode `0700`, that `state` and `before` are trusted, and that
 `after` is not a symlink, remove only the hostile link or resolve the reported
 path problem. If the target is then absent, use GNU `mv -T` to move

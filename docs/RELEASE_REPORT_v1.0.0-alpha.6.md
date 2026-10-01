@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Release Report -- v1.0.0-alpha.6
 
-Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser records in each delivery mode (896 pass/fail assertions and 2 performance observations).
 
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
@@ -24,7 +24,7 @@ review remains a separate gate.
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 480 unit tests; 168,697 hostile checks; 898 browser assertions in each of standalone and HTTP modes |
+| Verification | Q1-Q26 + JS; 480 unit tests; 168,697 hostile checks; 896 pass/fail browser assertions plus 2 performance observations in each of standalone and HTTP modes |
 | Implementation source | `5b868f10eec73bf6207113f56c41d42eb6802b1d` |
 
 The release adds or changes:
@@ -72,11 +72,18 @@ The release adds or changes:
 - CI preserves the committed candidate provenance while building the HTML
   before unit discovery, full-shell keyboard-listener coverage prevents a late
   synthetic copy handler, and the browser auditor retains distinct standalone
-  and HTTP result files.
+  and HTTP result files while proving the browser's main-document bytes equal
+  the audited artifact.
+- The post-merge provenance stamp is release-safe: readiness normalizes only
+  `git_commit`, requires its SHA to be an ancestor of the release tree, compares
+  every other manifest field with the reviewed implementation, and refuses an
+  uncommitted stamp. This keeps the documented post-stamp CI run green without
+  weakening protection for HTML, sidecar, tests, extraction, or workflow files.
 
-The final candidate passed 898 of 898 rendered-browser assertions in both its
-standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
-or console errors. Two consecutive builds produced the same 8,944,791-byte
+The final candidate passed all 896 pass/fail rendered-browser assertions and
+recorded two informational performance observations in both its standalone
+`file://` delivery mode and a local HTTP delivery, with no exceptions or console
+errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
   through twelfth independent Opus review records are preserved in
 `docs/design/`, including the eighth-review PASS, the ninth-review HOLD, and

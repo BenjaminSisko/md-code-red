@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser records in each delivery mode (896 pass/fail assertions and 2 performance observations).
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -85,7 +85,7 @@ This candidate adds or strengthens the following security properties:
   only for closed transaction scripts carrying an MDCR marker. Red-rated command,
   runbook, generated-file, and evidence-copy controls all share the exact-command
   acknowledgement gate. The rendered audit compares the rsync Recover clipboard
-  bytes with the independent instruction-binding probe and rejects any payload
+  bytes with the external instruction-binding probe and rejects any payload
   containing a Preflight or Finalize marker.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
@@ -97,8 +97,11 @@ This candidate adds or strengthens the following security properties:
   27,652 pipeline checks, 741 pipeline-oracle comparisons, and 232 one-stage
   invariants.
 - The final standalone and HTTP rendered-browser audits each produced zero
-  exceptions and zero console errors across 898 assertions. Their JSON metadata
-  binds each run to the artifact byte count, SHA-256, and content fingerprint.
+  exceptions and zero console errors across 896 pass/fail assertions and two
+  informational performance observations. Their JSON metadata binds each run to
+  the artifact byte count, SHA-256, and content fingerprint, and the auditor
+  compares the main-document response bytes returned by CDP with that artifact
+  before it records results.
   The coverage includes 109 guided text controls entered with real CDP
   key-down/key-up pairs, first-click
   pointer coverage after edits, stale-toast invalidation, pipeline redirect and

@@ -233,7 +233,13 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    `python3 extract/make_provenance.py --commit <full-tag-target-sha>`, change the
    release report from candidate to released state, and commit those updates.
    The manifest names the merge that produced the artifact. The later commit
-   carries that now-knowable fact; it is deliberately not the tag target.
+   carries that now-knowable fact; it is deliberately not the tag target. Use
+   the same release-workstation Python and Node toolchain that produced the
+   reviewed placeholder manifest. The committed stamp may change only
+   `git_commit`; the readiness test normalizes that field to the placeholder,
+   requires the stamped SHA to be an ancestor of the current tree, and compares
+   every other manifest field with the reviewed implementation. Rerun the full
+   Section 5 sequence on the committed post-stamp tree before pushing it.
 7. **Create and mirror the immutable tag.** Create an annotated tag named exactly
    like `APP_VERSION`, explicitly targeting the merge SHA from step 5, and push
    the same tag plus the post-stamp `main` commit to GitHub and Forgejo. Existing
@@ -254,6 +260,11 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    deploy receipt per artifact/host pair. When development of the next version
    begins, archive the just-released three-file set byte-for-byte under
    `releases/<version>/`; until then, the current release remains in `dist/`.
+
+The browser-evidence binding is deliberately candidate-specific. A later change
+to HTML, content, extractors, tests, QA tooling, build logic, or CI must create a
+new candidate and refresh its browser evidence; a post-review documentation
+commit or the validated one-field provenance stamp can keep the current binding.
 
 ## Quarterly STIG Refresh Cycle
 

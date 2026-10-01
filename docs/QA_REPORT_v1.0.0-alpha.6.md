@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # QA Report -- v1.0.0-alpha.6
 
-Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser records in each delivery mode (896 pass/fail assertions and 2 performance observations).
 
 The final candidate completed the full verification sequence on 2026-10-01.
 The detailed rendered-browser record is available in
@@ -30,8 +30,8 @@ The same audit was also run through the local HTTP delivery path; that record is
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
 | Python unit suite | PASS; 480 tests |
 | Hostile-input harness | PASS; 168,697 checks, zero failures |
-| Standalone rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
-| HTTP rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
+| Standalone rendered-browser audit | PASS; 896 of 896 pass/fail assertions plus 2 informational performance observations, zero runtime exceptions, zero console errors |
+| HTTP rendered-browser audit | PASS; 896 of 896 pass/fail assertions plus 2 informational performance observations, zero runtime exceptions, zero console errors |
 | Real-key guided-field matrix | PASS; 109 text controls entered with CDP key-down/key-up sequences, complete values, retained focus, zero exceptions |
 | Entry/release matrix | PASS; all 200 entries across RHEL 7, 8, 9, and 10 |
 | Responsive layouts | PASS; 320, 390, 768, 1024, and 1440 pixel widths |
@@ -93,11 +93,14 @@ The browser audit compares the copied rsync Recover payload byte for byte with
 the external instruction-binding probe, refuses any Preflight or Finalize
 marker in that payload, and counts exactly one keyboard activation and one
 clipboard write. Its structural companion scans the complete shell and permits
-one delegated `keydown` listener, no `keyup` listener, and no keyboard property
-handler. Forgejo CI builds the HTML before test discovery but preserves the
+one literal delegated `keydown` listener, rejects literal `keyup`/`keypress`,
+property, and call/apply registration forms, forbids copy or synthetic-event
+routing in the approved handler, and keeps Enter and Space out of the global
+shortcut table. Forgejo CI builds the HTML before test discovery but preserves the
 committed, release-workstation provenance rather than dirtying protected
 evidence with runner-specific toolchain versions. Standalone and HTTP audits
-write separate raw result files. The user-reported
+write separate raw result files and compare the main-document bytes returned by
+CDP with the audited file before recording results. The user-reported
 grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 

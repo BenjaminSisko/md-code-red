@@ -435,10 +435,12 @@ or changed. That listener also handles palette-local navigation (arrow keys,
 Enter, a `Tab` focus trap) and gutter-line activation ahead of the table because
 they are contextual to an open overlay or a specific element. Clipboard and
 runbook-copy controls use native button semantics for single-fire Enter and
-Space activation. A full-template structural test admits exactly that one
-`keydown` listener, rejects every `keyup` listener and `onkeydown`/`onkeyup`
-property assignment, and refuses any copy-action routing or synthetic click in
-the approved handler. Every focusable
+Space activation. A full-template structural test requires the only literal
+keyboard-event registration to be that `keydown` listener; it rejects literal
+`keyup`/`keypress`, property, and Function call/apply registration forms. The
+approved handler may not route copy actions, call click/dispatch APIs, or place
+Enter/Space in `KEYMAP`. This is a source-shape guard, not a proof against
+arbitrarily obfuscated JavaScript. Every focusable
 control shows a visible focus ring (`:focus`/`:focus-visible`, never removed
 without a replacement); the icon-only rail buttons reveal their text label on
 both focus and hover so a keyboard user reads the same word a mouse user does.

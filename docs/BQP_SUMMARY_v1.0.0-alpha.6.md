@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Build Quality Protocol Summary -- v1.0.0-alpha.6
 
-Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 480 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser records in each delivery mode (896 pass/fail assertions and 2 performance observations).
 
 The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
@@ -31,5 +31,9 @@ source `5b868f10eec73bf6207113f56c41d42eb6802b1d`.
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,
 then regenerate provenance with that immutable tag-target SHA in a later commit.
+The placeholder provenance hash above is also the normalized release hash: the
+readiness gate permits only `git_commit` to change, requires the stamped commit
+to be an ancestor of the release tree, and requires every other manifest field,
+including the release-workstation toolchain, to remain identical.
 The candidate is unsigned because no authorized publisher signing key is
 provisioned.

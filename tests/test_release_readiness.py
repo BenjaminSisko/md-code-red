@@ -19,6 +19,44 @@ make_provenance = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(make_provenance)
 
 
+def canonical_placeholder_provenance(current_blob, baseline_blob, head="HEAD"):
+    """Validate the one permitted post-review manifest stamp and normalize it.
+
+    The release procedure learns the immutable tag-target SHA only after merge.
+    That later commit may therefore replace TAG_COMMIT_PLACEHOLDER, but it may
+    not change the artifact, sources, review lineage, or release-workstation
+    toolchain that the candidate review bound.
+    """
+    try:
+        current=json.loads(current_blob)
+        baseline=json.loads(baseline_blob)
+    except (TypeError,json.JSONDecodeError) as exc:
+        raise ValueError("provenance must be valid JSON") from exc
+    if not isinstance(current,dict) or not isinstance(baseline,dict):
+        raise ValueError("provenance must be a JSON object")
+    commit=current.get("git_commit")
+    if commit!=make_provenance.PLACEHOLDER_COMMIT:
+        if not isinstance(commit,str) or not re.fullmatch(r"[0-9a-f]{40}",commit):
+            raise ValueError("git_commit must be the placeholder or a full lowercase SHA")
+        exists=subprocess.run(
+            ["git","cat-file","-e",commit+"^{commit}"],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+        )
+        if exists.returncode!=0:
+            raise ValueError("stamped git_commit does not resolve to a commit")
+        ancestor=subprocess.run(
+            ["git","merge-base","--is-ancestor",commit,head],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+        )
+        if ancestor.returncode!=0:
+            raise ValueError("stamped git_commit is not an ancestor of the release tree")
+    current["git_commit"]=make_provenance.PLACEHOLDER_COMMIT
+    baseline["git_commit"]=make_provenance.PLACEHOLDER_COMMIT
+    if current!=baseline:
+        raise ValueError("stamped provenance changed fields other than git_commit")
+    return (json.dumps(current,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+
+
 class ReleaseReadinessTests(unittest.TestCase):
     def test_review_lineage_is_derived_from_the_requested_version(self):
         version = "v9.8.7-test.6"
@@ -66,6 +104,16 @@ class ReleaseReadinessTests(unittest.TestCase):
             sidecar_blob=fh.read()
         with open(provenance,"rb") as fh:
             provenance_blob=fh.read()
+        provenance_rel=os.path.relpath(provenance,REPO)
+        with open(os.path.join(REPO,"docs","qa","QA_RESULTS_%s-rc.json" % version),
+                  encoding="utf-8") as fh:
+            implementation_source=json.load(fh)["meta"]["commit"]
+        baseline=subprocess.run(
+            ["git","show",implementation_source+":"+provenance_rel],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,
+        ).stdout
+        normalized_provenance=canonical_placeholder_provenance(
+            provenance_blob,baseline)
         with open(summary_path,encoding="utf-8") as fh:
             summary=fh.read()
         fingerprint=re.search(
@@ -76,7 +124,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             hashlib.sha256(blob).hexdigest(),
             fingerprint.group(1).decode("ascii"),
             hashlib.sha256(sidecar_blob).hexdigest(),
-            hashlib.sha256(provenance_blob).hexdigest(),
+            hashlib.sha256(normalized_provenance).hexdigest(),
         ):
             self.assertIn(expected,summary)
 
@@ -128,7 +176,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         subprocess.run(["git","cat-file","-e",implementation_source+"^{commit}"],
                        cwd=REPO,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         protected=("template.html","content","extract","build.py","qa.py","tools/qa",
-                   "tests","dist",".forgejo/workflows")
+                   "tests","dist",":(exclude)dist/*.provenance.json",
+                   ".forgejo/workflows")
         unchanged=subprocess.run(
             ["git","diff","--quiet",implementation_source+"..HEAD","--",*protected],
             cwd=REPO,
@@ -142,6 +191,44 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(working.stdout,"",
                          "protected implementation paths have uncommitted changes:\n"+
                          working.stdout)
+        provenance_rel="dist/md-code-red_%s.provenance.json" % version
+        provenance_path=os.path.join(REPO,provenance_rel)
+        provenance_working=subprocess.run(
+            ["git","status","--porcelain","--untracked-files=all","--",provenance_rel],
+            cwd=REPO,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=True,
+        )
+        self.assertEqual(
+            provenance_working.stdout,"",
+            "the placeholder or stamped provenance must be committed before release gates run",
+        )
+        with open(provenance_path,"rb") as fh:
+            current_provenance=fh.read()
+        baseline_provenance=subprocess.run(
+            ["git","show",implementation_source+":"+provenance_rel],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,
+        ).stdout
+        canonical_placeholder_provenance(current_provenance,baseline_provenance)
+        stamped=json.loads(current_provenance)
+        stamped["git_commit"]=subprocess.run(
+            ["git","rev-parse","HEAD"],cwd=REPO,stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,text=True,check=True,
+        ).stdout.strip()
+        stamped_blob=(json.dumps(stamped,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+        self.assertEqual(
+            canonical_placeholder_provenance(stamped_blob,baseline_provenance),
+            canonical_placeholder_provenance(current_provenance,baseline_provenance),
+            "a documented post-merge git_commit stamp must preserve candidate provenance",
+        )
+        drifted=json.loads(stamped_blob)
+        drifted["toolchain"]["python3"]="0.0-review-drift"
+        with self.assertRaisesRegex(ValueError,"other than git_commit"):
+            canonical_placeholder_provenance(
+                (json.dumps(drifted)+"\n").encode("utf-8"),baseline_provenance)
+        nonancestor=json.loads(stamped_blob)
+        nonancestor["git_commit"]="0"*40
+        with self.assertRaisesRegex(ValueError,"does not resolve"):
+            canonical_placeholder_provenance(
+                (json.dumps(nonancestor)+"\n").encode("utf-8"),baseline_provenance)
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
         suite=unittest.defaultTestLoader.discover(
             os.path.join(REPO,"tests"),pattern="test*.py")
@@ -155,7 +242,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         browser_total=len(result["results"])
         verification_line=(
             "Verification totals: %s unit tests; %s hostile-input checks; "
-            "%s pipeline checks; %s rendered-browser assertions in each delivery mode."
+            "%s pipeline checks; %s rendered-browser records in each delivery mode "
+            "(896 pass/fail assertions and 2 performance observations)."
             % (format(unit_count,","),format(hostile["checks"],","),
                format(hostile["pipeline_checks"],","),format(browser_total,","))
         )

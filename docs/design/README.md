@@ -8,6 +8,7 @@ This directory contains the 2026-09-30 UX/UI revamp research and design package 
 | [UX_REDESIGN_CONCEPT.html](UX_REDESIGN_CONCEPT.html) | Interactive benchmark, low-fidelity wireframes, and high-fidelity desktop and mobile mockups |
 | [UX_REDESIGN_REVIEW_DECK.html](UX_REDESIGN_REVIEW_DECK.html) | Self-contained offline presentation with keyboard navigation, outline, reader rail, responsive layout, and print support |
 | [CLAUDE_OPUS_REVIEW.md](CLAUDE_OPUS_REVIEW.md) | Independent read-only review of PR #17 by the verified `claude-opus-5-5` model at maximum effort |
+| `CLAUDE_OPUS_ALPHA6_RC_REVIEW_*.md` | Exact-head alpha.6 release-review history. The numbered HOLD/PASS reports preserve each reproduced finding and closure rather than replacing earlier evidence. |
 | `UX_REDESIGN_WIREFRAMES.png` | Browser-rendered wireframe preview |
 | `UX_REDESIGN_DESKTOP_MOCKUP.png` | Browser-rendered desktop mockup preview |
 | `UX_REDESIGN_MOBILE_MOCKUP.png` | Browser-rendered mobile mockup preview |
