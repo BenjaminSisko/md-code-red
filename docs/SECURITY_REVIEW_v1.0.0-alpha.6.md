@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 457 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 465 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -72,7 +72,7 @@ This candidate adds or strengthens the following security properties:
   27,652 pipeline checks, 741 pipeline-oracle comparisons, and 232 one-stage
   invariants.
 - The final standalone and HTTP rendered-browser audits each produced zero
-  exceptions and zero console errors across 897 assertions. Their JSON metadata
+  exceptions and zero console errors across 898 assertions. Their JSON metadata
   binds each run to the artifact byte count, SHA-256, and content fingerprint.
   The coverage includes 109 guided text controls entered with real CDP
   key-down/key-up pairs, first-click
