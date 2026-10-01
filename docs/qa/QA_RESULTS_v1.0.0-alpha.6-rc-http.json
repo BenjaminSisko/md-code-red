@@ -4,8 +4,8 @@
     "version": "v1.0.0-alpha.6",
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
-    "url": "http://127.0.0.1:8978/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "3e5c95402e7349a9ad7f6be233673728e301410d",
+    "url": "http://127.0.0.1:8988/dist/md-code-red_v1.0.0-alpha.6.html",
+    "commit": "d1b0a44fe293f3933e998630917ee0af6c60c078",
     "artifactBytes": 8944791,
     "artifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
     "loadedArtifactBytes": 8944791,
@@ -57,7 +57,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1208 ms",
+      "actual": "1209 ms",
       "severity": ""
     },
     {
@@ -8094,7 +8094,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":27723303,\"resources\":0,\"nav\":{\"dom\":65.60000002384186,\"load\":67.60000002384186}}",
+      "actual": "{\"heap\":6295174,\"resources\":0,\"nav\":{\"dom\":71.59999990463257,\"load\":72.89999997615814}}",
       "severity": ""
     },
     {

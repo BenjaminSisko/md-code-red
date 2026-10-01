@@ -21,7 +21,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
 | Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
-| Implementation source | `3e5c95402e7349a9ad7f6be233673728e301410d` |
+| Implementation source | `d1b0a44fe293f3933e998630917ee0af6c60c078` |
 
 | Check | Result |
 |---|---|
