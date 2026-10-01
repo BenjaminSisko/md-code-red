@@ -32,7 +32,7 @@ can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
 As built (`v1.0.0-alpha.6-dev`, 2026-09-30): 200 curated command
-entries across 102 tools (44 guided-form generators and 156 static checks), 14,439
+entries across 102 tools (58 guided-form generators and 142 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
 exact data payload. `docs/USER_GUIDE.md` states the remaining evidence and
@@ -113,7 +113,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |
 | `extract/import_captures.py` | Walks `tests/captures/<rhel_version>/<entry_id>.json`, validates every record against the content validation protocol's field set, verifies `command_hash_at_capture`, and folds STIG-mapped captures into `content/expected_output.json`. `--check` re-runs into a temp dir and diffs (Q15). | The canonical capture path, per Eli Cross's ruling -- see `docs/WORKFLOW.md`. |
 | `extract/make_pending_skeletons.py` | Writes empty, honestly-`pending` skeletons for content that has no source yet. | |
-| `content/commands.json` | The 200 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 44 generators and 156 static checks. |
+| `content/commands.json` | The 200 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 58 generators and 142 static checks. |
 | `content/tools.json` | The 102 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
 | `content/dangerous.json` | The 15-row destructive-pattern table `blastFor()` matches against every assembled command, both quoted and unquoted. | |
 | `content/glossary.json` | Loaded into the data island (`DATASETS.GLOSSARY`) but **never read by any renderer in `template.html`**. Inherited from the Grey Beard Ansible fork; its terms (implicit localhost, delegation, pipelining) are Ansible concepts, not RHEL ones. See Section 23. | |
@@ -125,7 +125,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `content-src/flag_coverage_baseline.json` | The dated, ratcheting acceptance baseline Q20 measures flag-dictionary completeness against. Expires 2026-09-25 (`docs/POAM.md`). | |
 | `content-src/raw/rhel<N>/*.man.txt` | Staged, git-ignored raw `man`/`--help` captures -- the source of record for licensing review and for Q14's paraphrase-collision check. Never read by `build.py`. | |
 | `content/checklists.json`, `dossier.json`, `drills.json`, `errors.json`, `letter.md`, `modules.json`, `rhel_flags.json`, `scars.json`, `snippets.json`, `trees.json`, `flags.json` | Present under `content/` but **absent from `build.py`'s `CONTENT` map** -- none of these reach the shipped artifact. Leftover from the Grey Beard Ansible fork (`modules.json`/`flags.json` are `extract_ansible_doc.py`'s own output). | See Section 23. |
-| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 339 unittest cases and 101,957 harness checks pass on this build. |
+| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 419 unittest cases and 128,449 harness checks pass on this build. |
 | `stig-src/` | The pinned DISA STIG/CCI zip sources and their SHA-256 sums -- the source of record `extract/parse_xccdf.py` reads from. | |
 | `NOTICE` | The per-family licensing derivation statement (public-domain vs. paraphrase-only, and where each family's raw source is staged). | |
 

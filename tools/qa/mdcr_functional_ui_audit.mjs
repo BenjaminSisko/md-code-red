@@ -163,19 +163,23 @@ for(const entry of entries){
 // Reproduce the grep task discovered by the user.
 const grepEntry=entries.find(e=>e.id==='grep-search-text');
 await evaluate(`__qa.open('builder','grep','grep-search-text','8',${JSON.stringify(grepEntry.intent)})`);
+const grepValues=golden.generators['grep-search-text'].values;
+for(const [name,value] of Object.entries(grepValues))await evaluate(`__qa.set('[data-field="'+CSS.escape(${JSON.stringify(name)})+'"]',${JSON.stringify(value)})`);
+const grepExpected=golden.generators['grep-search-text'].commands['8'];
 const grepState=await evaluate(`(()=>({command:__qa.command(),fields:document.querySelectorAll('[data-field]').length,flagControls:document.querySelectorAll('select[data-field],input[data-field]').length}))()`);
-if(grepState.fields===0&&grepState.command.includes('"pattern"')) fail('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”','Editable pattern, target, and flag controls producing a laundry command',JSON.stringify(grepState),'Major'); else pass('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”',JSON.stringify(grepState));
+if(grepState.command===grepExpected&&grepState.fields===grepEntry.fields.length&&grepState.flagControls>=3) pass('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”',JSON.stringify(grepState)); else fail('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”',grepExpected+' with editable pattern, target, and flags',JSON.stringify(grepState),'Major');
 
-// Clipboard and evidence workflow on a safe static command.
+// Clipboard and evidence workflow on the completed safe grep generator.
 await evaluate(`__qa.open('builder','grep','grep-search-text','8',${JSON.stringify(grepEntry.intent)})`);
+for(const [name,value] of Object.entries(grepValues))await evaluate(`__qa.set('[data-field="'+CSS.escape(${JSON.stringify(name)})+'"]',${JSON.stringify(value)})`);
 await evaluate(`(()=>{window.__copied='';document.execCommand=(name)=>{if(name==='copy'){window.__copied=document.querySelector('textarea')?.value||'';return true}return false};return true})()`);
 await evaluate(`document.querySelector('[data-action="copy"]').click()`);
 await delay(20);
 let clipboard=await evaluate(`window.__copied`);
-if(clipboard==='grep -rn -i "pattern" /etc')pass('TC-COPY-001','Clipboard','Copy command writes the exact rendered command',clipboard);else fail('TC-COPY-001','Clipboard','Copy command writes the exact rendered command','grep -rn -i "pattern" /etc',clipboard,'Critical');
+if(clipboard===grepExpected)pass('TC-COPY-001','Clipboard','Copy command writes the exact rendered command',clipboard);else fail('TC-COPY-001','Clipboard','Copy command writes the exact rendered command',grepExpected,clipboard,'Critical');
 await evaluate(`document.querySelector('[data-action="copy-comment"]').click()`);await delay(20);
 clipboard=await evaluate(`window.__copied`);
-if(clipboard.includes('# intent:')&&clipboard.trim().endsWith('grep -rn -i "pattern" /etc'))pass('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command',clipboard.slice(0,180));else fail('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command','comment header + exact command',clipboard.slice(0,300),'Critical');
+if(clipboard.includes('# intent:')&&clipboard.trim().endsWith(grepExpected))pass('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command',clipboard.slice(0,180));else fail('TC-COPY-002','Clipboard','Copy with comment includes metadata and the exact command','comment header + exact command',clipboard.slice(0,300),'Critical');
 const evidence=await evaluate(`(()=>{const opener=document.querySelector('[data-action="export-evidence"]');opener.focus();opener.click();return {open:!document.querySelector('#evidence-modal').hidden,focus:document.activeElement?.textContent?.trim(),inert:[...document.body.children].filter(x=>x!==document.querySelector('#evidence-modal')&&x.inert).length}})()`);
 if(evidence.open&&evidence.inert>0&&evidence.focus)pass('TC-EVIDENCE-001','Evidence','Evidence modal opens, contains focus, and inerts the background',JSON.stringify(evidence));else fail('TC-EVIDENCE-001','Evidence','Evidence modal opens, contains focus, and inerts the background','open/focused/inert',JSON.stringify(evidence),'Critical');
 const evidenceClose=await evaluate(`(()=>{document.querySelector('[data-action="evidence-close"]').click();return {closed:document.querySelector('#evidence-modal').hidden,focus:document.activeElement?.getAttribute('data-action'),inert:[...document.body.children].filter(x=>x.inert).length}})()`);
@@ -300,7 +304,7 @@ const placeholderChecks=[
 ];
 for(const [id,token] of placeholderChecks){
  const e=entries.find(x=>x.id===id);if(!e)continue;
- if(!Object.hasOwn(e,'template')) fail(`TC-PARAM-${id}`,'Task completion',`${id} represents user-specific data as editable fields`,`guided fields replacing ${token}`,'static Copy command with zero fields','Major');
+ if(Object.hasOwn(e,'template')&&(e.fields||[]).length) pass(`TC-PARAM-${id}`,'Task completion',`${id} represents user-specific data as editable fields`,`${e.fields.length} guided field(s)`); else fail(`TC-PARAM-${id}`,'Task completion',`${id} represents user-specific data as editable fields`,`guided fields replacing ${token}`,'static Copy command with zero fields','Major');
 }
 
 const testPlan=fs.readFileSync(path.join(repo,'docs/TEST_PLAN.md'),'utf8');

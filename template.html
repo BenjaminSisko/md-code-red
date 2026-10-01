@@ -5148,6 +5148,62 @@ function renderInspector(){
     el("inspector-body").innerHTML=html;
     return;
   }
+  /* A composed pipeline is a rendered result, but it is not a catalog entry:
+     res.id is the structural sentinel "pipeline", so entryById(res.id) is
+     deliberately null.  The old inspector treated every result as an entry
+     and dereferenced entry.rhel_versions while rendering the comparison table.
+     That raised after Add to pipeline and left every later render path able to
+     raise again until state was cleared.  Render the pipeline's own stage data
+     here and return before the single-entry path below. */
+  if(res.stages){
+    html+="<p class=\"region-label\">Pipeline verification</p>";
+    html+="<p class=\"muted\">Review every stage and operator. Evidence belongs to the stage entries; the composed line has no single catalog receipt.</p>";
+    for(var ps=0;ps<res.stages.length;ps++){
+      var stage=res.stages[ps],stageEntry=(stage.spec&&stage.spec.id)?entryById(stage.spec.id):null;
+      html+="<div class=\"flagrow\"><span class=\"tok\">Stage "+esc(String(ps+1))+"</span>";
+      if(stage.kind==="redirect"){
+        html+="<span class=\"mean\">redirection to "+esc(stage.target||"")+" · "+esc(stage.blast||"unrated")+" risk</span>";
+      }else if(stage.kind==="operator"){
+        html+="<span class=\"mean\">standalone operator "+esc(stage.op||"")+"</span>";
+      }else{
+        var stageStatus=verificationStatusForVersion(stageEntry,res.version);
+        html+="<span class=\"mean\">"+esc(stage.command||"")+" · "+esc(stageStatus.label)+"</span>";
+      }
+      html+="</div>";
+      if(stageEntry&&stageEntry.source){
+        html+="<p class=\"muted\">Source: "+esc(stageEntry.source.title||"")+" — "+
+              esc(stageEntry.source.version||"")+" · <code>"+esc(stageEntry.source.url_or_man||"")+"</code></p>";
+      }
+    }
+    html+="<p class=\"region-label\">Flag by flag</p>";
+    var pipelineFlags=res.flags||[];
+    if(!pipelineFlags.length) html+="<p class=\"muted\">This pipeline takes no flags.</p>";
+    for(var pf=0;pf<pipelineFlags.length;pf++){
+      var pipelineExplain=pipelineFlags[pf].explain||null;
+      for(var pe=0;pe<res.stages.length&&!pipelineExplain;pe++){
+        var explainEntry=(res.stages[pe].spec&&res.stages[pe].spec.id)?entryById(res.stages[pe].spec.id):null;
+        if(explainEntry){
+          pipelineExplain=flagExplain(explainEntry.explain_tool||explainEntry.tool,
+                                      pipelineFlags[pf].flag,res.version)||null;
+        }
+      }
+      html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(pipelineFlags[pf].flag)+"</span>"+
+            "<span class=\"mean"+(pipelineExplain?"":" unverified")+"\">"+
+            esc(pipelineExplain||UNVERIFIED_FLAG_COPY)+"</span></div>";
+    }
+    html+="<details><summary>RHEL release comparison</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Exact pipeline</th><th>Availability</th></tr></thead><tbody>";
+    for(var pv=0;pv<RHEL_VERSIONS.length;pv++){
+      var pipelineRelease=RHEL_VERSIONS[pv];
+      var pipelineResult=assemblePipeline(pipelineStages(),pipelineRelease,pipelineOpts());
+      html+="<tr><th>"+esc(pipelineRelease)+"</th><td>"+
+            esc(pipelineResult?pipelineResult.command:"Not available or incomplete")+"</td><td>"+
+            esc(pipelineResult?"Every stage composes on this release":"One or more stages are unavailable or incomplete")+
+            "</td></tr>";
+    }
+    html+="</tbody></table></details>";
+    el("inspector-body").innerHTML=html;
+    return;
+  }
   var entry=entryById(res.id);
   var vstatus=verificationStatusForVersion(entry,res.version);
   html+="<p class=\"region-label\">Verification</p>";

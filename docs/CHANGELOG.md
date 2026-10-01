@@ -4,6 +4,26 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ## Unreleased -- v1.0.0-alpha.6-dev
 
+### Fixed -- Full functional QA findings
+
+- Fixed the pipeline inspector crash caused by treating the structural
+  `pipeline` result ID as a catalog entry and dereferencing a missing
+  `rhel_versions` object. The inspector now reviews each stage, its evidence,
+  flags, and all-release composition before returning to the single-entry path.
+- Converted 14 fixed-example recipes into guided tasks with typed, validated
+  fields. The `grep` task now accepts the search pattern and absolute target
+  path, and exposes independent recursive, line-number, and case-insensitive
+  controls. The remaining repaired workflows cover process signaling, URL
+  downloads, SSH/SCP/rsync, destructive Git restore, Git recovery, account
+  inspection and group changes, shell export, and stream translation.
+- Added golden commands and instructional metadata for every repaired task,
+  expanded hostile-input and one-stage pipeline coverage to all 58 generators,
+  and added a negative-control audit that fails if the pipeline inspector looks
+  up its structural result as a catalog entry again.
+- Corrected the test plan, architecture guide, user guide, README, generated
+  release facts, and current safety/count statements to match the shipped
+  200-entry catalog: 58 guided generators and 142 static checks.
+
 ### Added -- Guided storage inspection
 
 - Added a deterministic `lsblk` guided form with curated capacity,

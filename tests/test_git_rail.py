@@ -30,11 +30,13 @@ class GitRailTests(unittest.TestCase):
             "Git content points at a tool the Git rail cannot render",
         )
 
-    def test_all_eight_roadmap_generators_ship(self):
+    def test_git_guided_workflows_include_the_roadmap_and_repaired_tasks(self):
         expected = {
             "gen-git-clone", "gen-git-branch", "gen-git-merge",
             "gen-git-rebase", "gen-git-tag", "gen-git-log",
             "gen-git-bisect", "gen-git-recovery",
+            "git-checkout-discard-changes", "git-recovery-wrong-branch",
+            "git-recovery-lost-commit",
         }
         actual = {
             e["id"] for e in self.entries

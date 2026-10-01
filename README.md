@@ -21,7 +21,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   column sets. Every preset keeps `NAME` first to preserve the device tree;
   RHEL 7/8 use the compatible `MOUNTPOINT` column, while RHEL 9/10 also offer
   `MOUNTPOINTS` for devices mounted in more than one place. The catalog now
-  contains 200 entries across 102 tools: 44 guided generators and 156 static
+  contains 200 entries across 102 tools: 58 guided generators and 142 static
   entries.
 
 - **2026-09-30** -- **Task-centered operations-console UX.** Adds Home with

@@ -29,12 +29,12 @@ implementation-dependent number.
 
 **The pipeline composer (CR-T-31)** is gated by the same suite and is documented
 in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
-what runs on every build: 17,092 hostile-vector checks into every field of every
-stage; at least 593 pipeline-oracle comparisons with negative controls that FAIL if
+what runs on every build: 19,732 hostile-vector checks into every field of every
+stage; at least 717 pipeline-oracle comparisons with negative controls that FAIL if
 the oracle agrees with a line it should reject; 332 operator-seam refusals; 100
-interpreter-class checks; at least 68 redirect-target rating checks; 108 one-stage
+interpreter-class checks; at least 68 redirect-target rating checks; 232 one-stage
 invariants (a pipeline of one stage equals `assembleCommand()` byte for byte);
-and `tests/test_pipeline_ui_wiring.py` (15 tests, 9 audits, 14 negative
+and `tests/test_pipeline_ui_wiring.py` (17 tests, 10 audits, 15 negative
 controls) on the panel the harness cannot see. Q18 fails closed on a zero in any
 of those counts, so a harness that stopped checking pipelines cannot pass by
 saying nothing about them.
@@ -63,17 +63,18 @@ captures, QA reviews, the roster and two-person rule, the closed grammars on
 
 ### Pre-Release Content Checklist
 
-- [x] **Syntax verified, where captured:** 18 of 108 possible (entry, RHEL
+- [x] **Syntax verified, where captured:** 18 of 800 possible (entry, RHEL
       version) pairs carry an independent QA-reviewed receipt as of this build.
-      The remaining 90 have not been independently run on a real host; see
+      The remaining 782 have not been independently run on a real host; see
       `docs/USER_GUIDE.md`'s per-version verification badges for how this shows
       in the UI.
 - [x] **Flags accurate, where curated:** every flag a command shows either
       resolves to a curated explanation or honestly renders "unverified -- see
       man page" (`qa.py`'s Q22 gate, and the assembler's no-guess rule --
       `docs/ARCHITECTURE_BIBLE.md` Section 5). As of this build, 0 of 3,178
-      flag-dictionary entries carry a curated explanation; only 4 flags
-      anywhere in the build do, all on the 3 static entries.
+      release-specific flag-dictionary rows carry a curated explanation. The
+      curated command entries separately carry 348 flag rows, of which 336 have
+      explanations and 12 deliberately fall back to the dictionary/no-guess copy.
 - [x] **STIG mapping correctness, mechanically checked:** `qa.py`'s Q10 gate
       re-parses the pinned XCCDF and requires full ID-set parity plus a
       deterministic content sample, on every build -- not a one-time
@@ -103,11 +104,11 @@ must show:
 
 **All four are real, gate-tested mechanisms** (`content/dangerous.json`'s rows
 are each proved to fire against a synthetic command by
-`tests/hostile_harness.js`) -- but **no entry in this shipped build is rated
-red**, and no generator's currently offered values assemble into a command
-matching a dangerous pattern. This checklist item is honestly satisfied by
-construction, not by an example anyone can currently click through in the
-running UI.
+`tests/hostile_harness.js`) -- and **seven entries in this build are rated red**. Three are guided forms
+(`gen-pvcreate-initialize`, `gen-vgcreate-new-vg`, and
+`git-checkout-discard-changes`) and four are static reviewed commands
+(`rm-remove`, `git-push`, `git-reset-hard`, and `a-adhoc-become`). Each provides
+a live confirmation-flow example in the running UI.
 
 ### Spot-Check Sampling
 

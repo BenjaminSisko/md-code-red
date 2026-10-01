@@ -19,7 +19,7 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-The catalog includes 44 **guided form generators** -- you fill in
+The catalog includes 58 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
@@ -183,10 +183,11 @@ you are entitled to see the difference.
 Every assembled command carries a blast rating -- **green** (read-only), **yellow**
 (a reversible state change), or **red** (destructive, confirmation required) -- shown
 in the muted line under the command's title (`tool . RHEL N . blast <level>`).
-Of the 44 guided entries, 28 are yellow (add a user, merge or rebase Git history,
-extend a logical volume, write a privileged configuration, and so on), 13 are green, and two
+Of the 58 guided entries, 33 are yellow (add a user, merge or rebase Git history,
+extend a logical volume, write a privileged configuration, and so on), 22 are green, and three
 are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
-block device, so the confirmation flow below is visible for real catalog content.
+block device; the guided `git checkout -- <path>` task discards uncommitted edits.
+All three exercise the confirmation flow with real catalog content.
 
 1. A yellow rating is informational only: it does not block **Copy** or **Copy with
    comment**, and there is no checkbox to tick. Read the muted blast line and the
@@ -434,8 +435,8 @@ that file with `python3 tools/generate_release_facts.py --check` so these facts 
 hand-maintained prose. The current derived default is RHEL 8: RHEL 8 and 10 tie
 with nine receipts each, and the documented algorithm chooses the lower release.
 
-- **200 curated command entries across 102 tools.** 44 are guided-form generators
-  and 156 are static checks. The separate mined reference tier contains 14,439
+- **200 curated command entries across 102 tools.** 58 are guided-form generators
+  and 142 are static checks. The separate mined reference tier contains 14,439
   distinct commands with 45,281 source citations; reference rows are discovery
   material and are never silently promoted into the curated catalog.
 - **RHEL 7 flags are extracted from a UBI7 container, not a real RHEL 7 host** --

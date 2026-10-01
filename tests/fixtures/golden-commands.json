@@ -791,6 +791,242 @@
     "9": "crontab cron.generated",
     "10": "crontab cron.generated"
    }
+  },
+  "grep-search-text": {
+   "pins": "Selected grep flags are independent option literals; the search pattern and target remain distinct quoted operands.",
+   "values": {
+    "recursive": "yes",
+    "line_numbers": "yes",
+    "ignore_case": "yes",
+    "pattern": "laundry",
+    "target": "/etc"
+   },
+   "blast": "green",
+   "flags": [
+    "-r",
+    "-n",
+    "-i"
+   ],
+   "commands": {
+    "7": "grep -r -n -i 'laundry' '/etc'",
+    "8": "grep -r -n -i 'laundry' '/etc'",
+    "9": "grep -r -n -i 'laundry' '/etc'",
+    "10": "grep -r -n -i 'laundry' '/etc'"
+   }
+  },
+  "kill-send-signal": {
+   "pins": "The signal stays the curated -TERM literal; only the PID is operator supplied.",
+   "values": {
+    "pid": "12345"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-TERM"
+   ],
+   "commands": {
+    "7": "kill -TERM '12345'",
+    "8": "kill -TERM '12345'",
+    "9": "kill -TERM '12345'",
+    "10": "kill -TERM '12345'"
+   }
+  },
+  "curl-transfer-url": {
+   "pins": "curl short options remain separate; -o takes the quoted output path and the URL remains a positional operand.",
+   "values": {
+    "output": "/tmp/output.bin",
+    "url": "https://server.example.test/file"
+   },
+   "blast": "green",
+   "flags": [
+    "-s",
+    "-S",
+    "-o"
+   ],
+   "commands": {
+    "7": "curl -s -S -o '/tmp/output.bin' 'https://server.example.test/file'",
+    "8": "curl -s -S -o '/tmp/output.bin' 'https://server.example.test/file'",
+    "9": "curl -s -S -o '/tmp/output.bin' 'https://server.example.test/file'",
+    "10": "curl -s -S -o '/tmp/output.bin' 'https://server.example.test/file'"
+   }
+  },
+  "wget-download-url": {
+   "pins": "-O takes a separate quoted output path; the URL is the final positional operand.",
+   "values": {
+    "output": "/tmp/output.bin",
+    "url": "https://server.example.test/file"
+   },
+   "blast": "green",
+   "flags": [
+    "-q",
+    "-O"
+   ],
+   "commands": {
+    "7": "wget -q -O '/tmp/output.bin' 'https://server.example.test/file'",
+    "8": "wget -q -O '/tmp/output.bin' 'https://server.example.test/file'",
+    "9": "wget -q -O '/tmp/output.bin' 'https://server.example.test/file'",
+    "10": "wget -q -O '/tmp/output.bin' 'https://server.example.test/file'"
+   }
+  },
+  "ssh-remote-shell": {
+   "pins": "-i takes the quoted identity path; the user@host destination stays one quoted operand.",
+   "values": {
+    "identity": "/home/alice/.ssh/id_ed25519",
+    "destination": "alice@server.example.test"
+   },
+   "blast": "green",
+   "flags": [
+    "-i"
+   ],
+   "commands": {
+    "7": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+    "8": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+    "9": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+    "10": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'"
+   }
+  },
+  "scp-secure-copy": {
+   "pins": "The optional -p literal precedes two required quoted operands, so omitting it cannot shift either path.",
+   "values": {
+    "preserve": "yes",
+    "source": "/etc/app/config.yml",
+    "destination": "alice@server.example.test:/tmp/config.yml"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-p"
+   ],
+   "commands": {
+    "7": "scp -p '/etc/app/config.yml' 'alice@server.example.test:/tmp/config.yml'",
+    "8": "scp -p '/etc/app/config.yml' 'alice@server.example.test:/tmp/config.yml'",
+    "9": "scp -p '/etc/app/config.yml' 'alice@server.example.test:/tmp/config.yml'",
+    "10": "scp -p '/etc/app/config.yml' 'alice@server.example.test:/tmp/config.yml'"
+   }
+  },
+  "rsync-sync-files": {
+   "pins": "Archive flags are explicit literals and --dry-run is independently selectable before the required source and destination operands.",
+   "values": {
+    "dry_run": "yes",
+    "source": "/etc/app/",
+    "destination": "alice@server.example.test:/tmp/app/"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-a",
+    "-v",
+    "-h",
+    "--dry-run"
+   ],
+   "commands": {
+    "7": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+    "8": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+    "9": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+    "10": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'"
+   }
+  },
+  "git-checkout-discard-changes": {
+   "pins": "The curated -- delimiter prevents a path from being parsed as a revision; the pathspec is one quoted operand.",
+   "values": {
+    "path": "src/app.py"
+   },
+   "blast": "red",
+   "flags": [],
+   "commands": {
+    "7": "git checkout -- 'src/app.py'",
+    "8": "git checkout -- 'src/app.py'",
+    "9": "git checkout -- 'src/app.py'",
+    "10": "git checkout -- 'src/app.py'"
+   }
+  },
+  "git-recovery-wrong-branch": {
+   "pins": "The selected revision is one validated Git revision operand to cherry-pick.",
+   "values": {
+    "revision": "a1b2c3d"
+   },
+   "blast": "yellow",
+   "flags": [],
+   "commands": {
+    "7": "git cherry-pick 'a1b2c3d'",
+    "8": "git cherry-pick 'a1b2c3d'",
+    "9": "git cherry-pick 'a1b2c3d'",
+    "10": "git cherry-pick 'a1b2c3d'"
+   }
+  },
+  "git-recovery-lost-commit": {
+   "pins": "Both the new refname and recovered revision are validated and emitted as separate operands.",
+   "values": {
+    "recovered_branch": "recovered-work",
+    "lost_revision": "HEAD@{1}"
+   },
+   "blast": "green",
+   "flags": [],
+   "commands": {
+    "7": "git branch 'recovered-work' 'HEAD@{1}'",
+    "8": "git branch 'recovered-work' 'HEAD@{1}'",
+    "9": "git branch 'recovered-work' 'HEAD@{1}'",
+    "10": "git branch 'recovered-work' 'HEAD@{1}'"
+   }
+  },
+  "r-id": {
+   "pins": "The validated username is the only positional operand.",
+   "values": {
+    "username": "alice"
+   },
+   "blast": "green",
+   "flags": [],
+   "commands": {
+    "7": "id 'alice'",
+    "8": "id 'alice'",
+    "9": "id 'alice'",
+    "10": "id 'alice'"
+   }
+  },
+  "r-usermod-ag": {
+   "pins": "-a is mandatory and -G takes the quoted group list before the username operand.",
+   "values": {
+    "groups": "wheel",
+    "username": "alice"
+   },
+   "blast": "yellow",
+   "flags": [
+    "-a",
+    "-G"
+   ],
+   "commands": {
+    "7": "usermod -a -G 'wheel' 'alice'",
+    "8": "usermod -a -G 'wheel' 'alice'",
+    "9": "usermod -a -G 'wheel' 'alice'",
+    "10": "usermod -a -G 'wheel' 'alice'"
+   }
+  },
+  "export-shell-variable": {
+   "pins": "The validated variable name is exported as one quoted operand; no value or shell expansion is synthesized.",
+   "values": {
+    "variable": "EDITOR"
+   },
+   "blast": "green",
+   "flags": [],
+   "commands": {
+    "7": "export 'EDITOR'",
+    "8": "export 'EDITOR'",
+    "9": "export 'EDITOR'",
+    "10": "export 'EDITOR'"
+   }
+  },
+  "tr-translate-characters": {
+   "pins": "-d is a curated option literal and the character set remains one quoted operand.",
+   "values": {
+    "characters": "\\r"
+   },
+   "blast": "green",
+   "flags": [
+    "-d"
+   ],
+   "commands": {
+    "7": "tr -d '\\r'",
+    "8": "tr -d '\\r'",
+    "9": "tr -d '\\r'",
+    "10": "tr -d '\\r'"
+   }
   }
  },
  "_flags_column": "MCR-SEC-023. The flag-by-flag panel must name every option the command shows, in the order the command shows them \u2014 option tokens AND option-shaped literals ('-T', '-P', '-r', '--permanent', '--boot'). A panel silent about a flag that is present is a smaller version of a panel describing one that is not. Where no curated or dictionary explanation exists the panel says 'unverified \u2014 see man page'; it never guesses."

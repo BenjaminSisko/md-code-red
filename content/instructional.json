@@ -1620,6 +1620,437 @@
     }
    ],
    "proven_reversible": false
+  },
+  "grep-search-text": {
+   "fields": {
+    "recursive": {
+     "label": "Search directories recursively",
+     "meaning": "Adds -r so grep descends through a directory tree.",
+     "example": "yes",
+     "discovery_command": null,
+     "consequence": "Leave unchecked when the target is one file."
+    },
+    "line_numbers": {
+     "label": "Show line numbers",
+     "meaning": "Adds -n so each match includes its source line number.",
+     "example": "yes",
+     "discovery_command": null,
+     "consequence": "Useful when another person must find the same result."
+    },
+    "ignore_case": {
+     "label": "Ignore letter case",
+     "meaning": "Adds -i so Laundry, laundry, and LAUNDRY match alike.",
+     "example": "yes",
+     "discovery_command": null,
+     "consequence": "Leave unchecked when capitalization is meaningful."
+    },
+    "pattern": {
+     "label": "Search text or regular expression",
+     "meaning": "The text grep should find.",
+     "example": "laundry",
+     "discovery_command": null,
+     "consequence": "grep reads this as its pattern; regular-expression characters retain their grep meaning."
+    },
+    "target": {
+     "label": "File or directory to search",
+     "meaning": "The absolute file or directory grep should inspect.",
+     "example": "/etc",
+     "discovery_command": "pwd",
+     "consequence": "grep reads files below this path when recursive search is selected."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Review the assembled command and confirm every value before copying it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
+  },
+  "kill-send-signal": {
+   "fields": {
+    "pid": {
+     "label": "Process ID",
+     "meaning": "The numeric PID that should receive SIGTERM.",
+     "example": "12345",
+     "discovery_command": "ps -ef",
+     "consequence": "The selected process is asked to exit and may stop serving work."
+    }
+   },
+   "preflight": [
+    {
+     "command": "ps -p 12345 -o pid,user,comm,args",
+     "text": "Recheck the process owner and command immediately before sending the signal."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "curl-transfer-url": {
+   "fields": {
+    "output": {
+     "label": "Output file",
+     "meaning": "Absolute local path where the response body will be written.",
+     "example": "/tmp/output.bin",
+     "discovery_command": "pwd",
+     "consequence": "An existing file at this path can be replaced."
+    },
+    "url": {
+     "label": "URL",
+     "meaning": "The HTTP or HTTPS resource to request.",
+     "example": "https://server.example.test/file",
+     "discovery_command": null,
+     "consequence": "The host receives the request and the response body is stored locally."
+    }
+   },
+   "preflight": [
+    {
+     "command": "test ! -e /tmp/output.bin",
+     "text": "Check whether the chosen output path already exists before downloading."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "wget-download-url": {
+   "fields": {
+    "output": {
+     "label": "Output file",
+     "meaning": "Absolute local path where wget will write the download.",
+     "example": "/tmp/output.bin",
+     "discovery_command": "pwd",
+     "consequence": "An existing file at this path can be replaced."
+    },
+    "url": {
+     "label": "URL",
+     "meaning": "The HTTP or HTTPS resource to download.",
+     "example": "https://server.example.test/file",
+     "discovery_command": null,
+     "consequence": "The remote host receives the request and data is written locally."
+    }
+   },
+   "preflight": [
+    {
+     "command": "test ! -e /tmp/output.bin",
+     "text": "Check whether the chosen output path already exists before downloading."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "ssh-remote-shell": {
+   "fields": {
+    "identity": {
+     "label": "Private-key file",
+     "meaning": "Optional absolute path to the SSH identity file.",
+     "example": "/home/alice/.ssh/id_ed25519",
+     "discovery_command": "ls -l ~/.ssh",
+     "consequence": "SSH reads this private key; protect it from other users."
+    },
+    "destination": {
+     "label": "Remote destination",
+     "meaning": "Remote account and host in user@host form.",
+     "example": "alice@server.example.test",
+     "discovery_command": null,
+     "consequence": "A successful connection authenticates to this account on this host."
+    }
+   },
+   "preflight": [
+    {
+     "command": "ssh-keygen -F server.example.test",
+     "text": "Review any already-known host key before connecting."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
+  },
+  "scp-secure-copy": {
+   "fields": {
+    "preserve": {
+     "label": "Preserve times and mode",
+     "meaning": "Adds -p so the destination inherits source timestamps and permission mode.",
+     "example": "yes",
+     "discovery_command": null,
+     "consequence": "Preserved metadata may differ from destination defaults."
+    },
+    "source": {
+     "label": "Local source file",
+     "meaning": "Absolute path to the local file to copy.",
+     "example": "/etc/app/config.yml",
+     "discovery_command": "realpath FILE",
+     "consequence": "This file is read and transferred."
+    },
+    "destination": {
+     "label": "Remote destination",
+     "meaning": "Remote user, host, and destination path.",
+     "example": "alice@server.example.test:/tmp/config.yml",
+     "discovery_command": null,
+     "consequence": "An existing destination file can be replaced."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Confirm whether a file already exists at the remote destination and preserve it if needed."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "rsync-sync-files": {
+   "fields": {
+    "dry_run": {
+     "label": "Preview without changing files",
+     "meaning": "Adds --dry-run so rsync lists its planned changes without applying them.",
+     "example": "yes",
+     "discovery_command": null,
+     "consequence": "Clearing this box allows rsync to write at the destination."
+    },
+    "source": {
+     "label": "Source",
+     "meaning": "Local path or rsync remote source.",
+     "example": "/etc/app/",
+     "discovery_command": null,
+     "consequence": "rsync reads this tree; a trailing slash means copy its contents."
+    },
+    "destination": {
+     "label": "Destination",
+     "meaning": "Local path or user@host:path destination.",
+     "example": "alice@server.example.test:/tmp/app/",
+     "discovery_command": null,
+     "consequence": "Without --dry-run, rsync creates or updates files here."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Run the assembled command with Dry run selected and review every listed change before clearing it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "git-checkout-discard-changes": {
+   "fields": {
+    "path": {
+     "label": "Tracked path to restore",
+     "meaning": "Repository-relative path whose uncommitted edits will be discarded.",
+     "example": "src/app.py",
+     "discovery_command": "git status --short",
+     "consequence": "Uncommitted changes in this path cannot be recovered by Git after the command runs."
+    }
+   },
+   "preflight": [
+    {
+     "command": "git diff -- src/app.py",
+     "text": "Review and save the exact uncommitted changes before discarding them."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "git-recovery-wrong-branch": {
+   "fields": {
+    "revision": {
+     "label": "Commit to replay",
+     "meaning": "Commit hash or Git revision that identifies the misplaced commit.",
+     "example": "a1b2c3d",
+     "discovery_command": "git log -1 --oneline",
+     "consequence": "Git applies this commit to the currently checked-out branch."
+    }
+   },
+   "preflight": [
+    {
+     "command": "git branch --show-current",
+     "text": "Confirm that the currently checked-out branch is the branch that should receive the commit."
+    },
+    {
+     "command": "git show --stat a1b2c3d",
+     "text": "Review the commit before replaying it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "git-recovery-lost-commit": {
+   "fields": {
+    "recovered_branch": {
+     "label": "Recovery branch name",
+     "meaning": "New branch that will keep the recovered commit reachable.",
+     "example": "recovered-work",
+     "discovery_command": "git branch --list",
+     "consequence": "A new local branch with this name is created."
+    },
+    "lost_revision": {
+     "label": "Lost revision",
+     "meaning": "Commit hash or reflog expression that identifies the lost work.",
+     "example": "HEAD@{1}",
+     "discovery_command": "git reflog",
+     "consequence": "The recovery branch points at this revision."
+    }
+   },
+   "preflight": [
+    {
+     "command": "git reflog",
+     "text": "Find and inspect the revision that still contains the lost work."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
+  },
+  "r-id": {
+   "fields": {
+    "username": {
+     "label": "Username",
+     "meaning": "Local account whose identity and groups should be displayed.",
+     "example": "alice",
+     "discovery_command": "getent passwd",
+     "consequence": "The command reads and displays this account only."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Review the assembled command and confirm every value before copying it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
+  },
+  "r-usermod-ag": {
+   "fields": {
+    "groups": {
+     "label": "Supplementary groups to add",
+     "meaning": "One group or a comma-separated group list.",
+     "example": "wheel",
+     "discovery_command": "getent group",
+     "consequence": "The account gains these supplementary memberships."
+    },
+    "username": {
+     "label": "Username",
+     "meaning": "Existing local account to modify.",
+     "example": "alice",
+     "discovery_command": "getent passwd",
+     "consequence": "The selected account group membership changes."
+    }
+   },
+   "preflight": [
+    {
+     "command": "id alice",
+     "text": "Record the complete current group list before making the change."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": false
+  },
+  "export-shell-variable": {
+   "fields": {
+    "variable": {
+     "label": "Variable name",
+     "meaning": "Name of an existing shell variable to export.",
+     "example": "EDITOR",
+     "discovery_command": "set",
+     "consequence": "Child commands launched after this point inherit the variable value."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Review the assembled command and confirm every value before copying it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
+  },
+  "tr-translate-characters": {
+   "fields": {
+    "characters": {
+     "label": "Characters to delete",
+     "meaning": "Character set tr should remove from the input stream.",
+     "example": "\\r",
+     "discovery_command": null,
+     "consequence": "Every matching character is omitted from standard output."
+    }
+   },
+   "preflight": [
+    {
+     "command": null,
+     "text": "Review the assembled command and confirm every value before copying it."
+    }
+   ],
+   "prerequisites": [
+    {
+     "command": null,
+     "text": "Confirm that the selected RHEL release and cited source apply to the target host."
+    }
+   ],
+   "proven_reversible": true
   }
  },
  "learning_paths": [

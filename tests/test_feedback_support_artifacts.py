@@ -19,8 +19,8 @@ class FeedbackSupportArtifactTests(unittest.TestCase):
                   encoding="utf-8") as handle:
             facts = json.load(handle)
         self.assertEqual(facts["curated_entries"], 200)
-        self.assertEqual(facts["guided_generators"], 44)
-        self.assertEqual(facts["static_entries"], 156)
+        self.assertEqual(facts["guided_generators"], 58)
+        self.assertEqual(facts["static_entries"], 142)
         self.assertEqual(facts["default_rhel"], "8")
         self.assertEqual(facts["flag_rows_total"], 3178)
 

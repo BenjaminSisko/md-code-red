@@ -3183,38 +3183,9 @@
    "id": "export-shell-variable",
    "tool": "export",
    "category": "coreutils",
-   "intent": "Make a shell variable visible to every command this shell launches from now on",
-   "rhel_versions": {
-    "7": {
-     "command": "export PATH=\"$PATH:/opt/tool/bin\"",
-     "notes": "A shell builtin: an ordinary variable is local to this shell process; export marks it so child processes inherit it too. The change lasts only for this shell session unless it is also written into a shell init file."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-n",
-     "explain": "Remove the export attribute from a variable without unsetting its value.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-p",
-     "explain": "List every currently exported variable.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "A newly launched command (e.g. `env | grep VARNAME`) shows the expected value.",
-   "undo": "Unset the variable with `unset VARNAME`, or restart the shell -- the change never persists past the session unless also placed in a shell init file.",
+   "intent": "Mark an existing shell variable for inheritance by commands launched from this shell",
+   "verify": "A newly launched `env` command shows the variable and its expected value.",
+   "undo": "Remove the export attribute with `export -n VARNAME`, unset the variable, or start a new shell.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -3230,90 +3201,29 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "variable",
+     "type": "service",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "export"
+    },
+    {
+     "field": "variable"
+    }
+   ],
+   "notes": "This form exports the current value of an already-set variable. Set or update the variable separately before exporting it."
   },
   {
    "id": "grep-search-text",
    "tool": "grep",
    "category": "text-processing",
    "intent": "Find which lines, or which files, contain a pattern instead of reading everything by eye",
-   "rhel_versions": {
-    "7": {
-     "command": "grep -rn -i \"pattern\" /etc",
-     "notes": "Prints every matching line by default. -r walks a directory tree, -i folds case, -n prefixes the line number, and -E switches the pattern language to extended regular expressions (so +, ?, | and () need no backslash). Reads only; never modifies the files it searches."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-r",
-     "explain": "Recurse into a directory tree instead of requiring a single file.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-i",
-     "explain": "Case-insensitive match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-n",
-     "explain": "Prefix each match with its line number.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-E",
-     "explain": "Use extended regular expressions (grep -E, same engine as egrep).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Invert the match: print lines that do NOT match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-l",
-     "explain": "Print only the names of matching files, not the matching lines.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Print a count of matching lines per file instead of the lines themselves.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-A",
-     "explain": "Print N lines of context AFTER each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-B",
-     "explain": "Print N lines of context BEFORE each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-C",
-     "explain": "Print N lines of context on both sides of each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The printed matches (or file list, or count) match what a manual read of the target would show.",
    "undo": "Nothing to undo -- read-only.",
    "blast": "green",
@@ -3331,7 +3241,70 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "recursive",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "line_numbers",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "ignore_case",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "pattern",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "target",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "grep"
+    },
+    {
+     "lit": "-r",
+     "requires": "recursive"
+    },
+    {
+     "lit": "-n",
+     "requires": "line_numbers"
+    },
+    {
+     "lit": "-i",
+     "requires": "ignore_case"
+    },
+    {
+     "field": "pattern"
+    },
+    {
+     "field": "target"
+    }
+   ],
+   "notes": "Select only the flags the task needs. The pattern and absolute target path are emitted as separate, shell-quoted operands."
   },
   {
    "id": "sed-substitute",
@@ -3727,44 +3700,9 @@
    "id": "tr-translate-characters",
    "tool": "tr",
    "category": "text-processing",
-   "intent": "Translate, squeeze, or delete individual characters in a stream -- case-folding, stripping CR, collapsing whitespace",
-   "rhel_versions": {
-    "7": {
-     "command": "tr -d '\\r' < dos.txt > unix.txt",
-     "notes": "Operates on standard input only (no filename argument) and writes to standard output, so the usual shape redirects both ends as shown. -d deletes every character in the given set; with two sets and no -d, tr replaces each character in the first set with the character in the same position of the second (e.g. tr 'a-z' 'A-Z' upper-cases)."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-d",
-     "explain": "Delete every character in the given set instead of translating it.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-s",
-     "explain": "Squeeze runs of a repeated character down to one.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Complement the given set: act on every character NOT listed.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "The output stream no longer contains the deleted/translated characters (e.g. `file` reports the CR-stripped file as ASCII text, not CRLF).",
-   "undo": "Nothing to undo directly -- tr never edits a file in place; keep the original input file until the redirected output is confirmed correct.",
+   "intent": "Delete selected characters from standard input and write the transformed stream to standard output",
+   "verify": "The output stream no longer contains the selected characters.",
+   "undo": "Nothing to undo in the command itself because tr reads one stream and writes another; keep the source until redirected output is verified.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -3780,7 +3718,26 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "characters",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "tr"
+    },
+    {
+     "lit": "-d"
+    },
+    {
+     "field": "characters"
+    }
+   ],
+   "notes": "This command reads standard input and writes standard output. Add it to a pipeline and use the pipeline redirection control when a file output is needed."
   },
   {
    "id": "diff-compare-files",
@@ -5066,47 +5023,6 @@
    "tool": "kill",
    "category": "process",
    "intent": "Ask a process, by PID, to stop -- gracefully by default, or unconditionally with -9",
-   "rhel_versions": {
-    "7": {
-     "command": "kill -TERM 12345",
-     "notes": "With no signal, kill sends SIGTERM, which asks the process to exit and gives it the chance to catch the signal, flush buffers, and clean up. kill -9 (SIGKILL) cannot be caught, blocked, or ignored -- the kernel tears the process down immediately with no chance for it to release locks or finish writing. content/dangerous.json's dp-kill-9 pattern forces the red confirmation banner on any kill -9."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-TERM",
-     "explain": "The default, catchable request to terminate (signal 15).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-9",
-     "explain": "SIGKILL: unconditional, uncatchable termination -- no cleanup, no chance to ignore it.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-HUP",
-     "explain": "Signal 1, traditionally used to ask a daemon to reload its configuration without restarting.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-l",
-     "explain": "List the signal names kill understands, with their numbers.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "`ps -p <pid>` no longer shows the process (or, for a reload signal like -HUP, the service's logs show it re-read its configuration).",
    "undo": "None -- a terminated process is gone; if it was a managed service, undo means starting it again (systemctl start), not un-killing the old process instance.",
    "blast": "yellow",
@@ -5124,7 +5040,26 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "pid",
+     "type": "integer",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "kill"
+    },
+    {
+     "lit": "-TERM"
+    },
+    {
+     "field": "pid"
+    }
+   ],
+   "notes": "Sends SIGTERM, the catchable request to exit. Confirm the PID immediately before copying because process IDs can be reused."
   },
   {
    "id": "pkill-signal-by-name",
@@ -5658,59 +5593,6 @@
    "tool": "curl",
    "category": "network",
    "intent": "Fetch or post to a URL from the command line -- HTTP status, headers, and body, or a file download",
-   "rhel_versions": {
-    "7": {
-     "command": "curl -sS -o output.bin https://example.invalid/file",
-     "notes": "-s silences the progress meter, -S still shows an error if one occurs, -o writes the response body to a file instead of stdout. On an air-gapped or network-segmented host, curl against anything outside the lab's own segment will simply time out or fail to resolve -- that is the network boundary working as designed, not a curl problem, and is not something to route around by relaxing firewall or DNS controls without going through change control."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-s",
-     "explain": "Silent mode: suppress the progress meter (but not errors).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-S",
-     "explain": "Show an error message on failure even with -s.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-o",
-     "explain": "Write output to the named file instead of stdout.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-I",
-     "explain": "Fetch headers only (HTTP HEAD), for checking status without downloading the body.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-X",
-     "explain": "Set the HTTP method explicitly (e.g. -X POST).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-k",
-     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee and should not be used to work around a certificate problem that needs its own fix.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The expected HTTP status is returned and, for a download, the output file's size/checksum matches what was expected.",
    "undo": "For a plain fetch, nothing to undo -- read-only against the remote. A downloaded file can simply be deleted; curl itself makes no change on the local host beyond the file it was told to write.",
    "blast": "green",
@@ -5728,54 +5610,44 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "output",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "url",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "curl"
+    },
+    {
+     "lit": "-s"
+    },
+    {
+     "lit": "-S"
+    },
+    {
+     "flag": "-o",
+     "field": "output"
+    },
+    {
+     "field": "url"
+    }
+   ],
+   "notes": "The destination path and URL are editable. TLS verification remains enabled."
   },
   {
    "id": "wget-download-url",
    "tool": "wget",
    "category": "network",
    "intent": "Download a file (or mirror a small site) from a URL, with built-in retry and resume that curl leaves to the caller",
-   "rhel_versions": {
-    "7": {
-     "command": "wget -q -O output.bin https://example.invalid/file",
-     "notes": "-q suppresses the normal progress/status chatter; -O sets the output filename (- means stdout). wget resumes an interrupted download with -c and retries transient failures on its own, which is why it is often preferred over curl for one-shot large-file pulls. Same air-gap caveat as curl: a lab host with no route to the target network will simply fail here, by design."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-q",
-     "explain": "Quiet mode: suppress the normal status output.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-O",
-     "explain": "Write output to the named file (or - for stdout) instead of deriving a name from the URL.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Continue/resume a partially downloaded file instead of starting over.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "--no-check-certificate",
-     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee; do not use to work around a certificate problem that needs its own fix.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The downloaded file's size/checksum matches what was expected.",
    "undo": "Delete the downloaded file -- wget makes no other change on the local host.",
    "blast": "green",
@@ -5793,60 +5665,41 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "output",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "url",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "wget"
+    },
+    {
+     "lit": "-q"
+    },
+    {
+     "flag": "-O",
+     "field": "output"
+    },
+    {
+     "field": "url"
+    }
+   ],
+   "notes": "The destination path and URL are editable. Certificate checking remains enabled."
   },
   {
    "id": "ssh-remote-shell",
    "tool": "ssh",
    "category": "network",
    "intent": "Open an interactive shell, or run one command, on a remote host over an encrypted channel",
-   "rhel_versions": {
-    "7": {
-     "command": "ssh -i ~/.ssh/id_ed25519 user@host",
-     "notes": "With no trailing command, opens an interactive login shell on the remote host; given a command after the host, runs just that command and returns. -i selects a specific private key instead of the agent/default identity files. The remote host's own STIG posture (pam_faillock, banner, key vs password auth policy) governs what happens on repeated failed attempts -- this entry does not change that policy, only connects to whatever it already is."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-i",
-     "explain": "Use a specific private key file for authentication instead of the default identity files.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-p",
-     "explain": "Connect to a non-default port.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Verbose: print connection/negotiation diagnostics, useful when a connection fails and the reason is not obvious.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-L",
-     "explain": "Local port forward: bind a local port that tunnels to a destination reachable from the remote host.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-o",
-     "explain": "Set an ssh_config option for just this invocation (e.g. -o StrictHostKeyChecking=no, which should be used deliberately, not as a default habit).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "A shell prompt (or the command's output) returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
    "undo": "Exit the remote shell (Ctrl-D or `exit`) to return to the local session; ssh itself changes nothing on either host beyond the transient connection.",
    "blast": "green",
@@ -5864,54 +5717,39 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "identity",
+     "type": "path",
+     "required": false
+    },
+    {
+     "name": "destination",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "ssh"
+    },
+    {
+     "flag": "-i",
+     "field": "identity",
+     "optional": true
+    },
+    {
+     "field": "destination"
+    }
+   ],
+   "notes": "Destination accepts the normal user@host form. Host-key checking is not weakened by this generator."
   },
   {
    "id": "scp-secure-copy",
    "tool": "scp",
    "category": "network",
    "intent": "Copy a file to or from a remote host over the same encrypted channel ssh uses",
-   "rhel_versions": {
-    "7": {
-     "command": "scp -p /etc/app/config.yml user@host:/etc/app/config.yml",
-     "notes": "-p preserves modification time, access time, and mode from the source. Like mv/cp locally, scp overwrites an existing destination file with no prompt -- there is no built-in dry-run or confirmation step. rsync (below) is generally the better tool for anything larger than a one-off file, since it can resume and only transfers changed data."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-p",
-     "explain": "Preserve the source file's modification time, access time, and permission mode.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-r",
-     "explain": "Recurse into directories, copying a whole tree.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-i",
-     "explain": "Use a specific private key file for authentication.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-C",
-     "explain": "Compress data during the transfer.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The file exists at the destination with the expected size/checksum.",
    "undo": "Delete the copy at the destination (or restore the destination's own prior version from a backup, if it was overwritten and something was already there).",
    "blast": "yellow",
@@ -5929,60 +5767,50 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "preserve",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "source",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "destination",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "scp"
+    },
+    {
+     "lit": "-p",
+     "requires": "preserve"
+    },
+    {
+     "field": "source"
+    },
+    {
+     "field": "destination"
+    }
+   ],
+   "notes": "The source is a local absolute path. Destination accepts user@host:/absolute/path."
   },
   {
    "id": "rsync-sync-files",
    "tool": "rsync",
    "category": "network",
    "intent": "Synchronize a file tree to a local path or a remote host over ssh, transferring only what changed",
-   "rhel_versions": {
-    "7": {
-     "command": "rsync -avh --dry-run /etc/app/ user@host:/etc/app/",
-     "notes": "-a (archive) preserves permissions/ownership/timestamps/symlinks and recurses; -v is verbose, -h human-readable sizes. --dry-run reports exactly what WOULD be transferred, added, or deleted without touching anything -- always worth running once before the real sync, especially before adding --delete (which removes destination files that no longer exist on the source and is otherwise the one flag that turns this into a red-rated deletion, not a copy)."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-a",
-     "explain": "Archive mode: recursive, and preserve permissions/ownership/timestamps/symlinks.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Verbose: list each file as it is transferred.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-n",
-     "explain": "Dry run: report what would happen without changing anything (same as --dry-run).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-z",
-     "explain": "Compress data during transfer.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "--delete",
-     "explain": "Delete files at the destination that no longer exist at the source -- turns a copy into a synchronized mirror, and is where rsync stops being purely additive.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
    "undo": "Without --delete, rsync only adds/updates files, so undo is the same as cp: remove or restore the files it wrote. With --delete, anything it removed at the destination is gone the same way rm's targets are, unless backed up first -- treat --delete with the same caution as rm -rf.",
    "blast": "yellow",
@@ -6000,7 +5828,53 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "dry_run",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "source",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "destination",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "rsync"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "lit": "-v"
+    },
+    {
+     "lit": "-h"
+    },
+    {
+     "lit": "--dry-run",
+     "requires": "dry_run"
+    },
+    {
+     "field": "source"
+    },
+    {
+     "field": "destination"
+    }
+   ],
+   "notes": "Archive, verbose, and human-readable output are fixed. Start with Dry run selected, inspect the file list, then clear it only when ready to transfer."
   },
   {
    "id": "git-clone",
@@ -6361,35 +6235,6 @@
    "tool": "git",
    "category": "git",
    "intent": "Throw away uncommitted changes to specific tracked files, restoring them to their last-committed content",
-   "rhel_versions": {
-    "7": {
-     "command": "git checkout -- path/to/file",
-     "notes": "This is git checkout's OTHER job, distinct from switching branches: given one or more paths after --, it overwrites those files in the working tree with their content from HEAD (or a given commit), discarding whatever was edited and never committed. The newer, less ambiguous spelling for this specific job is `git restore <path>`. Either way, there is no staging step and no confirmation prompt -- the previous uncommitted content is simply gone."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "--",
-     "explain": "Separates the commit/branch argument (if any) from the pathspec, so a path that happens to share a name with a branch is never misread as one.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "<commit>",
-     "explain": "Restore the path from a specific commit instead of from HEAD.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "`git diff <path>` shows no difference between the working tree and the last commit for that path.",
    "undo": "None -- the discarded edits were never committed, so there is nothing for git itself to recover them from. Recovery, if any, comes only from an editor's own local backup/undo history or a copy kept outside git.",
    "blast": "red",
@@ -6407,7 +6252,29 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "path",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "checkout"
+    },
+    {
+     "lit": "--"
+    },
+    {
+     "field": "path"
+    }
+   ],
+   "notes": "This overwrites uncommitted changes in the selected tracked path with its content from HEAD. Copy remains blocked until the destructive-operation acknowledgement is checked."
   },
   {
    "id": "git-merge",
@@ -7434,25 +7301,9 @@
    "id": "git-recovery-wrong-branch",
    "tool": "git",
    "category": "git",
-   "intent": "Recovery scenario: 'I committed to the wrong branch' -- move a commit that was just made on the wrong branch onto the right one",
-   "rhel_versions": {
-    "7": {
-     "command": "git log -1  # note the hash, then: git checkout right-branch && git cherry-pick <hash> && git checkout wrong-branch && git reset --hard HEAD~1",
-     "notes": "The commit itself is not damaged -- it exists as an object regardless of which branch pointed at it. The fix is additive-then-subtractive: cherry-pick the commit onto the branch it belongs on (a new commit object, same content), THEN remove it from the wrong branch with reset. Doing the cherry-pick BEFORE the reset means the commit is safely copied before anything is removed, so an interruption partway through never leaves the work existing nowhere. If the wrong-branch commit was already pushed, treat removing it there the same as any other push --force: only safe if nobody else has already fetched it."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [],
-   "verify": "`git log` on the correct branch shows the commit, and `git log` on the originally-wrong branch no longer shows it.",
-   "undo": "If interrupted after the cherry-pick but before the reset, the commit now simply exists on both branches -- re-running just the reset half finishes the cleanup; nothing is lost either way since the cherry-pick step never removes anything.",
+   "intent": "Replay a known commit on the currently checked-out correct branch before removing it from the wrong branch",
+   "verify": "git show HEAD displays the expected copied commit on the correct branch.",
+   "undo": "If the cherry-pick was wrong and has not been pushed, run git reset --hard HEAD~1 only after confirming HEAD is the new cherry-pick and the original commit still exists on the source branch.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -7468,30 +7319,33 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "revision",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "cherry-pick"
+    },
+    {
+     "field": "revision"
+    }
+   ],
+   "notes": "First check out the branch that should receive the commit. This step copies the commit there; remove it from the wrong branch only after verifying the copied work."
   },
   {
    "id": "git-recovery-lost-commit",
    "tool": "git",
    "category": "git",
    "intent": "Recovery scenario: 'I lost a commit' -- a hard reset, a rebase, or a deleted branch removed a commit from every branch's visible history",
-   "rhel_versions": {
-    "7": {
-     "command": "git reflog  # find the commit's hash, then: git branch recovered-work <hash>",
-     "notes": "A commit that no longer appears in `git log` on any branch is not necessarily gone: as long as it has not been garbage-collected (git's default grace period is long, on the order of weeks, unless someone has run `git gc --prune=now`), it is still a real object in the repository, and `git reflog` almost always still has a line recording the moment HEAD pointed at it. Once the hash is found there, `git branch <new-name> <hash>` recreates a branch pointing at it, or `git cherry-pick <hash>` replays just that commit onto the current branch -- either way the 'lost' commit was never actually deleted, only unreferenced."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [],
-   "verify": "`git log <new-branch-or-hash>` shows the recovered commit and its content matches what was expected to be lost.",
+   "verify": "git show <recovered_branch> displays the recovered commit and git branch --contains <lost_revision> includes the new branch.",
    "undo": "Nothing further to undo -- this recovery only reads the reflog and creates a new reference; it does not remove anything.",
    "blast": "green",
    "stig": [],
@@ -7508,7 +7362,34 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "recovered_branch",
+     "type": "git_refname",
+     "required": true
+    },
+    {
+     "name": "lost_revision",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "branch"
+    },
+    {
+     "field": "recovered_branch"
+    },
+    {
+     "field": "lost_revision"
+    }
+   ],
+   "notes": "Use git reflog to identify the lost revision, then create a named branch pointing to it so the commit is reachable again."
   },
   {
    "id": "gen-git-clone",
@@ -9171,25 +9052,6 @@
    "tool": "id",
    "category": "Users & sudo",
    "intent": "See a user's UID, groups, and SELinux context",
-   "rhel_versions": {
-    "7": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "8": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "9": {
-     "command": "id alice",
-     "notes": "Groups shown are current; a user added to a group mid-session must log out/in (or newgrp) to pick it up - the classic 'I added them to the group but it doesn't work'. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
-     "changed_in_note": null
-    },
-    "10": {
-     "same_as": "9",
-     "changed_in_note": null
-    }
-   },
    "verify": "Expected groups listed.",
    "undo": "none - read-only",
    "blast": "green",
@@ -9206,46 +9068,29 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "id"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "notes": "Reports the selected account UID, primary group, and supplementary groups without changing the account."
   },
   {
    "id": "r-usermod-ag",
    "tool": "usermod",
    "category": "Users & sudo",
    "intent": "Add a user to a group without destroying their other groups",
-   "rhel_versions": {
-    "7": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "8": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "9": {
-     "command": "usermod -aG wheel alice",
-     "notes": "-a APPENDS; -G alone REPLACES the supplementary group list - the most destructive missing letter in Linux administration. wheel = sudo rights on RHEL. Mentor: usermod -G without -a has ended careers. The tool's generator will never emit it bare. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
-     "changed_in_note": null
-    },
-    "10": {
-     "same_as": "9",
-     "changed_in_note": null
-    }
-   },
-   "flags": [
-    {
-     "flag": "-a",
-     "explain": "Append supplementary groups instead of replacing the account's existing supplementary-group list; use together with -G.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-G",
-     "explain": "Set the account's supplementary groups. Without -a, groups omitted from this list are removed from the account.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "id alice shows wheel plus all previous groups.",
    "undo": "gpasswd -d alice wheel",
    "blast": "yellow",
@@ -9263,7 +9108,35 @@
     "9": false,
     "10": false
    },
-   "privilege": "root"
+   "privilege": "root",
+   "fields": [
+    {
+     "name": "groups",
+     "type": "group_list",
+     "required": true
+    },
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "usermod"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-G",
+     "field": "groups"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "notes": "The required -a keeps existing supplementary groups while -G adds the selected group list."
   },
   {
    "id": "r-visudo-c",

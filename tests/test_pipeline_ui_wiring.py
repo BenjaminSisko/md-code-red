@@ -310,6 +310,37 @@ def audit_the_header_names_a_pipeline(src):
     return f
 
 
+def audit_pipeline_inspector_handles_structural_results(src):
+    """A pipeline result must be rendered before any catalog-entry dereference.
+
+    assemblePipeline() returns id="pipeline" as a structural result identifier;
+    it is deliberately absent from content/commands.json. Looking it up through
+    entryById() therefore returns None/null. The inspector must branch on the
+    result's stages first, write its own stage-oriented content, and return.
+    """
+    f = []
+    inspector = body(src, "renderInspector")
+    branch = inspector.find("if(res.stages){")
+    lookup_match = re.search(r"\bvar\s+[A-Za-z_][A-Za-z0-9_]*\s*=\s*entryById\(res\.id\)", inspector)
+    lookup = -1 if lookup_match is None else lookup_match.start()
+    if branch < 0:
+        return ["renderInspector() has no pipeline-result branch"]
+    if lookup < 0:
+        return ["renderInspector() no longer contains the catalog-entry path this audit guards"]
+    if branch > lookup:
+        f.append("renderInspector() looks up res.id as a catalog entry before recognizing a "
+                 "pipeline. id='pipeline' is structural and entryById() returns null")
+    pipeline_path = inspector[branch:lookup]
+    if 'el("inspector-body").innerHTML=html;' not in pipeline_path or "return;" not in pipeline_path:
+        f.append("the pipeline inspector branch does not write its stage review and return before "
+                 "the single-entry renderer")
+    if "verificationStatusForVersion(stageEntry,res.version)" not in pipeline_path:
+        f.append("the pipeline inspector does not report verification per catalog-backed stage")
+    if "assemblePipeline(pipelineStages(),pipelineRelease,pipelineOpts())" not in pipeline_path:
+        f.append("the pipeline inspector no longer compares the composed stages across releases")
+    return f
+
+
 AUDITS = (
     ("operator text stays text", audit_operator_text_stays_text),
     ("the picker hands back a key", audit_the_picker_hands_back_a_key),
@@ -320,6 +351,7 @@ AUDITS = (
     ("every rendered value is escaped", audit_every_rendered_value_is_escaped),
     ("every rating has a badge (PL4 on the screen)", audit_every_rating_has_a_badge),
     ("the header names a pipeline as a pipeline", audit_the_header_names_a_pipeline),
+    ("the inspector handles a pipeline before catalog lookup", audit_pipeline_inspector_handles_structural_results),
 )
 
 
@@ -460,6 +492,15 @@ class TheAuditsAreShownToFail(unittest.TestCase):
         self.assertNotEqual(bad, SRC)
         self.assertCatches(audit_every_rendered_value_is_escaped, bad,
                            "a stage value reaches the sink with no escaper")
+
+    def test_a_pipeline_looked_up_as_a_catalog_entry_is_caught(self):
+        inspector = body(SRC, "renderInspector")
+        bad_inspector = inspector.replace('if(res.stages){',
+                                          'var premature=entryById(res.id);\n  if(res.stages){', 1)
+        bad = SRC.replace(inspector, bad_inspector, 1)
+        self.assertNotEqual(bad, SRC)
+        self.assertCatches(audit_pipeline_inspector_handles_structural_results, bad,
+                           "the inspector dereferences a structural pipeline id as a catalog entry")
 
 
 if __name__ == "__main__":
