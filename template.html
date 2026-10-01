@@ -26,6 +26,7 @@
   --bg-app:#fafafa; --bg-surface:#ffffff; --bg-editor:#f6f8fa; --bg-gutter:#eef1f6;
   --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#53657d;
   --accent:#b45309; --success:#047857; --warning:#b45309; --danger:#dc2626;
+  --primary-action-text:#ffffff; --danger-heading:#b91c1c; --pressed-text:#92400e;
   --brand:#991b1b; --selected-fill:rgba(180,83,9,.10);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
   --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#a16207;
@@ -43,6 +44,7 @@
     --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
     --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
     --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+    --primary-action-text:#18181b; --danger-heading:#f87171; --pressed-text:#fbbf24;
     --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
     --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
     --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
@@ -52,6 +54,7 @@
   --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
   --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
   --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+  --primary-action-text:#18181b; --danger-heading:#f87171; --pressed-text:#fbbf24;
   --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
   --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
@@ -165,7 +168,7 @@ code,pre{font-family:var(--font-mono);}
 .themebtn,.panelbtn{border:1px solid var(--border-primary); border-radius:5px;
   background:transparent; color:var(--text-secondary); font:inherit; font-size:12px;
   padding:1px 8px; cursor:pointer;}
-.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--accent);
+.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--pressed-text);
   background:var(--selected-fill); font-weight:600;}
 .themebtn:hover,.panelbtn:hover{border-color:var(--accent); color:var(--text-primary);}
 .toast{color:var(--accent); font-weight:600;}
@@ -203,7 +206,7 @@ code,pre{font-family:var(--font-mono);}
 /* red blast banner — role="alert", never colour alone, holds Copy until acked */
 .blast{border:2px solid var(--danger); border-radius:6px; padding:10px 12px; margin:0 0 12px;
   background:var(--badge-critical-fill);}
-.blast h2{color:var(--danger); font-size:14px; margin:0 0 4px;}
+.blast h2{color:var(--danger-heading); font-size:14px; margin:0 0 4px;}
 .blast label{display:block; margin-top:8px; font-size:13px;}
 .badge{display:inline-block; border:1px solid var(--badge-info); border-radius:999px;
   padding:0 8px; font-size:11px; margin:0 5px 5px 0; color:var(--text-primary);}
@@ -325,7 +328,7 @@ code,pre{font-family:var(--font-mono);}
 .builderfields>.region-label,.commandreview>.region-label{color:var(--text-secondary);font-weight:700}
 .trustbar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.trustfact{border:1px solid var(--border-primary);border-radius:999px;padding:3px 8px;font-size:11px;color:var(--text-secondary)}
 .trustfact.risk-green{border-color:var(--success)}.trustfact.risk-yellow{border-color:var(--warning)}.trustfact.risk-red{border-color:var(--danger)}
-.primaryaction{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;min-height:40px}
+.primaryaction{background:var(--accent);border-color:var(--accent);color:var(--primary-action-text);font-weight:700;min-height:40px}
 .supportdetails{margin-top:12px;border-top:1px solid var(--border-primary)}.supportdetails>summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--text-primary)}
 @media (max-width:720px){
   html,body{height:auto; min-height:100%; width:100%; max-width:100%; overflow-x:hidden;}
@@ -1474,6 +1477,18 @@ function blastFor(command,base,patterns){
   }
   return {blast:blast,reasons:reasons};
 }
+function mergeBlastReasons(first,second){
+  var out=[],seen={},lists=[first||[],second||[]],i,j,r,key;
+  for(i=0;i<lists.length;i++){
+    for(j=0;j<lists[i].length;j++){
+      r=lists[i][j];
+      key=String(r.id||"")+"\u0000"+String(r.why||"");
+      if(seen[key]) continue;
+      seen[key]=true; out.push(r);
+    }
+  }
+  return out;
+}
 
 function assembleEntry(entry,version,patterns){
   var slot=entry.rhel_versions?entry.rhel_versions[version]:null;
@@ -1688,6 +1703,10 @@ function assembleCommand(spec,version,values,opts){
                   (writeField.type==="remote_path"?remoteWritePath(writeValue):null);
     if(writePath===null||isExecutionSink(writePath)) return null;
     var writeClass=redirectTargetBlast(writePath);
+    /* A remote directory operand takes the local source's basename, so the
+       exact file written is not stated in the destination field. Rate that
+       uncertainty at the strongest class the directory can contain. */
+    if(writeField.type==="remote_path"&&/\/$/.test(writePath)) writeClass="red";
     var writeFloor=writeClass==="red"?"red":"yellow";
     if(BLAST_RANK[writeFloor]>BLAST_RANK[b.blast]) b.blast=writeFloor;
     b.reasons.push({id:"WRITE-TARGET",label:"File write target",
@@ -2119,7 +2138,7 @@ var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/et
                          "/etc/init.d","/etc/rc.d","/etc/ld.so.conf.d","/etc/ld.so.preload",
                          "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
                          "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
-                         "/usr/libexec","/etc/xdg/autostart"];
+                         "/usr/libexec","/etc/xdg/autostart","/run/systemd/system"];
 /* ---- PIPE-002: normalise LEXICALLY, then classify (Marcus Reed, D4) -------
    underDir() is a prefix match, and a prefix match answers a question about a
    SPELLING. Three spellings of one file got three ratings in review:
@@ -2161,7 +2180,20 @@ function lexicalPath(target){
     out.push(p);
   }
   var joined=out.join("/");
-  if(absolute) return "/"+joined;
+  if(absolute){
+    var normalized="/"+joined;
+    /* RHEL's usrmerge aliases must classify exactly like their /usr spelling.
+       This is lexical policy, not a filesystem lookup: the four aliases are
+       part of the supported platform contract. */
+    var aliases=[["/bin","/usr/bin"],["/sbin","/usr/sbin"],
+                 ["/lib","/usr/lib"],["/lib64","/usr/lib64"]];
+    for(i=0;i<aliases.length;i++){
+      if(normalized===aliases[i][0]||normalized.indexOf(aliases[i][0]+"/")===0){
+        return aliases[i][1]+normalized.slice(aliases[i][0].length);
+      }
+    }
+    return normalized;
+  }
   return joined===""?".":joined;
 }
 function pathTraverses(target){
@@ -2186,11 +2218,16 @@ function isExecutionSink(target){
    remote-copy destinations. */
 function isSensitiveUserTarget(target){
   var t=lexicalPath(target),parts=t.split("/"),leaf=parts.length?parts[parts.length-1]:"";
-  var inHome=(t.indexOf("/home/")===0||t.indexOf("/root/")===0);
-  if(!inHome) return false;
   if(t.indexOf("/.ssh/")>=0||/\/.ssh$/.test(t)) return true;
-  if(inList([".bashrc",".bash_profile",".bash_login",".profile",".zshrc",".zprofile"],leaf)) return true;
+  if(inList([".bashrc",".bash_profile",".bash_login",".bash_logout",".profile",
+             ".zshrc",".zprofile",".cshrc",".tcshrc",".login",".kshrc",
+             ".k5login",".shosts",".rhosts"],leaf)) return true;
   if(t.indexOf("/.config/systemd/user/")>=0||/\/.config\/systemd\/user$/.test(t)) return true;
+  if(t.indexOf("/.local/share/systemd/user/")>=0||/\/.local\/share\/systemd\/user$/.test(t)) return true;
+  if(t.indexOf("/.config/autostart/")>=0||/\/.config\/autostart$/.test(t)) return true;
+  /* A remote copy to a home directory names no final file; the source basename
+     may itself be a startup or trust file. */
+  if(t==="/root"||/^\/home\/[^/]+$/.test(t)) return true;
   return false;
 }
 /* remote_path has a closed grammar that excludes ':' from the identity and
@@ -2278,7 +2315,7 @@ function assemblePipeline(stages,version,opts){
   if(!stages||typeof stages.length!=="number"||!stages.length) return null;
   if(stages.length>MAX_PIPELINE_STAGES) return null;
   if(!inList(["7","8","9","10"],version)) return null;
-  var words=[],flags=[],stageRecords=[],rank=0,i,j;
+  var words=[],flags=[],stageRecords=[],reasons=[],rank=0,i,j;
   var prevOpKey=null,prevKind=null,prevCommand=null;
 
   for(i=0;i<stages.length;i++){
@@ -2327,6 +2364,9 @@ function assemblePipeline(stages,version,opts){
       words.push(shQuote(tgt.value));
       var tb=redirectTargetBlast(tgt.value);
       if(PIPE_TARGET_RANK[tb]>rank) rank=PIPE_TARGET_RANK[tb];
+      reasons.push({id:"WRITE-TARGET",label:"File write target",
+                    why:"Stage "+(i+1)+" writes to "+tgt.value+" ("+tb+" target class).",
+                    floor:tb==="red"?"red":"yellow"});
       stageRecords.push({index:i,op:opKey,kind:"redirect",command:null,target:tgt.value,
                   blast:tb,spec:null});
       prevOpKey=opKey; prevKind="redirect";
@@ -2349,6 +2389,7 @@ function assemblePipeline(stages,version,opts){
                     stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
       }
       if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
+      reasons=mergeBlastReasons(reasons,res.blast_reasons);
       stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
                   blast:res.blast,spec:st.spec});
       prevOpKey=opKey; prevKind="command"; prevCommand=res.command;
@@ -2408,7 +2449,11 @@ function assemblePipeline(stages,version,opts){
          path the operator typed and read. */
       if((childBase!==null&&inList(XARGS_RED_TOOLS,childBase))||child.blast==="red"){
         xrank=BLAST_RANK.red;
+        reasons.push({id:"XARGS-RED",label:"Destructive xargs child",
+                      why:"Stage "+(i+1)+" runs "+(childBase||"a destructive command")+
+                          " once per input batch.",floor:"red"});
       }
+      reasons=mergeBlastReasons(reasons,child.blast_reasons);
       if(xrank>rank) rank=xrank;
       words.push(xcmd);
       flags.push({flag:"xargs",explain:null,stage_index:i,tool:"xargs"});
@@ -2442,12 +2487,15 @@ function assemblePipeline(stages,version,opts){
   for(pi=0;pi<projected.length;pi++){
     var ptb=redirectTargetBlast(projected[pi]);
     if(PIPE_TARGET_RANK[ptb]>rank) rank=PIPE_TARGET_RANK[ptb];
+    reasons.push({id:"WRITE-TARGET",label:"File write target",
+                  why:"The composed command writes to "+projected[pi]+" ("+ptb+" target class).",
+                  floor:ptb==="red"?"red":"yellow"});
   }
   var b=blastFor(command,BLAST_NAMES[rank],patterns);
   var ops=[];
   for(i=0;i<stageRecords.length;i++){ if(stageRecords[i].op!==null) ops.push(stageRecords[i].op); }
   return {id:"pipeline",tool:"pipeline",command:command,flags:flags,
-          blast:b.blast,blast_reasons:b.reasons,notes:null,resolved_from:null,
+          blast:b.blast,blast_reasons:mergeBlastReasons(reasons,b.reasons),notes:null,resolved_from:null,
           version:version,stages:stageRecords,operators:ops};
 }
 
@@ -3686,7 +3734,7 @@ function withCopyPayloads(res,entry){
   var probe=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
   var b=blastFor(probe===null?res.command:probe,res.blast,PATTERNS);
   res.blast=b.blast;
-  res.blast_reasons=b.reasons;
+  res.blast_reasons=mergeBlastReasons(res.blast_reasons,b.reasons);
   res.copy_plain=res.command;
   res.copy_comment=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
   /* CR-T-25. The generated file is a THIRD clipboard payload, and it is the one
@@ -4023,13 +4071,20 @@ function verificationStatusForResult(res,entry,version){
    with no row for it, renders an empty panel, not an empty card. */
 function renderStigPanel(){
   var html="";
-  var rows=[],version=STATE.version,standalone=false;
-  if(STATE.pipeline.length){
+  var rows=[],version=STATE.version;
+  var standalone=!!(STATE.stigRuleId&&STATE.stigRuleVersion);
+  /* A pipeline suppresses control identity inherited from a selected command.
+     A standalone STIG rule opened from search is a separate reading task and
+     remains visible; it is still excluded from the composed command export. */
+  if(STATE.pipeline.length&&!standalone){
     el("stig-panel").innerHTML="";
     el("print-stig-panel").innerHTML="";
     return;
   }
-  if(STATE.entryId){
+  if(standalone){
+    version=STATE.stigRuleVersion;
+    rows=[{stig_id:STATE.stigRuleId,rhel_version:STATE.stigRuleVersion,cci:null,nist:null}];
+  }else if(STATE.entryId){
     var entry=entryById(STATE.entryId);
     rows=entry?stigRowsFor(entry):[];
     if(entry){
@@ -4039,10 +4094,6 @@ function renderStigPanel(){
               esc(slot.changed_in_note)+"</p>";
       }
     }
-  }else if(STATE.stigRuleId&&STATE.stigRuleVersion){
-    version=STATE.stigRuleVersion;
-    rows=[{stig_id:STATE.stigRuleId,rhel_version:STATE.stigRuleVersion,cci:null,nist:null}];
-    standalone=true;
   }
   if(!rows.length){
     el("stig-panel").innerHTML=html;
@@ -4528,7 +4579,7 @@ function cloneValues(v){
   for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
   return out;
 }
-function bumpPipeline(){ STATE.pipelineRev++; }
+function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; }
 /* The assembler's stage array, built fresh from STATE. Every command stage
    hands over the ENTRY as its spec -- the same object assembleCommand() is
    given for a single command -- so a stage is assembled by exactly the code a
@@ -4706,6 +4757,7 @@ function pipelineSetKind(i,kind){
   renderAll();
 }
 function pipelineSetField(i,field,value){
+  var focusIdentity=renderedFocusIdentity();
   var row=STATE.pipeline[i];
   if(!row) return;
   if(field==="target"){ row.target=value; }
@@ -4714,8 +4766,13 @@ function pipelineSetField(i,field,value){
   else if(field==="replace"){ row.xargs.replace=(value==="1"); }
   else return;
   bumpPipeline();
-  reRenderEditorAndInspector();
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(entry&&isGeneratorEntry(entry)) renderGeneratorResult();
+  else renderEditor();
+  renderInspector();
   renderPipelinePanel();
+  renderStatusBar();
+  restoreRenderedFocus(focusIdentity);
 }
 /* PL6: the panel names the stage that is incomplete, and only that stage.
    validatePipeline() is the assembler's own decision, per stage, so what this
@@ -4726,7 +4783,13 @@ function pipelineBlastBadge(blast){
   if(!inList(["green","yellow","red","unrated"],blast)) return "";
   return "<span class=\"sbadge b-"+escapeAttr(blast)+"\">"+esc(blast)+"</span>";
 }
+/* Replacing the focused pipeline row causes Chromium to emit a synchronous
+   change event during the innerHTML assignment. That late event carries the
+   same value already stored by the input event. Refuse its nested render so
+   one node replacement completes before another begins. */
+var pipelinePanelRendering=false;
 function renderPipelinePanel(){
+  if(pipelinePanelRendering) return;
   var target=el("pipeline-panel");
   if(!target) return;
   if(!STATE.pipeline.length){
@@ -4852,7 +4915,9 @@ function renderPipelinePanel(){
         ">Add a redirection</button>";
   html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"clear\">Clear pipeline</button>";
   html+="</div></div>";
-  target.innerHTML=html;
+  pipelinePanelRendering=true;
+  try{ target.innerHTML=html; }
+  finally{ pipelinePanelRendering=false; }
 }
 /* The reference-tier editor pane. READ ONLY, by construction rather than by
    discipline: there is no form, no field, no template, no assembler call and no
@@ -4998,7 +5063,8 @@ function renderEditor(){
     el("editor-card").innerHTML=html;
     return;
   }
-  html+="<p class=\"taskcrumb\">Build / "+esc(res.stages?"pipeline":entry.tool)+" / reviewed command</p>";
+  html+="<p class=\"taskcrumb\">Build / "+esc(res.stages?"pipeline":entry.tool)+" / "+
+        esc(res.stages?"composed command":"reviewed command")+"</p>";
   html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
@@ -5270,6 +5336,10 @@ function renderGeneratorEditor(entry){
   el("editor-card").innerHTML=html;
   renderGeneratorForm(entry);
   renderGeneratorResult();
+  /* Seed the transition state while the form is first rendered. A one-field
+     form can become complete on its first keystroke, and that transition must
+     announce just like later incomplete/complete changes. */
+  STATE.announcementComplete=!!assembleCommand(entry,STATE.version,STATE.formValues,{patterns:PATTERNS});
 }
 
 function renderInspector(){
@@ -5627,6 +5697,7 @@ function activateHit(i){
   }
   else{ if(h.tool) STATE.toolId=h.tool; selectEntry(h.id); }
   closePalette(false);
+  restoreRenderedFocus({fallback:true});
 }
 
 /* ============ selection ============ */
@@ -5767,13 +5838,16 @@ function togglePanel(which){
 function renderedFocusIdentity(){
   var active=document.activeElement;
   if(!active||active===document.body) return null;
-  if(active.id) return {id:active.id};
+  if(active.id) return {id:active.id,selectionStart:active.selectionStart,
+                         selectionEnd:active.selectionEnd,selectionDirection:active.selectionDirection};
   var attrs=["data-version","data-rail","data-tool","data-entry","data-ref",
-             "data-reftool","data-reffam","data-hit","data-action","data-pipe-action"];
+             "data-reftool","data-reffam","data-hit","data-action","data-pipe-action",
+             "data-pipe-field","data-line"];
   for(var i=0;i<attrs.length;i++){
     if(active.hasAttribute&&active.hasAttribute(attrs[i])){
       return {attr:attrs[i],value:active.getAttribute(attrs[i]),
-              index:active.getAttribute("data-pipe-index")};
+              index:active.getAttribute("data-pipe-index"),
+              favorite:active.getAttribute("data-favid")};
     }
   }
   return {fallback:true};
@@ -5787,10 +5861,17 @@ function restoreRenderedFocus(identity){
     for(i=0;i<nodes.length;i++){
       if(nodes[i].getAttribute(identity.attr)!==identity.value) continue;
       if(identity.index!==null&&identity.index!==nodes[i].getAttribute("data-pipe-index")) continue;
+      if(identity.favorite!==null&&identity.favorite!==nodes[i].getAttribute("data-favid")) continue;
       node=nodes[i]; break;
     }
   }
-  if(node&&node.focus){ node.focus(); return; }
+  if(node&&node.focus){
+    node.focus();
+    if(identity.selectionStart!==undefined&&identity.selectionStart!==null&&node.setSelectionRange){
+      node.setSelectionRange(identity.selectionStart,identity.selectionEnd,identity.selectionDirection||"none");
+    }
+    return;
+  }
   node=document.querySelector("#editor-card .tasktitle, #editor-card h2");
   if(node&&node.focus){
     if(!node.hasAttribute("tabindex")) node.setAttribute("tabindex","-1");
@@ -5880,7 +5961,7 @@ document.addEventListener("click",function(ev){
   var action=a.getAttribute("data-action");
   if(routeChromeAction(action)) return;
   if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
-  if(action==="ref-ack"){ STATE.refAck=!!a.checked; renderEditor(); return; }
+  if(action==="ref-ack"){ STATE.refAck=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="ref-copy"){ doRefCopy(false); return; }
   if(action==="ref-copy-comment"){ doRefCopy(true); return; }
   if(action==="ref-evidence"){ doRefEvidence(); return; }
@@ -5905,10 +5986,13 @@ document.addEventListener("click",function(ev){
    #gen-result for a generator and falls back to the ordinary full render for
    a static entry, which has no separate form to preserve. */
 function reRenderEditorAndInspector(){
+  var focusIdentity=renderedFocusIdentity();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
   if(entry && isGeneratorEntry(entry)){ renderGeneratorResult(); }
   else{ renderEditor(); }
   renderInspector();
+  renderStatusBar();
+  restoreRenderedFocus(focusIdentity);
 }
 
 /* Announce only the transition between incomplete and ready. The command
@@ -5937,6 +6021,9 @@ function announceGeneratorCompletion(){
    event for <select>/checkbox on older engines) route through the same
    handler; re-running it twice for one edit is idempotent. */
 function onFieldChange(ev){
+  /* Replacing a focused pipeline row can make its former node emit a late
+     change event. Detached controls no longer describe live state. */
+  if(ev.target&&!document.documentElement.contains(ev.target)) return;
   /* CR-T-31 first: a pipeline control is never a generator field, and routing
      it here keeps one input listener in this file rather than two. */
   var pf=ev.target&&ev.target.closest?ev.target.closest("[data-pipe-field]"):null;
@@ -5953,6 +6040,7 @@ function onFieldChange(ev){
   if(!f) return;
   var name=f.getAttribute("data-field");
   var val=(f.type==="checkbox"&&!f.checked)?"":f.value;
+  STATE.acked=false;                            /* review applies to exact bytes */
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
   /* When a stage is being edited, STATE.formValues IS that stage's values
      object, so the line above has already changed the pipeline: bump the
@@ -6076,8 +6164,7 @@ document.addEventListener("keydown",function(ev){
   }
   if((key==="Enter"||key===" ") && ev.target.closest && ev.target.closest("[data-line]")){
     STATE.line=parseInt(ev.target.closest("[data-line]").getAttribute("data-line"),10);
-    renderEditor();
-    renderInspector();
+    reRenderEditorAndInspector();
     ev.preventDefault();
     return;
   }

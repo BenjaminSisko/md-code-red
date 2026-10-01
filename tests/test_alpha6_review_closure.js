@@ -32,8 +32,14 @@ const remoteSystem=assemble('scp-secure-copy',{source:'/etc/app/config.yml',dest
 check(remoteSystem&&remoteSystem.blast==='red','remote protected destination was not raised to red');
 const remoteRoot=assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/'});
 check(remoteRoot&&remoteRoot.blast==='red','remote filesystem root was not raised to red');
+const remoteDirectory=assemble('scp-secure-copy',{source:'/tmp/.bashrc',destination:'root@host:/root/'});
+check(remoteDirectory&&remoteDirectory.blast==='red','remote directory destination did not receive the strongest possible rating');
+check(assemble('scp-secure-copy',{source:'/tmp/key',destination:'root@host:/srv/app/.ssh/authorized_keys'})?.blast==='red',
+      'SSH trust path outside conventional home roots was not red');
 check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/etc/cron.d/job'})===null,
       'remote execution sink was not refused');
+check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/lib/systemd/system/x.service'})===null,
+      'usrmerge /lib execution-sink alias was not refused');
 
 // A pipeline write is never read-only. Ordinary files are yellow, sensitive
 // login/startup files are red, and delayed-execution sinks are refused.
@@ -47,7 +53,13 @@ check(pipelineScratch&&pipelineScratch.blast==='yellow','pipeline file write was
 const pipelineStartup=redirected('/root/.bashrc');
 check(pipelineStartup&&pipelineStartup.blast==='red','pipeline shell-startup write was not red');
 check(redirected('/root/.ssh/authorized_keys')?.blast==='red','pipeline SSH trust write was not red');
+check(redirected('/srv/app/.ssh/authorized_keys')?.blast==='red','pipeline SSH trust write outside /home was not red');
+check(redirected('/home/alice/.bash_logout')?.blast==='red','pipeline logout startup file was not red');
+check(redirected('/lib64/libc.so.6')?.blast==='red','usrmerge /lib64 alias was not red');
+check(redirected('/lib/systemd/system/x.service')===null,'usrmerge /lib execution sink was not refused');
 check(redirected('/etc/cron.d/job')===null,'pipeline execution sink was not refused');
+check(pipelineStartup&&pipelineStartup.blast_reasons.some(r=>r.id==='WRITE-TARGET'&&r.why.includes('/root/.bashrc')),
+      'pipeline red banner reason omitted the write target');
 const attributedFlags=mod.assemblePipeline([
   {spec:by['gen-journalctl-unit-logs'],values:journalValues},
   {op:'pipe',spec:by['gen-systemctl-manage'],values:{action:'start',unit:'sshd.service'}}
@@ -65,6 +77,8 @@ for(const id of ['curl-transfer-url','wget-download-url']){
   check(scratch&&scratch.blast==='yellow',id+' did not rate a scratch write yellow');
   const system=assemble(id,{output:'/etc/hosts',url:'https://example.test/file'});
   check(system&&system.blast==='red',id+' did not raise a protected path write to red');
+  check(system&&system.blast_reasons.some(r=>r.id==='WRITE-TARGET'&&r.why.includes('/etc/hosts')),
+        id+' lost the write-target reason after clipboard payload scanning');
 }
 
 check(assemble('kill-send-signal',{pid:'0'})===null,'kill accepted PID 0');

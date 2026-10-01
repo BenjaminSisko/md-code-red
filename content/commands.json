@@ -5612,7 +5612,7 @@
    "category": "network",
    "intent": "Fetch or post to a URL from the command line -- HTTP status, headers, and body, or a file download",
    "verify": "The expected HTTP status is returned and, for a download, the output file's size/checksum matches what was expected.",
-   "undo": "For a plain fetch, nothing to undo -- read-only against the remote. A downloaded file can simply be deleted; curl itself makes no change on the local host beyond the file it was told to write.",
+   "undo": "If <output>.mdcr-before-download exists, restore it to <output>. Otherwise remove <output> only after confirming it did not exist before the run.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5668,7 +5668,7 @@
    "category": "network",
    "intent": "Download a file (or mirror a small site) from a URL, with built-in retry and resume that curl leaves to the caller",
    "verify": "The downloaded file's size/checksum matches what was expected.",
-   "undo": "Delete the downloaded file -- wget makes no other change on the local host.",
+   "undo": "If <output>.mdcr-before-download exists, restore it to <output>. Otherwise remove <output> only after confirming it did not exist before the run.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5779,7 +5779,7 @@
    "id": "scp-secure-copy",
    "tool": "scp",
    "category": "network",
-   "intent": "Copy a file to or from a remote host over the same encrypted channel ssh uses",
+   "intent": "Copy a local file to a remote host over the same encrypted channel ssh uses",
    "verify": "The file exists at the destination with the expected size/checksum.",
    "undo": "Delete the copy at the destination (or restore the destination's own prior version from a backup, if it was overwritten and something was already there).",
    "blast": "yellow",
@@ -5843,7 +5843,7 @@
    "category": "network",
    "intent": "Synchronize a local file tree to a remote host over ssh, transferring only what changed",
    "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
-   "undo": "Without --delete, rsync only adds/updates files, so undo is the same as cp: remove or restore the files it wrote. With --delete, anything it removed at the destination is gone the same way rm's targets are, unless backed up first -- treat --delete with the same caution as rm -rf.",
+   "undo": "Restore overwritten destination files from the backups kept before the run. Remove newly created destination files only after confirming they did not exist before the run.",
    "blast": "yellow",
    "stig": [],
    "source": {

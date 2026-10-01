@@ -113,6 +113,9 @@ class ResponsiveControlsTests(unittest.TestCase):
         self.assertGreaterEqual(contrast("#a16207", "#ffffff"), 3.0)
         self.assertGreaterEqual(contrast("#fbbf24", "#18181b"), 3.0)
         self.assertGreaterEqual(contrast("#047857", "#ffffff"), 4.5)
+        self.assertGreaterEqual(contrast("#18181b", "#f59e0b"), 4.5)
+        self.assertGreaterEqual(contrast("#b91c1c", "#f4ebed"), 4.5)
+        self.assertGreaterEqual(contrast("#92400e", "#f8eee6"), 4.5)
         self.assertIn(
             'id=\\"gen-announcement\\" class=\\"sr-only\\" '
             'aria-live=\\"polite\\" aria-atomic=\\"true\\"',
@@ -134,6 +137,32 @@ class ResponsiveControlsTests(unittest.TestCase):
         body = handler.group("body")
         self.assertIn("renderInspector();", body)
         self.assertIn("renderStatusBar();", body)
+        self.assertIn("STATE.acked=false", body)
+        self.assertIn("function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; }", self.source)
+
+    def test_partial_renders_preserve_focus_and_pipeline_status(self):
+        pipeline = re.search(
+            r"function pipelineSetField\([^)]*\)\{(?P<body>[\s\S]*?)\n\}", self.source
+        )
+        self.assertIsNotNone(pipeline)
+        body = pipeline.group("body")
+        self.assertIn("renderedFocusIdentity();", body)
+        self.assertIn("renderStatusBar();", body)
+        self.assertIn("restoreRenderedFocus(focusIdentity);", body)
+        partial = re.search(
+            r"function reRenderEditorAndInspector\(\)\{(?P<body>[\s\S]*?)\n\}", self.source
+        )
+        self.assertIsNotNone(partial)
+        self.assertIn("restoreRenderedFocus(focusIdentity);", partial.group("body"))
+        self.assertIn('"data-pipe-field","data-line"', self.source)
+        self.assertIn("!document.documentElement.contains(ev.target)", self.source)
+
+    def test_first_generator_completion_has_an_initialized_live_state(self):
+        editor = re.search(
+            r"function renderGeneratorEditor\(entry\)\{(?P<body>[\s\S]*?)\n\}", self.source
+        )
+        self.assertIsNotNone(editor)
+        self.assertIn("STATE.announcementComplete=!!assembleCommand", editor.group("body"))
 
 
 if __name__ == "__main__":

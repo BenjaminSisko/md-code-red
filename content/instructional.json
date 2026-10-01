@@ -1716,8 +1716,8 @@
    },
    "preflight": [
     {
-     "command": "test ! -e <output>",
-     "text": "Check whether the chosen output path already exists before downloading."
+     "command": "if [ -e <output> ]; then test ! -e <output>.mdcr-before-download && cp -a -- <output> <output>.mdcr-before-download; fi",
+     "text": "If the output path exists, preserve it at <output>.mdcr-before-download before downloading."
     }
    ],
    "prerequisites": [
@@ -1747,8 +1747,8 @@
    },
    "preflight": [
     {
-     "command": "test ! -e <output>",
-     "text": "Check whether the chosen output path already exists before downloading."
+     "command": "if [ -e <output> ]; then test ! -e <output>.mdcr-before-download && cp -a -- <output> <output>.mdcr-before-download; fi",
+     "text": "If the output path exists, preserve it at <output>.mdcr-before-download before downloading."
     }
    ],
    "prerequisites": [

@@ -121,6 +121,18 @@ class InstructionalSchemaTests(unittest.TestCase):
         kill=by_id['kill-send-signal']
         self.assertIn('SIGTERM',kill['verify'])
         self.assertNotIn('SIGHUP',kill['verify'])
+        for eid in ('curl-transfer-url','wget-download-url'):
+            download=by_id[eid]
+            self.assertIn('<output>.mdcr-before-download',download['undo'])
+            self.assertIn('restore',download['undo'].lower())
+            self.assertNotIn('simply be deleted',download['undo'].lower())
+            preflight='\n'.join((item.get('command') or '') for item in self.data['entries'][eid]['preflight'])
+            self.assertIn('cp -a -- <output> <output>.mdcr-before-download',preflight)
+        self.assertEqual(
+            by_id['scp-secure-copy']['intent'],
+            'Copy a local file to a remote host over the same encrypted channel ssh uses',
+        )
+        self.assertNotIn('--delete',by_id['rsync-sync-files']['undo'])
 
 
 if __name__=='__main__':
