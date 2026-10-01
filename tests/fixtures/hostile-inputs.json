@@ -1,7 +1,7 @@
 {
  "_meta": {
   "purpose": "Adversarial values per field type for the command assembler, threat-model-v1 \u00a712 item 1 and CI merge-gate #4 (\u00a711). tests/hostile_harness.js runs every vector against every field type, in both --flag=VALUE and positional-argument shapes, on all four RHEL versions, plus the composed firewalld rich-rule path.",
-  "contract": "Every (field type, vector) pair has a REQUIRED outcome, and producing the other one fails the gate. For every field type except 'comment' the required outcome is REJECTED \u2014 those types are closed grammars and no vector here is a legal value of any of them, so an accepted-but-safely-quoted result means an allow-list stopped enforcing its grammar even though the shell quoting still held. For 'comment', the single free-text type, each vector's own free_text key says which outcome is required. REJECTED means assembleCommand() returned null and the UI can copy nothing. QUOTED-SAFE means the value survives only inside a single-quoted shQuote() token, nothing the shell would still interpret carries any of it, and the command's shell-visible shape is byte-identical to the same command built from that field type's benign value.",
+  "contract": "Every (field type, vector) pair has a REQUIRED outcome. Closed field types reject every vector except IDs explicitly listed in that field type's quoted_safe_vectors; those entries are valid grammar values that must remain inside one shell-quoted token. The comment type follows each vector's free_text outcome. REJECTED means assembleCommand() returned null and the UI can copy nothing. QUOTED-SAFE means the value survives only inside a single-quoted shQuote() token, nothing the shell would still interpret carries any of it, and the command's shell-visible shape is byte-identical to the same command built from that field type's benign value.",
   "execution_note": "The harness never runs /bin/sh against a vector. Proving the quoting by executing it would mean executing attacker-controlled text in CI on exactly the one build where the quoting is broken, which is the failure this gate exists to catch. It tokenises the assembled command under POSIX single-quote rules instead.",
   "owner": "Milo Vance, Toolkit Systems Engineer (CR-T-16)",
   "review": "Marcus Reed review required before merge \u2014 CRITICAL gate, plan section (f).",
@@ -83,6 +83,33 @@
   "group_list": {
    "benign": "wheel"
   },
+  "git_repository": {
+   "benign": "ssh://git@git.example.test/team/project.git"
+  },
+  "connection_name": {
+   "benign": "Wired connection 1",
+   "quoted_safe_vectors": [
+    "space"
+   ]
+  },
+  "lvm_name": {
+   "benign": "vg_data"
+  },
+  "container_name": {
+   "benign": "web-01"
+  },
+  "directory_name": {
+   "benign": "project-clone"
+  },
+  "unit_description": {
+   "benign": "OpenSSH server daemon",
+   "quoted_safe_vectors": [
+    "space"
+   ]
+  },
+  "chrony_directive": {
+   "benign": "server time.example.test iburst"
+  },
   "enum": {
    "benign": "alpha",
    "options": [
@@ -104,6 +131,21 @@
   },
   "cron_hour": {
    "benign": "2"
+  },
+  "remote_path": {
+   "benign": "alice@host01.lab.internal:/tmp/file"
+  },
+  "http_url": {
+   "benign": "https://server.example.test/file?mode=full"
+  },
+  "git_path": {
+   "benign": "src/config/app.yml"
+  },
+  "shell_variable": {
+   "benign": "EDITOR"
+  },
+  "pid": {
+   "benign": "4242"
   }
  },
  "vectors": [

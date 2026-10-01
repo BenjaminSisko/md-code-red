@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MD CODE RED — UX Redesign Concept</title>
+<style>
+:root{
+  --ink:#16191d;--ink-2:#282d33;--paper:#f0ede5;--sheet:#fffdf8;--line:#c8c2b6;
+  --muted:#69675f;--red:#b6261d;--red-soft:#f7e2dd;--amber:#c87908;--amber-soft:#fff1cf;
+  --green:#087451;--green-soft:#dcefe7;--blue:#2f5f88;--blue-soft:#e1edf6;
+  --mono:"Liberation Mono",Consolas,monospace;--ui:"Trebuchet MS","Liberation Sans",sans-serif;
+  --display:"DejaVu Serif","Liberation Serif",Georgia,serif;
+}
+*{box-sizing:border-box}html{background:var(--ink)}body{margin:0;color:var(--ink);font-family:var(--ui);background:
+  linear-gradient(90deg,rgba(0,0,0,.025) 1px,transparent 1px),
+  linear-gradient(rgba(0,0,0,.025) 1px,transparent 1px),var(--paper);background-size:24px 24px}
+button,input,select{font:inherit}button{cursor:pointer}.boardbar{position:sticky;top:0;z-index:20;display:flex;
+  align-items:center;justify-content:space-between;padding:12px 22px;background:var(--ink);color:#fff;border-bottom:4px solid var(--red)}
+.boardbar strong{font-family:var(--display);font-size:20px}.boardbar span{color:#ddd;font-family:var(--mono);font-size:11px}
+.boardnav{display:flex;gap:8px}.boardnav button{border:1px solid #555;background:#252a30;color:#fff;border-radius:3px;padding:7px 10px}
+.boardnav button[aria-pressed=true]{background:var(--red);border-color:var(--red)}
+.intro{max-width:1180px;margin:34px auto 24px;padding:0 24px}.eyebrow{font:700 11px/1.2 var(--mono);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--red)}h1,h2,h3{font-family:var(--display)}h1{font-size:46px;line-height:1.02;margin:9px 0 12px;max-width:880px}
+.lede{font-size:18px;line-height:1.6;max-width:920px;color:#42423e}.principles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px}
+.principle{background:var(--sheet);border:1px solid var(--line);border-top:4px solid var(--red);padding:16px;min-height:118px}
+.principle b{display:block;margin-bottom:8px}.principle p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.section{display:none;max-width:1480px;margin:0 auto;padding:20px 24px 60px}.section.active{display:block}
+.sectionhead{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:18px 0}.sectionhead h2{font-size:30px;margin:0}.sectionhead p{max-width:690px;margin:0;color:var(--muted)}
+.wiregrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,.72fr);gap:22px;align-items:start}
+.frame{border:2px solid #3c4045;background:#fafafa;box-shadow:7px 7px 0 rgba(0,0,0,.12)}.framecap{display:flex;justify-content:space-between;
+  padding:8px 11px;border-bottom:1px solid #777;font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.wf-desktop{height:720px;display:grid;grid-template-columns:190px 1fr 300px;grid-template-rows:74px 1fr 46px;grid-template-areas:
+  "head head head" "nav main aside" "foot foot foot";background:#fff;gap:0}.wfbox{border:1px solid #999;background:#fff;padding:10px}
+.wf-head{grid-area:head;display:grid;grid-template-columns:190px 1fr 270px;gap:8px}.wf-nav{grid-area:nav}.wf-main{grid-area:main;background:#f3f3f3}
+.wf-aside{grid-area:aside}.wf-foot{grid-area:foot}.ghost{height:12px;background:#d8d8d8;margin:7px 0;border-radius:2px}.ghost.dark{background:#777}
+.ghost.short{width:55%}.ghost.tiny{width:31%}.ghost.tall{height:38px}.wftitle{font:700 11px var(--mono);text-transform:uppercase;margin-bottom:12px}
+.wfstep{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}.wfstep span{border:1px solid #888;padding:8px;text-align:center;font:10px var(--mono)}
+.wfstep span:first-child{background:#222;color:#fff}.wfcard{border:1px solid #777;padding:12px;margin-bottom:12px;background:#fff}.wfcommand{border:2px solid #222;padding:14px;margin:14px 0;background:#eee}
+.wf-mobile{width:390px;max-width:100%;margin:auto;min-height:780px;background:#fff}.wf-mobile .mobilebar{height:56px;border-bottom:2px solid #333;padding:10px}
+.wf-mobile .mobilebody{padding:12px}.wf-mobile .wfstep{position:sticky;top:0;background:#fff}.wire-note{font-size:12px;color:#555;line-height:1.5;padding:10px 12px;border-left:3px solid #444;background:#eee;margin:10px 0}
+.app{border:1px solid #575b60;background:var(--sheet);box-shadow:0 24px 70px rgba(0,0,0,.24);min-height:840px;display:grid;
+  grid-template-columns:218px minmax(0,1fr);grid-template-rows:76px 1fr;grid-template-areas:"brand top" "nav workspace";overflow:hidden}
+.brand{grid-area:brand;background:var(--ink);color:#fff;padding:15px 18px;border-left:8px solid var(--red)}.brand strong{font:700 19px/1 var(--display);display:block}
+.brand strong em{font-style:normal;color:#ff7165}.brand small{font:10px var(--mono);letter-spacing:.12em;color:#aeb3b8;text-transform:uppercase}
+.top{grid-area:top;display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--line);background:#fff}
+.search{flex:1;display:flex;align-items:center;gap:10px;background:#f4f3ef;border:1px solid #9d9a92;border-radius:5px;padding:10px 13px;color:#555}
+.search kbd{margin-left:auto;font:10px var(--mono);border:1px solid #bbb;background:#fff;padding:2px 5px}.offline{font:700 10px var(--mono);color:var(--green);text-transform:uppercase}
+.version{border:1px solid var(--line);padding:8px 9px;background:#fff}.nav{grid-area:nav;background:var(--ink-2);color:#dfe2e5;padding:16px 10px;display:flex;flex-direction:column}
+.nav .navlabel{font:700 9px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:#92989f;margin:12px 9px 7px}
+.nav button{border:0;border-left:3px solid transparent;background:transparent;color:#e7e8e9;padding:10px 10px;text-align:left;border-radius:2px;margin:1px 0}
+.nav button.active{background:#373d44;border-left-color:#ff5b50;color:#fff}.nav button span{display:block;font-size:11px;color:#9da4aa;margin-top:2px}
+.nav .saved{margin-top:auto;border-top:1px solid #424850;padding-top:10px}.workspace{grid-area:workspace;background:#f4f1e9;padding:22px;overflow:auto}
+.crumb{font:10px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}.taskhead{display:flex;align-items:start;justify-content:space-between;gap:20px;margin:10px 0 18px}
+.taskhead h2{font-size:28px;margin:0 0 5px}.taskhead p{margin:0;color:var(--muted)}.riskchip{white-space:nowrap;border:1px solid var(--green);color:var(--green);background:var(--green-soft);padding:6px 9px;font:700 11px var(--mono)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);background:#fff;margin-bottom:18px}.step{padding:11px 14px;border-right:1px solid var(--line);display:flex;gap:9px;align-items:center;color:#777}
+.step:last-child{border:0}.step b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #aaa;font:11px var(--mono)}.step.active{color:var(--ink);background:#fff8e8;box-shadow:inset 0 -3px var(--amber)}
+.step.active b{background:var(--amber);border-color:var(--amber);color:#fff}.workgrid{display:grid;grid-template-columns:minmax(380px,1.15fr) minmax(360px,.85fr);gap:18px;align-items:start}
+.panel{background:var(--sheet);border:1px solid var(--line)}.panelhead{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--line)}
+.panelhead h3{font-family:var(--ui);font-size:14px;margin:0}.panelhead span{font-size:11px;color:var(--muted)}.formbody{padding:16px}.fieldrow{margin-bottom:15px}
+.fieldrow label{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px}.fieldrow label span{font-weight:400;color:var(--muted)}
+.fieldrow input,.fieldrow select{width:100%;padding:10px;border:1px solid #aaa;background:#fff}.fieldhint{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--muted)}
+.disclose{border-top:1px solid var(--line);padding:12px 16px;font-weight:700;font-size:13px}.preview{position:sticky;top:0}.command{background:#171a1e;color:#eef1f2;padding:16px;border-left:5px solid var(--green);font:13px/1.65 var(--mono);white-space:pre-wrap}
+.command .flag{color:#ffcc67}.command .value{color:#8fd9bb}.commandactions{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.primary,.secondary{border-radius:3px;padding:9px 12px;font-weight:700}.primary{background:var(--red);border:1px solid var(--red);color:#fff}.secondary{background:#fff;border:1px solid #888;color:var(--ink)}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}.fact{background:var(--sheet);padding:11px}.fact small{display:block;color:var(--muted);font-size:10px}.fact b{font-size:12px}
+.tabs{display:flex;border-bottom:1px solid var(--line)}.tabs button{flex:1;border:0;background:#f6f4ee;padding:10px;border-bottom:3px solid transparent;font-weight:700;font-size:12px}.tabs button.active{background:#fff;border-bottom-color:var(--amber)}
+.explain{padding:13px 15px}.explain p{font-size:12px;line-height:1.5;margin:7px 0}.explain code{font-family:var(--mono);color:var(--blue)}.callout{background:var(--blue-soft);border-left:3px solid var(--blue);padding:9px 10px;font-size:12px}
+.mobilemock{width:390px;max-width:100%;min-height:844px;margin:0 auto;background:#f4f1e9;border:8px solid #202328;border-radius:28px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.25)}
+.m-top{background:var(--ink);color:#fff;padding:15px;border-bottom:4px solid var(--red)}.m-top strong{font-family:var(--display)}.m-search{margin:12px;background:#fff;border:1px solid #999;padding:10px;color:#666}
+.m-content{padding:0 12px 18px}.m-content h3{font-size:19px;margin:14px 0 3px}.m-steps{display:flex;gap:4px;margin:12px 0}.m-steps span{flex:1;padding:7px 4px;text-align:center;font:9px var(--mono);background:#ddd}.m-steps span:first-child{background:var(--amber);color:#fff}
+.m-command{background:#171a1e;color:#fff;padding:12px;border-left:4px solid var(--green);font:11px/1.5 var(--mono);margin-bottom:10px}.m-card{background:#fff;border:1px solid var(--line);padding:12px;margin:9px 0}.m-card label{font-weight:700;font-size:12px}.m-card input{width:100%;margin-top:5px;padding:9px;border:1px solid #aaa}
+.m-actions{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:9px 12px;display:flex;gap:7px}.m-actions button{flex:1}
+.comparetable{width:100%;border-collapse:collapse;background:var(--sheet);font-size:13px}.comparetable th,.comparetable td{border:1px solid var(--line);padding:11px 12px;text-align:left;vertical-align:top}.comparetable th{background:var(--ink);color:#fff}.comparetable td:first-child{font-weight:700}
+.tag{display:inline-block;padding:2px 6px;font:700 10px var(--mono);text-transform:uppercase;border:1px solid var(--line)}.tag.keep{color:var(--green);border-color:var(--green)}.tag.change{color:var(--red);border-color:var(--red)}
+.capture .intro{display:none}.capture .section{padding-top:8px}.capture .sectionhead{margin-top:8px}
+@media(max-width:900px){.principles{grid-template-columns:1fr 1fr}.wiregrid,.workgrid{grid-template-columns:1fr}.app{grid-template-columns:1fr;grid-template-rows:auto auto auto;grid-template-areas:"brand" "top" "workspace"}.nav{display:none}.preview{position:static}}
+@media(max-width:560px){h1{font-size:34px}.principles{grid-template-columns:1fr}.boardbar{align-items:flex-start;gap:8px}.boardbar span{display:none}.boardnav{flex-wrap:wrap}.section,.intro{padding-left:12px;padding-right:12px}.top{flex-wrap:wrap}.workgrid{display:block}.steps{grid-template-columns:1fr}.step{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header class="boardbar"><div><strong>MD CODE RED / UX REVAMP</strong><br><span>Design concept · 30 September 2026 · not production code</span></div>
+<nav class="boardnav" aria-label="Concept sections"><button data-show="compare" aria-pressed="true">Benchmark</button><button data-show="wireframes" aria-pressed="false">Wireframes</button><button data-show="desktop" aria-pressed="false">Desktop mockup</button><button data-show="mobile" aria-pressed="false">Mobile mockup</button></nav></header>
+<div class="intro"><div class="eyebrow">Concept direction · Operational field manual</div><h1>Make the command the hero. Reveal the evidence when it earns attention.</h1>
+<p class="lede">MD CODE RED already has more authority, safety, and RHEL-specific context than lightweight command generators. The redesign turns that depth into a staged workflow: find the task in plain language, configure only what matters, review the exact command and risk, then open verification and compliance details on demand.</p>
+<div class="principles"><div class="principle"><b>Task first</b><p>Search by goal or browse Diagnose, Change, Automate, Comply, and Learn. Tool names remain a secondary path.</p></div><div class="principle"><b>One decision at a time</b><p>Use Build → Review → Verify. Hide advanced fields and long teaching text until requested.</p></div><div class="principle"><b>Command always visible</b><p>Keep a sticky, readable preview beside the form on desktop and above the form on mobile.</p></div><div class="principle"><b>Trust stays explicit</b><p>RHEL version, blast level, verification state, source, and recovery remain visible without flooding the main task.</p></div></div></div>
+
+<main>
+<section id="compare" class="section active"><div class="sectionhead"><div><div class="eyebrow">Observed product patterns</div><h2>Competitive benchmark</h2></div><p>The goal is selective adaptation. Fast generators win on focus and first-use clarity; MD CODE RED wins on deterministic output, release awareness, evidence, and operational recovery.</p></div>
+<table class="comparetable"><thead><tr><th>Dimension</th><th>Cmd Generator</th><th>MarkdownMe</th><th>MD CODE RED today</th><th>Revamp response</th></tr></thead><tbody>
+<tr><td>Starting point</td><td>Search or choose one of 105 command names.</td><td>One plain-English prompt plus examples.</td><td>Choose activity, RHEL version, tool, then command entry.</td><td><span class="tag change">Change</span> One global task search, with browse-by-job and browse-by-tool.</td></tr>
+<tr><td>Command prominence</td><td>Command is immediately under the title and updates live.</td><td>Generated command is the central result.</td><td>Command appears after instructional field blocks and can fall below the fold.</td><td><span class="tag change">Change</span> Sticky preview; on mobile, command precedes editable fields.</td></tr>
+<tr><td>Complexity</td><td>Basic and Advanced tabs; fields stay terse.</td><td>Natural language absorbs complexity.</td><td>Meaning, example, discovery, and consequence repeat under every field.</td><td><span class="tag change">Change</span> Concise labels and hints; teaching moves into optional “Learn this field.”</td></tr>
+<tr><td>Trust</td><td>No RHEL release or provenance; limited safety context.</td><td>AI-generated, server-sent, daily-capped; summary and cautions.</td><td>Deterministic, offline, release-gated, cited, rated, verified, recoverable.</td><td><span class="tag keep">Keep</span> Surface four trust facts; move full proof into Review and Verify.</td></tr>
+<tr><td>Same journal task</td><td><code>journalctl --no-pager -u sshd.service -p err --since today</code></td><td><code>journalctl -u sshd.service -p err --since today --no-pager</code> plus summary and flag breakdown.</td><td><code>journalctl --no-pager --unit='sshd.service' --priority='err' --since='today'</code> plus validation, version, blast, source, verify, recovery, evidence.</td><td>Keep MD CODE RED’s output and proof, match competitors’ visual focus and speed.</td></tr>
+</tbody></table></section>
+
+<section id="wireframes" class="section"><div class="sectionhead"><div><div class="eyebrow">Low-fidelity structure</div><h2>Wireframes</h2></div><p>The desktop layout uses task navigation, a configuration workspace, and a sticky command/review panel. Mobile follows the same information order without horizontal panes.</p></div>
+<div class="wiregrid"><div class="frame"><div class="framecap"><span>Desktop · 1440 × 900</span><span>Task / Configure / Review</span></div><div class="wf-desktop">
+<div class="wfbox wf-head"><div><div class="ghost dark short"></div><div class="ghost tiny"></div></div><div><div class="ghost tall"></div></div><div><div class="ghost tall"></div></div></div>
+<div class="wfbox wf-nav"><div class="wftitle">Task navigation</div><div class="ghost dark"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost dark"></div><div class="ghost"></div><div class="ghost"></div><br><div class="ghost"></div><div class="ghost"></div></div>
+<div class="wfbox wf-main"><div class="ghost tiny"></div><div class="ghost dark short"></div><div class="wfstep"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div><div class="wfcard"><div class="wftitle">Essential fields</div><div class="ghost short"></div><div class="ghost tall"></div><div class="ghost short"></div><div class="ghost tall"></div></div><div class="wfcard"><div class="wftitle">Advanced options (collapsed)</div></div><div class="wire-note">Field teaching and discovery commands open per field instead of appearing permanently.</div></div>
+<div class="wfbox wf-aside"><div class="wftitle">Sticky command preview</div><div class="wfcommand"><div class="ghost dark"></div><div class="ghost dark short"></div></div><div class="ghost short"></div><div class="ghost"></div><div class="wfcard"><div class="wftitle">Risk · verification · source</div><div class="ghost"></div><div class="ghost"></div><div class="ghost short"></div></div><div class="wfcard"><div class="wftitle">Explain / Safety / Compliance tabs</div><div class="ghost"></div><div class="ghost"></div></div></div>
+<div class="wfbox wf-foot"><div class="ghost dark tiny"></div></div></div></div>
+<div><div class="frame"><div class="framecap"><span>Mobile · 390 × 844</span><span>Single reading order</span></div><div class="wf-mobile"><div class="mobilebar"><div class="ghost dark short"></div><div class="ghost tiny"></div></div><div class="mobilebody"><div class="ghost tall"></div><div class="ghost dark short"></div><div class="wfstep"><span>Build</span><span>Review</span><span>Verify</span></div><div class="wfcommand"><div class="ghost dark"></div><div class="ghost dark short"></div></div><div class="wfcard"><div class="wftitle">Essential fields</div><div class="ghost"></div><div class="ghost tall"></div><div class="ghost"></div><div class="ghost tall"></div></div><div class="wfcard"><div class="wftitle">Advanced options</div></div></div></div></div><div class="wire-note">The command moves above the form on small screens. Task navigation becomes a sheet opened from the header.</div></div></div></section>
+
+<section id="desktop" class="section"><div class="sectionhead"><div><div class="eyebrow">High-fidelity direction</div><h2>Desktop command-builder mockup</h2></div><p>Example task: inspect SSH errors on RHEL 9. The command and four trust facts remain visible while configuration details stay spacious.</p></div>
+<div class="app"><div class="brand"><strong>MD <em>CODE RED</em></strong><small>RHEL field console</small></div><div class="top"><div class="search">⌕ <b>What do you need to do?</b><span>Try “show SSH errors since today”</span><kbd>Ctrl K</kbd></div><select class="version" aria-label="RHEL version"><option>RHEL 9</option><option>RHEL 8</option><option>RHEL 10</option><option>RHEL 7</option></select><span class="offline">● Offline</span></div>
+<aside class="nav"><div class="navlabel">Work by outcome</div><button class="active">Diagnose<span>Logs, services, storage, network</span></button><button>Change<span>Users, packages, firewall, system</span></button><button>Automate<span>Ansible and Git workflows</span></button><button>Comply<span>STIG checks and evidence</span></button><button>Learn<span>Guided paths and references</span></button><div class="navlabel">Current area</div><button class="active">System logs<span>journalctl · rsyslog</span></button><button>Services<span>systemctl</span></button><button>Networking<span>nmcli · firewall-cmd</span></button><div class="saved"><button>★ Saved commands<span>4 favorites · 7 recent</span></button></div></aside>
+<section class="workspace"><div class="crumb">Diagnose / System logs / journalctl</div><div class="taskhead"><div><h2>Show service errors in the system journal</h2><p>Build a version-correct journal query without memorizing flags.</p></div><span class="riskchip">READ ONLY · GREEN</span></div>
+<div class="steps"><div class="step active"><b>1</b><span><strong>Configure</strong><br><small>Choose scope and filters</small></span></div><div class="step"><b>2</b><span><strong>Review</strong><br><small>Risk, source, and recovery</small></span></div><div class="step"><b>3</b><span><strong>Verify</strong><br><small>Expected result and evidence</small></span></div></div>
+<div class="workgrid"><div class="panel"><div class="panelhead"><h3>Essential fields</h3><span>0 required · 3 selected</span></div><div class="formbody"><div class="fieldrow"><label for="mock-unit">Service unit <span>Optional</span></label><input id="mock-unit" value="sshd.service"><div class="fieldhint"><span>Filter the journal to one systemd unit.</span><a>Learn this field</a></div></div><div class="fieldrow"><label for="mock-priority">Minimum priority <span>Optional</span></label><select id="mock-priority"><option>error (err)</option></select><div class="fieldhint"><span>Includes error, critical, alert, and emergency.</span><a>Why this matters</a></div></div><div class="fieldrow"><label for="mock-since">Starting time <span>Optional</span></label><input id="mock-since" value="today"><div class="fieldhint"><span>Examples: today, yesterday, or 2026-09-30 08:00.</span><a>Use a discovery command</a></div></div></div><div class="disclose">＋ Advanced output options <span style="float:right;color:#777">1 selected</span></div><div class="disclose">＋ Add this command to a pipeline</div></div>
+<aside class="panel preview"><div class="panelhead"><h3>Command preview</h3><span>Updates as you type</span></div><div class="command">journalctl <span class="flag">--no-pager</span> <span class="flag">--unit</span>=<span class="value">'sshd.service'</span> <span class="flag">--priority</span>=<span class="value">'err'</span> <span class="flag">--since</span>=<span class="value">'today'</span></div><div class="commandactions"><button class="primary">Copy command</button><button class="secondary">Copy with context</button><button class="secondary">★</button></div><div class="summary"><div class="fact"><small>RHEL release</small><b>9</b></div><div class="fact"><small>Host verification</small><b>Not verified</b></div><div class="fact"><small>Source</small><b>journalctl(1)</b></div></div><div class="tabs"><button class="active">Explain</button><button>Safety</button><button>Compliance</button></div><div class="explain"><p><code>--no-pager</code> prints directly to the terminal.</p><p><code>--unit</code> limits entries to <b>sshd.service</b>.</p><p><code>--priority</code> includes errors and more severe events.</p><p><code>--since</code> begins at the start of today.</p><div class="callout"><b>Expected result</b><br>Journal lines for the SSH daemon. No system state is changed.</div></div></aside></div></section></div></section>
+
+<section id="mobile" class="section"><div class="sectionhead"><div><div class="eyebrow">High-fidelity direction</div><h2>Mobile command-builder mockup</h2></div><p>Mobile prioritizes the generated command, then the form. Advanced proof is available through the same staged flow instead of stacking every desktop panel into one long page.</p></div>
+<div class="mobilemock"><div class="m-top"><strong>MD <span style="color:#ff7165">CODE RED</span></strong><span style="float:right;font:10px var(--mono);color:#8fd9bb">● OFFLINE · RHEL 9</span></div><div class="m-search">⌕ What do you need to do?</div><div class="m-content"><div class="crumb">Diagnose / System logs</div><h3>Show service errors</h3><small style="color:var(--muted)">journalctl · read only</small><div class="m-steps"><span>1 CONFIGURE</span><span>2 REVIEW</span><span>3 VERIFY</span></div><div class="m-command">journalctl --no-pager<br>--unit='sshd.service'<br>--priority='err' --since='today'</div><div class="m-card"><label>Service unit</label><input value="sshd.service"></div><div class="m-card"><label>Minimum priority</label><input value="error (err)"></div><div class="m-card"><label>Starting time</label><input value="today"></div><div class="m-card"><b>＋ Advanced output options</b></div><div class="m-card"><b>Why this command is safe</b><p style="font-size:11px;color:var(--muted)">Read only · changes no host state · source journalctl(1)</p></div></div><div class="m-actions"><button class="primary">Copy command</button><button class="secondary">Review</button></div></div></section>
+</main>
+<script>
+(function(){
+  function showSection(id,updateUrl){
+    var button=document.querySelector('[data-show="'+id+'"]');
+    var section=document.getElementById(id);
+    if(!button||!section)return;
+    document.querySelectorAll('.boardnav button').forEach(function(x){x.setAttribute('aria-pressed',x===button?'true':'false')});
+    document.querySelectorAll('.section').forEach(function(x){x.classList.toggle('active',x===section)});
+    if(updateUrl)history.replaceState(null,'','#'+id);
+  }
+  document.addEventListener('click',function(e){var b=e.target.closest('[data-show]');if(!b)return;showSection(b.dataset.show,true)});
+  window.addEventListener('hashchange',function(){showSection(location.hash.slice(1),false)});
+  var params=new URLSearchParams(location.search);
+  if(params.get('capture')==='1')document.documentElement.classList.add('capture');
+  showSection(params.get('view')||location.hash.slice(1)||'compare',false);
+})();
+</script>
+</body>
+</html>

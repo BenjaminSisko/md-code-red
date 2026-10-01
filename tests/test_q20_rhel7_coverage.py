@@ -39,10 +39,9 @@ RHEL7_TOOLS = ("chage", "journalctl", "systemctl", "useradd", "usermod", "yum")
 
 
 def _real_ctx():
-    artifact = qa.find_artifact()
-    if not artifact:
+    ctx = qa.build_ctx_if_current()
+    if not ctx:
         return None
-    ctx = qa.build_ctx()
     qa.load_sources(ctx)
     return ctx
 
@@ -70,7 +69,7 @@ class Q20EvaluatesRhel7Rows(unittest.TestCase):
 
     def test_rhel7_rows_are_in_q20s_evaluated_set(self):
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         f, d, _p = qa.gate_q20(self.ctx)
         evaluated = set()
         for line in d + f:
@@ -87,7 +86,7 @@ class Q20EvaluatesRhel7Rows(unittest.TestCase):
         """No baseline widening: the pre-recorded accepted_missing counts must
         still cover the real measurement, so Q20 reports zero failures."""
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         f, _d, _p = qa.gate_q20(self.ctx)
         self.assertEqual([], f, f)
 

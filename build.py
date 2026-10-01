@@ -28,7 +28,7 @@ REPO = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(REPO, "extract"))
 import schema  # noqa: E402
 APP_NAME = "MD CODE RED"
-APP_VERSION = "v1.0.0-alpha.5"
+APP_VERSION = "v1.0.0-alpha.6"
 # Pinned, not date.today(): a release commit fixes both the version and the
 # build date together so the artifact this commit produces is reproducible on
 # any machine, any day (readiness REL-2026-09-18-001, tag procedure step 2).
@@ -36,7 +36,7 @@ APP_VERSION = "v1.0.0-alpha.5"
 # useful answer; a tagged release needs "when was this released" instead, and
 # that value has to stop moving once it's committed. The next version bump
 # repins this alongside APP_VERSION.
-APP_BUILD_DATE = "2026-09-22"
+APP_BUILD_DATE = "2026-10-01"
 CLASSIFICATION = "UNCLASSIFIED"
 
 VERSIONS = schema.VERSIONS
@@ -379,7 +379,7 @@ def compute_default_version(data):
 
     The metric: count, per RHEL version, how many command entries carry a REAL
     verified receipt for that version (extract/schema.py's entry_has_any_receipt
-    shape — a dict of {by, on, host, capture}, never the bare `false` every
+    shape — a dict of {by, on, host, capture, command_as_run}, never the bare `false` every
     unreceipted version also holds). The version with the most receipts is the
     one host-verified content actually backs. Ties break toward the lower RHEL
     version number, for a result that is deterministic and easy to state out

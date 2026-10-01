@@ -10,11 +10,28 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 ## Version & Release Info
 
-**Current version:** v1.0.0-alpha.5 (release candidate, lab-only, unsigned)
+**Current version:** v1.0.0-alpha.6 (release candidate, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-22
+**Last built:** 2026-10-01
 
 ## Recent changes
+
+- **2026-09-30** -- **Guided storage inspection.** Adds an all-release `lsblk`
+  builder with curated capacity, filesystem, parent-topology, and LVM-oriented
+  column sets. Every preset keeps `NAME` first to preserve the device tree;
+  RHEL 7/8 use the compatible `MOUNTPOINT` column, while RHEL 9/10 also offer
+  `MOUNTPOINTS` for devices mounted in more than one place. The catalog now
+  contains 200 entries across 102 tools: 58 guided generators and 142 static
+  entries.
+
+- **2026-09-30** -- **Task-centered operations-console UX.** Adds Home with
+  common RHEL outcomes, working modes, learning starts, favorites, and recent
+  work; separates reviewed Build content from the mined Reference Library; and
+  presents guided tasks as Configure, Review, and Verify with a persistent
+  command/trust area. The responsive shell also adds global search, visible
+  navigator and inspector toggles, focus restoration, dialog containment, a
+  keyboard skip link, and single-column narrow-screen flow without horizontal
+  navigation scrolling. The released alpha.5 artifact remains archived unchanged.
 
 - **2026-09-22** -- **Administrator and instructor feedback release.** Corrects
   firewalld, NetworkManager, package, service, LVM, cron, and configuration
@@ -187,7 +204,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   (`capture-review-run1-2026-09-18.md` RILEY-F1): a single whole-entry `verified` flag could not
   be set `true` for any of Caleb Stone's CR-T-34 batch without overclaiming an RHEL version
   nobody captured. `content/commands.json`'s `verified` is now an object keyed `"7"`/`"8"`/
-  `"9"`/`"10"`, each `false` or a `{by, on, host, capture}` receipt; the old boolean is rejected
+  `"9"`/`"10"`, each `false` or a `{by, on, host, capture, command_as_run}` receipt; the old boolean is rejected
   by `extract/schema.py`, and a version whose row is `unavailable` or a `same_as` pointer can
   never carry a receipt of its own (it was never independently run — a `same_as` target's
   receipt does not propagate). `qa.py`'s Q16 gate now checks each receipt against its own

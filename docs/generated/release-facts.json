@@ -1,6 +1,6 @@
 {
-  "build_date": "2026-09-22",
-  "curated_entries": 199,
+  "build_date": "2026-10-01",
+  "curated_entries": 200,
   "default_rhel": "8",
   "flag_rows": {
     "10": 1054,
@@ -9,8 +9,8 @@
     "9": 964
   },
   "flag_rows_total": 3178,
-  "guided_generators": 43,
-  "static_entries": 156,
+  "guided_generators": 58,
+  "static_entries": 142,
   "tool_records": 102,
   "verified_receipts": {
     "10": 9,
@@ -18,5 +18,5 @@
     "8": 9,
     "9": 0
   },
-  "version": "v1.0.0-alpha.5"
+  "version": "v1.0.0-alpha.6"
 }

@@ -433,26 +433,28 @@ class TheCorpusMustCoverWhatShipped(unittest.TestCase):
                                   "coverage — a directory is not a corpus")
 
     def test_the_real_repo_is_covered(self):
-        self.assertEqual([], qa.raw_coverage_failures(qa.build_ctx()["data"], REPO)
-                         if qa.find_artifact() else [],
+        ctx = qa.build_ctx_if_current()
+        if not ctx:
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
+        self.assertEqual([], qa.raw_coverage_failures(ctx["data"], REPO),
                          "a flags dictionary ships populated with no raw sources staged for it")
 
 
 class TheWholeGate(unittest.TestCase):
 
     def test_q14_passes_on_the_shipped_bundle(self):
-        if not qa.find_artifact():
-            self.skipTest("no dist/ artifact — run python3 build.py first")
-        ctx = qa.build_ctx()
+        ctx = qa.build_ctx_if_current()
+        if not ctx:
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         failures, details = qa.gate_q14(ctx)
         self.assertEqual([], failures, "Q14 fails on the shipped bundle:\n  " + "\n  ".join(failures))
         self.assertTrue(details)
 
     def test_q14_fails_when_a_planted_sentence_is_in_the_shipped_bundle(self):
         """End to end, through the gate, not only through the pure function."""
-        if not qa.find_artifact():
-            self.skipTest("no dist/ artifact — run python3 build.py first")
-        ctx = qa.build_ctx()
+        ctx = qa.build_ctx_if_current()
+        if not ctx:
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         lifted = a_real_sentence()
         entries = ctx["data"]["commands"]["entries"]
         self.assertTrue(entries, "no entries to plant into")

@@ -30,10 +30,9 @@ import qa  # noqa: E402
 
 
 def _real_ctx():
-    artifact = qa.find_artifact()
-    if not artifact:
+    ctx = qa.build_ctx_if_current()
+    if not ctx:
         return None
-    ctx = qa.build_ctx()
     qa.load_sources(ctx)
     return ctx
 
@@ -89,7 +88,7 @@ class ContentFamilyLivenessIsChecked(unittest.TestCase):
         DATASETS key, and every one of them is either live or documented as
         joined elsewhere (EXPECTED)."""
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         failures = qa.content_family_liveness_failures(self.ctx["app_script"])
         self.assertEqual([], failures, failures)
         # And GLOSSARY must actually be gone from the family list, not merely

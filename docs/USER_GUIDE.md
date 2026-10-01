@@ -1,14 +1,14 @@
 ---
 type: user-guide
 status: current
-last_verified: 2026-09-22
+last_verified: 2026-10-01
 ---
 
 # MD CODE RED User Guide
 
 MD CODE RED is one HTML file. Double-click it (or open it from your browser's File
 menu) and it runs -- no install, no server, no network call of any kind. This guide
-describes what the development build (`dist/md-code-red_v1.0.0-alpha.5.html`, 199 curated
+describes what the release candidate (`dist/md-code-red_v1.0.0-alpha.6.html`, 200 curated
 command entries, 102 tools, and 14,439 mined reference commands) actually does,
 verified against the running artifact and the QA
 gates, not against the original product brief. Where the brief promised something
@@ -19,17 +19,19 @@ it worked.
 
 ### Journey 1: Generate a command with a guided form
 
-The catalog includes 43 **guided form generators** -- you fill in
+The catalog includes 58 **guided form generators** -- you fill in
 a small set of fields and watch the exact command assemble as you type. Walkthrough,
 using the real `journalctl` entry:
 
-1. Open the file. The **Command Builder** rail item is selected by default
-   (`Ctrl+Alt+1`), and RHEL 9 is the starting version.
-2. In the sidebar's **Tools** list, click **journalctl / systemd-journald**. Its one
+1. Open the file. The task-centered **Home** view is selected by default
+   (`Ctrl+Alt+1`), and the receipt-derived starting version is RHEL 8. Choose
+   **Read service logs** from the common tasks, or open **Build** (`Ctrl+Alt+2`).
+2. In Build's sidebar **Tools** list, click **journalctl / systemd-journald**. Its one
    catalogued command, "Read the systemd journal, filtered by unit, minimum priority
    and time window," appears underneath, tagged **guided form**.
-3. Click it. The editor splits into a **Fields** panel and the assembled-command
-   panel below it. All four fields on this entry (`unit`, `priority`, `since`,
+3. Click it. The workspace shows **Configure, Review, Verify**, with fields beside
+   a sticky command-and-trust panel on wide screens. On a narrow screen the command
+   review moves before the fields. All four fields on this entry (`unit`, `priority`, `since`,
    `thisboot`) are optional, so a command renders immediately with nothing typed:
    `journalctl --no-pager`, blast **green**.
 4. Type into the fields -- `unit: sshd.service`, choose `priority: err` from its
@@ -38,18 +40,27 @@ using the real `journalctl` entry:
    every keystroke, never the field inputs themselves, so you never lose your place
    mid-word:
    `journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot`
-5. The **Inspector** panel on the right lists every flag the command actually shows,
+5. The optional **Inspector** panel lists every flag the command actually shows.
+   It starts closed to give the command workspace more room; use **Inspector: Off**
+   in the status controls (or `Ctrl+I`) when you need it. The panel lists flags
    in order, each with its explanation or the honest `unverified -- see man page`
    line when no curated explanation exists yet (see Known Limitations -- for this
    build, that is every flag on every generator entry).
-6. Click **Copy** to put the plain command on the clipboard, or **Copy with
+6. Click **Copy command** to put the plain command on the clipboard, or **Copy with
    comment** (`Ctrl+Shift+C`) to prepend a `#`-prefixed header (tool/version,
    intent, any STIG/CCI rows, blast level) -- see "Copy vs. Copy with comment"
    below. A field left invalid (wrong shape for its type) is refused with a plain-
    English reason under **Fill in the required fields**; nothing partial is ever
    rendered as if it were complete.
 
-A further 156 entries are **static** checks, including
+The `lsblk` tool also includes a guided storage-inspection form. Choose a
+curated capacity, filesystem, parent-topology, or LVM-oriented column set. Every
+choice begins with `NAME`, so the output remains a parent-child device tree.
+RHEL 7/8 offer compatible `MOUNTPOINT` views; RHEL 9/10 also offer the
+multi-mount `MOUNTPOINTS` view. Selecting the latter produces:
+`lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS'`.
+
+A further 142 entries are **static** checks, including
 `firewalld-service-active`, `ctrl-alt-del-target-masked`, and
 `journald-service-active`. Static checks have no form: pick the tool, pick the
 command, and the version-specific command renders directly.
@@ -127,14 +138,68 @@ the line appears.
 * **Eight stages, maximum.** Not a technical limit -- a refusal to render
   something nobody will read before running it as root.
 
-**Ratings, when a pipeline writes.** A pipeline is not rated as the worst of its
-stages. A write outside a scratch path (`/tmp`, `/var/tmp`, `/home`, `/root`) is
-a write and rates at least **yellow**; a target under `/etc`, `/boot`, `/dev`,
-`/usr`, `/var/lib`, `/sys` or `/proc` is **red**; `| xargs rm` and friends are
-**red** whatever the arguments say. A target in none of those lists shows as
-**unrated** -- not green. Green in this tool means a person curated that entry
-and said so; a path nobody has ever classified is unclassified, not safe, and
-you are entitled to see the difference.
+**Ratings, when a command writes.** A pipeline is not rated as the worst of its
+stages. Every ordinary file write rates at least **yellow**, including targets
+under `/tmp`, `/var/tmp`, `/home`, or `/root`. Shell startup files, SSH trust
+files, and targets under `/etc`, `/boot`, `/dev`, `/usr`, `/var/lib`, `/sys`, or
+`/proc` are **red**; delayed-execution targets such as cron, systemd, profile,
+sudoers, and executable directories are refused. `| xargs rm` and friends are
+**red** whatever the arguments say. A target in none of the classified lists
+shows as **unrated** -- not green. Green in this tool means a person curated that
+entry and said so; a path nobody has ever classified is unclassified, not safe,
+and you are entitled to see the difference.
+
+SCP classifies the possible destination formed by joining the validated local
+source basename to the remote path, because that remote path may already be a
+directory even without a trailing slash. Every rsync remote write is red: a
+local directory written without a trailing slash changes destination semantics,
+and the browser cannot inspect the operator's filesystem to distinguish that
+case. `/var/run`, `/etc/rc.local`, `/etc/rc0.d` through `/etc/rc6.d`, and user
+startup paths such as `.bashrc.d/` classify like their actual sensitive targets.
+
+Remote paths containing `.` or `..` segments are refused so the displayed
+path, classified target, and transaction location cannot diverge. The SCP and
+rsync preflight steps create an adjacent transaction directory on the remote
+host. They refuse symlinked destinations and transaction parents, unsafe
+world/group-writable parents without sticky protection, stale or foreign-owned
+transaction state, and non-mode-`0700` transaction directories. The final
+transaction directory is created atomically, then it receives either the
+complete saved target or an explicit `absent` state; the state file is written
+last. The protected transaction directory, rather than the saved target's
+preserved owner, establishes trust. Rsync also refuses the operation unless the
+remote filesystem has room for two copies plus a safety margin. Recover restores a saved target through a temporary
+`after` path, or removes a new target only when the recorded state proves it was
+absent. After the operator accepts the verified result, the finalization command
+removes the transaction directory so the next transfer can begin.
+
+If Recover exits nonzero or prints a refusal, stop and keep the transaction directory. Do not run
+Finalize and do not delete `<target>.mdcr-scp.txn` or
+`<target>.mdcr-rsync.txn`. From a trusted console, inspect its `state`,
+`before`, and any `after` entry; resolve the reported symlink, owner, mode, or
+parent-directory problem, including any shell `rm` error that prevented removal
+of an untrusted link; then retry the generated Recover step. A nonzero exit is
+designed to preserve all rollback material rather than guess which path is
+safe.
+
+If the transaction contains an `after` entry, Recover already moved the current
+target aside before it refused. A direct retry while a hostile target link is
+still present refuses that symlinked destination. After the link is removed, a
+retry while `after` remains stops with `recovery swap already exists`. Both are
+safe refusals. Have an administrator work on the remote host from a trusted
+console. After validating that the transaction directory is the
+expected owner and mode `0700`, that `state` and `before` are trusted, and that
+`after` is not a symlink, remove only the hostile link or resolve the reported
+path problem. If the target is then absent, use GNU `mv -T` to move
+`<target>.mdcr-scp.txn/after` or `<target>.mdcr-rsync.txn/after` back to the
+original target path. Do not delete `state` or `before`. Verify the restored
+current target, then retry the generated Recover step; it can now recreate
+`after`, install `before`, and remove the completed transaction. If the target
+is not absent, any transaction path is a symlink, or the owner/mode check does
+not match, stop and reconcile the paths manually instead of overwriting them.
+
+For NetworkManager, apply the same preserve-and-inspect rule to
+`/var/lib/md-code-red/nmcli-static-ipv4.txn` and keep local or out-of-band
+access until the saved profile has been restored and reactivated.
 
 ### Journey 2: Build STIG evidence for an audit package
 
@@ -146,8 +211,9 @@ you are entitled to see the difference.
    screen.
 2. Press `Enter` or click a result. A **STIG** hit opens the rule directly: if a
    command in this build's catalog is linked to it, the command assembles and the
-   Inspector shows the full panel; otherwise the rule opens on its own -- the panel
-   still renders in full, and the editor says plainly that no command is catalogued
+   Inspector shows the full panel; otherwise the rule opens on its own and the
+   Inspector opens automatically so the rule is visible on screen. The panel still
+   renders in full, and the editor says plainly that no command is catalogued
    for it yet. A **CCI** or **NIST** hit resolves to the first embedded rule that
    cites it, current RHEL version searched first, then the other three.
 3. The Inspector's STIG panel (also mirrored below the command for printing) shows
@@ -169,32 +235,41 @@ you are entitled to see the difference.
 
 ### Journey 3: Review a state-changing command before you copy it
 
-Every assembled command carries a blast rating -- **green** (read-only), **yellow**
-(a reversible state change), or **red** (destructive, confirmation required) -- shown
-in the muted line under the command's title (`tool . RHEL N . blast <level>`).
-Of the 43 guided entries, 28 are yellow (add a user, merge or rebase Git history,
-extend a logical volume, write a privileged configuration, and so on), 13 are green, and two
+Every assembled command carries a blast rating -- **green** (low impact), **yellow**
+(a state change), or **red** (destructive or lockout-prone, confirmation required) --
+shown in the trust bar above the exact command. Green is a curated risk rating;
+it is not a promise that every command is literally read-only.
+Of the 58 guided entries, 37 are yellow (add a user, download a file, create a
+recovery branch, merge or rebase Git history, extend a logical volume, write a
+privileged configuration, and so on), 18 are green, and three
 are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
-block device, so the confirmation flow below is visible for real catalog content.
+block device; the guided `git checkout -- <path>` task discards uncommitted edits.
+All three exercise the confirmation flow with real catalog content.
 
 1. A yellow rating is informational only: it does not block **Copy** or **Copy with
-   comment**, and there is no checkbox to tick. Read the muted blast line and the
-   entry's own **Verify** / **Undo** lines (printed under the command) before you
-   run anything that changes host state.
-2. A red rating (from an entry's own content, or from the destructive-pattern table
-   matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `pvcreate`,
-   `vgcreate`, `dnf remove`, and the rest of `content/dangerous.json`'s fifteen
-   rows) opens a red bordered
+   comment**, and there is no checkbox to tick. Read the **Changes system** trust
+   label, the recovery warning, and the entry's **Verify** / **Recover** runbook
+   steps before you run anything that changes host state.
+   In the expanded runbook, descriptive prose remains visible but cannot be
+   copied as a shell command. A step's Copy button is enabled only for an
+   authored runnable command. Preflight copies only its command lines, without
+   adjoining prose.
+2. A red rating can come from the entry's curated rating, a destructive-pattern
+   match (`rm -rf`, `wipefs`, `lvremove`, `pvcreate`, `vgcreate`, `dnf remove`,
+   and the rest of `content/dangerous.json`), a protected write target, a remote
+   directory whose final writes cannot be known in advance, or a destructive
+   `xargs` child. It opens a red bordered
    banner above the command: **"Destructive operation -- review before running,"**
-   naming which pattern matched and why. **Copy** and **Copy with comment** are
-   both disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
+   naming every reason and, for a pipeline, its stage. **Copy**, **Copy with comment**,
+   runbook command steps, generated files, and evidence text are
+   disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
    have reviewed this command."** The banner is evaluated over the *entire*
    clipboard payload, including the comment header, not just the command line --
    so a destructive word hidden only in a comment header still trips it.
-3. **Favorite** the entry (toolbar button, or from the Favorites rail once opened)
-   if you expect to come back to it; see "Favorites & Recent" below.
+3. **Favorite** the entry if you expect to come back to it. Home lists both
+   saved and recently opened tasks; see "Favorites & Recent" below.
 
-**Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+3`) contains
+**Ansible and Git generators.** The **Ansible** rail (`Ctrl+Alt+4`) contains
 guided playbook, inventory, and `ansible.cfg` builders. The playbook form always
 creates the requested package task and provides two optional task checkboxes:
 **Refresh DNF package metadata first** and **Start and enable the same-named
@@ -203,12 +278,14 @@ name; leave it unchecked when those names differ. Every typed YAML scalar is
 quoted, the two checkbox choices only add complete curated YAML blocks, and the
 offered `ansible-playbook` invocation keeps `--check --diff` so it reports the
 proposed changes without applying them. The **Git** rail
-(`Ctrl+Alt+4`) contains the curated Git reference entries plus eight guided
-forms: clone, create a branch, merge, rebase, create an annotated tag, inspect a
-bounded log, start a bisect, and recover a lost commit by creating a branch at
-its revision. Branch and tag fields reject invalid ref shapes; revision fields
+(`Ctrl+Alt+5`) contains the curated Git reference entries plus eleven guided
+forms, including clone, branching, merge, rebase, tagging, bounded log, bisect,
+literal-path checkout, reset, and recovery workflows. Branch and tag fields reject invalid ref shapes; revision fields
 accept conservative commit expressions such as `main`, `origin/main`, `HEAD~1`,
-and `HEAD@{1}`. Git values remain single shell-quoted operands in the assembled
+and `HEAD@{1}`. Clone repositories accept only HTTPS, SSH, SCP-like
+`user@host:path`, or absolute local paths; command-running `ext::` transports,
+whitespace, percent escapes, and option-shaped values are refused. Git values
+remain single shell-quoted operands in the assembled
 command.
 
 ## UI Reference
@@ -223,14 +300,17 @@ release cannot offer it (RHEL 7 has no `dnf` or `podman`, for example; the entri
 say so and point at `yum` as the alternative for package management).
 
 Every command entry's per-version verification is one of three states, shown as a
-badge in the Inspector, the status bar, and the evidence export -- read from one
-function (`verificationStatusForVersion()`) so the three places can never disagree:
+badge in the Inspector, the status bar, and the evidence export. A composed
+pipeline has its own fourth display state, **Composed -- not host-verified**, and
+never inherits the selected entry's receipt. The UI reads the state through
+`verificationStatusForResult()` and `verificationStatusForVersion()` so the
+preview, status bar, Inspector, and export cannot disagree:
 
 | Badge | Meaning | What backs it |
 |---|---|---|
-| **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
+| **Verified** (green badge) | "this exact command was verified by NAME on DATE (HOST)" | A real `{by, on, host, capture, command_as_run}` receipt sits on this exact RHEL version, and the current assembled command is byte-for-byte identical to the capture's `command_as_run`. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Changing any generator value changes the command and displays **Not host-verified**. A receipt is never inherited from a `same_as` target. |
 | **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
-| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 guided-entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
+| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
 
 A version whose command is a `same_as` pointer at another version (for example RHEL
 9 often reuses RHEL 8's command text) shows **Not host-verified** even when the text
@@ -261,7 +341,7 @@ row (labeled "Copy with comment -- exactly what reaches the clipboard") so what 
 see is byte-for-byte what lands on the clipboard:
 
 ```
-# MD CODE RED v1.0.0-alpha.5 -- RHEL 8
+# MD CODE RED v1.0.0-alpha.6 -- RHEL 8
 # intent: <the entry's one-line intent text>
 # STIG: RHEL-08-XXXXXX (CAT II)  NIST: AC-6, CM-6
 # blast: yellow
@@ -290,8 +370,10 @@ and therefore is not proof that the command ran. Use
 
 1. Header line, tool version and build date.
 2. **Content fingerprint** (see below).
-3. **Verified (RHEL N): <status text>** -- the same three-state text described
-   above, for the exported version only.
+3. **Verification (RHEL N): <label> -- <status text>** -- the same entry or
+   pipeline state described above, for the exported version only. A pipeline
+   export states that the composition has no single host-verification receipt
+   or STIG/control identity, and then lists each stage and source separately.
 4. When a STIG row applies: STIG ID; STIG version and benchmark date; rule title;
    CAT; every cited CCI; the mapped NIST SP 800-53 controls; Check text and Fix
    text verbatim; then either the captured output, compliance result (yes/no/not
@@ -299,17 +381,17 @@ and therefore is not proof that the command ran. Use
    "Expected output: not captured yet -- no capture record exists for this STIG
    ID/RHEL version pair."
 5. The assembled command for the exported RHEL version and its blast level, a
-   `Requires: root` line when the entry declares one (currently only
-   `gen-sshd-test-config`), and every flag the command shows with its explanation
-   or `unverified -- see man page`.
+   `Requires:` line when the entry or any pipeline stage declares a privilege,
+   and every flag the command shows with its explanation or `unverified -- see
+   man page`. Pipeline flags also name their source stage and tool.
 6. The source citation (title, version, retrieval date), or "Source citation: not
    recorded on this entry."
 7. The operator's own date line (today's date, taken from the browser clock at
    export time -- there is no server to disagree with it).
 
 **Content fingerprint, and how to check it offline.** The fingerprint is the sha256
-hash of the exact bytes inside this file's own `<script id="mcr-data">` element (the
-embedded JSON data island), computed by `build.py` at build time and printed both
+hash of the exact bytes inside every embedded JSON data island, in declaration
+order, computed by `build.py` at build time and printed both
 in the file's own header comment and in the About panel. It exists because the tool
 is air-gapped: there is nowhere to look the content up to compare it against. What
 it actually proves is narrower than "this content is correct" -- it proves **this
@@ -325,9 +407,22 @@ cannot match to the file that produced it.
 
 ### Keyboard Operation
 
-No mouse is required. Every binding below comes from one table in the app script
-(`KEYMAP`) read by one delegated `keydown` listener, so what this page says and what
-the tool does cannot drift apart without the table changing.
+The activity rail now begins with a visible **Search all** button. It opens the
+same typed command palette as `/` or `Ctrl+K` / `Cmd+K`, so mouse and touch users
+do not need to discover a shortcut first. The status bar includes **Navigator**
+and **Inspector** buttons; their highlighted pressed state means the panel is
+open. Below 720 pixels the activity rail stays at the top and wraps instead of
+creating horizontal page or navigation scrolling,
+while the navigator, command workspace, inspector, and status appear in that
+reading order. Keyboard users can press `Tab` once from the top of the document
+to reveal **Skip to command workspace**.
+
+No mouse is required. Every global binding below comes from one table in the app
+script (`KEYMAP`) read by the primary delegated `keydown` listener, so what this
+page says and what the tool does cannot drift apart without the table changing.
+Contextual palette and command-line keys are handled by that primary listener.
+Clipboard and runbook-copy buttons use native single-fire Enter and Space
+activation.
 
 | Action | Binding | Notes |
 |---|---|---|
@@ -337,19 +432,19 @@ the tool does cannot drift apart without the table changing.
 | Toggle the sidebar | `Ctrl+B` | |
 | Toggle the inspector | `Ctrl+I` | |
 | Toggle dark / light theme | `Ctrl+Shift+L` | Also the **Theme** button at the right of the status bar. The choice is kept for the browser session only (`sessionStorage`), not across a fresh open of the file. |
-| Command Builder | `Ctrl+Alt+1` | Opens the guided command builder and focuses its rail button. |
-| STIG and Evidence Search | `Ctrl+Alt+2` | Opens STIG and evidence search and focuses its rail button. |
-| Ansible Generator | `Ctrl+Alt+3` | Opens the Ansible generator and focuses its rail button. |
-| Git Command Generator | `Ctrl+Alt+4` | Opens the curated Git catalog and its eight guided scenarios, and focuses its rail button. |
-| Favorites and Recent | `Ctrl+Alt+5` | Opens saved and recently used entries and focuses its rail button. |
-| Reference Commands | `Ctrl+Alt+6` | Opens the mined reference-command catalog and focuses its rail button. |
+| Home | `Ctrl+Alt+1` | Opens task starts, common work, learning paths, favorites, recent work, and the catalog trust boundary. |
+| Build reviewed commands | `Ctrl+Alt+2` | Opens the reviewed RHEL command catalog and guided builders. |
+| Compliance search | `Ctrl+Alt+3` | Opens STIG, CCI, NIST, and evidence search. |
+| Build Ansible automation | `Ctrl+Alt+4` | Opens the Ansible generator and focuses its rail button. |
+| Build Git commands | `Ctrl+Alt+5` | Opens the curated Git catalog and its eleven guided scenarios, and focuses its rail button. |
+| Reference library | `Ctrl+Alt+6` | Opens mined vendor and DISA text, kept separate from reviewed Build results. |
 | About | `Ctrl+Alt+7` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
 | Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |
 | Export command and control reference | `Ctrl+E` | Opens the command/control reference preview modal. |
 | Move through palette results, or within any list (tools, commands, palette rows) | Arrow Up / Arrow Down | Wraps at both ends inside the palette. |
 | Open the selected palette result | `Enter` | A tool opens its command list; a STIG/CCI/NIST hit opens the rule or resolves to one; a command loads into the editor. |
 | Focus an editor line and pin its explanation | `Enter` or `Space` on a gutter line | Gutter lines are `role="button"`, `tabindex="0"`. |
-| Move anywhere else | `Tab` / `Shift+Tab` | Focus order: rail, sidebar (version selector first), editor toolbar, gutter lines, inspector, status-bar theme button. The palette traps focus until `Esc`. |
+| Move anywhere else | `Tab` / `Shift+Tab` | Focus order: rail, sidebar (version selector first), command workspace, inspector, status controls. The palette and evidence dialog each constrain focus until closed. |
 | Print | `Ctrl+P` / `Cmd+P` | Browser-native, not in `KEYMAP`. The print stylesheet drops the rail, sidebar, inspector and status bar. |
 
 **Note: plain Copy has no keyboard shortcut** -- only Copy *with comment*
@@ -363,7 +458,7 @@ glyph and its text label, and exposes the same name through its accessible label
 ### Favorites & Recent
 
 Every command entry's toolbar carries a **Favorite** / **Favorited** toggle. The
-**Favorites** rail (`Ctrl+Alt+5`) lists favorited entries and, below them, the
+**Home** (`Ctrl+Alt+1`) lists favorited entries and, below them, the
 entries opened most recently this session, newest first (up to 20). Selecting
 either opens the entry in its owning rail: Git, Ansible, or Command Builder.
 
@@ -413,8 +508,8 @@ that file with `python3 tools/generate_release_facts.py --check` so these facts 
 hand-maintained prose. The current derived default is RHEL 8: RHEL 8 and 10 tie
 with nine receipts each, and the documented algorithm chooses the lower release.
 
-- **199 curated command entries across 102 tools.** 43 are guided-form generators
-  and 156 are static checks. The separate mined reference tier contains 14,439
+- **200 curated command entries across 102 tools.** 58 are guided-form generators
+  and 142 are static checks. The separate mined reference tier contains 14,439
   distinct commands with 45,281 source citations; reference rows are discovery
   material and are never silently promoted into the curated catalog.
 - **RHEL 7 flags are extracted from a UBI7 container, not a real RHEL 7 host** --
@@ -433,34 +528,43 @@ with nine receipts each, and the documented algorithm chooses the lower release.
   (RHEL 8, RHEL 10), and `journald-service-active` (RHEL 10 only -- it has no RHEL
   8 STIG mapping at all). Every other STIG panel in the build honestly shows "No
   capture yet."
-- **Flag explanations are almost entirely uncurated.** Across the four release flag
-  dictionaries, most entries do not carry a curated
+- **Flag explanations are incomplete.** Across the four release flag
+  dictionaries, no row carries a curated
   `explain` -- the extractor writes `explain: null` by design and a human SME
-  curates prose in a separate step that has not run yet. Only 4 flags anywhere in
-  the build (on the 3 static entries' own hand-curated `flags[]`) carry a curated
-  explanation; every other flag panel entry in this build reads `unverified -- see
-  man page`. This is the no-guess rule working as intended, not a bug, but it means
-  the Inspector is not yet a teaching tool for most flags.
+  curates prose in a separate step that has not run yet. The curated command
+  entries separately contain 348 flag rows, 336 with explanations and 12 that
+  deliberately fall back to dictionary/no-guess copy. Missing prose renders
+  `unverified -- see man page`; it is never borrowed from another tool or RHEL
+  release.
 - **The "Captured, awaiting QA" verification badge is implemented and tested but
   never actually shown in this build** -- every capture on record already has a QA
   receipt.
-- **Two guided entries are rated blast red:** `pvcreate` and `vgcreate`. Both
-  write LVM metadata to a selected block device. The Copy controls stay locked
-  until the operator checks **I have reviewed this command**.
-- **The STIG Search rail item is a placeholder.** STIG lookup today happens
-  through the command palette (Journey 2), not a dedicated browse view. The
+- **Three guided entries are rated blast red:** `pvcreate`, `vgcreate`, and the
+  literal-path Git discard task. The first two write LVM metadata to a selected
+  block device; the third discards uncommitted edits in one validated repository
+  path. Copy stays locked until the operator checks **I have reviewed this command**.
+- **The Compliance rail opens focused search.** STIG, CCI, and NIST lookup today
+  uses the command palette (Journey 2), not a dedicated browse dashboard. The
   Ansible and Git rails are live. Six configuration generators have shipped:
   sshd, chrony, rsyslog, sudoers, systemd units and cron. Their output is a
   reviewed fragment; deployment still requires site-specific backup, ownership,
   mode, SELinux context, service action and recovery steps.
-- **English only, desktop only.** No localization, no mobile layout beyond the
-  responsive breakpoint at 1024px that stacks the inspector under the sidebar.
+- **English only.** No localization is shipped. The responsive shell uses one
+  document scroll on narrow screens and wraps the primary navigation; formal
+  VoiceOver and NVDA workflow validation remains a release task.
 
 ## Troubleshooting
 
 Nine RHEL-first, read-only decision trees for boot/emergency mode, fstab,
 DNF/RPM, NetworkManager, firewalld, LVM/filesystems, SELinux AVCs, time sync and
-rsyslog are maintained in `content/rhel_troubleshooting.json`. They preserve
+rsyslog are maintained in `content/rhel_troubleshooting.json`. The NetworkManager
+static-address runbook resolves one unique connection name or UUID from
+`nmcli -g FILENAME,NAME,UUID connection show`, quotes the identifier as one shell
+word, and creates its rollback transaction atomically beneath the root-owned,
+mode-`0700` `/var/lib/md-code-red` state directory. Recover and Finalize refuse
+symlinked, non-root-owned, incorrectly permissioned, or incomplete state, and
+recovery reloads and reactivates the saved profile from the required local or
+out-of-band session. They preserve
 unknowns and stop before destructive repair. They are operator data in this
 release and are not yet rendered as an in-browser rail.
 
@@ -480,7 +584,7 @@ entirely) rather than looking for a missing server.
 opens.** Every `localStorage`/`sessionStorage` access is wrapped in its own
 try/catch and degrades to "nothing was saved" rather than erroring -- a hardened
 browser profile that blocks storage on `file://` pages will show this. The app
-still works; it just starts from defaults (RHEL 9, light/dark by system
+still works; it just starts from defaults (RHEL 8, light/dark by system
 preference, no favorites) every time.
 
 **Copy says "Copy failed."** The clipboard write uses a hidden, selected textarea

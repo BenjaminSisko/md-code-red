@@ -1,0 +1,5 @@
+{
+  "exceptions": [
+    "TypeError: Cannot read properties of null (reading 'rhel_versions')\n    at renderInspector (http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6-dev.html:5197:68)\n    at renderAll (http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6-dev.html:5574:3)\n    at pipelineAdd (http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6-dev.html:4468:3)\n    at HTMLDocument.<anonymous> (http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6-dev.html:5628:23)\n    at <anonymous>:1:560\n    at <anonymous>:1:569"
+  ]
+}

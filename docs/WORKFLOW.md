@@ -79,7 +79,7 @@ this repo's code.
   whole-entry `verified` flag could not be set for a real batch of captures
   without overclaiming a version nobody actually ran). `content/commands.json`'s
   `verified` field is an object keyed `"7"`/`"8"`/`"9"`/`"10"`, each value
-  `false` or a `{by, on, host, capture}` receipt naming the QA reviewer, the
+  `false` or a `{by, on, host, capture, command_as_run}` receipt naming the QA reviewer, the
   date, the host, and the capture file that backs it. A version whose row is
   `unavailable` or a `same_as` pointer can never carry a receipt of its own --
   it was never independently run -- and a `same_as` target's receipt never
@@ -233,7 +233,18 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    `python3 extract/make_provenance.py --commit <full-tag-target-sha>`, change the
    release report from candidate to released state, and commit those updates.
    The manifest names the merge that produced the artifact. The later commit
-   carries that now-knowable fact; it is deliberately not the tag target.
+   carries that now-knowable fact; it is deliberately not the tag target. Use
+   the same release-workstation Python and Node toolchain that produced the
+   reviewed placeholder manifest. The committed stamp may change only
+   `git_commit`; the readiness test requires canonical generator-formatted JSON,
+   requires that field to name a commit object at or after the reviewed
+   implementation and in the current tree's ancestry, normalizes it to the
+   placeholder, and compares every other manifest field byte-for-byte with the
+   reviewed implementation. Because
+   release artifacts under `dist/` are ignored, stage the exact manifest with
+   `git add -f dist/md-code-red_<version>.provenance.json` and stage the release
+   report normally; do not force-add any other path. Rerun the full Section 5
+   sequence on the committed post-stamp tree before pushing it.
 7. **Create and mirror the immutable tag.** Create an annotated tag named exactly
    like `APP_VERSION`, explicitly targeting the merge SHA from step 5, and push
    the same tag plus the post-stamp `main` commit to GitHub and Forgejo. Existing
@@ -254,6 +265,16 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    deploy receipt per artifact/host pair. When development of the next version
    begins, archive the just-released three-file set byte-for-byte under
    `releases/<version>/`; until then, the current release remains in `dist/`.
+   In that same next-version change, archive or retarget the candidate-specific
+   readiness tests and browser-evidence paths so CI no longer opens the released
+   version under `dist/`.
+
+The browser-evidence binding is deliberately candidate-specific. A later change
+to HTML, content, extractors, tests, QA tooling, build logic, or CI must create a
+new candidate and refresh its browser evidence; a post-review documentation
+commit or the validated one-field provenance stamp can keep the current binding.
+Because Forgejo runs this binding on every push and pull request, a protected-path
+change stays red on every branch until its new candidate evidence is committed.
 
 ## Quarterly STIG Refresh Cycle
 

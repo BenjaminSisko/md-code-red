@@ -30,7 +30,7 @@ class CommandSyntaxOracleTests(unittest.TestCase):
     if not cmd:continue
     commands+=1; parts,errs=split_invocations(cmd);self.assertFalse(errs,(e['id'],v,errs));invocations+=len(parts)
     self.assertEqual([],syntax_errors(cmd,v,self.grammars,self.binary(e)),(e['id'],v,cmd))
-  self.assertEqual(620,commands);self.assertGreater(invocations,commands)
+  self.assertEqual(564,commands);self.assertGreater(invocations,commands)
  def test_every_non_null_golden_generator_command(self):
   byid={e['id']:e for e in self.commands};checks=0
   for eid,row in self.golden.items():
@@ -38,7 +38,7 @@ class CommandSyntaxOracleTests(unittest.TestCase):
     cmd=row['commands'].get(v)
     if cmd is None:continue
     checks+=1;self.assertEqual([],syntax_errors(cmd,v,self.grammars,self.binary(byid[eid])),(eid,v,cmd))
-  self.assertEqual(169,checks)
+  self.assertEqual(229,checks)
  def test_real_operators_split_but_quoted_and_escaped_operators_are_operands(self):
   parts,errs=split_invocations("printf '|' \\| '&&' ';' && printf done")
   self.assertFalse(errs);self.assertEqual(2,len(parts));self.assertEqual(['printf','|','|','&&',';'],[x['text'] for x in parts[0]])

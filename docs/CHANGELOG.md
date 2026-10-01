@@ -2,6 +2,237 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
+## v1.0.0-alpha.6 - 2026-10-01
+
+### Fixed -- Independent release review closure
+
+- Close the final Opus PASS observations: a stamped provenance SHA must be a
+  commit at or after the browser-reviewed implementation, both placeholder and
+  stamped manifests must retain canonical JSON bytes, and only the exact current
+  provenance path is exempted from protected-path drift. The keyboard guard now
+  rejects inline/property handlers, synthetic activation APIs, common `KEYMAP`
+  mutations, nonliteral key arrays, and whitespace/quoted-property variations;
+  its documentation states the exact source forms it checks.
+- Refresh the merge-and-stamp evidence after provenance hardening and extend the
+  keyboard guard across template-literal keys, spread/concatenated arrays,
+  post-declaration `KEYMAP` writes, mixed-case inline handlers, and direct,
+  bracketed, spaced, or call/apply click forms. Release documentation now avoids
+  a stale numeric review count.
+- Make the keyboard guard's identifier check string- and comment-aware, retain
+  exact declaration/length/index span checks, keep explicit mutation-method
+  bans, require one ordinary literal `keys` array per binding, and reject escaped
+  key names or later binding-array mutation.
+- Keep post-merge provenance stamping compatible with release readiness while
+  allowing only the now-knowable `git_commit` field to differ from the reviewed
+  placeholder manifest. The stamp must be committed, name an ancestor of the
+  release tree, and preserve the release-workstation toolchain and every other
+  manifest field. The documented step now names the exact force-add command for
+  the ignored release manifest, and a simulated committed stamp passes all 480
+  tests plus Q1-Q26 + JS.
+- Hash the main-document bytes Chrome actually loaded and compare them with the
+  audited artifact before a rendered-browser result can be recorded. Browser
+  evidence now distinguishes 896 pass/fail assertions from two informational
+  performance observations.
+- Extend the full-shell keyboard guard to literal `keypress`, template-literal
+  events, computed registrations, Function call/apply, dispatch-event routing,
+  and Enter/Space additions to the global shortcut table. Documentation now
+  describes the guard as a source-shape control rather than an obfuscation-proof
+  JavaScript parser.
+- Build the HTML before unit discovery in Forgejo CI so all artifact-backed
+  tests execute, while preserving the committed candidate provenance instead
+  of regenerating toolchain-specific bytes with the runner's Python and Node
+  versions.
+- Cover every fail-closed branch in SCP/rsync target replacement: an
+  unremovable raced link in a sticky parent, a planted non-link directory, and
+  exhaustion after three replants. The tests require exact status `1`, preserve
+  trusted rollback state, and prove an outside directory contains only its
+  original sentinel. Existing link-race cases now enforce the same exact
+  directory inventory so writes through an attacker link cannot pass unseen.
+- Scan the complete shell for keyboard listener registrations, allowing one
+  delegated `keydown` listener and no `keyup` or property handler, so a second
+  handler cannot synthesize copy-button clicks after the audited region.
+- Give each rendered-browser audit an optional `AUDIT_OUTPUT` path so standalone
+  and HTTP runs can retain separate raw results without overwriting one another.
+- Document the `after` state left by a failed remote Recover and the trusted
+  administrator procedure that moves it back to an absent target before the
+  generated Recover step is retried.
+- Keep descriptive runbook prose visible while disabling its Copy control;
+  Preflight now copies only authored commands, and Verify/Recover copy only
+  closed transaction scripts. Red-rated evidence and plan copying share the
+  exact-command acknowledgement gate.
+- Exit with status `1` and clean partial SCP, rsync, and NetworkManager transactions on
+  HUP, INT, or TERM; explicitly refuse symlinked transaction parents; and allow
+  `cp -a` to preserve the saved target owner inside the trusted mode-`0700`
+  directory. The execution suite signals the generated shell itself at the last
+  state validation for all nine workflow/signal combinations.
+- Resolve NetworkManager names and UUIDs with forced string comparison, suppress
+  paging while recording the current profile, report zero and multiple matches,
+  and test missing, duplicate, numeric-looking, and path-specific forged-owner
+  cases through the shipped binder.
+- Bind instruction placeholders once so operator values cannot become a second
+  template pass, and identify runnable Verify/Recover markers in authored text
+  before substitution so a form value cannot manufacture a clipboard script.
+  Fake-SSH transaction tests obtain their runnable scripts from the app's
+  `operationalPlan()` output.
+- Quote form values separately for runnable runbook commands, including ordinary
+  NetworkManager names with spaces. Static-address recovery now resolves exactly
+  one documented FILENAME/NAME/UUID row, atomically creates its transaction under
+  root-owned mode-0700 `/var/lib/md-code-red`, validates the state before recovery
+  or finalization, and reloads and reactivates the saved profile.
+- Create SCP and rsync transactions atomically at mode `0700`, validate their
+  ownership before recovery or finalization, and refuse writable non-sticky
+  transaction parents. Recovery can no longer trust a directory created by a
+  different remote user. Recovery uses real GNU `mv -T` plus a bounded
+  symlink-removal retry for directory restores. Adversarial tests plant a link
+  before the restore, once after removal, and persistently through the six total
+  bounded restore/rollback attempts. They prove that a normal race restores the
+  saved content while a persistent race exits `1`, preserves every transaction
+  artifact, leaves the outside sentinel unchanged, and cannot loop forever.
+- Exercise transaction ownership one path at a time for Preflight, Recover, and
+  Finalize, including missing state files and the positive case where preserved
+  content has a different owner inside a trusted transaction directory.
+- Drive clipboard buttons with native Enter and Space text events and assert
+  exactly one DOM click and one clipboard write. Red runbook steps are verified
+  disabled before acknowledgement; after acknowledgement, Space copies the
+  exact isolated Recover script once, excludes Preflight and Finalize, and
+  retains focus.
+- Derive documentation counts inside the browser audit when `AUDIT_*` variables
+  are omitted, and let source-level unit discovery skip stale artifact-backed
+  checks without weakening the release gate's stale-build refusal.
+- Preserve keyboard focus after clipboard actions, require the mobile STIG test
+  to observe a closed search palette, and replace the unsafe all-steps clipboard
+  action with explicit step-by-step guidance that keeps Recover separate.
+- Refuse top-level symlink destinations before SCP or rsync backup, capacity,
+  recovery, or finalization work; refuse remote `.` path segments; and execute
+  these cases through the shipped instruction binder in the fake-SSH suite.
+- Clear stale copy-success status when either curated or reference acknowledgement
+  is revoked, focus and scroll selected STIG evidence into view at mobile width,
+  and bind browser evidence to artifact bytes, SHA-256, and content fingerprint.
+- Rebuilt SCP and rsync recovery around remotely executed transaction scripts
+  that survive OpenSSH argument joining, reject stale state, stage backups
+  atomically, restore through a rollback-safe `after` path, and require explicit
+  finalization. Rsync preflight also refuses insufficient remote capacity.
+- Corrected NetworkManager recovery to preserve the actual backing profile,
+  accepted real connection names and systemd descriptions containing spaces,
+  constrained chronyd directives to `server` or `pool`, and conservatively
+  classified ambiguous rsync destinations, `/etc/rc.local`, and `.bashrc.d`.
+- Added six executable fake-SSH transaction tests, browser assertions for both
+  remote runbooks and linked STIG selection, current-artifact evidence gates,
+  and an explicit harness exception only for the two valid space-bearing field
+  grammars.
+- Made guided edits and pipeline-field edits idempotent across `input` and
+  deferred `change` events. The first real pointer click after typing now reaches
+  Copy, destructive acknowledgement, and Add to pipeline; Tab keeps its next
+  focus target, and changing command bytes clears any stale copy-success message.
+- Re-rated twelve file- and state-changing catalogue entries yellow and renamed
+  the green trust label to **Low impact**. Green remains a curated risk class and
+  no longer claims that every command is literally read-only.
+- Added a closed Git repository grammar for HTTPS, SSH, SCP-like
+  `user@host:path`, and absolute local paths. Git remote-helper `ext::` values,
+  whitespace, percent escapes, leading options, and unapproved schemes are refused.
+- Classify `/var/run` and `/etc/rc0.d` through `/etc/rc6.d` through their RHEL
+  execution-directory aliases. Remote copy classification now considers the
+  source basename and directory-source semantics, with added zsh, X session,
+  and `environment.d` startup targets.
+- Added bound SCP and rsync preflight backups and absence markers, with
+  restore-first recovery using the current remote identity, destination, and
+  source basename. Purpose-specific field types now produce accurate errors for
+  NetworkManager, LVM, Podman, Git destinations, and systemd descriptions.
+- Standalone searched STIG rules now open the Inspector automatically. Placeholder
+  colors meet rendered 4.5:1 contrast in both themes, pipeline reasons are
+  de-duplicated and stage-attributed, and generator completion announcements are
+  independent of any existing pipeline.
+- Expanded the browser release gate with real CDP key-down/key-up and pointer
+  sequences for copy, acknowledgement, pipeline addition, Tab focus, stale toast
+  invalidation, visible STIG text, and placeholder contrast.
+- Replaced open-ended SSH, SCP, rsync, URL, Git path, shell-variable, and PID
+  operands with purpose-specific closed grammars. Remote copy/sync forms now
+  accept a local source and one validated remote destination; rsync also emits
+  `-s` so the remote shell protects validated arguments.
+- Classify generated download output paths as write targets. Executable sinks
+  are refused, protected system destinations are destructive, and other file
+  writes require the change-producing review path rather than appearing read
+  only.
+- Bound preflight, verification, and recovery instructions to the operator's
+  actual field values. Schema validation now rejects hardcoded non-enum example
+  values in instructional commands, and unresolved recovery state remains
+  visibly unavailable instead of producing unsafe placeholder text.
+- Give composed pipelines their own verification state, evidence context, and
+  flag provenance. A composed command is labeled "not host-verified" and never
+  borrows an individual stage's execution receipt or STIG identity.
+- Bind every verification receipt to its exact captured command. Editing a
+  generator field now removes the Verified label in both the Inspector and
+  status bar until the command again matches the reviewed bytes.
+- Rate every ordinary local or remote file destination as a write, and rate
+  shell startup, SSH authorization, and user-service destinations destructive.
+  Pipeline evidence now preserves composed privilege and names the stage and
+  tool that supplied each flag.
+- Corrected Home package routing, light-theme text and focus contrast, live
+  result announcements, and the documented default release. Added executable
+  runtime, optional-field, runbook-binding, pipeline-trust, and Home-route
+  regressions for each review finding.
+
+### Fixed -- Full functional QA findings
+
+- Fixed the pipeline inspector crash caused by treating the structural
+  `pipeline` result ID as a catalog entry and dereferencing a missing
+  `rhel_versions` object. The inspector now reviews each stage, its evidence,
+  flags, and all-release composition before returning to the single-entry path.
+- Converted 14 fixed-example recipes into guided tasks with typed, validated
+  fields. The `grep` task now accepts the search pattern and absolute target
+  path, and exposes independent recursive, line-number, and case-insensitive
+  controls. The remaining repaired workflows cover process signaling, URL
+  downloads, SSH/SCP/rsync, destructive Git restore, Git recovery, account
+  inspection and group changes, shell export, and stream translation.
+- Added golden commands and instructional metadata for every repaired task,
+  expanded hostile-input and one-stage pipeline coverage to all 58 generators,
+  and added a negative-control audit that fails if the pipeline inspector looks
+  up its structural result as a catalog entry again.
+- Corrected the test plan, architecture guide, user guide, README, generated
+  release facts, and current safety/count statements to match the shipped
+  200-entry catalog: 58 guided generators and 142 static checks.
+
+### Added -- Guided storage inspection
+
+- Added a deterministic `lsblk` guided form with curated capacity,
+  filesystem, topology, and LVM-oriented column sets. Every preset keeps
+  `NAME` first so the result remains a dependency tree on RHEL 7-10.
+- RHEL 7/8 receive the compatible singular `MOUNTPOINT` presets. RHEL 9/10
+  additionally offer `MOUNTPOINTS`, which reports every mount location for a
+  multiply mounted device.
+- Added all-release golden commands, a release-specific `-o` syntax policy,
+  hostile-input and enum-branch coverage, and focused assembly tests for the
+  benchmark command.
+
+### Changed -- Responsive operations-console UX
+
+- Reorganized the entry experience around a task-centered Home view with common
+  RHEL outcomes, working modes, learning paths, favorites, recent work, and an
+  explicit boundary between the reviewed catalog and the mined Reference Library.
+- Reworked guided builders into Configure, Review, and Verify stages. Wide screens
+  keep the generated command and trust signals beside the fields; narrow screens
+  place command review before the form. Detailed field teaching and the complete
+  operational runbook now open on demand.
+- Added a trust bar with plain-language Read only, Changes system, or Destructive
+  status, selected RHEL release, host-verification state, and required privilege.
+  The primary action is now labeled **Copy command**.
+- Added an always-visible **Search all** control for tools, commands, STIGs,
+  CCIs, and NIST controls, with documented keyboard shortcuts, including the updated Ctrl+Alt+1-7 rail mappings.
+- Added visible **Navigator** and **Inspector** controls whose pressed state
+  reports whether each panel is open.
+- Reworked the layout below 720 pixels into a single-column reading order with
+  wrapping sticky navigation, no horizontal navigation scroll, and larger targets.
+- Fixed the tablet layout so hiding the inspector also removes its empty row.
+- Added a keyboard skip link, clearer product identity, stronger command-title
+  hierarchy, and focused industrial typography while preserving the offline,
+  zero-asset, single-file design.
+- Preserved focus across panel and theme rerenders, restored search focus to its
+  real opener, added combobox/listbox relationships to Search, constrained focus
+  inside the evidence dialog, added non-color pressed-state text, and separated
+  brand red from the destructive-operation token.
+- Archived the immutable alpha.5 HTML, SHA-256 sidecar, and provenance manifest
+  before starting alpha.6 development.
+
 ## v1.0.0-alpha.5 - 2026-09-22
 
 ### Fixed -- Operational recovery and administrative accuracy

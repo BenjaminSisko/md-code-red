@@ -71,6 +71,13 @@ finding below:
 | `gen-yum-package` | Same issue, `yum` on RHEL 7/8+. |
 | `gen-chronyd-one-shot-check` | `chronyd -Q '<directive>'` does not just test config — per `chronyd(8)`, `-Q` retrieves the offset from the given NTP source(s), **applies it to step the system clock**, and exits. That steps the real system clock on a STIG'd host, which is a state change (affects logs, cron, any time-sensitive service) even though it touches no file. Not run. |
 
+**Later disposition:** this table records the classifications used during the capture run; it
+is not a statement of the current catalogue. `gen-dnf-package` and `gen-yum-package` were
+subsequently raised to yellow. A follow-up review of the pinned `chronyd(8)` source corrected
+the third interpretation: `-Q` reports the measured offset and does not step the clock, so
+`gen-chronyd-one-shot-check` remains green. The current ratings and their regression gate live
+in `content/commands.json` and `tests/test_blast_state_change_labels.py`.
+
 ### YELLOW — deferred to a throwaway VM (not run tonight)
 
 `gen-fw-set-default-zone`, `gen-fw-open-port`, `gen-fw-allow-service`, `gen-nmcli-static-ipv4`,

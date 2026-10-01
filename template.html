@@ -24,11 +24,14 @@
        resolves the default at first paint with no flash of the wrong theme. -- */
 :root{
   --bg-app:#fafafa; --bg-surface:#ffffff; --bg-editor:#f6f8fa; --bg-gutter:#eef1f6;
-  --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#8494ab;
-  --accent:#b45309; --success:#059669; --warning:#b45309; --danger:#dc2626;
+  --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#53657d;
+  --accent:#b45309; --success:#047857; --warning:#b45309; --danger:#dc2626;
+  --primary-action-text:#ffffff; --danger-heading:#b91c1c; --pressed-text:#92400e;
+  --brand:#991b1b; --selected-fill:rgba(180,83,9,.10);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
-  --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#f59e0b;
-  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#a16207;
+  --font-ui:"Trebuchet MS","Liberation Sans",sans-serif;
+  --font-display:"DejaVu Serif","Liberation Serif",Georgia,serif;
   --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
   /* --rail-w was 48px (icon-only, label revealed on hover/focus). Problem 3
      (2026-09-17): the rail now shows its label text unconditionally, so the
@@ -39,20 +42,27 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
-    --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
+    --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
     --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+    --primary-action-text:#18181b; --danger-heading:#f87171; --pressed-text:#fbbf24;
+    --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
     --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
     --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
   }
 }
 :root[data-theme="dark"]{
   --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
-  --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
+  --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
   --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
+  --primary-action-text:#18181b; --danger-heading:#f87171; --pressed-text:#fbbf24;
+  --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
   --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
 }
 *{box-sizing:border-box;}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+  margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;border:0!important;}
 html,body{height:100%;}
 body{
   margin:0; background:var(--bg-app); color:var(--text-primary);
@@ -71,13 +81,27 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
     grid-template-rows:minmax(0,1fr) 220px var(--statusbar-h);
     grid-template-areas:"rail sidebar editor" "rail sidebar inspector" "status status status";
   }
+  body[data-sidebar="off"]{
+    grid-template-columns:var(--rail-w) minmax(0,1fr);
+    grid-template-areas:"rail editor" "rail inspector" "status status";
+  }
+  body[data-inspector="off"]{
+    grid-template-columns:var(--rail-w) 200px minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) var(--statusbar-h);
+    grid-template-areas:"rail sidebar editor" "status status status";
+  }
+  body[data-sidebar="off"][data-inspector="off"]{
+    grid-template-columns:var(--rail-w) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) var(--statusbar-h);
+    grid-template-areas:"rail editor" "status status";
+  }
 }
 /* Never outline:none without a replacement (UI spec §6) — :focus is the ESR
    fallback for engines that predate :focus-visible. */
 :focus{outline:2px solid var(--focus-ring); outline-offset:1px;}
 :focus-visible{outline:2px solid var(--focus-ring); outline-offset:1px;}
 #rail{grid-area:rail; background:var(--bg-surface); border-right:1px solid var(--border-primary);
-  display:flex; flex-direction:column; align-items:stretch; gap:2px; padding:6px 6px;}
+  display:flex; flex-direction:column; align-items:stretch; gap:3px; padding:8px 7px;}
 #sidebar{grid-area:sidebar; background:var(--bg-surface); border-right:1px solid var(--border-primary);
   overflow:auto; padding:10px;}
 #editor{grid-area:editor; background:var(--bg-editor); overflow:auto; padding:14px 16px; min-width:0;}
@@ -86,6 +110,22 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
 #statusbar{grid-area:status; background:var(--bg-surface); border-top:1px solid var(--border-primary);
   display:flex; align-items:center; gap:10px; padding:0 10px; font-size:12px;
   color:var(--text-secondary); overflow:hidden; white-space:nowrap;}
+.skiplink{position:fixed; left:12px; top:8px; z-index:100; padding:8px 12px;
+  border:2px solid var(--focus-ring); border-radius:5px; background:var(--bg-surface);
+  color:var(--text-primary); transform:translateY(-160%);}
+.skiplink:focus{transform:translateY(0);}
+.railbrand{padding:4px 8px 12px; margin:0 0 5px; border-bottom:1px solid var(--border-primary);}
+.railbrand h1{display:block; margin:0; font-family:var(--font-display); font-size:17px; line-height:1;
+  letter-spacing:.025em;}
+.railbrand h1 span{color:var(--brand);}
+.railbrand small{display:block; margin-top:6px; color:var(--text-secondary); font-family:var(--font-mono);
+  font-size:11px; line-height:1.2; letter-spacing:.08em; text-transform:uppercase;}
+.quicksearch{width:100%; min-height:34px; margin:0 0 5px; border:1px solid var(--border-primary);
+  border-radius:6px; background:var(--bg-editor); color:var(--text-secondary); font:inherit;
+  font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  padding:0 8px; text-align:left;}
+.quicksearch:hover{border-color:var(--accent); color:var(--text-primary);}
+.quicksearch kbd{font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);}
 #palette[hidden]{display:none;}
 #palette{position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex;
   align-items:flex-start; justify-content:center; padding-top:12vh; z-index:50;}
@@ -93,6 +133,7 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   border-radius:8px; width:min(640px,92vw); padding:12px;}
 #palette input{width:100%; padding:7px 9px; font:inherit; color:var(--text-primary);
   background:var(--bg-editor); border:1px solid var(--border-primary); border-radius:5px;}
+input::placeholder,textarea::placeholder{color:var(--text-muted);opacity:1}
 .region-label{font-size:11px; letter-spacing:.08em; text-transform:uppercase;
   color:var(--text-muted); margin:0 0 8px;}
 .railbtn{position:relative; width:100%; height:34px; border:1px solid transparent; border-radius:6px;
@@ -100,7 +141,8 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; padding:0 8px;
   text-align:left;}
 .railbtn:hover{border-color:var(--border-primary); color:var(--text-primary);}
-.railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);}
+.railbtn[aria-current="true"]{border-color:var(--accent); color:var(--accent);
+  background:linear-gradient(90deg,var(--selected-fill),transparent 75%);}
 /* Founder alpha feedback (2026-09-17), problem 3: "the left rail's icons [...]
    read as bare symbols with no meaning." The glyph (">", "$", etc.) and the
    aria-label/title always named each rail item, but .lbl used to sit
@@ -117,15 +159,19 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   background:transparent; color:var(--text-secondary); font:inherit; cursor:pointer;}
 .seg button[aria-pressed="true"]{border-color:var(--accent); color:var(--accent); font-weight:600;}
 .card{border:1px solid var(--border-primary); border-radius:8px; background:var(--bg-surface);
-  padding:12px 14px; margin:0 0 12px;}
-.card h2{margin:0 0 6px; font-size:15px;}
+  padding:14px 16px; margin:0 0 12px; box-shadow:0 1px 0 rgba(0,0,0,.03);}
+.card h2{margin:0 0 7px; font-family:var(--font-display); font-size:18px; line-height:1.25;}
 .muted{color:var(--text-muted);}
 code,pre{font-family:var(--font-mono);}
 .statusitem{display:inline-flex; align-items:center; gap:5px;}
 .statusitem+.statusitem::before{content:"\00b7"; color:var(--text-muted); margin-right:5px;}
-.themebtn{margin-left:auto; border:1px solid var(--border-primary); border-radius:5px;
+.statusactions{margin-left:auto; display:flex; align-items:center; gap:5px;}
+.themebtn,.panelbtn{border:1px solid var(--border-primary); border-radius:5px;
   background:transparent; color:var(--text-secondary); font:inherit; font-size:12px;
   padding:1px 8px; cursor:pointer;}
+.panelbtn[aria-pressed="true"]{border-color:var(--accent); color:var(--pressed-text);
+  background:var(--selected-fill); font-weight:600;}
+.themebtn:hover,.panelbtn:hover{border-color:var(--accent); color:var(--text-primary);}
 .toast{color:var(--accent); font-weight:600;}
 /* list rows — tools, entries, palette results. Arrow keys move between them. */
 .list{list-style:none; margin:0 0 12px; padding:0;}
@@ -161,7 +207,7 @@ code,pre{font-family:var(--font-mono);}
 /* red blast banner — role="alert", never colour alone, holds Copy until acked */
 .blast{border:2px solid var(--danger); border-radius:6px; padding:10px 12px; margin:0 0 12px;
   background:var(--badge-critical-fill);}
-.blast h2{color:var(--danger); font-size:14px; margin:0 0 4px;}
+.blast h2{color:var(--danger-heading); font-size:14px; margin:0 0 4px;}
 .blast label{display:block; margin-top:8px; font-size:13px;}
 .badge{display:inline-block; border:1px solid var(--badge-info); border-radius:999px;
   padding:0 8px; font-size:11px; margin:0 5px 5px 0; color:var(--text-primary);}
@@ -202,6 +248,7 @@ code,pre{font-family:var(--font-mono);}
 .sbadge.b-unrated{border-color:var(--text-muted); color:var(--text-muted);}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
+.flagrow .source{display:block; font-size:11px; color:var(--text-muted);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
 .unverified{color:var(--text-muted); font-style:italic;}
 /* generator guided-form fields (CR-T-17..25) — required/optional/version-gated
@@ -252,15 +299,86 @@ code,pre{font-family:var(--font-mono);}
 .aboutblock{border-left:3px solid var(--border-primary); padding:2px 0 2px 10px;
   margin:0 0 12px; font-size:12px; white-space:pre-wrap;}
 .fieldhelp{margin:4px 0 8px;padding:7px 9px;border-left:3px solid var(--accent);background:var(--bg-editor);font-size:12px;line-height:1.45;}
-.fieldhelp p{margin:2px 0}.opplan{margin:14px 0;border:1px solid var(--border-primary);border-radius:6px;overflow:hidden}
+.fieldhelp p{margin:2px 0}.fieldhelp>p:first-child{color:var(--text-secondary)}
+.fieldhelp details{margin-top:5px}.fieldhelp summary{cursor:pointer;color:var(--accent);font-weight:600}
+.fieldhelp details p{margin:5px 0 0}
+.opplan{margin:14px 0;border:1px solid var(--border-primary);border-radius:6px;overflow:hidden}
 .planstep{padding:10px 12px;border-top:1px solid var(--border-primary)}.planstep:first-child{border-top:0}
 .planstep h3{margin:0 0 5px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.planstep pre{white-space:pre-wrap;margin:5px 0}
 .compare{width:100%;border-collapse:collapse;font-size:12px}.compare th,.compare td{text-align:left;vertical-align:top;padding:6px;border:1px solid var(--border-primary)}
 .learncard{border-left:3px solid var(--accent);padding:8px 10px;margin:8px 0;background:var(--bg-editor)}
 .risknote{padding:7px 9px;border:1px solid var(--border-primary);border-radius:5px;margin:8px 0}
+/* Task-first home and selected-command workspace. These are presentation
+   surfaces over the existing curated IDs and currentResult(); they do not
+   change assembly, validation, evidence, or clipboard behavior. */
+.homehero{padding:24px;max-width:1040px;margin:0 auto;background:linear-gradient(135deg,var(--bg-surface),var(--bg-editor));}
+.homehero h2{font-size:28px;margin-bottom:8px}.homehero>p{max-width:68ch;font-size:15px;color:var(--text-secondary)}
+.homeactions{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}.homeactions .btn{min-height:44px;font-weight:700}
+.homegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:1040px;margin:0 auto 12px}
+.homepanel{border:1px solid var(--border-primary);border-radius:8px;background:var(--bg-surface);padding:16px}
+.homepanel h3{font:700 16px var(--font-display);margin:0 0 5px}.homepanel p{color:var(--text-secondary);margin:0 0 10px}
+.taskcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.taskcard{display:block;width:100%;min-height:64px;text-align:left;border:1px solid var(--border-primary);border-radius:7px;background:var(--bg-editor);color:var(--text-primary);padding:10px 12px;cursor:pointer}
+.taskcard:hover{border-color:var(--accent)}.taskcard strong{display:block}.taskcard span{display:block;margin-top:3px;color:var(--text-secondary);font-size:12px}
+.trustboundary{border-left:4px solid var(--accent);padding:10px 12px;background:var(--bg-editor);color:var(--text-secondary)}.trustboundary+.trustboundary{margin-top:10px}
+.taskcrumb{font:11px var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 7px}
+.tasktitle{font-size:24px!important;margin-bottom:5px!important}.workflowsteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:16px 0}
+.workflowsteps span{border-top:3px solid var(--border-primary);padding:7px 2px 0;color:var(--text-secondary);font-size:12px;font-weight:700}.workflowsteps span:first-child{border-color:var(--accent);color:var(--text-primary)}
+.builderworkspace{display:grid;grid-template-columns:minmax(260px,1fr) minmax(360px,1.1fr);gap:16px;align-items:start}
+.builderfields,.commandreview{min-width:0;border:1px solid var(--border-primary);border-radius:8px;background:var(--bg-surface);padding:16px}
+.builderfields{grid-column:1}.commandreview{grid-column:2;position:sticky;top:0}
+.builderfields>.region-label,.commandreview>.region-label{color:var(--text-secondary);font-weight:700}
+.trustbar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.trustfact{border:1px solid var(--border-primary);border-radius:999px;padding:3px 8px;font-size:11px;color:var(--text-secondary)}
+.trustfact.risk-green{border-color:var(--success)}.trustfact.risk-yellow{border-color:var(--warning)}.trustfact.risk-red{border-color:var(--danger)}
+.primaryaction{background:var(--accent);border-color:var(--accent);color:var(--primary-action-text);font-weight:700;min-height:40px}
+.supportdetails{margin-top:12px;border-top:1px solid var(--border-primary)}.supportdetails>summary{cursor:pointer;padding:12px 0;font-weight:700;color:var(--text-primary)}
+@media (max-width:720px){
+  html,body{height:auto; min-height:100%; width:100%; max-width:100%; overflow-x:hidden;}
+  body,body[data-sidebar="off"],body[data-inspector="off"],
+  body[data-sidebar="off"][data-inspector="off"]{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto auto auto auto auto;
+    grid-template-areas:"rail" "sidebar" "editor" "inspector" "status";
+  }
+  body[data-selection-open="true"],
+  body[data-selection-open="true"][data-sidebar="off"],
+  body[data-selection-open="true"][data-inspector="off"],
+  body[data-selection-open="true"][data-sidebar="off"][data-inspector="off"]{
+    grid-template-areas:"rail" "editor" "sidebar" "inspector" "status";
+  }
+  #rail{position:sticky; top:0; z-index:20; width:100%; max-width:100%; min-width:0; flex-direction:row; align-items:center;
+    flex-wrap:wrap; overflow-x:visible; padding:6px; border-right:0;
+    border-bottom:1px solid var(--border-primary); box-shadow:0 2px 10px rgba(0,0,0,.08);}
+  .railbrand{flex:0 1 98px; min-width:88px; padding:3px 7px; margin:0 2px 0 0;
+    border-bottom:0; border-right:1px solid var(--border-primary);}
+  .railbrand h1{font-size:14px;}.railbrand small{display:none;}
+  .quicksearch{flex:1 1 145px; width:auto; min-width:0; min-height:40px; margin:0; gap:8px;}
+  .railbtn{flex:1 1 78px; width:auto; min-width:0; min-height:40px; height:40px; padding:0 8px;}
+  .railbtn[aria-current="true"]{background:var(--selected-fill);}
+  #sidebar{max-height:42vh; max-width:100%; min-width:0; border-right:0; border-bottom:1px solid var(--border-primary);}
+  #editor{overflow:visible; max-width:100%; min-width:0; padding:12px; scroll-margin-top:132px;}
+  #inspector{overflow:visible; max-width:100%; min-width:0; border-left:0; border-top:1px solid var(--border-primary);}
+  #statusbar{min-height:var(--statusbar-h); height:auto; flex-wrap:wrap; white-space:normal;
+    overflow:visible; padding:6px 10px;}
+  .statusactions{width:100%; margin-left:0;}
+  .themebtn,.panelbtn{min-height:36px; flex:1;}
+  body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:none;}
+  .seg{width:100%; min-width:0}.seg button{min-width:0}
+  .homehero,.homegrid,.homepanel,.taskcards{width:100%; max-width:100%; min-width:0}
+  .homehero{padding:18px 14px}.homehero h2{font-size:23px}.homegrid,.taskcards{grid-template-columns:minmax(0,1fr)}
+  .homepanel p,.taskcard span,.muted{overflow-wrap:anywhere}
+  .homeactions .btn{flex:1 1 100%;white-space:normal}
+  .builderworkspace{display:flex;flex-direction:column}.commandreview{order:1;position:static;width:100%}.builderfields{order:2;width:100%}
+  .workflowsteps{padding:8px 0;margin:8px 0}
+}
+@media (max-width:440px){
+  .railbtn .glyph{display:none;}
+  .railbtn{flex-basis:70px;padding:0 7px;}
+  .card{padding:12px;}
+  .toolbar>.btn,.toolbar>.favbtn{min-height:40px; flex:1 1 auto;}
+}
 @media print{
   body{display:block;}
-  #rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
+  .skiplink,#rail,#sidebar,#inspector,#statusbar,#palette,#evidence-modal{display:none;}
   #editor{background:none; color:#000;}
   .codeline .ln{background:none;}
   .print-only{display:block !important;}
@@ -268,32 +386,37 @@ code,pre{font-family:var(--font-mono);}
 .print-only{display:none;}
 </style>
 </head>
-<body data-sidebar="on" data-inspector="on">
+<body data-sidebar="on" data-inspector="off" data-selection-open="false">
+<a class="skiplink" href="#editor">Skip to command workspace</a>
 
 <!-- RAIL — activity rail. Founder alpha feedback (2026-09-17): the glyph plus
      label is now always visible, not revealed only on hover/focus (UI spec §2
      as amended, problem 3) -- see .railbtn/.railbtn .lbl in the stylesheet. -->
-<nav id="rail" role="navigation" aria-label="Activity rail">
-  <button type="button" class="railbtn" data-rail="builder" aria-label="Command Builder" title="Command Builder (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Command Builder</span></button>
-  <button type="button" class="railbtn" data-rail="stig" aria-label="STIG and Evidence Search" title="STIG and Evidence Search (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">$</span><span class="lbl">STIG Search</span></button>
-  <button type="button" class="railbtn" data-rail="ansible" aria-label="Ansible Generator" title="Ansible Generator (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
-  <button type="button" class="railbtn" data-rail="git" aria-label="Git Command Generator" title="Git Command Generator (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">G</span><span class="lbl">Git</span></button>
-  <button type="button" class="railbtn" data-rail="favorites" aria-label="Favorites and Recent" title="Favorites and Recent (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">*</span><span class="lbl">Favorites</span></button>
-  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference Commands" title="Reference Commands (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">?</span><span class="lbl">Reference</span></button>
+<nav id="rail" role="navigation" aria-label="Primary navigation">
+  <div class="railbrand">
+    <h1>MD <span>CODE RED</span></h1><small>RHEL field console</small>
+  </div>
+  <button type="button" class="quicksearch" data-action="palette" aria-label="Search all tools, commands, STIGs, CCIs, and controls"><span>Search all</span><kbd>Ctrl K</kbd></button>
+  <button type="button" class="railbtn" data-rail="favorites" aria-label="Home" title="Home (Ctrl+Alt+1)"><span class="glyph" aria-hidden="true">H</span><span class="lbl">Home</span></button>
+  <button type="button" class="railbtn" data-rail="builder" aria-label="Build reviewed commands" title="Build reviewed commands (Ctrl+Alt+2)"><span class="glyph" aria-hidden="true">&gt;</span><span class="lbl">Build</span></button>
+  <button type="button" class="railbtn" data-rail="stig" aria-label="Compliance search" title="Compliance search (Ctrl+Alt+3)"><span class="glyph" aria-hidden="true">C</span><span class="lbl">Compliance</span></button>
+  <button type="button" class="railbtn" data-rail="ansible" aria-label="Build Ansible automation" title="Build Ansible automation (Ctrl+Alt+4)"><span class="glyph" aria-hidden="true">Y</span><span class="lbl">Ansible</span></button>
+  <button type="button" class="railbtn" data-rail="git" aria-label="Build Git commands" title="Build Git commands (Ctrl+Alt+5)"><span class="glyph" aria-hidden="true">G</span><span class="lbl">Git</span></button>
+  <button type="button" class="railbtn" data-rail="reference" aria-label="Reference library" title="Reference library (Ctrl+Alt+6)"><span class="glyph" aria-hidden="true">L</span><span class="lbl">Library</span></button>
   <button type="button" class="railbtn" data-rail="about" aria-label="About" title="About (Ctrl+Alt+7)"><span class="glyph" aria-hidden="true">i</span><span class="lbl">About</span></button>
 </nav>
 
 <!-- SIDEBAR — context panel for the active rail tool -->
-<aside id="sidebar" role="complementary" aria-label="Sidebar">
+<aside id="sidebar" role="complementary" aria-label="Command navigator">
   <p class="region-label">RHEL version</p>
   <div class="seg" id="version-seg" role="group" aria-label="RHEL version selector"></div>
   <div id="sidebar-body"><p class="muted">Reading the embedded content island.</p></div>
 </aside>
 
 <!-- EDITOR — the generated command, with gutter -->
-<main id="editor" role="main" aria-label="Editor">
+<main id="editor" role="main" aria-label="Command workspace" tabindex="-1">
   <div id="blast-banner"></div>
-  <div class="card" id="editor-card" aria-live="polite" aria-atomic="false">
+  <div class="card" id="editor-card">
     <h2>Loading</h2>
     <p class="muted" id="editor-empty">Reading the embedded content island.</p>
   </div>
@@ -311,7 +434,7 @@ code,pre{font-family:var(--font-mono);}
 </main>
 
 <!-- INSPECTOR — flag explanations, badges, provenance -->
-<aside id="inspector" role="complementary" aria-label="Inspector">
+<aside id="inspector" role="complementary" aria-label="Command safety and evidence">
   <p class="region-label">Inspector</p>
   <!-- CR-T-26: renderStigPanel() owns this sink exclusively. -->
   <div id="stig-panel"></div>
@@ -319,14 +442,14 @@ code,pre{font-family:var(--font-mono);}
 </aside>
 
 <!-- STATUSBAR — version state, pinned STIG releases, tool version -->
-<footer id="statusbar" role="contentinfo" aria-label="Status bar"></footer>
+<footer id="statusbar" role="contentinfo" aria-label="Application status and controls"></footer>
 
 <!-- PALETTE — command palette overlay (/ or Ctrl/Cmd+K) -->
 <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
   <div class="panel">
     <label class="region-label" for="palette-input">Search tools and commands</label>
-    <input id="palette-input" type="text" autocomplete="off" spellcheck="false"
-           aria-controls="palette-results" aria-describedby="palette-help"
+    <input id="palette-input" type="text" role="combobox" autocomplete="off" spellcheck="false"
+           aria-autocomplete="list" aria-expanded="false" aria-controls="palette-list" aria-describedby="palette-help"
            placeholder="Tool name or command intent">
     <p class="region-label" id="palette-help">Up and down arrows move, Enter opens, Esc closes</p>
     <div id="palette-results"></div>
@@ -337,7 +460,7 @@ code,pre{font-family:var(--font-mono);}
      <pre> here is the SAME string doCopy()'s clipboard rule requires: what is
      previewed is exactly and only what a Copy button on this panel copies
      (threat-model-v1 §9, MCR-SEC-003's rule applied to the exporter). -->
-<div id="evidence-modal" role="dialog" aria-modal="true" aria-label="Export as evidence" hidden>
+<div id="evidence-modal" role="dialog" aria-modal="true" aria-label="Export command and control reference" hidden>
   <div class="panel" id="evidence-modal-body"></div>
 </div>
 
@@ -683,6 +806,59 @@ function isPath(s){
   for(var i=0;i<segs.length;i++){ if(segs[i]==="..") return false; }  /* no traversal */
   return true;
 }
+var HOSTNAME_RE=/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
+var USERNAME_RE=/^[a-z_][a-z0-9_-]{0,31}$/;
+function isRemotePath(s){
+  /* scp/rsync remote operands are parsed again by a remote shell on the
+     legacy RHEL implementations.  Local shQuote() is therefore insufficient:
+     keep the entire [user@]host:/absolute/path operand in a closed grammar. */
+  var colon=s.indexOf(":"),left,path,at,user,host;
+  if(colon<1||s.indexOf(":",colon+1)>=0) return false;
+  left=s.slice(0,colon); path=s.slice(colon+1);
+  at=left.indexOf("@");
+  if(at>=0){
+    if(left.indexOf("@",at+1)>=0) return false;
+    user=left.slice(0,at); host=left.slice(at+1);
+    if(!USERNAME_RE.test(user)) return false;
+  }else host=left;
+  /* A literal dot segment changes where transfer tools place the transaction
+     directory and can turn /srv/tree/. into an in-tree backup. Keep the
+     remote grammar lexical and unambiguous instead of normalising after the
+     operator has reviewed a different string. */
+  var segments=path.split("/");
+  for(var i=0;i<segments.length;i++){ if(segments[i]===".") return false; }
+  return HOSTNAME_RE.test(host)&&isPath(path)&&path!=="/";
+}
+function isChronyDirective(s){
+  /* chronyd accepts complete configuration directives as operands. Keep this
+     one-shot check to the two source directives it actually teaches so a
+     green command cannot smuggle file-writing or logging directives through
+     the former free-text field. */
+  var match=/^(server|pool) ([A-Za-z0-9.:-]+)( iburst)?$/.exec(s);
+  if(!match) return false;
+  return HOSTNAME_RE.test(match[2])||isIpv4(match[2])||isIpv6(match[2]);
+}
+function isHttpUrl(s){
+  /* Only HTTP(S), without credentials, fragments, whitespace, IPv6 literals,
+     or characters that can acquire syntax in another parser. */
+  var prefix=s.indexOf("https://")===0?8:(s.indexOf("http://")===0?7:0);
+  if(!prefix) return false;
+  var rest=s.slice(prefix),slash=rest.indexOf("/"),authority=slash<0?rest:rest.slice(0,slash);
+  var resource=slash<0?"":rest.slice(slash),colon=authority.lastIndexOf(":"),host=authority,port="";
+  if(authority.indexOf("@")>=0||authority.indexOf("[")>=0||authority.indexOf("]")>=0) return false;
+  if(colon>=0){ host=authority.slice(0,colon); port=authority.slice(colon+1); }
+  if(!(HOSTNAME_RE.test(host)||isIpv4(host))) return false;
+  if(port!==""&&!isPort(port)) return false;
+  return resource===""||(/^\/[A-Za-z0-9._~\/%?=&+,-]*$/.test(resource));
+}
+function isGitPath(s){
+  if(s.charAt(0)==="/"||s.charAt(0)==="-") return false;
+  if(!/^[A-Za-z0-9_./-]+$/.test(s)||s.indexOf("//")>=0) return false;
+  var parts=s.split("/");
+  for(var i=0;i<parts.length;i++){ if(!parts[i]||parts[i]==="."||parts[i]==="..") return false; }
+  return true;
+}
+function isPid(s){ return /^[1-9]\d{0,9}$/.test(s); }
 function isGitRefName(s){
   if(!/^[A-Za-z0-9][A-Za-z0-9_./-]*$/.test(s)) return false;
   if(s==="@"||s.indexOf("..")>=0||s.indexOf("//")>=0||/[/.]$/.test(s)) return false;
@@ -697,13 +873,44 @@ function isGitRevision(s){
   if(s.indexOf("..")>=0||s.indexOf("//")>=0||s.charAt(s.length-1)==="/") return false;
   return true;
 }
+function isGitRepository(s){
+  /* Git repositories are parsed by Git a second time, after the shell has
+     removed our quoting. Keep transports to a closed set so legacy Git cannot
+     interpret an ext:: value as a command. */
+  if(s.indexOf("::")>=0||/[\s%]/.test(s)||s.charAt(0)==="-") return false;
+  if(s.charAt(0)==="/") return isPath(s);
+  if(s.indexOf("https://")===0) return isHttpUrl(s);
+  if(s.indexOf("ssh://")===0){
+    var rest=s.slice(6),slash=rest.indexOf("/"),authority,path,at,user,host,colon,port="";
+    if(slash<1) return false;
+    authority=rest.slice(0,slash); path=rest.slice(slash+1);
+    if(!path||!/^[A-Za-z0-9._~+\/-]+$/.test(path)||path.indexOf("//")>=0) return false;
+    at=authority.indexOf("@");
+    if(at>=0){
+      if(authority.indexOf("@",at+1)>=0) return false;
+      user=authority.slice(0,at); authority=authority.slice(at+1);
+      if(!USERNAME_RE.test(user)) return false;
+    }
+    colon=authority.lastIndexOf(":"); host=authority;
+    if(colon>=0){ host=authority.slice(0,colon); port=authority.slice(colon+1); }
+    return (HOSTNAME_RE.test(host)||isIpv4(host))&&(port===""||isPort(port));
+  }
+  /* SCP-like Git syntax requires an explicit user so a bare `scheme:path`
+     cannot silently select a remote helper. */
+  var sep=s.indexOf(":"),left,repo,mark;
+  if(sep<1||s.indexOf(":",sep+1)>=0) return false;
+  left=s.slice(0,sep); repo=s.slice(sep+1); mark=left.indexOf("@");
+  if(mark<1||left.indexOf("@",mark+1)>=0||!repo||
+     !/^[A-Za-z0-9._~+\/-]+$/.test(repo)||repo.indexOf("//")>=0) return false;
+  return USERNAME_RE.test(left.slice(0,mark))&&HOSTNAME_RE.test(left.slice(mark+1));
+}
 
 /* The field TYPE system (threat-model-v1 §3.1). Allow-list, full match, capped.
    'comment' is the ONLY free-text type in the product, it is the only type that
    accepts non-ASCII text, and it is still shQuote()d before it can reach a
    shell. Everything else is a closed grammar or an enum. */
 var FIELD_TYPES={
-  hostname:{cap:253,label:"hostname (RFC 1123)",re:/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/},
+  hostname:{cap:253,label:"hostname (RFC 1123)",re:HOSTNAME_RE},
   ipv4:{cap:15,label:"IPv4 address",fn:isIpv4},
   ipv6:{cap:45,label:"IPv6 address",fn:isIpv6},
   ipaddr:{cap:45,label:"IP address",fn:isIpAddr},
@@ -718,11 +925,23 @@ var FIELD_TYPES={
      is the one character that changes meaning between the shell, YAML, and a
      unit name. The hostile-input harness caught it here; keep it out. */
   unit:{cap:200,label:"systemd unit name",re:/^[A-Za-z0-9_.@:-]+(\.(service|socket|timer|target|mount|automount|path|slice|scope|swap|device))?$/},
-  username:{cap:32,label:"POSIX user name",re:/^[a-z_][a-z0-9_-]{0,31}$/},
+  username:{cap:32,label:"POSIX user name",re:USERNAME_RE},
   groupname:{cap:32,label:"POSIX group name",re:/^[a-z_][a-z0-9_-]{0,31}$/},
   path:{cap:255,label:"absolute path",fn:isPath},
+  remote_path:{cap:509,label:"remote path in [user@]host:/absolute/path form",fn:isRemotePath},
+  http_url:{cap:1024,label:"HTTP or HTTPS URL",fn:isHttpUrl},
+  git_repository:{cap:1024,label:"Git repository (https://, ssh://, user@host:path, or absolute local path)",fn:isGitRepository},
+  git_path:{cap:255,label:"literal repository-relative Git path",fn:isGitPath},
+  shell_variable:{cap:128,label:"shell variable name",re:/^[A-Za-z_][A-Za-z0-9_]*$/},
+  pid:{cap:10,label:"process ID greater than zero",fn:isPid},
   zone:{cap:17,label:"firewalld zone",re:/^[A-Za-z0-9_-]{1,17}$/},
   service:{cap:64,label:"firewalld service name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/},
+  connection_name:{cap:128,label:"ASCII NetworkManager connection name or UUID",re:/^[A-Za-z0-9][A-Za-z0-9_. -]{0,127}$/},
+  lvm_name:{cap:128,label:"LVM volume name",re:/^[A-Za-z0-9][A-Za-z0-9+_.-]{0,127}$/},
+  container_name:{cap:128,label:"container name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
+  directory_name:{cap:128,label:"directory name",re:/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/},
+  unit_description:{cap:128,label:"systemd unit description",re:/^[A-Za-z0-9][A-Za-z0-9 .,:_()\/-]{0,127}$/},
+  chrony_directive:{cap:256,label:"chronyd server or pool directive",fn:isChronyDirective},
   package:{cap:128,label:"package name",re:/^[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}$/},
   selinux_boolean:{cap:64,label:"SELinux boolean",re:/^[a-z][a-z0-9_]{0,63}$/},
   audit_key:{cap:31,label:"audit rule key",re:/^[A-Za-z0-9_-]{1,31}$/},
@@ -1035,12 +1254,14 @@ var DOC_KEY_RE=/^[A-Za-z_][A-Za-z0-9_.-]*$/;
 var DOC_LIT_RE=/^[A-Za-z0-9_./:@+-]+$/;
 var DOC_LINE_LIT_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
 var DOC_LINE_VALUE_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
-/* No whitespace, no quote, no ';' or '#', no '=', no control character:
-   nothing that can end an INI entry or start a comment. */
-var INI_VALUE_RE=/^[A-Za-z0-9_./:@+-]+$/;
+/* Spaces and ordinary description punctuation are data inside an INI value.
+   Quotes, ';', '#', '=', and controls remain excluded because they can alter
+   parsing or begin a comment. */
+var INI_VALUE_RE=/^[A-Za-z0-9_./:@+(), -]+$/;
 /* Closed grammars only, for the reason above the function. */
 var INI_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
-                     "interface","package","unit","service","ipv4","ipv6","ipaddr"];
+                     "interface","package","unit","service","unit_description",
+                     "ipv4","ipv6","ipaddr"];
 var LINE_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
                       "interface","package","unit","service","ipv4","ipv6","ipaddr",
                       "cron_minute","cron_hour"];
@@ -1312,6 +1533,18 @@ function blastFor(command,base,patterns){
   }
   return {blast:blast,reasons:reasons};
 }
+function mergeBlastReasons(first,second){
+  var out=[],seen={},lists=[first||[],second||[]],i,j,r,key;
+  for(i=0;i<lists.length;i++){
+    for(j=0;j<lists[i].length;j++){
+      r=lists[i][j];
+      key=String(r.id||"")+"\u0000"+String(r.why||"");
+      if(seen[key]) continue;
+      seen[key]=true; out.push(r);
+    }
+  }
+  return out;
+}
 
 function assembleEntry(entry,version,patterns){
   var slot=entry.rhel_versions?entry.rhel_versions[version]:null;
@@ -1512,6 +1745,53 @@ function assembleCommand(spec,version,values,opts){
      playbook it runs is the thing that changes hosts -- the same gap
      MCR-SEC-003 found between the command line and the clipboard header. */
   var b=blastFor(command+(doc?"\n"+doc.text:""),spec.blast,patterns);
+  /* A path used as an output operand is a write even when no shell redirect is
+     present. Apply the same target rules as the pipeline composer: execution
+     sinks are refused, protected system paths are red, and every other write
+     remains at least yellow. */
+  var specFields=spec.fields||[];
+  for(i=0;i<specFields.length;i++){
+    var writeField=specFields[i];
+    if(!writeField||writeField.write_target!==true) continue;
+    var writeValue=v.resolved[writeField.name];
+    if(writeValue===undefined||writeValue===null) continue;
+    var writePath=writeField.type==="path"?writeValue:
+                  (writeField.type==="remote_path"?remoteWritePath(writeValue):null);
+    if(writePath===null||isExecutionSink(writePath)) return null;
+    var writeClass=redirectTargetBlast(writePath);
+    var writeWhy="The command writes to "+writeValue+" ("+writeClass+" target class).";
+    if(writeField.type==="remote_path"){
+      var sourceValue=v.resolved.source,sourceBase="",candidateClass="unrated";
+      /* A remote destination may already be a directory even without a final
+         slash. Classify the possible destination/basename path as well as the
+         literal operand. A directory rsync source writes a set of names whose
+         final targets cannot be reviewed here, so it receives the red floor. */
+      if(typeof sourceValue==="string"&&sourceValue!==""){
+        var sourceParts=lexicalPath(sourceValue).split("/");
+        sourceBase=sourceParts[sourceParts.length-1]||"";
+        if(sourceBase!==""){
+          var possiblePath=lexicalPath(writePath+"/"+sourceBase);
+          if(isExecutionSink(possiblePath)) return null;
+          candidateClass=redirectTargetBlast(possiblePath);
+          if(PIPE_TARGET_RANK[candidateClass]>PIPE_TARGET_RANK[writeClass]) writeClass=candidateClass;
+        }
+      }
+      if(spec.id==="rsync-sync-files"){
+        writeClass="red";
+        writeWhy="Rsync can treat the source as a directory even without a trailing slash, so the exact files written below "+writeValue+" cannot be classified in advance.";
+      }else if((typeof sourceValue==="string"&&/\/$/.test(sourceValue))||/\/$/.test(writePath)){
+        writeClass="red";
+        writeWhy="The remote operand can name a directory, so the exact files written below "+writeValue+" cannot be classified in advance.";
+      }else if(candidateClass==="red"){
+        writeWhy="The remote destination may be a directory; joining it with source name "+sourceBase+" reaches a sensitive target.";
+      }
+    }
+    var writeFloor=writeClass==="red"?"red":"yellow";
+    if(BLAST_RANK[writeFloor]>BLAST_RANK[b.blast]) b.blast=writeFloor;
+    b.reasons.push({id:"WRITE-TARGET",label:"File write target",
+                    why:writeWhy,
+                    floor:writeFloor});
+  }
   return {id:spec.id,tool:spec.tool,command:command,flags:flags,blast:b.blast,
           blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version,
           doc:doc};
@@ -1905,7 +2185,7 @@ var XARGS_RED_TOOLS=["rm","unlink","rmdir","kill","pkill","killall","shred","dd"
 /* ---- where a redirect may point (conditions PL3 and PL4) -----------------
    Three classes, and the third is the one that matters most:
 
-     SCRATCH   /tmp, /var/tmp, /home, /root -- the ordinary case. Green.
+     ORDINARY  /tmp, /var/tmp, /home, /root -- a real file write. Yellow.
      SYSTEM    /etc, /boot, /dev, /usr, /var/lib -- RED. `> /etc/passwd`
                truncates the file before the command it redirects has produced
                a single byte, so the damage is done whether or not the command
@@ -1937,7 +2217,7 @@ var PIPE_EXEC_SINK_DIRS=["/etc/cron.d","/etc/cron.hourly","/etc/cron.daily","/et
                          "/etc/init.d","/etc/rc.d","/etc/ld.so.conf.d","/etc/ld.so.preload",
                          "/usr/bin","/usr/sbin","/usr/local/bin","/usr/local/sbin","/bin","/sbin",
                          "/opt","/etc/NetworkManager/dispatcher.d","/etc/kernel/postinst.d",
-                         "/usr/libexec","/etc/xdg/autostart"];
+                         "/usr/libexec","/etc/xdg/autostart","/run/systemd/system"];
 /* ---- PIPE-002: normalise LEXICALLY, then classify (Marcus Reed, D4) -------
    underDir() is a prefix match, and a prefix match answers a question about a
    SPELLING. Three spellings of one file got three ratings in review:
@@ -1979,7 +2259,25 @@ function lexicalPath(target){
     out.push(p);
   }
   var joined=out.join("/");
-  if(absolute) return "/"+joined;
+  if(absolute){
+    var normalized="/"+joined;
+    /* RHEL's usrmerge aliases must classify exactly like their /usr spelling.
+       This is lexical policy, not a filesystem lookup: the four aliases are
+       part of the supported platform contract. */
+    var aliases=[["/bin","/usr/bin"],["/sbin","/usr/sbin"],
+                 ["/lib","/usr/lib"],["/lib64","/usr/lib64"],
+                 ["/var/run","/run"],["/etc/rc.local","/etc/rc.d/rc.local"],
+                 ["/etc/rc0.d","/etc/rc.d/rc0.d"],["/etc/rc1.d","/etc/rc.d/rc1.d"],
+                 ["/etc/rc2.d","/etc/rc.d/rc2.d"],["/etc/rc3.d","/etc/rc.d/rc3.d"],
+                 ["/etc/rc4.d","/etc/rc.d/rc4.d"],["/etc/rc5.d","/etc/rc.d/rc5.d"],
+                 ["/etc/rc6.d","/etc/rc.d/rc6.d"]];
+    for(i=0;i<aliases.length;i++){
+      if(normalized===aliases[i][0]||normalized.indexOf(aliases[i][0]+"/")===0){
+        return aliases[i][1]+normalized.slice(aliases[i][0].length);
+      }
+    }
+    return normalized;
+  }
   return joined===""?".":joined;
 }
 function pathTraverses(target){
@@ -1998,6 +2296,34 @@ function isExecutionSink(target){
   }
   return false;
 }
+/* User-controlled startup and authentication files are not system directories,
+   but changing them can execute code at the next shell start or replace login
+   trust. They therefore receive the red floor for both local redirects and
+   remote-copy destinations. */
+function isSensitiveUserTarget(target){
+  var t=lexicalPath(target),parts=t.split("/"),leaf=parts.length?parts[parts.length-1]:"";
+  if(t.indexOf("/.ssh/")>=0||/\/\.ssh$/.test(t)) return true;
+  if(t.indexOf("/.bashrc.d/")>=0||/\/\.bashrc\.d$/.test(t)) return true;
+  if(inList([".bashrc",".bash_profile",".bash_login",".bash_logout",".profile",
+             ".zshrc",".zprofile",".zshenv",".zlogin",".zlogout",
+             ".cshrc",".tcshrc",".login",".kshrc",".xinitrc",".xsession",
+             ".Xclients",".xprofile",
+             ".k5login",".shosts",".rhosts"],leaf)) return true;
+  if(t.indexOf("/.config/systemd/user/")>=0||/\/\.config\/systemd\/user$/.test(t)) return true;
+  if(t.indexOf("/.local/share/systemd/user/")>=0||/\/.local\/share\/systemd\/user$/.test(t)) return true;
+  if(t.indexOf("/.config/autostart/")>=0||/\/\.config\/autostart$/.test(t)) return true;
+  if(t.indexOf("/.config/environment.d/")>=0||/\/\.config\/environment\.d$/.test(t)) return true;
+  /* A remote copy to a home directory names no final file; the source basename
+     may itself be a startup or trust file. */
+  if(t==="/root"||/^\/home\/[^/]+$/.test(t)) return true;
+  return false;
+}
+/* remote_path has a closed grammar that excludes ':' from the identity and
+   host portions, so the first colon is the one structural separator. */
+function remoteWritePath(value){
+  var s=String(value),at=s.indexOf(":");
+  return at<0?null:s.slice(at+1);
+}
 /* PL3: this function takes a STRING and nothing else. It does not consult the
    `path` field type, the stage shape, or anything the form did. The field type
    is a VALIDATOR; this is the blast rule, and it has to stand on its own if a
@@ -2009,18 +2335,19 @@ function redirectTargetBlast(target){
      The exception is exact: /dev/zero, disks, descendants and look-alikes
      continue through the protected /dev classification below. */
   if(inList(["/dev/null","/dev/stdout","/dev/stderr","/dev/fd/1","/dev/fd/2"],t)) return "green";
+  if(t==="/"||isSensitiveUserTarget(t)) return "red";
   for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
   for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){
     if(!underDir(t,PIPE_SCRATCH_DIRS[i])) continue;
     /* PIPE-002 + PL4: scratch REACHED BY TRAVERSAL is not a curated path, and
        green is a claim somebody made about a path, not an arithmetic result. */
-    return pathTraverses(target)?"unrated":"green";
+    return pathTraverses(target)?"unrated":"yellow";
   }
   return "unrated";                             /* PL4: never green by default */
 }
 /* `unrated` is not a fourth blast colour: it is a rating the product declines to
    make, and it is ranked with the writes so it can never rate BELOW one. */
-var PIPE_TARGET_RANK={green:0,unrated:1,red:2};
+var PIPE_TARGET_RANK={green:0,yellow:1,unrated:1,red:2};
 
 var BLAST_NAMES=["green","yellow","red"];
 
@@ -2076,7 +2403,7 @@ function assemblePipeline(stages,version,opts){
   if(!stages||typeof stages.length!=="number"||!stages.length) return null;
   if(stages.length>MAX_PIPELINE_STAGES) return null;
   if(!inList(["7","8","9","10"],version)) return null;
-  var words=[],flags=[],stageRecords=[],rank=0,i,j;
+  var words=[],flags=[],stageRecords=[],reasons=[],rank=0,i,j;
   var prevOpKey=null,prevKind=null,prevCommand=null;
 
   for(i=0;i<stages.length;i++){
@@ -2125,6 +2452,9 @@ function assemblePipeline(stages,version,opts){
       words.push(shQuote(tgt.value));
       var tb=redirectTargetBlast(tgt.value);
       if(PIPE_TARGET_RANK[tb]>rank) rank=PIPE_TARGET_RANK[tb];
+      reasons.push({id:"WRITE-TARGET",label:"File write target",
+                    why:"Stage "+(i+1)+" writes to "+tgt.value+" ("+tb+" target class).",
+                    floor:tb==="red"?"red":"yellow"});
       stageRecords.push({index:i,op:opKey,kind:"redirect",command:null,target:tgt.value,
                   blast:tb,spec:null});
       prevOpKey=opKey; prevKind="redirect";
@@ -2142,8 +2472,17 @@ function assemblePipeline(stages,version,opts){
       if(!stageBinaryDeclared(st.spec,res.command,toolIndex)) return null;   /* PIPE-001 */
       if(!stageCommandClean(res.command)) return null;
       words.push(res.command);
-      for(j=0;j<(res.flags||[]).length;j++) flags.push(res.flags[j]);
+      for(j=0;j<(res.flags||[]).length;j++){
+        flags.push({flag:res.flags[j].flag,explain:res.flags[j].explain||null,
+                    stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
+      }
       if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
+      if(res.blast==="red"&&!(res.blast_reasons||[]).length){
+        reasons.push({id:"CATALOGUE-RED",label:"Catalogue risk rating",
+                      why:"Stage "+(i+1)+" ("+(st.spec.intent||st.spec.id)+") is catalogued as destructive or lockout-prone.",
+                      floor:"red"});
+      }
+      reasons=mergeBlastReasons(reasons,res.blast_reasons);
       stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
                   blast:res.blast,spec:st.spec});
       prevOpKey=opKey; prevKind="command"; prevCommand=res.command;
@@ -2203,14 +2542,26 @@ function assemblePipeline(stages,version,opts){
          path the operator typed and read. */
       if((childBase!==null&&inList(XARGS_RED_TOOLS,childBase))||child.blast==="red"){
         xrank=BLAST_RANK.red;
+        reasons.push({id:"XARGS-RED",label:"Destructive xargs child",
+                      why:"Stage "+(i+1)+" runs "+(childBase||"a destructive command")+
+                          " once per input batch.",floor:"red"});
       }
+      if(child.blast==="red"&&!(child.blast_reasons||[]).length){
+        reasons.push({id:"CATALOGUE-RED",label:"Catalogue risk rating",
+                      why:"Stage "+(i+1)+" xargs child ("+(st.spec.intent||st.spec.id)+") is catalogued as destructive or lockout-prone.",
+                      floor:"red"});
+      }
+      reasons=mergeBlastReasons(reasons,child.blast_reasons);
       if(xrank>rank) rank=xrank;
       words.push(xcmd);
-      flags.push({flag:"xargs",explain:null});
-      if(nul===true) flags.push({flag:"-0",explain:null});
-      if(maxArgs!=="") flags.push({flag:"-n",explain:null});
-      if(replace===true) flags.push({flag:"-I",explain:null});
-      for(j=0;j<(child.flags||[]).length;j++) flags.push(child.flags[j]);
+      flags.push({flag:"xargs",explain:null,stage_index:i,tool:"xargs"});
+      if(nul===true) flags.push({flag:"-0",explain:null,stage_index:i,tool:"xargs"});
+      if(maxArgs!=="") flags.push({flag:"-n",explain:null,stage_index:i,tool:"xargs"});
+      if(replace===true) flags.push({flag:"-I",explain:null,stage_index:i,tool:"xargs"});
+      for(j=0;j<(child.flags||[]).length;j++){
+        flags.push({flag:child.flags[j].flag,explain:child.flags[j].explain||null,
+                    stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
+      }
       stageRecords.push({index:i,op:opKey,kind:"xargs",command:xcmd,target:null,
                   blast:BLAST_NAMES[xrank],spec:st.spec});
       prevOpKey=opKey; prevKind="xargs"; prevCommand=xcmd;
@@ -2230,16 +2581,26 @@ function assemblePipeline(stages,version,opts){
      visible in the DE-QUOTED projection of the whole pipeline is classified by
      redirectTargetBlast() again, whether or not it came through a validated
      `path` field. Raises only. */
-  var projected=projectedRedirectTargets(unquoteCommand(command)),pi;
+  var projected=projectedRedirectTargets(unquoteCommand(command)),pi,si,alreadyRecorded;
   for(pi=0;pi<projected.length;pi++){
+    alreadyRecorded=false;
+    for(si=0;si<stageRecords.length;si++){
+      if(stageRecords[si].target!==null&&lexicalPath(stageRecords[si].target)===lexicalPath(projected[pi])){
+        alreadyRecorded=true; break;
+      }
+    }
+    if(alreadyRecorded) continue;
     var ptb=redirectTargetBlast(projected[pi]);
     if(PIPE_TARGET_RANK[ptb]>rank) rank=PIPE_TARGET_RANK[ptb];
+    reasons.push({id:"WRITE-TARGET",label:"File write target",
+                  why:"The composed command writes to "+projected[pi]+" ("+ptb+" target class).",
+                  floor:ptb==="red"?"red":"yellow"});
   }
   var b=blastFor(command,BLAST_NAMES[rank],patterns);
   var ops=[];
   for(i=0;i<stageRecords.length;i++){ if(stageRecords[i].op!==null) ops.push(stageRecords[i].op); }
   return {id:"pipeline",tool:"pipeline",command:command,flags:flags,
-          blast:b.blast,blast_reasons:b.reasons,notes:null,resolved_from:null,
+          blast:b.blast,blast_reasons:mergeBlastReasons(reasons,b.reasons),notes:null,resolved_from:null,
           version:version,stages:stageRecords,operators:ops};
 }
 
@@ -2623,7 +2984,7 @@ function formatEvidenceText(opts){
      function stays pure over exactly the values it is handed, same as res/
      stigRow/rule above. */
   if(opts.vstatus){
-    push("Verified (RHEL "+(opts.version||"")+"): "+opts.vstatus.text);
+    push("Verification (RHEL "+(opts.version||"")+"): "+opts.vstatus.label+" — "+opts.vstatus.text);
   }
   push("");
   if(stigRow){
@@ -2675,6 +3036,8 @@ function formatEvidenceText(opts){
   if(pstages&&pstages.length){
     push("Pipeline: "+pstages.length+" stages, composed in this tool. The operators between "+
          "stages are emitted by the tool from a fixed set; they are not values anyone typed.");
+    push("Pipeline STIG/control identity: none. Composition changes the evaluated command; "+
+         "review each stage's catalog record separately.");
     push("");
     for(si=0;si<pstages.length;si++){
       var ps=pstages[si];
@@ -2690,24 +3053,23 @@ function formatEvidenceText(opts){
       }else{
         push("    Source citation: not recorded on this stage.");
       }
-      var pstig=ps.stig||[];
-      for(sj=0;sj<pstig.length;sj++){
-        push("    STIG: "+(pstig[sj].stig_id||"")+"  NIST: "+
-             ((pstig[sj].nist||[]).join(", ")||"none mapped"));
-      }
     }
     push("");
   }
   if(res){
     push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
     push(res.command||"");
-    if(entry&&entry.privilege) push("Requires: "+entry.privilege);
+    var requiredPrivilege=opts.privilege||(entry&&entry.privilege)||"";
+    if(requiredPrivilege) push("Requires: "+requiredPrivilege);
     push("");
     var flags=res.flags||[],fi;
     if(flags.length){
       push("Flags:");
       for(fi=0;fi<flags.length;fi++){
-        push("  "+flags[fi].flag+" — "+(flags[fi].explain||"unverified — see man page"));
+        var flagSource=(res.stages&&flags[fi].stage_index!==undefined)?
+          "Stage "+(Number(flags[fi].stage_index)+1)+" · "+(flags[fi].tool||"unknown tool")+" · ":"";
+        push("  "+flagSource+flags[fi].flag+" — "+
+             (flags[fi].explain||"unverified — see man page"));
       }
       push("");
     }
@@ -2920,15 +3282,32 @@ function fieldInstruction(entry,name){
   var row=instructionFor(entry);
   return row&&row.fields?row.fields[name]||null:null;
 }
+/* ===== MCR-INSTRUCTION-BINDING-BEGIN ===================================== */
 function bindInstruction(text,values){
-  return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>/g,function(_m,name){
-    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"<"+name+">";
-  }).replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,function(_m,name){
-    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"{{"+name+"}}";
+  /* Bind both placeholder syntaxes in one pass. A value containing text that
+     happens to look like the other placeholder syntax is operator data, not a
+     second template, and must remain byte-for-byte unchanged. */
+  return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>|\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,function(match,angle,braces){
+    var name=angle||braces;
+    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):match;
   });
 }
+function bindInstructionCommand(text,values){
+  /* Instruction prose names the operator's value as typed. Shell commands
+     need a different domain: each raw form value becomes one POSIX word.
+     Derived values below already come from shQuote() or from a closed command
+     fragment and must not be quoted a second time. */
+  var bound={},prequoted={generated_rule_arg:true,remote_destination_path:true,
+                          remote_source_basename:true};
+  for(var name in values){
+    if(!Object.prototype.hasOwnProperty.call(values,name)) continue;
+    bound[name]=prequoted[name]?String(values[name]):shQuote(String(values[name]));
+  }
+  return bindInstruction(text,bound);
+}
+/* ===== MCR-INSTRUCTION-BINDING-END ======================================= */
 function operationalPlan(entry,res){
-  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],i,item,match;
+  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],preCopy=[],i,item,match;
   for(var valueName in formValues){
     if(Object.prototype.hasOwnProperty.call(formValues,valueName)) values[valueName]=formValues[valueName];
   }
@@ -2937,15 +3316,43 @@ function operationalPlan(entry,res){
      same rule instead of leaving an operator to reconstruct it by hand. */
   match=String((res&&res.command)||"").match(/--add-rich-rule=('[^']*')/);
   if(match) values.generated_rule_arg=match[1];
+  if(typeof values.destination==="string"&&validateField("remote_path",values.destination,null).ok){
+    var remoteColon=values.destination.indexOf(":");
+    var remotePath=values.destination.slice(remoteColon+1);
+    if(remotePath.length>1&&/\/$/.test(remotePath)) remotePath=remotePath.slice(0,-1);
+    values.remote_identity=values.destination.slice(0,remoteColon);
+    values.remote_destination_path=shQuote(remotePath);
+    if(typeof values.source==="string"&&validateField("path",values.source,null).ok){
+      var remoteSourceParts=lexicalPath(values.source).split("/");
+      values.remote_source_basename=shQuote(remoteSourceParts[remoteSourceParts.length-1]);
+    }
+  }
   for(i=0;i<(ins.prerequisites||[]).length;i++){
-    item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+    item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
+    if(item.command) preCopy.push(bindInstructionCommand(item.command,values));
   }
   for(i=0;i<(ins.preflight||[]).length;i++){
-    item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+    item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
+    if(item.command) preCopy.push(bindInstructionCommand(item.command,values));
   }
-  return {preflight:pre.join("\n"),run:res.command,
-          verify:bindInstruction(entry.verify||"No curated verification step.",values),
-          recover:bindInstruction(entry.undo||"No curated recovery step.",values)};
+  var authoredVerify=entry.verify||"No curated verification step.";
+  var authoredRecover=entry.undo||"No curated recovery step.";
+  var verify=bindInstructionCommand(authoredVerify,values);
+  var recover=bindInstructionCommand(authoredRecover,values);
+  /* Displayed runbook prose is useful guidance, but it is not automatically a
+     shell program. Only authored command fields and the transaction scripts
+     carrying a closed MDCR marker are offered to the clipboard. */
+  function markedScript(text){
+    var marker=String(text).search(/# MDCR_[A-Z0-9_]+_(?:FINALIZE|RECOVER)(?:\n|'|$)/);
+    if(marker<0) return null;
+    var start=String(text).lastIndexOf("printf",marker);
+    return start<0?null:String(text).slice(start);
+  }
+  var verifyScript=markedScript(authoredVerify),recoverScript=markedScript(authoredRecover);
+  return {preflight:pre.join("\n"),run:res.command,verify:verify,recover:recover,
+          copy:{preflight:preCopy.length?preCopy.join("\n"):null,run:res.command,
+                verify:verifyScript===null?null:bindInstructionCommand(verifyScript,values),
+                recover:recoverScript===null?null:bindInstructionCommand(recoverScript,values)}};
 }
 function instructionIsBound(text){
   /* Hyphenated and plain-English placeholders previously escaped the narrow
@@ -2956,9 +3363,9 @@ function instructionIsBound(text){
 
 /* ============ version state — one source of truth, mirrored to sessionStorage ============ */
 var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
-           rail:"builder",toolId:null,entryId:null,line:0,acked:false,
+           rail:"favorites",toolId:null,entryId:null,line:0,acked:false,
            toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],paletteGroups:[],
-           formValues:{},
+           formValues:{},announcementComplete:null,
            /* CR-T-26: a STIG rule opened from search with no associated command. */
            stigRuleId:null,stigRuleVersion:null,
            /* CR-T-28 */ evidenceOpen:false,
@@ -3020,6 +3427,7 @@ function setVersion(v){
   if(RHEL_VERSIONS.indexOf(v)<0) return;
   STATE.version=v;
   STATE.acked=false;                              /* a new version is a new command */
+  STATE.toast="";
   STORE.setSession("version",v);
   renderAll();
 }
@@ -3451,12 +3859,8 @@ function commentHeaderLines(res,entry,blast){
       }
       lines.push("stage "+(i+1)+": "+opLabel+((stEntry&&stEntry.intent)||st.command||"")+
                  "  ["+st.blast+"]");
-      var srows=stEntry?stigRowsFor(stEntry):[];
-      for(j=0;j<srows.length;j++){
-        lines.push("  STIG: "+srows[j].stig_id+" (CAT "+catFor(srows[j])+")  NIST: "+
-                   ((srows[j].nist||[]).join(", ")||"n/a"));
-      }
     }
+    lines.push("STIG/control identity: none — composition changes the evaluated command; review each stage separately.");
     lines.push("blast: "+blast);
     return lines;
   }
@@ -3481,7 +3885,7 @@ function withCopyPayloads(res,entry){
   var probe=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
   var b=blastFor(probe===null?res.command:probe,res.blast,PATTERNS);
   res.blast=b.blast;
-  res.blast_reasons=b.reasons;
+  res.blast_reasons=mergeBlastReasons(res.blast_reasons,b.reasons);
   res.copy_plain=res.command;
   res.copy_comment=commentPayload(commentHeaderLines(res,entry,res.blast),res.command);
   /* CR-T-25. The generated file is a THIRD clipboard payload, and it is the one
@@ -3526,6 +3930,7 @@ var THEME=(function(){
 
 /* ============ clipboard — air-gapped: a selection and execCommand, nothing else ============ */
 function copyText(text){
+  var previous=document.activeElement;
   var ta=document.createElement("textarea");
   ta.value=String(text);
   ta.setAttribute("readonly","readonly");
@@ -3536,6 +3941,7 @@ function copyText(text){
   var ok=false;
   try{ ok=document.execCommand("copy")===true; }catch(e){ ok=false; }
   document.body.removeChild(ta);
+  if(previous&&previous.focus&&document.contains(previous)) previous.focus();
   return ok;
 }
 function toast(msg){
@@ -3562,9 +3968,9 @@ function doCopyPlanStep(which){
   if(!entry||!res||!isGeneratorEntry(entry)){ toast("No complete guided plan is assembled."); return; }
   if(res.blast==="red"&&!STATE.acked){ toast("Destructive command — tick the review box first."); return; }
   var plan=operationalPlan(entry,res),payload;
-  if(which==="all") payload="PREFLIGHT\n"+plan.preflight+"\n\nRUN\n"+plan.run+"\n\nVERIFY\n"+plan.verify+"\n\nRECOVER\n"+plan.recover;
-  else payload=plan[which];
+  payload=plan.copy[which];
   if(payload===undefined){ toast("That plan step is unavailable."); return; }
+  if(payload===null){ toast("This step is guidance; only runnable command steps can be copied."); return; }
   if(!instructionIsBound(payload)){ toast("Copy refused — this step still contains an unresolved placeholder."); return; }
   toast(copyText(payload)?"Copied operational plan step":"Copy failed — select the displayed plan text and copy it manually.");
 }
@@ -3606,8 +4012,7 @@ function evidenceStageRows(res){
     rows.push({operator:st.op&&PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit:null,
                intent:stEntry?(stEntry.intent||stEntry.id):null,
                command:st.command||null,target:st.target||null,blast:st.blast||null,
-               source:stEntry?(stEntry.source||null):null,
-               stig:stEntry?stigRowsFor(stEntry):[]});
+               source:stEntry?(stEntry.source||null):null});
   }
   return rows;
 }
@@ -3615,7 +4020,11 @@ function evidenceContext(){
   var res=currentResult();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
   var version=STATE.version,stigRow=null,rule=null;
-  if(entry){
+  /* The selected entry is only editor context while a pipeline is active. It
+     must not lend its receipt or STIG row to a composed command. */
+  if(STATE.pipeline.length){
+    entry=null;
+  }else if(entry){
     var rows=stigRowsFor(entry);
     if(rows.length) stigRow=rows[0];
   }else if(STATE.stigRuleId){
@@ -3631,8 +4040,25 @@ function exportEvidence(){
     toast("Nothing to export — select a command or a STIG rule first.");
     return;
   }
+  EVIDENCE_OPENER=document.activeElement;
   STATE.evidenceOpen=true;
+  setEvidenceBackgroundInert(true);
   renderEvidenceModal();
+}
+var EVIDENCE_OPENER=null,EVIDENCE_INERTED=[];
+function setEvidenceBackgroundInert(on){
+  var modal=el("evidence-modal"),children=document.body&&document.body.children?document.body.children:[],i,node;
+  if(on){
+    EVIDENCE_INERTED=[];
+    for(i=0;i<children.length;i++){
+      node=children[i];
+      if(node===modal) continue;
+      if("inert" in node){ node.inert=true; EVIDENCE_INERTED.push(node); }
+    }
+  }else{
+    for(i=0;i<EVIDENCE_INERTED.length;i++){ EVIDENCE_INERTED[i].inert=false; }
+    EVIDENCE_INERTED=[];
+  }
 }
 function renderEvidenceModal(){
   if(!STATE.evidenceOpen){
@@ -3651,33 +4077,47 @@ function renderEvidenceModal(){
   /* verification status for THE EXPORTED VERSION ONLY (task item 4) —
      computed here, at the render call site, exactly like stigMeta/src above,
      so formatEvidenceText() stays pure over values it is handed. */
-  var vstatus=ctx.entry?verificationStatusForVersion(ctx.entry,ctx.version):null;
+  var vstatus=verificationStatusForResult(ctx.res,ctx.entry,ctx.version);
   var text=formatEvidenceText({
     res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,version:ctx.version,
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
     stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
     source:src,operatorDate:operatorDate,vstatus:vstatus,
+    privilege:resultPrivilege(ctx.res,ctx.entry),
     stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
+  STATE._evidenceRequiresAck=!!(ctx.res&&ctx.res.blast==="red"&&!STATE.acked);
   var html="<p class=\"region-label\">Command and control reference — plain text</p>";
   html+="<pre class=\"evidencepre\" aria-label=\"Evidence export preview — exactly what Copy copies\">"+
         esc(text)+"</pre>";
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-copy\">Copy evidence text</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-copy\""+
+        (STATE._evidenceRequiresAck?" disabled aria-disabled=\"true\" title=\"Tick the review box before copying a destructive command\"":"")+
+        ">Copy evidence text</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-close\">Close</button>";
   html+="</div>";
   el("evidence-modal-body").innerHTML=html;
   el("evidence-modal").hidden=false;
+  if(!el("evidence-modal").contains(document.activeElement)){
+    var first=el("evidence-modal-body").querySelector("button");
+    if(first) first.focus();
+  }
 }
 function closeEvidenceModal(){
   STATE.evidenceOpen=false;
   STATE._evidenceText=null;
+  STATE._evidenceRequiresAck=false;
   el("evidence-modal").hidden=true;
   el("evidence-modal-body").innerHTML="";
+  setEvidenceBackgroundInert(false);
+  var back=EVIDENCE_OPENER;
+  EVIDENCE_OPENER=null;
+  if(back&&back!==document.body&&back.focus&&document.documentElement.contains(back)) back.focus();
 }
 function doCopyEvidence(){
   if(!STATE._evidenceText){ toast("Nothing to copy."); return; }
+  if(STATE._evidenceRequiresAck){ toast("Destructive command — tick the review box first."); return; }
   var ok=copyText(STATE._evidenceText);
   toast(ok?"Evidence copied to clipboard.":
            "Copy failed — select the text in the preview and use your browser's copy.");
@@ -3720,7 +4160,7 @@ function nistForCci(cciList){
 /* ============ per-version verification status ============
    CEO ruling closing Riley Park's first capture review (capture-review-run1-
    2026-09-18.md RILEY-F1): `verified` is an object keyed by RHEL version, each
-   value false or a {by, on, host, capture} receipt — never a single
+   value false or a {by, on, host, capture, command_as_run} receipt — never a single
    whole-entry claim. This is the ONE place that turns entry.verified[version]
    (plus, where one exists, a joined STIG capture) into the three states the
    UI ever shows for a version:
@@ -3747,12 +4187,17 @@ function nistForCci(cciList){
    never markup (Q17's audit rule — every field a caller reads off this
    crosses esc()/escapeAttr() at the call site, same as ruleFor()/
    nistForCci() above). */
-function verificationStatusForVersion(entry, version){
+function verificationStatusForVersion(entry, version, command){
   var ver=(entry&&entry.verified)||{};
   var receipt=ver[version];
   if(receipt&&typeof receipt==="object"){
-    return {state:"verified", label:"Verified",
-            text:"verified by "+receipt.by+" on "+receipt.on+" ("+receipt.host+")"};
+    if(command&&receipt.command_as_run===command){
+      return {state:"verified", label:"Verified",
+              text:"this exact command was verified by "+receipt.by+" on "+receipt.on+
+                   " ("+receipt.host+")"};
+    }
+    return {state:"unverified", label:"Not host-verified",
+            text:"the current command differs from the command in the reviewed host receipt"};
   }
   var rows=(entry&&entry.stig)||[],i;
   for(i=0;i<rows.length;i++){
@@ -3761,6 +4206,13 @@ function verificationStatusForVersion(entry, version){
     }
   }
   return {state:"unverified", label:"Not host-verified", text:"not host-verified"};
+}
+function verificationStatusForResult(res,entry,version){
+  if(res&&res.stages){
+    return {state:"unverified",label:"Composed — not host-verified",
+            text:"the composed pipeline has no single host-verification receipt; review each stage"};
+  }
+  return entry?verificationStatusForVersion(entry,version,res&&res.command):null;
 }
 
 /* ============ CR-T-26: the STIG panel ============
@@ -3777,8 +4229,20 @@ function verificationStatusForVersion(entry, version){
    with no row for it, renders an empty panel, not an empty card. */
 function renderStigPanel(){
   var html="";
-  var rows=[],version=STATE.version,standalone=false;
-  if(STATE.entryId){
+  var rows=[],version=STATE.version;
+  var standalone=!!(STATE.stigRuleId&&STATE.stigRuleVersion);
+  /* A pipeline suppresses control identity inherited from a selected command.
+     A standalone STIG rule opened from search is a separate reading task and
+     remains visible; it is still excluded from the composed command export. */
+  if(STATE.pipeline.length&&!standalone){
+    el("stig-panel").innerHTML="";
+    el("print-stig-panel").innerHTML="";
+    return;
+  }
+  if(standalone){
+    version=STATE.stigRuleVersion;
+    rows=[{stig_id:STATE.stigRuleId,rhel_version:STATE.stigRuleVersion,cci:null,nist:null}];
+  }else if(STATE.entryId){
     var entry=entryById(STATE.entryId);
     rows=entry?stigRowsFor(entry):[];
     if(entry){
@@ -3788,10 +4252,6 @@ function renderStigPanel(){
               esc(slot.changed_in_note)+"</p>";
       }
     }
-  }else if(STATE.stigRuleId&&STATE.stigRuleVersion){
-    version=STATE.stigRuleVersion;
-    rows=[{stig_id:STATE.stigRuleId,rhel_version:STATE.stigRuleVersion,cci:null,nist:null}];
-    standalone=true;
   }
   if(!rows.length){
     el("stig-panel").innerHTML=html;
@@ -3888,7 +4348,9 @@ function entryGateInfo(e){
    trusted, let alone rendered). An id that no longer resolves — an older
    build's favorite — is silently skipped rather than shown blank. */
 function renderFavoritesSidebar(){
-  var html="<p class=\"region-label\">Favorites</p>";
+  var html="<p class=\"region-label\">Home</p>";
+  html+="<p class=\"muted\">Start from an outcome, return to saved work, or use Search all. Reviewed tasks stay separate from the Library's mined reference text.</p>";
+  html+="<p class=\"region-label\">Favorites</p>";
   var i,id,entry,tool;
   if(!STATE.favorites.length){
     html+="<p class=\"muted\">No favorites yet. Open a command and use the Favorite button in its toolbar.</p>";
@@ -3926,6 +4388,48 @@ function renderFavoritesSidebar(){
   }
   el("sidebar-body").innerHTML=html;
 }
+function renderHome(){
+  var html="<section class=\"homehero\"><p class=\"taskcrumb\">Offline · deterministic · RHEL "+esc(STATE.version)+"</p>"+
+           "<h2>What do you need to do?</h2>"+
+           "<p>Choose a reviewed task by outcome. MD CODE RED keeps the exact command, release, risk, source, verification, and recovery guidance together.</p>"+
+           "<div class=\"homeactions\"><button type=\"button\" class=\"btn primaryaction\" data-action=\"palette\">Find a reviewed task</button>"+
+           "<button type=\"button\" class=\"btn\" data-rail=\"builder\">Browse all reviewed commands</button>"+
+           "<button type=\"button\" class=\"btn\" data-rail=\"stig\">Assess controls</button></div></section>";
+  html+="<div class=\"homegrid\"><section class=\"homepanel\"><h3>Common RHEL tasks</h3>"+
+        "<p>Open a guided builder with the selected release carried forward.</p><div class=\"taskcards\">";
+  var packageEntry=STATE.version==="7"?"gen-yum-package":"gen-dnf-package";
+  var common=["gen-journalctl-unit-logs","gen-systemctl-manage","gen-useradd-create","gen-fw-allow-service","gen-lsblk-inspect-storage",packageEntry];
+  var labels={"gen-journalctl-unit-logs":"Read service logs","gen-systemctl-manage":"Manage a service","gen-useradd-create":"Create a local user","gen-fw-allow-service":"Open firewall access","gen-lsblk-inspect-storage":"Inspect storage","gen-yum-package":"Install a package","gen-dnf-package":"Install a package"};
+  for(var ci=0;ci<common.length;ci++){
+    var ce=entryById(common[ci]);
+    if(!ce) continue;
+    html+="<button type=\"button\" class=\"taskcard\" data-entry=\""+escapeAttr(ce.id)+"\"><strong>"+
+          esc(labels[ce.id]||ce.intent||ce.id)+"</strong><span>"+esc(ce.tool)+(isGeneratorEntry(ce)?" · guided form":" · reviewed recipe")+"</span></button>";
+  }
+  html+="</div></section><section class=\"homepanel\"><h3>Choose a working mode</h3>"+
+        "<p>Start in the area that matches the outcome.</p><div class=\"taskcards\">"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"builder\"><strong>Operate a host</strong><span>Commands, services, users, packages, storage, and networking</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"ansible\"><strong>Automate a change</strong><span>Ansible playbooks and control-node commands</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"git\"><strong>Work with Git</strong><span>Repository, branch, recovery, and history tasks</span></button>"+
+        "<button type=\"button\" class=\"taskcard\" data-rail=\"reference\"><strong>Research vendor syntax</strong><span>Clearly labeled Library material with copy friction</span></button></div></section>";
+  var paths=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.learning_paths)||[];
+  html+="<section class=\"homepanel\"><h3>Learn and teach</h3><p>Short paths reuse the same reviewed tasks operators run.</p>";
+  for(var lp=0;lp<paths.length;lp++){
+    var path=paths[lp];
+    html+="<div class=\"learncard\"><strong>"+esc(path.title)+"</strong><p>"+esc(path.summary)+"</p><ol>";
+    for(var ls=0;ls<path.entry_ids.length;ls++){
+      var lessonEntry=entryById(path.entry_ids[ls]);
+      html+="<li><button type=\"button\" class=\"btn\" data-learn-entry=\""+escapeAttr(path.entry_ids[ls])+"\">"+
+            esc(lessonEntry?(lessonEntry.intent||lessonEntry.id):path.entry_ids[ls])+"</button></li>";
+    }
+    html+="</ol><details><summary>Comprehension check</summary><p>"+esc(path.check.question)+
+          "</p><p class=\"muted\">Answer: "+esc(path.check.answer)+"</p></details></div>";
+  }
+  html+="</section><section class=\"homepanel\"><h3>Know what you are using</h3>"+
+        "<div class=\"trustboundary\"><strong>Reviewed catalog</strong><br>Curated commands use deterministic assembly, RHEL gating, safety classification, and cited sources.</div>"+
+        "<div class=\"trustboundary\"><strong>Reference Library</strong><br>Mined vendor and DISA text is visibly unrated, never assembled, and requires acknowledgement before copy.</div></section></div>";
+  el("editor-card").innerHTML=html;
+}
 function renderToolList(){
   var all=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[];
   var html="";
@@ -3943,22 +4447,6 @@ function renderToolList(){
     html+="<p class=\"muted\">Use the activity rail to open a catalog workspace.</p>";
     el("sidebar-body").innerHTML=html;
     return;
-  }
-  if(STATE.rail==="builder"){
-    var paths=(DATASETS.INSTRUCTIONAL&&DATASETS.INSTRUCTIONAL.learning_paths)||[];
-    html+="<p class=\"region-label\">Start here</p>";
-    for(var lp=0;lp<paths.length;lp++){
-      var path=paths[lp];
-      html+="<div class=\"learncard\"><strong>"+esc(path.title)+"</strong><p class=\"muted\">"+
-            esc(path.summary)+"</p><ol>";
-      for(var ls=0;ls<path.entry_ids.length;ls++){
-        var lessonEntry=entryById(path.entry_ids[ls]);
-        html+="<li><button type=\"button\" class=\"btn\" data-learn-entry=\""+
-              escapeAttr(path.entry_ids[ls])+"\">"+esc(lessonEntry?(lessonEntry.intent||lessonEntry.id):path.entry_ids[ls])+"</button></li>";
-      }
-      html+="</ol><details><summary>Comprehension check</summary><p>"+esc(path.check.question)+
-            "</p><p class=\"muted\">Answer: "+esc(path.check.answer)+"</p></details></div>";
-    }
   }
   /* The Ansible rail renders the SAME tool list as the Command Builder, over a
      different slice of tools.json: the seven ansible-* control-node binaries,
@@ -3980,6 +4468,7 @@ function renderToolList(){
     else if(!ansibleRail && !gitRail && all[ti].category!=="ansible" && all[ti].category!=="git") tools.push(all[ti]);
   }
   html+="<p class=\"region-label\">"+esc(ansibleRail?"Ansible":gitRail?"Git":"Tools")+"</p>";
+  html+="<p class=\"muted\">Reviewed catalog only. Mined vendor and DISA text stays in the separate Library.</p>";
   if(!tools.length){
     html+="<p class=\"muted\">No tools in this build's content island.</p>";
     el("sidebar-body").innerHTML=html;
@@ -4025,30 +4514,6 @@ function renderToolList(){
               (e.id===STATE.entryId?"true":"false")+"\">"+esc(e.intent||e.id)+
               (isGeneratorEntry(e)?"<span class=\"why\">guided form</span>":"")+"</button></li>";
       }
-    }
-    var refs=refCommandsForTool(t.id);
-    if(refs.length){
-      html+="<li><p class=\"region-label reftier\">Reference commands ("+
-            esc(String(refs.length))+") &mdash; vendor text, not host-verified</p>";
-      html+="<ul class=\"list reflist\" data-listnav=\"refs\">";
-      var shown=0,r2;
-      for(r2=0;r2<refs.length&&shown<REF_SIDEBAR_CAP;r2++){
-        var rr=refs[r2];
-        if(!refOnVersion(rr)) continue;
-        shown++;
-        html+="<li><button type=\"button\" class=\"row ref\" data-ref=\""+escapeAttr(rr.id)+
-              "\" aria-current=\""+(rr.id===STATE.refId?"true":"false")+"\">"+esc(rr.c)+
-              "<span class=\"why\">"+esc(rr.authority==="governing"?"DISA reference":"vendor doc")+
-              (rr.trunc?esc(" \u00b7 incomplete line"):"")+"</span></button></li>";
-      }
-      if(!shown){
-        html+="<li><p class=\"muted\">No reference command for this tool on RHEL "+
-              esc(STATE.version)+".</p></li>";
-      }else if(refs.length>shown){
-        html+="<li><p class=\"muted\">Showing "+esc(String(shown))+" of "+esc(String(refs.length))+
-              ". Press / and search to reach the rest.</p></li>";
-      }
-      html+="</ul></li>";
     }
     html+="</ul></li>";
   }
@@ -4272,7 +4737,7 @@ function cloneValues(v){
   for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
   return out;
 }
-function bumpPipeline(){ STATE.pipelineRev++; }
+function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; STATE.toast=""; }
 /* The assembler's stage array, built fresh from STATE. Every command stage
    hands over the ENTRY as its spec -- the same object assembleCommand() is
    given for a single command -- so a stage is assembled by exactly the code a
@@ -4450,16 +4915,26 @@ function pipelineSetKind(i,kind){
   renderAll();
 }
 function pipelineSetField(i,field,value){
+  var focusIdentity=renderedFocusIdentity();
   var row=STATE.pipeline[i];
   if(!row) return;
-  if(field==="target"){ row.target=value; }
-  else if(field==="maxargs"){ row.xargs.maxArgs=value; }
-  else if(field==="nul"){ row.xargs.nul=(value==="1"); }
-  else if(field==="replace"){ row.xargs.replace=(value==="1"); }
+  if(field==="target"){ if(row.target===value) return; row.target=value; }
+  else if(field==="maxargs"){ if(row.xargs.maxArgs===value) return; row.xargs.maxArgs=value; }
+  else if(field==="nul"){
+    var nulValue=(value==="1"); if(row.xargs.nul===nulValue) return; row.xargs.nul=nulValue;
+  }
+  else if(field==="replace"){
+    var replaceValue=(value==="1"); if(row.xargs.replace===replaceValue) return; row.xargs.replace=replaceValue;
+  }
   else return;
   bumpPipeline();
-  reRenderEditorAndInspector();
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  if(entry&&isGeneratorEntry(entry)) renderGeneratorResult();
+  else renderEditor();
+  renderInspector();
   renderPipelinePanel();
+  renderStatusBar();
+  restoreRenderedFocus(focusIdentity);
 }
 /* PL6: the panel names the stage that is incomplete, and only that stage.
    validatePipeline() is the assembler's own decision, per stage, so what this
@@ -4470,7 +4945,13 @@ function pipelineBlastBadge(blast){
   if(!inList(["green","yellow","red","unrated"],blast)) return "";
   return "<span class=\"sbadge b-"+escapeAttr(blast)+"\">"+esc(blast)+"</span>";
 }
+/* Replacing the focused pipeline row causes Chromium to emit a synchronous
+   change event during the innerHTML assignment. That late event carries the
+   same value already stored by the input event. Refuse its nested render so
+   one node replacement completes before another begins. */
+var pipelinePanelRendering=false;
 function renderPipelinePanel(){
+  if(pipelinePanelRendering) return;
   var target=el("pipeline-panel");
   if(!target) return;
   if(!STATE.pipeline.length){
@@ -4596,7 +5077,9 @@ function renderPipelinePanel(){
         ">Add a redirection</button>";
   html+="<button type=\"button\" class=\"btn\" data-pipe-action=\"clear\">Clear pipeline</button>";
   html+="</div></div>";
-  target.innerHTML=html;
+  pipelinePanelRendering=true;
+  try{ target.innerHTML=html; }
+  finally{ pipelinePanelRendering=false; }
 }
 /* The reference-tier editor pane. READ ONLY, by construction rather than by
    discipline: there is no form, no field, no template, no assembler call and no
@@ -4681,6 +5164,11 @@ function renderReferenceEditor(rec){
 
 function renderEditor(){
   var html="";
+  if(STATE.rail==="favorites"){
+    renderBlastBanner(null);
+    renderHome();
+    return;
+  }
   if(STATE.rail==="about"){
     renderAbout();
     return;
@@ -4698,7 +5186,7 @@ function renderEditor(){
     if(STATE.stigRuleId){
       html+="<div class=\"card\"><h2>"+esc(STATE.stigRuleId)+"</h2>"+
             "<p class=\"muted\">Opened from search. The check text, fix text and control mapping "+
-            "are in the Inspector panel on the right — this rule has no command in this build's "+
+            "are in the Inspector panel — this rule has no command in this build's "+
             "catalog to assemble.</p></div>";
       el("editor-card").innerHTML=html;
       return;
@@ -4719,6 +5207,14 @@ function renderEditor(){
   }
   var res=currentResult();
   if(!res){
+    if(STATE.pipeline.length){
+      var pv=validatePipeline(pipelineStages(),STATE.version,pipelineOpts());
+      html+="<div class=\"card\"><h2>Complete the pipeline</h2><p class=\"muted\">"+
+            esc(pv.reason||"One or more pipeline stages are incomplete.")+"</p>"+
+            "<p class=\"muted\">Use the pipeline panel to complete or remove the affected stage.</p></div>";
+      el("editor-card").innerHTML=html;
+      return;
+    }
     var slot=(entry.rhel_versions||{})[STATE.version]||{};
     var why=(slot.unavailable&&slot.unavailable.reason)||"";
     var alt=(slot.unavailable&&slot.unavailable.alternative)||"";
@@ -4729,11 +5225,19 @@ function renderEditor(){
     el("editor-card").innerHTML=html;
     return;
   }
-  html+="<h2>"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"taskcrumb\">Build / "+esc(res.stages?"pipeline":entry.tool)+" / "+
+        esc(res.stages?"composed command":"reviewed command")+"</p>";
+  html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
+  html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
-  html+="<p class=\"muted\">"+esc(subjA)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (res.resolved_from?esc(" · same as RHEL "+res.resolved_from):"")+
-        (privA?"<span class=\"badge privilege\">requires ":"")+(privA?esc(privA):"")+(privA?"</span>":"")+"</p>";
+  var riskLabelA=res.blast==="green"?"Low impact":(res.blast==="yellow"?"Changes system":"Destructive");
+  var vstatusA=verificationStatusForResult(res,entry,res.version);
+  html+="<div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+esc(riskLabelA)+"</span>"+
+        "<span class=\"trustfact\">RHEL "+esc(res.version)+"</span><span class=\"trustfact\">"+esc(vstatusA.label)+"</span>";
+  if(privA) html+="<span class=\"trustfact\">requires "+esc(privA)+"</span>";
+  if(res.resolved_from) html+="<span class=\"trustfact\">same as RHEL "+esc(res.resolved_from)+"</span>";
+  html+="</div>";
+  html+="<p class=\"muted\">"+esc(subjA)+(res.stages?" · composed workflow":" · reviewed task")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -4745,12 +5249,14 @@ function renderEditor(){
   html+="</div>";
   var blocked=(res.blast==="red"&&!STATE.acked);
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn primaryaction\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy command</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
-  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
-        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
-        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  if(!res.stages){
+    html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+          escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+          (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  }
   html+="</div>";
   /* threat-model-v1 §9: what is in the preview is exactly and only what gets
      copied. The comment header used to be built at click time and never shown;
@@ -4762,8 +5268,12 @@ function renderEditor(){
           esc(res.copy_comment)+"</pre>";
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
-  html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
-  html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  if(res.stages){
+    html+="<p class=\"muted\">This composed workflow has no single Verify or Undo receipt. Review every stage in the Inspector and verify each stage on the target host.</p>";
+  }else{
+    html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
+    html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  }
   el("editor-card").innerHTML=html;
 }
 
@@ -4784,7 +5294,7 @@ function renderEditor(){
    function is none of those, so the helper's returned markup would be an
    unaudited segment no matter how carefully the helper itself escapes it. */
 function renderGeneratorForm(entry){
-  var html="<p class=\"region-label\">Fields</p>";
+  var html="<p class=\"region-label\">Essential fields</p><p class=\"muted\">Configure the operation. The command preview updates without rebuilding these controls.</p>";
   var fields=entry.fields||[];
   for(var i=0;i<fields.length;i++){
     var field=fields[i];
@@ -4799,10 +5309,11 @@ function renderGeneratorForm(entry){
     html+="</label>";
     if(teaching){
       html+="<div class=\"fieldhelp\"><p>"+esc(teaching.meaning)+"</p>";
-      html+="<p><strong>Example:</strong> "+esc(teaching.example===null?"No curated example.":teaching.example)+"</p>";
-      html+="<p><strong>Discover:</strong> "+esc(teaching.discovery_command===null?
-            "No discovery command has been curated; consult the cited source.":teaching.discovery_command)+"</p>";
-      html+="<p><strong>Consequence:</strong> "+esc(teaching.consequence)+"</p></div>";
+      html+="<details><summary>Why this field?</summary>"+
+            "<p><strong>Example:</strong> "+esc(teaching.example===null?"No curated example.":teaching.example)+"</p>"+
+            "<p><strong>Discover:</strong> "+esc(teaching.discovery_command===null?
+            "No discovery command has been curated; consult the cited source.":teaching.discovery_command)+"</p>"+
+            "<p><strong>Consequence:</strong> "+esc(teaching.consequence)+"</p></details></div>";
     }
     if(gated){
       html+="<input type=\"text\" id=\""+escapeAttr(id)+"\" data-field=\""+escapeAttr(name)+
@@ -4866,6 +5377,14 @@ function renderGeneratorResult(){
   renderBlastBanner(res);
   var html="";
   if(!res){
+    if(STATE.pipeline.length){
+      var pipelineValidation=validatePipeline(pipelineStages(),STATE.version,pipelineOpts());
+      html+="<div class=\"card\"><h2>Complete the pipeline</h2><p class=\"muted\">"+
+            esc(pipelineValidation.reason||"One or more pipeline stages are incomplete.")+"</p>"+
+            "<p class=\"muted\">Use the pipeline panel to complete or remove the affected stage.</p></div>";
+      target.innerHTML=html;
+      return;
+    }
     if(entry.versions && !inList(entry.versions,STATE.version)){
       html+="<div class=\"card\"><h2>"+esc(GATED_COPY+STATE.version)+"</h2>"+
             "<p class=\"muted\">This generator is not offered on RHEL "+esc(STATE.version)+
@@ -4886,12 +5405,18 @@ function renderGeneratorResult(){
     return;
   }
   var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
-  html+="<p class=\"muted\">"+esc(subjG)+" · RHEL "+esc(res.version)+" · blast "+esc(res.blast)+
-        (privG?"<span class=\"badge privilege\">requires ":"")+(privG?esc(privG):"")+(privG?"</span>":"")+"</p>";
+  var riskLabelG=res.blast==="green"?"Low impact":(res.blast==="yellow"?"Changes system":"Destructive");
+  var vstatusG=verificationStatusForResult(res,entry,res.version);
+  html+="<p class=\"region-label\">Command preview</p><div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+
+        esc(riskLabelG)+"</span><span class=\"trustfact\">RHEL "+esc(res.version)+"</span>"+
+        "<span class=\"trustfact\">"+esc(vstatusG.label)+"</span>";
+  if(privG) html+="<span class=\"trustfact\">requires "+esc(privG)+"</span>";
+  html+="</div>";
+  html+="<p class=\"muted\">"+esc(subjG)+(res.stages?" · composed workflow":" · reviewed task")+"</p>";
   var teachingRow=instructionFor(entry)||{};
   if(res.blast==="yellow") html+="<p class=\"risknote\"><strong>State-changing operation.</strong> A reviewed recovery plan is required before use.</p>";
   if(res.blast==="red") html+="<p class=\"risknote\"><strong>Destructive or lockout-prone operation.</strong> Verify the target and recovery access independently.</p>";
-  html+="<p><span class=\"badge\">"+esc(teachingRow.proven_reversible?"Proven reversible":"Recovery not proven")+"</span></p>";
+  if(!res.stages) html+="<p><span class=\"badge\">"+esc(teachingRow.proven_reversible?"Proven reversible":"Recovery not proven")+"</span></p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
@@ -4903,15 +5428,17 @@ function renderGeneratorResult(){
   html+="</div>";
   var blocked=(res.blast==="red"&&!STATE.acked);
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy</button>";
+  html+="<button type=\"button\" class=\"btn primaryaction\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy command</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
   if(res.doc){
     html+="<button type=\"button\" class=\"btn\" data-action=\"copy-doc\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy "+esc(res.doc.filename)+"</button>";
   }
-  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
-        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
-        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  if(!res.stages){
+    html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+          escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+          (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  }
   html+="</div>";
   /* CR-T-25. The generated file, rendered from the SAME res.doc the Copy button
      copies -- the MCR-SEC-012 rule that the screen and the clipboard read one
@@ -4928,27 +5455,37 @@ function renderGeneratorResult(){
           esc(res.copy_comment)+"</pre>";
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
-  var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
-  html+="<div class=\"opplan\">";
-  for(var pk=0;pk<planKeys.length;pk++){
-    var planText=plan[planKeys[pk]];
-    var planBound=instructionIsBound(planText);
-    html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
-          (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
-          "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
-          (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
+  if(res.stages){
+    html+="<p class=\"muted\">Pipeline runbooks and verification are stage-specific. Review every stage and its source in the Inspector before use.</p>";
+  }else{
+    var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
+    html+="<details class=\"supportdetails\"><summary>Review runbook: Preflight, Run, Verify, Recover</summary><div class=\"opplan\">";
+    for(var pk=0;pk<planKeys.length;pk++){
+      var planText=plan[planKeys[pk]];
+      var planBound=instructionIsBound(planText);
+      var planCopy=plan.copy[planKeys[pk]];
+      var planCopyBound=planCopy!==null&&planCopy!==undefined&&instructionIsBound(planCopy);
+      var planCopyEnabled=planCopyBound&&!blocked;
+      html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
+            (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
+            (planBound&&!planCopyBound?"<p class=\"muted\">This step is guidance. Copy is available only for an authored runnable command.</p>":"")+
+            "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
+            (planCopyEnabled?"":" disabled aria-disabled=\"true\"")+
+            (blocked&&planCopyBound?" title=\"Tick the review box to unlock copy\"":"")+
+            ">Copy "+esc(planLabels[pk])+"</button></div>";
+    }
+    html+="<p class=\"muted\">Copy and complete one step at a time. Recovery is kept separate so it cannot run immediately after the change.</p></div></details>";
+    html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
+    for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
+      var compareVersion=RHEL_VERSIONS[cv];
+      var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
+      var compareStatus=verificationStatusForVersion(entry,compareVersion,compareRes&&compareRes.command);
+      html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
+            "</td><td>"+esc(compareStatus.label)+"</td><td>"+
+            esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
+    }
+    html+="</tbody></table></details>";
   }
-  html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div>";
-  html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
-  for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
-    var compareVersion=RHEL_VERSIONS[cv];
-    var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
-    var compareStatus=verificationStatusForVersion(entry,compareVersion);
-    html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
-          "</td><td>"+esc(compareStatus.label)+"</td><td>"+
-          esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
-  }
-  html+="</tbody></table></details>";
   target.innerHTML=html;
 }
 function renderGeneratorEditor(entry){
@@ -4957,12 +5494,20 @@ function renderGeneratorEditor(entry){
      esc()/escapeAttr()/escapeRegex() and literals are) — the fields and the
      result each write into their OWN sink below, as separate statements,
      never concatenated into this accumulator. */
-  var html="<h2>"+esc(entry.intent||entry.id)+"</h2>";
-  html+="<p class=\"muted\">"+esc(entry.tool)+" — guided form</p>";
-  html+="<div id=\"gen-fields\"></div><div id=\"gen-result\"></div>";
+  var html="<p class=\"taskcrumb\">Build / "+esc(entry.tool)+" / guided task</p>";
+  html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"muted\">Build a release-aware command from typed, validated fields.</p>";
+  html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
+  html+="<div id=\"gen-announcement\" class=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\"></div>"+
+        "<div class=\"builderworkspace\"><section class=\"builderfields\" id=\"gen-fields\" aria-label=\"Command fields\"></section>"+
+        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\"></aside></div>";
   el("editor-card").innerHTML=html;
   renderGeneratorForm(entry);
   renderGeneratorResult();
+  /* Seed the transition state while the form is first rendered. A one-field
+     form can become complete on its first keystroke, and that transition must
+     announce just like later incomplete/complete changes. */
+  STATE.announcementComplete=!!assembleCommand(entry,STATE.version,STATE.formValues,{patterns:PATTERNS});
 }
 
 function renderInspector(){
@@ -4982,8 +5527,60 @@ function renderInspector(){
     el("inspector-body").innerHTML=html;
     return;
   }
+  /* A composed pipeline is a rendered result, but it is not a catalog entry:
+     res.id is the structural sentinel "pipeline", so entryById(res.id) is
+     deliberately null.  The old inspector treated every result as an entry
+     and dereferenced entry.rhel_versions while rendering the comparison table.
+     That raised after Add to pipeline and left every later render path able to
+     raise again until state was cleared.  Render the pipeline's own stage data
+     here and return before the single-entry path below. */
+  if(res.stages){
+    html+="<p class=\"region-label\">Pipeline verification</p>";
+    html+="<p class=\"muted\">Review every stage and operator. Source citations belong to the stage entries; the composed line has no host receipt or STIG/control identity.</p>";
+    for(var ps=0;ps<res.stages.length;ps++){
+      var stage=res.stages[ps],stageEntry=(stage.spec&&stage.spec.id)?entryById(stage.spec.id):null;
+      html+="<div class=\"flagrow\"><span class=\"tok\">Stage "+esc(String(ps+1))+"</span>";
+      if(stage.kind==="redirect"){
+        html+="<span class=\"mean\">redirection to "+esc(stage.target||"")+" · "+esc(stage.blast||"unrated")+" risk</span>";
+      }else if(stage.kind==="operator"){
+        html+="<span class=\"mean\">standalone operator "+esc((PIPE_OPERATORS[stage.op]||{}).emit||"")+"</span>";
+      }else{
+        var stageStatus=verificationStatusForVersion(stageEntry,res.version,stage.command);
+        html+="<span class=\"mean\">"+esc(stage.command||"")+" · "+esc(stageStatus.label)+"</span>";
+      }
+      html+="</div>";
+      if(stageEntry&&stageEntry.source){
+        html+="<p class=\"muted\">Source: "+esc(stageEntry.source.title||"")+" — "+
+              esc(stageEntry.source.version||"")+" · <code>"+esc(stageEntry.source.url_or_man||"")+"</code></p>";
+      }
+    }
+    html+="<p class=\"region-label\">Flag by flag</p>";
+    var pipelineFlags=res.flags||[];
+    if(!pipelineFlags.length) html+="<p class=\"muted\">This pipeline takes no flags.</p>";
+    for(var pf=0;pf<pipelineFlags.length;pf++){
+      var pipelineExplain=pipelineFlags[pf].explain||
+                          flagExplain(pipelineFlags[pf].tool,pipelineFlags[pf].flag,res.version)||null;
+      html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(pipelineFlags[pf].flag)+"</span>"+
+            "<span class=\"source\">Stage "+esc(String(Number(pipelineFlags[pf].stage_index)+1))+
+            " · "+esc(pipelineFlags[pf].tool||"unknown tool")+"</span>"+
+            "<span class=\"mean"+(pipelineExplain?"":" unverified")+"\">"+
+            esc(pipelineExplain||UNVERIFIED_FLAG_COPY)+"</span></div>";
+    }
+    html+="<details><summary>RHEL release comparison</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Exact pipeline</th><th>Availability</th></tr></thead><tbody>";
+    for(var pv=0;pv<RHEL_VERSIONS.length;pv++){
+      var pipelineRelease=RHEL_VERSIONS[pv];
+      var pipelineResult=assemblePipeline(pipelineStages(),pipelineRelease,pipelineOpts());
+      html+="<tr><th>"+esc(pipelineRelease)+"</th><td>"+
+            esc(pipelineResult?pipelineResult.command:"Not available or incomplete")+"</td><td>"+
+            esc(pipelineResult?"Every stage composes on this release":"One or more stages are unavailable or incomplete")+
+            "</td></tr>";
+    }
+    html+="</tbody></table></details>";
+    el("inspector-body").innerHTML=html;
+    return;
+  }
   var entry=entryById(res.id);
-  var vstatus=verificationStatusForVersion(entry,res.version);
+  var vstatus=verificationStatusForVersion(entry,res.version,res.command);
   html+="<p class=\"region-label\">Verification</p>";
   html+="<p class=\"vline\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+"\">"+
         esc(vstatus.label)+"</span> <span class=\"muted\">"+esc(vstatus.text)+"</span></p>";
@@ -5028,7 +5625,7 @@ function renderInspector(){
   html+="<details><summary>RHEL release comparison</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Exact command</th><th>Evidence</th><th>Why changed</th></tr></thead><tbody>";
   for(var rv=0;rv<RHEL_VERSIONS.length;rv++){
     var release=RHEL_VERSIONS[rv],rr=assembleCommand(entry,release,isGeneratorEntry(entry)?STATE.formValues:{},{patterns:PATTERNS});
-    var rs=verificationStatusForVersion(entry,release),slot=(entry.rhel_versions||{})[release]||{},why="No release-specific rationale recorded.";
+    var rs=verificationStatusForVersion(entry,release,rr&&rr.command),slot=(entry.rhel_versions||{})[release]||{},why="No release-specific rationale recorded.";
     if(slot.changed_in_note) why=slot.changed_in_note;
     else if(slot.unavailable) why=slot.unavailable.reason||"Unavailable on this release.";
     else if(rr&&rr.resolved_from) why="Command text is shared with RHEL "+rr.resolved_from+"; this release remains independently unverified unless a receipt is shown.";
@@ -5049,9 +5646,30 @@ function stigReleaseLabel(){
   if(meta.partial) label+=" · partial dataset";
   return label;
 }
+/* The status bar is rendered from state after every panel/theme action. Keep
+   keyboard focus on the logical control that initiated that render instead of
+   stranding focus on <body> when innerHTML replaces the old button. The
+   allow-list also prevents an arbitrary data-action value from becoming a
+   focus target. */
+function focusedStatusAction(){
+  var active=document.activeElement;
+  var status=el("statusbar");
+  if(!active||!status||!status.contains(active)||!active.getAttribute) return null;
+  var action=active.getAttribute("data-action");
+  if(action==="panel-sidebar"||action==="panel-inspector"||action==="theme") return action;
+  return null;
+}
+function restoreStatusAction(action){
+  if(!action) return;
+  var controls=el("statusbar").querySelectorAll("[data-action]");
+  for(var i=0;i<controls.length;i++){
+    if(controls[i].getAttribute("data-action")===action){ controls[i].focus(); return; }
+  }
+}
 function renderStatusBar(){
+  var restoreAction=focusedStatusAction();
   var parts=[];
-  if(STATE.toast) parts.push("<span class=\"statusitem toast\">"+esc(STATE.toast)+"</span>");
+  if(STATE.toast) parts.push("<span class=\"statusitem toast\" role=\"status\">"+esc(STATE.toast)+"</span>");
   parts.push("<span class=\"statusitem\">RHEL "+esc(STATE.version)+"</span>");
   /* Version-selector badge (task item 4): the currently selected entry's
      verification state for the currently selected RHEL version, read through
@@ -5062,10 +5680,17 @@ function renderStatusBar(){
      `if`-gated parts.push() (not a value spliced into another statusitem) so
      every segment reaching the sink is a literal or an esc()/escapeAttr()
      call, same audited shape as every other line in this function (Q17). */
-  if(STATE.entryId){
+  var statusResult=currentResult();
+  if(statusResult&&statusResult.stages){
+    var pipelineVstatus=verificationStatusForResult(statusResult,null,STATE.version);
+    parts.push("<span class=\"statusitem\"><span class=\"vbadge v-"+escapeAttr(pipelineVstatus.state)+
+               "\" title=\""+escapeAttr(pipelineVstatus.text)+"\">"+esc(pipelineVstatus.label)+"</span></span>");
+  }else if(STATE.pipeline.length){
+    parts.push("<span class=\"statusitem\"><span class=\"vbadge v-unverified\">Pipeline incomplete</span></span>");
+  }else if(STATE.entryId){
     var statusEntry=entryById(STATE.entryId);
     if(statusEntry){
-      var vstatus=verificationStatusForVersion(statusEntry,STATE.version);
+      var vstatus=verificationStatusForVersion(statusEntry,STATE.version,statusResult&&statusResult.command);
       parts.push("<span class=\"statusitem\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+
                  "\" title=\""+escapeAttr(vstatus.text)+"\">"+esc(vstatus.label)+"</span></span>");
     }
@@ -5074,9 +5699,23 @@ function renderStatusBar(){
   parts.push("<span class=\"statusitem\">"+esc(APP_NAME)+" "+esc(APP_VERSION)+"</span>");
   parts.push("<span class=\"statusitem\">built "+esc(APP_BUILD_DATE)+"</span>");
   parts.push("<span class=\"statusitem\">"+esc(APP_CLASSIFICATION)+"</span>");
-  parts.push("<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\"Toggle dark and light theme\">Theme: "+
-             esc(THEME.resolved()==="dark"?"Dark":"Light")+"</button>");
+  var sidebarOn=document.body.getAttribute("data-sidebar")==="on";
+  var inspectorOn=document.body.getAttribute("data-inspector")==="on";
+  var themeName=THEME.resolved()==="dark"?"Dark":"Light";
+  parts.push("<span class=\"statusactions\">"+
+             "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-sidebar\" aria-pressed=\""+
+             escapeAttr(sidebarOn?"true":"false")+
+             "\" aria-label=\""+escapeAttr("Navigator: "+(sidebarOn?"On. Hide the command navigator":"Off. Show the command navigator"))+
+             "\">Navigator: "+esc(sidebarOn?"On":"Off")+"</button>"+
+             "<button type=\"button\" class=\"panelbtn\" data-action=\"panel-inspector\" aria-pressed=\""+
+             escapeAttr(inspectorOn?"true":"false")+
+             "\" aria-label=\""+escapeAttr("Inspector: "+(inspectorOn?"On. Hide command safety and evidence":"Off. Show command safety and evidence"))+
+             "\">Inspector: "+esc(inspectorOn?"On":"Off")+"</button>"+
+             "<button type=\"button\" class=\"themebtn\" data-action=\"theme\" aria-label=\""+
+             escapeAttr("Theme: "+themeName+". Toggle dark and light theme")+"\">Theme: "+
+             esc(themeName)+"</button></span>");
   el("statusbar").innerHTML=parts.join("");
+  restoreStatusAction(restoreAction);
 }
 
 /* ============ CR-T-29: palette over the lazy typed search index ============
@@ -5086,6 +5725,7 @@ function renderStatusBar(){
    dataset). Every later keystroke only calls queryIndex(), which is cheap:
    the index is already built. */
 var SEARCH_INDEX=null;
+var PALETTE_OPENER=null;
 function ensureSearchIndex(){
   if(!SEARCH_INDEX) SEARCH_INDEX=buildIndex(DATASETS);
   return SEARCH_INDEX;
@@ -5115,14 +5755,17 @@ function paletteMatches(q){
 }
 function renderPalette(){
   var html="";
-  var q=el("palette-input").value;
+  var paletteInput=el("palette-input");
+  var q=paletteInput.value;
   STATE.paletteHits=paletteMatches(q);
   if(!q){
+    paletteInput.removeAttribute("aria-activedescendant");
     html+="<p class=\"muted\">Type a tool name, a command intent, a flag, a STIG ID, a CCI, or a NIST control number (e.g. AC-6).</p>";
     el("palette-results").innerHTML=html;
     return;
   }
   if(!STATE.paletteHits.length){
+    paletteInput.removeAttribute("aria-activedescendant");
     html+="<p class=\"muted\">No matches for "+esc(q)+". Try a tool name such as "+
           esc(nearestToolNames(q))+".</p>";
     el("palette-results").innerHTML=html;
@@ -5137,7 +5780,7 @@ function renderPalette(){
     for(hi=0;hi<group.hits.length;hi++){
       var h=group.hits[hi];
       var atIndex=flatIndex;
-      html+="<li><button type=\"button\" class=\"row\" role=\"option\" aria-selected=\""+
+      html+="<li><button type=\"button\" class=\"row\" id=\"palette-option-"+escapeAttr(String(atIndex))+"\" role=\"option\" aria-selected=\""+
             (atIndex===STATE.paletteSel?"true":"false")+"\" aria-current=\""+
             (atIndex===STATE.paletteSel?"true":"false")+
             "\" data-hit=\""+escapeAttr(String(atIndex))+"\">"+esc(h.label)+
@@ -5149,6 +5792,7 @@ function renderPalette(){
   html+="</ul>";
   html+="<p class=\"palettetiming\">"+esc(String(STATE.paletteHits.length))+" match(es)</p>";
   el("palette-results").innerHTML=html;
+  paletteInput.setAttribute("aria-activedescendant","palette-option-"+String(STATE.paletteSel));
 }
 function nearestToolNames(q){
   var tools=(DATASETS.TOOLS&&DATASETS.TOOLS.tools)||[],scored=[];
@@ -5165,19 +5809,30 @@ function nearestToolNames(q){
   return out.join(", ")||"none in this build";
 }
 function openPalette(){
+  if(!STATE.paletteOpen) PALETTE_OPENER=document.activeElement;
   STATE.paletteOpen=true;
   STATE.paletteSel=0;
   el("palette").hidden=false;
+  el("palette-input").setAttribute("aria-expanded","true");
   el("palette-input").value="";
   renderPalette();
   el("palette-input").focus();
 }
-function closePalette(){
+function closePalette(restoreFocus){
   if(!STATE.paletteOpen) return;
   STATE.paletteOpen=false;
   el("palette").hidden=true;
-  var back=el("editor-card").querySelector("button");
-  if(back) back.focus();
+  el("palette-input").setAttribute("aria-expanded","false");
+  el("palette-input").removeAttribute("aria-activedescendant");
+  var back=PALETTE_OPENER;
+  PALETTE_OPENER=null;
+  if(restoreFocus===false) return;
+  if(back&&back!==document.body&&back.focus&&document.documentElement.contains(back)){
+    back.focus();
+    return;
+  }
+  var search=document.querySelector(".quicksearch");
+  if(search) search.focus();
 }
 /* A search-index hit for a CCI or a NIST control has no command of its own —
    it resolves to the first embedded STIG rule that cites it, current release
@@ -5200,7 +5855,12 @@ function activateHit(i){
   if(!h) return;
   if(h.kind==="Reference"){ selectRefCommand(h.id); }
   else if(h.kind==="Tool"){ selectTool(h.id); }
-  else if(h.kind==="STIG"){ selectStigRule(h.id,h.version||STATE.version); }
+  else if(h.kind==="STIG"){
+    selectStigRule(h.id,h.version||STATE.version);
+    closePalette(false);
+    focusStigPanel();
+    return;
+  }
   else if(h.kind==="CCI"){ activateCrosswalkHit(h.id,"cci"); }
   else if(h.kind==="NIST"){ activateCrosswalkHit(h.id,"nist"); }
   else if(h.kind==="Flag" && h.version && !entryById(h.id)){
@@ -5209,7 +5869,8 @@ function activateHit(i){
     if(h.tool) selectTool(h.tool);
   }
   else{ if(h.tool) STATE.toolId=h.tool; selectEntry(h.id); }
-  closePalette();
+  closePalette(false);
+  restoreRenderedFocus({fallback:true});
 }
 
 /* ============ selection ============ */
@@ -5223,6 +5884,7 @@ function selectTool(id,toggle){
   else STATE.rail="builder";
   STATE.entryId=null;
   STATE.acked=false;
+  STATE.toast="";
   STORE.set("lasttool",STATE.toolId);
   renderAll();
 }
@@ -5235,7 +5897,9 @@ function selectRefCommand(id){
   STATE.refId=id;
   STATE.refAck=false;
   STATE.entryId=null;
+  STATE.toast="";
   STATE.stigRuleId=null;
+  STATE.rail="reference";
   STATE.line=0;
   renderAll();
 }
@@ -5287,7 +5951,9 @@ function selectEntry(id){
   STATE.stigRuleId=null;                            /* an entry selection replaces a standalone rule */
   STATE.line=0;
   STATE.acked=false;
+  STATE.toast="";
   STATE.formValues={};                              /* a new entry starts with a blank form */
+  STATE.announcementComplete=null;
   if(entry.tool==="git") STATE.rail="git";
   else if((toolById(entry.tool)||{}).category==="ansible") STATE.rail="ansible";
   else STATE.rail="builder";
@@ -5304,6 +5970,7 @@ function selectStigRule(ruleId,version){
   for(i=0;i<ruleset.length;i++){ if(ruleset[i].i===ruleId){ rule=ruleset[i]; break; } }
   if(!rule) return;
   if(rule.cmds&&rule.cmds.length&&entryById(rule.cmds[0])){
+    document.body.setAttribute("data-inspector","on");
     setVersion(version);
     selectEntry(rule.cmds[0]);
     return;
@@ -5312,7 +5979,20 @@ function selectStigRule(ruleId,version){
   STATE.stigRuleId=ruleId;
   STATE.stigRuleVersion=version;
   STATE.rail="builder";
+  STATE.toast="";
+  document.body.setAttribute("data-inspector","on");
   setVersion(version);
+}
+function focusStigPanel(){
+  /* A linked rule opens a command workspace. On a one-column viewport the
+     Inspector follows that workspace and can otherwise land below the fold.
+     Give the rendered rule a programmatic focus target and bring the evidence
+     the operator selected into view. */
+  var panel=el("stig-panel");
+  if(!panel||!panel.textContent.trim()) return;
+  panel.setAttribute("tabindex","-1");
+  panel.focus();
+  panel.scrollIntoView({block:"center",inline:"nearest"});
 }
 function setRail(name){
   if(name==="stig"){
@@ -5338,10 +6018,65 @@ function togglePanel(which){
     document.body.setAttribute("data-inspector",
       document.body.getAttribute("data-inspector")==="off"?"on":"off");
   }
+  renderStatusBar();
+}
+
+/* Full-region renders replace the focused button node. Preserve a small,
+   closed identity for controls that survive the render; when a selection came
+   from a Home card or palette row that no longer exists, move focus to the new
+   task heading instead of silently dropping it on <body>. */
+function renderedFocusIdentity(){
+  var active=document.activeElement;
+  if(!active||active===document.body) return null;
+  if(active.id) return {id:active.id,selectionStart:active.selectionStart,
+                         selectionEnd:active.selectionEnd,selectionDirection:active.selectionDirection};
+  var attrs=["data-version","data-rail","data-tool","data-entry","data-ref",
+             "data-reftool","data-reffam","data-hit","data-action","data-pipe-action",
+             "data-pipe-field","data-line"];
+  for(var i=0;i<attrs.length;i++){
+    if(active.hasAttribute&&active.hasAttribute(attrs[i])){
+      return {attr:attrs[i],value:active.getAttribute(attrs[i]),
+              index:active.getAttribute("data-pipe-index"),
+              favorite:active.getAttribute("data-favid")};
+    }
+  }
+  return {fallback:true};
+}
+function restoreRenderedFocus(identity){
+  if(!identity) return;
+  var node=null,i,nodes;
+  if(identity.id) node=document.getElementById(identity.id);
+  else if(identity.attr){
+    nodes=document.querySelectorAll("["+identity.attr+"]");
+    for(i=0;i<nodes.length;i++){
+      if(nodes[i].getAttribute(identity.attr)!==identity.value) continue;
+      if(identity.index!==null&&identity.index!==nodes[i].getAttribute("data-pipe-index")) continue;
+      if(identity.favorite!==null&&identity.favorite!==nodes[i].getAttribute("data-favid")) continue;
+      node=nodes[i]; break;
+    }
+  }
+  if(node&&node.focus){
+    node.focus();
+    if(identity.selectionStart!==undefined&&identity.selectionStart!==null&&node.setSelectionRange){
+      node.setSelectionRange(identity.selectionStart,identity.selectionEnd,identity.selectionDirection||"none");
+    }
+    return;
+  }
+  node=document.querySelector("#editor-card .tasktitle, #editor-card h2");
+  if(node&&node.focus){
+    if(!node.hasAttribute("tabindex")) node.setAttribute("tabindex","-1");
+    node.focus();
+  }
 }
 
 function renderAll(){
+  var focusIdentity=renderedFocusIdentity();
   invalidateResult();          /* one interaction, one assembly (MCR-SEC-012) */
+  /* On narrow screens, put a selected command ahead of the long navigator so
+     the result of a task choice appears immediately. The navigator remains in
+     the document after the workspace and its status-bar control still works. */
+  document.body.setAttribute("data-selection-open",
+    STATE.entryId||STATE.refId||STATE.stigRuleId?"true":"false");
   renderRail();
   renderVersionSelector();
   renderToolList();
@@ -5350,6 +6085,18 @@ function renderAll(){
   renderInspector();
   renderStatusBar();
   renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
+  restoreRenderedFocus(focusIdentity);
+}
+
+/* Static shell actions share one closed router so the visible data-action
+   controls and their behavior can be exercised directly by the UI contract
+   tests. Returning false leaves entry-specific actions to the main router. */
+function routeChromeAction(action){
+  if(action==="palette"){ openPalette(); return true; }
+  if(action==="panel-sidebar"){ togglePanel("sidebar"); return true; }
+  if(action==="panel-inspector"){ togglePanel("inspector"); return true; }
+  if(action==="theme"){ THEME.toggle(); return true; }
+  return false;
 }
 
 /* ============ one delegated click router — zero inline handlers ============ */
@@ -5402,9 +6149,9 @@ document.addEventListener("click",function(ev){
   var a=t.closest("[data-action]");
   if(!a) return;
   var action=a.getAttribute("data-action");
-  if(action==="theme"){ THEME.toggle(); return; }
-  if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
-  if(action==="ref-ack"){ STATE.refAck=!!a.checked; renderEditor(); return; }
+  if(routeChromeAction(action)) return;
+  if(action==="ack"){ STATE.acked=!!a.checked; STATE.toast=""; reRenderEditorAndInspector(); return; }
+  if(action==="ref-ack"){ STATE.refAck=!!a.checked; STATE.toast=""; reRenderEditorAndInspector(); return; }
   if(action==="ref-copy"){ doRefCopy(false); return; }
   if(action==="ref-copy-comment"){ doRefCopy(true); return; }
   if(action==="ref-evidence"){ doRefEvidence(); return; }
@@ -5429,10 +6176,33 @@ document.addEventListener("click",function(ev){
    #gen-result for a generator and falls back to the ordinary full render for
    a static entry, which has no separate form to preserve. */
 function reRenderEditorAndInspector(){
+  var focusIdentity=renderedFocusIdentity();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
   if(entry && isGeneratorEntry(entry)){ renderGeneratorResult(); }
   else{ renderEditor(); }
   renderInspector();
+  renderStatusBar();
+  restoreRenderedFocus(focusIdentity);
+}
+
+/* Announce only the transition between incomplete and ready. The command
+   review itself re-renders on each keystroke, but reading that entire region
+   aloud repeatedly makes typed fields unusable with a screen reader. */
+function announceGeneratorCompletion(){
+  var live=el("gen-announcement");
+  if(!live) return;
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  var complete=!!(entry&&isGeneratorEntry(entry)&&
+                  assembleCommand(entry,STATE.version,STATE.formValues,{patterns:PATTERNS}));
+  if(STATE.announcementComplete===null){
+    STATE.announcementComplete=complete;
+    return;
+  }
+  if(complete===STATE.announcementComplete) return;
+  STATE.announcementComplete=complete;
+  live.textContent=complete?
+    "Command ready. Review the generated command before copying.":
+    "Command incomplete. Check the required fields.";
 }
 
 /* ============ generator field input -> STATE.formValues, no full re-render ============
@@ -5443,6 +6213,9 @@ function reRenderEditorAndInspector(){
    event for <select>/checkbox on older engines) route through the same
    handler; re-running it twice for one edit is idempotent. */
 function onFieldChange(ev){
+  /* Replacing a focused pipeline row can make its former node emit a late
+     change event. Detached controls no longer describe live state. */
+  if(ev.target&&!document.documentElement.contains(ev.target)) return;
   /* CR-T-31 first: a pipeline control is never a generator field, and routing
      it here keeps one input listener in this file rather than two. */
   var pf=ev.target&&ev.target.closest?ev.target.closest("[data-pipe-field]"):null;
@@ -5459,6 +6232,14 @@ function onFieldChange(ev){
   if(!f) return;
   var name=f.getAttribute("data-field");
   var val=(f.type==="checkbox"&&!f.checked)?"":f.value;
+  var had=Object.prototype.hasOwnProperty.call(STATE.formValues,name);
+  var previous=had?STATE.formValues[name]:"";
+  /* Text controls emit `input` while editing and then an identical `change`
+     on blur. Re-rendering on that duplicate replaces the button between its
+     mousedown and mouseup, swallowing the click and dropping keyboard focus. */
+  if(previous===val&&((val!=="")||!had)) return;
+  STATE.acked=false;                            /* review applies to exact bytes */
+  STATE.toast="";                              /* a copy message applies to old bytes */
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
   /* When a stage is being edited, STATE.formValues IS that stage's values
      object, so the line above has already changed the pipeline: bump the
@@ -5467,6 +6248,8 @@ function onFieldChange(ev){
   renderGeneratorResult();
   renderPipelinePanel();
   renderInspector();
+  renderStatusBar();
+  announceGeneratorCompletion();
 }
 document.addEventListener("input",function(ev){
   if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); return; }
@@ -5474,10 +6257,11 @@ document.addEventListener("input",function(ev){
 });
 document.addEventListener("change",onFieldChange);
 
-/* ============ keyboard controller — ONE delegated keydown, ONE binding table ============ */
-/* UI spec §5. Every binding lives in KEYMAP; nothing in this file attaches a
-   second keydown listener, so the map is the whole truth about what a key does
-   and docs/USER_GUIDE.md can be checked against it by reading one array. */
+/* ============ keyboard controller — primary delegated shortcut table ============ */
+/* UI spec §5. Application shortcuts live in KEYMAP. Native button semantics
+   provide Enter and Space activation for copy controls. Contextual code-line
+   activation stays in this primary controller, ahead of the global shortcut
+   table. */
 function isTypingTarget(node){
   if(!node||!node.tagName) return false;
   var tag=node.tagName.toLowerCase();
@@ -5521,9 +6305,8 @@ var KEYMAP=[
    doc:"Export command and control reference",run:function(){ exportEvidence(); }},
   /* CR-T-31. Ctrl+Shift+P adds the command on screen as the next stage;
      Ctrl+Shift+Backspace clears the pipeline. Both are listed in KEYMAP like
-     every other binding, so docs/USER_GUIDE.md stays checkable against one
-     array (UI spec section 5) and nothing in this file attaches a second
-     keydown listener. */
+     every other application shortcut, so docs/USER_GUIDE.md stays checkable
+     against one array (UI spec section 5). */
   {id:"pipeline-add",keys:["p","P"],mods:"ctrlShift",whenTyping:true,
    doc:"Add the command on screen to the pipeline as the next stage",
    run:function(){ pipelineAdd(); }},
@@ -5545,6 +6328,15 @@ function modsMatch(rule,ev){
 document.addEventListener("keydown",function(ev){
   var typing=isTypingTarget(ev.target);
   var key=ev.key;
+  if(STATE.evidenceOpen && key==="Tab"){
+    var evidenceFocusables=el("evidence-modal").querySelectorAll("button");
+    if(evidenceFocusables.length){
+      var evidenceFirst=evidenceFocusables[0],evidenceLast=evidenceFocusables[evidenceFocusables.length-1];
+      if(ev.shiftKey && ev.target===evidenceFirst){ evidenceLast.focus(); ev.preventDefault(); }
+      else if(!ev.shiftKey && ev.target===evidenceLast){ evidenceFirst.focus(); ev.preventDefault(); }
+    }
+    return;
+  }
   /* palette-local navigation first: arrows move the selection, Enter opens it */
   if(STATE.paletteOpen){
     if(key==="ArrowDown"||key==="ArrowUp"){
@@ -5571,8 +6363,7 @@ document.addEventListener("keydown",function(ev){
   }
   if((key==="Enter"||key===" ") && ev.target.closest && ev.target.closest("[data-line]")){
     STATE.line=parseInt(ev.target.closest("[data-line]").getAttribute("data-line"),10);
-    renderEditor();
-    renderInspector();
+    reRenderEditorAndInspector();
     ev.preventDefault();
     return;
   }

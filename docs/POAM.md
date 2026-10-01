@@ -2,8 +2,8 @@
 
 **Status:** In Draft
 **Owner:** Noor Patel (ISSO / security engineer, content) with Alex Okafor (Compliance Officer, control and evidence mapping)
-**Last Updated:** 2026-09-22 (repository-evidence reconciliation by Zee; no
-new closure authority asserted)
+**Last Updated:** 2026-10-01 (alpha.6 release-evidence reconciliation; no new
+closure authority asserted)
 
 ---
 
@@ -26,7 +26,7 @@ schedules for MD CODE RED.
 |---|---|---|---|---|---|---|
 | POAM-CONTENT-001 | MEDIUM | Content Verification | Caleb Stone (or a named delegate) | Open | Not yet scheduled | RHEL 9 now has raw captures from `rhel9-stig-test` and a release-specific 22-tool flag dictionary (`content/flags_rhel9.json`; 20 tools available, 964 extracted flag rows). That capture work does not independently verify commands: none of the build's 18 QA-reviewed `verified[version]` receipts is for RHEL 9. The remaining action is to capture and independently review representative RHEL 9 command executions under `docs/WORKFLOW.md` Section 2a. Flag availability, curated flag explanation, and command verification are separate claims; this finding tracks the last of those. |
 | POAM-CONTENT-002 | LOW | Content Coverage | Caleb Stone (RHEL 7 host access, or continued container use) | Open | Not yet scheduled | RHEL 7 flags are read from a UBI7 *container* standing in for a real RHEL 7 host (none exists in the lab) and cover only 6 of the probed tools (`systemctl`, `journalctl`, `yum`, `useradd`, `usermod`, `chage`); the container ships no `man`/`man-db` at all, so every result is `--help`-only, and kernel/systemd-manager-dependent behavior was never observed. RHEL 7's pinned STIG (V3R15) is also DISA's stated terminal release (`docs/WORKFLOW.md`, "The RHEL 7 frozen source") -- worth weighing against POAM-CONTENT-001 when prioritizing: RHEL 7's ceiling is fixed either way, RHEL 9's is not. |
-| POAM-CONTENT-003 | LOW | Curation Coverage | Not yet assigned (RHEL SME) | Open | Not yet scheduled | 0 of 3,178 flag-dictionary entries across RHEL 7/8/9/10 carry a curated `explain` (the extractor deliberately writes `null`; curation is a separate human step that has not started). Only 4 flags anywhere in the shipped build carry curated text, all on the 3 static STIG-sourced entries. The no-guess rule means this is not a defect in what ships, but it means the Inspector is not yet a teaching tool for most of the catalog. |
+| POAM-CONTENT-003 | LOW | Curation Coverage | Not yet assigned (RHEL SME) | Open | Not yet scheduled | 0 of 3,178 flag-dictionary entries across RHEL 7/8/9/10 carry a curated `explain` (the extractor deliberately writes `null`; curation is a separate human step that has not started). The curated catalog itself supplies explanations for 336 of 348 option/subcommand uses; the remaining 12 render the explicit unverified fallback. The no-guess rule means the dictionary gap does not cause invented guidance, but completing independent flag curation would broaden the Inspector beyond commands already covered by curated entry content. |
 | POAM-QA-001 | LOW | Test Coverage | Not yet assigned | Open | Not yet scheduled | `docs/TEST_PLAN.md`'s Spot-Check Sampling section has no assigned rate or lead -- independent human re-verification of curated content (as distinct from the automated gates, which prove structure and safety but not "does this explanation read correctly") has no owner. |
 
 ### Example Entry (retained from the original skeleton for format reference)

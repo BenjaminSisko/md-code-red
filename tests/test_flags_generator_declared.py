@@ -30,10 +30,9 @@ BOGUS_GENERATOR = "extract/extract_rhel_flags.py"  # AL-GATE3-009: never existed
 
 
 def _real_ctx():
-    artifact = qa.find_artifact()
-    if not artifact:
+    ctx = qa.build_ctx_if_current()
+    if not ctx:
         return None
-    ctx = qa.build_ctx()
     qa.load_sources(ctx)
     return ctx
 
@@ -45,7 +44,7 @@ class FlagsDatasetGeneratorIsChecked(unittest.TestCase):
 
     def test_bogus_flags_generator_fails_q15(self):
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         ctx = copy.deepcopy(self.ctx)
         ctx["data"]["flags"]["9"].setdefault("_meta", {})["generator"] = BOGUS_GENERATOR
         f, _d = qa.gate_q15(ctx)
@@ -56,7 +55,7 @@ class FlagsDatasetGeneratorIsChecked(unittest.TestCase):
 
     def test_bogus_flags_generator_fails_q8(self):
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         ctx = copy.deepcopy(self.ctx)
         ctx["data"]["flags"]["9"].setdefault("_meta", {})["generator"] = BOGUS_GENERATOR
         f, _d = qa.gate_q8(ctx)
@@ -69,7 +68,7 @@ class FlagsDatasetGeneratorIsChecked(unittest.TestCase):
         """Control: on the REAL bundle (flags_rhel9.json corrected to name the
         real extractor), neither gate may fire on any flags_rhel* dataset."""
         if not self.ctx:
-            self.skipTest("no dist/ artifact — run python3 build.py first")
+            self.skipTest("artifact is missing or stale — run python3 build.py first")
         f_q15, _ = qa.gate_q15(self.ctx)
         f_q8, _ = qa.gate_q8(self.ctx)
         flags_related_q15 = [x for x in f_q15 if x.startswith("flags_rhel")]

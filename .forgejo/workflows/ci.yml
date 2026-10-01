@@ -1,9 +1,10 @@
 # MD CODE RED CI — BQP HTML profile (ADR-001 §10, threat-model-v1 §11).
 #
-# Seven steps, in order, stopping at the first failure:
-#   1 build            2 QA gate (Q1-Q22 + JS)   3 STIG accuracy re-check
-#   4 gitleaks         5 size report        6 drift check (reproducible build)
-#   7 artifact upload (with the .sha256 sidecar)
+# Eight steps, in order, stopping at the first failure:
+#   1 build                2 full unit suite   3 QA gate (Q1-Q26 + JS)
+#   4 STIG accuracy re-check
+#   5 gitleaks         6 size report        7 drift check (reproducible build)
+#   8 artifact upload (with the .sha256 sidecar)
 #
 # PROTECTED: .forgejo/workflows/** has a CODEOWNERS entry (today @benny; ADR-001 §10
 # names Devon Park as the platform owner of this path). A change to this file needs
@@ -44,32 +45,34 @@ jobs:
       - name: Node is present (the assembler gate cannot be skipped)
         run: node --version
 
+      # ---- 1 ----------------------------------------------------------------
+      # Build before discovery so artifact-backed tests execute on a fresh checkout
+      # instead of truthfully skipping a stale committed dist file. The committed
+      # candidate provenance intentionally records the release workstation
+      # toolchain, so CI must not regenerate and dirty that protected evidence with
+      # the runner's Python/Node versions before the release-readiness tests run.
+      - name: Build the single file from sources
+        run: python3 build.py
+
+      # ---- 2 ----------------------------------------------------------------
       # extract/schema.py states the content schema once; test_schema.py pins it
       # against valid and invalid bundles, and test_build_fails_on_broken.py proves
       # the build itself refuses defective content. Discover runs both, so a new
       # test file is picked up without editing this protected workflow.
-      # test_accuracy_gate.py additionally proves the Q10 accuracy gate FAILS on a
-      # committed mutated fixture and PASSES on the clean one (CR-T-08), and
-      # test_hostile_inputs.py runs the assembler harness over template.html
-      # before anything is built (CR-T-16).
-      - name: Schema, accuracy-gate, hostile-input and build-refusal tests
+      - name: Full unit suite against the freshly built artifact
         run: python3 -m unittest discover -s tests -v
 
-      # ---- 1 ----------------------------------------------------------------
-      - name: Build the single file from sources (never patch an assembled file)
-        run: python3 build.py
-
-      # ---- 2 ----------------------------------------------------------------
-      - name: QA gate (Q1-Q22 + JS, including the hostile-input harness over the built artifact)
+      # ---- 3 ----------------------------------------------------------------
+      - name: QA gate (Q1-Q26 + JS, including the hostile-input harness over the built artifact)
         run: python3 qa.py
 
-      # ---- 3 ----------------------------------------------------------------
+      # ---- 4 ----------------------------------------------------------------
       - name: STIG and CCI accuracy re-check against the pinned XCCDF (Q10, Q11)
         run: |
           cd stig-src && sha256sum -c SHA256SUMS && cd ..
           python3 qa.py --accuracy
 
-      # ---- 4 ----------------------------------------------------------------
+      # ---- 5 ----------------------------------------------------------------
       # .gitleaks.toml keeps the default rule set and exempts exactly one pattern:
       # the example GRUB 2 password hash quoted inside the pinned DISA check text.
       # The four XCCDF files are still scanned in full by every other rule.
@@ -79,11 +82,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
 
-      # ---- 5 ----------------------------------------------------------------
+      # ---- 6 ----------------------------------------------------------------
       - name: Size report (informational — Founder ruled the ceiling unlimited, 2026-09-17)
         run: python3 qa.py --size
 
-      # ---- 6 ----------------------------------------------------------------
+      # ---- 7 ----------------------------------------------------------------
       - name: Drift check (a build must be reproducible from the same sources)
         run: |
           set -eu
@@ -99,7 +102,7 @@ jobs:
           test "$first" = "$second"  || { echo "FAIL: two builds of the same sources differ — the build is not reproducible"; exit 1; }
           echo "OK: rebuild is byte-identical"
 
-      # ---- 7 ----------------------------------------------------------------
+      # ---- 8 ----------------------------------------------------------------
       - name: Upload artifact and sha256 sidecar
         uses: actions/upload-artifact@v4
         with:

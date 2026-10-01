@@ -41,8 +41,9 @@ class OperationalRecoveryContent(unittest.TestCase):
         row = ENTRIES["gen-nmcli-static-ipv4"]
         self.assertNotIn("DNS method", row["intent"])
         self.assertIn("does not configure DNS", row["notes"])
-        self.assertIn("complete saved NetworkManager connection profile", row["undo"])
-        self.assertIn("out-of-band", row["undo"])
+        self.assertIn("MDCR_NMCLI_RECOVER", row["undo"])
+        self.assertIn("different profile file", row["undo"])
+        self.assertIn("out-of-band", row["notes"])
         self.assertNotIn("returns the connection to DHCP", row["undo"])
 
     def test_storage_recovery_is_explicitly_destructive(self):

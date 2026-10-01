@@ -11,7 +11,7 @@
    "{unavailable: {reason, alternative}}"
   ],
   "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified \u2014 see man page'. The extractor and this file never guess.",
-  "entry_count": 199
+  "entry_count": 200
  },
  "categories": [
   "firewall-cmd",
@@ -172,14 +172,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/firewalld-service-active.json"
+     "capture": "tests/captures/8/firewalld-service-active.json",
+     "command_as_run": "systemctl is-active firewalld"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/firewalld-service-active.json"
+     "capture": "tests/captures/10/firewalld-service-active.json",
+     "command_as_run": "systemctl is-active firewalld"
     }
    }
   },
@@ -293,14 +295,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/ctrl-alt-del-target-masked.json"
+     "capture": "tests/captures/8/ctrl-alt-del-target-masked.json",
+     "command_as_run": "systemctl status ctrl-alt-del.target"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/ctrl-alt-del-target-masked.json"
+     "capture": "tests/captures/10/ctrl-alt-del-target-masked.json",
+     "command_as_run": "systemctl status ctrl-alt-del.target"
     }
    }
   },
@@ -387,14 +391,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/journald-service-active.json"
+     "capture": "tests/captures/8/journald-service-active.json",
+     "command_as_run": "systemctl is-active systemd-journald"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/journald-service-active.json"
+     "capture": "tests/captures/10/journald-service-active.json",
+     "command_as_run": "systemctl is-active systemd-journald"
     }
    }
   },
@@ -599,7 +605,7 @@
    "fields": [
     {
      "name": "con",
-     "type": "service",
+     "type": "connection_name",
      "required": true
     },
     {
@@ -656,8 +662,8 @@
      "lit": "manual"
     }
    ],
-   "verify": "Review nmcli connection show <con> for ipv4.method, ipv4.addresses, ipv4.gateway and ipv4.dns, then activate only from a recoverable session and confirm address, route, DNS and management reachability.",
-   "undo": "Do not assume ipv4.method auto reconstructs the prior profile. Re-import or restore the complete saved NetworkManager connection profile, activate it from console or out-of-band access, and verify address, route, DNS and management reachability.",
+   "verify": ": 'From a local console or out-of-band session, review the selected connection for ipv4.method, ipv4.addresses, ipv4.gateway and ipv4.dns.'; : 'Activate the changed connection only from that recoverable session.'; : 'After address, route, DNS and management reachability pass, finalize the trusted rollback transaction.'; printf '%s\\n' '# MDCR_NMCLI_FINALIZE' 'set -eu' state_root=/var/lib/md-code-red 'txn=$state_root/nmcli-static-ipv4.txn' '[ -d \"$state_root\" ] && [ ! -L \"$state_root\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$state_root\")\" = \"0:700\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: NetworkManager state root is not root-owned mode 0700'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"0:700\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' '[ -f \"$txn/profile_path\" ] && [ ! -L \"$txn/profile_path\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/profile_path\")\" = \"0\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' '[ -f \"$txn/before\" ] && [ ! -L \"$txn/before\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/before\")\" = \"0\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' 'rm -rf -- \"$txn\"' | sudo sh -s -- <con>",
+   "undo": "printf '%s\\n' '# MDCR_NMCLI_RECOVER' 'set -eu' state_root=/var/lib/md-code-red 'txn=$state_root/nmcli-static-ipv4.txn' '[ -d \"$state_root\" ] && [ ! -L \"$state_root\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$state_root\")\" = \"0:700\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: NetworkManager state root is not root-owned mode 0700'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"0:700\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' '[ -f \"$txn/profile_path\" ] && [ ! -L \"$txn/profile_path\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/profile_path\")\" = \"0\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' '[ -f \"$txn/before\" ] && [ ! -L \"$txn/before\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/before\")\" = \"0\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: no trusted complete NetworkManager transaction'\"'\"' >&2; exit 1; }' 'con=$1' 'record=$(nmcli -g FILENAME,NAME,UUID connection show | awk -F: -v n=\"$con\" '\"'\"'(\"x\" $2) == (\"x\" n) || (\"x\" $3) == (\"x\" n) { count++; value=$1 } END { if (count == 1) print value; else exit 1 }'\"'\"') || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: connection name or UUID did not resolve exactly once'\"'\"' >&2; exit 1; }' '[ -n \"$record\" ] && [ -f \"$record\" ] && [ ! -L \"$record\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: expected one regular NetworkManager profile file'\"'\"' >&2; exit 1; }' 'profile_file=$record' 'IFS= read -r saved_path < \"$txn/profile_path\"' '[ \"$profile_file\" = \"$saved_path\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: connection now resolves to a different profile file'\"'\"' >&2; exit 1; }' 'cp -a -- \"$txn/before\" \"$profile_file\"' 'restorecon -F -- \"$profile_file\"' 'nmcli connection reload' 'nmcli connection up \"$con\"' 'rm -rf -- \"$txn\"' | sudo sh -s -- <con>",
    "blast": "yellow",
    "source": {
     "id": "src-man-nmcli-r8",
@@ -674,7 +680,7 @@
     "10": false
    },
    "privilege": "root",
-   "notes": "Before changing the profile, save its complete pre-state with nmcli connection export <con> and record nmcli connection show <con>. This command does not configure DNS. Activating the profile can immediately disconnect a remote session; require console or out-of-band recovery access before changing the active management connection."
+   "notes": "Before changing the profile, record nmcli connection show <con>. The preflight resolves exactly one name or UUID through the documented FILENAME,NAME,UUID listing and stores the backing file outside NetworkManager profile directories. This command does not configure DNS. Activating the profile can immediately disconnect a remote session; require console or out-of-band recovery access before changing the active management connection."
   },
   {
    "id": "gen-journalctl-unit-logs",
@@ -760,16 +766,70 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-journalctl-unit-logs.json"
+     "capture": "tests/captures/8/gen-journalctl-unit-logs.json",
+     "command_as_run": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-journalctl-unit-logs.json"
+     "capture": "tests/captures/10/gen-journalctl-unit-logs.json",
+     "command_as_run": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
     }
    }
+  },
+  {
+   "id": "gen-lsblk-inspect-storage",
+   "tool": "lsblk",
+   "category": "filesystem",
+   "intent": "Inspect block-device hierarchy with a curated capacity, filesystem, topology, or LVM-oriented column set",
+   "fields": [
+    {
+     "name": "columns",
+     "type": "enum",
+     "required": true,
+     "options": [
+      "NAME,TYPE,SIZE,MOUNTPOINT",
+      "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINT",
+      "NAME,KNAME,PKNAME,TYPE,TRAN,SIZE,MOUNTPOINT",
+      {
+       "value": "NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS",
+       "versions": [
+        "9",
+        "10"
+       ]
+      }
+     ]
+    }
+   ],
+   "template": [
+    {
+     "lit": "lsblk"
+    },
+    {
+     "flag": "-o",
+     "field": "columns"
+    }
+   ],
+   "verify": "Confirm the output includes the selected columns and that the NAME tree shows the expected disks, partitions, device-mapper or LVM children, filesystems, sizes and mount points. Cross-check LVM-specific questions with pvs, vgs and lvs before making storage changes.",
+   "undo": "Nothing to undo -- lsblk reads block-device metadata and changes nothing on the host.",
+   "blast": "green",
+   "source": {
+    "id": "src-lsblk-guided-rhel",
+    "title": "Red Hat RHEL 8 storage-guide lsblk custom-column example, cross-checked against pinned RHEL 9/10 block-device checks",
+    "url_or_man": "content-src/raw/redhat/rhel8.candidates.jsonl#L782",
+    "version": "RHEL 7/8 use MOUNTPOINT; RHEL 9 V2R9 and RHEL 10 V1R2 show MOUNTPOINTS",
+    "retrieved_on": "2026-09-30",
+    "license_class": "paraphrase-only"
+   },
+   "verified": {
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false
+   },
+   "notes": "Every preset keeps NAME first, so lsblk preserves the parent-child device tree while -o fixes the visible columns. Use NAME,TYPE,SIZE,MOUNTPOINT for a capacity view; add FSTYPE for filesystems and LVM/device-mapper context; use KNAME,PKNAME and TRAN for parent and transport topology. RHEL 7 and 8 expose the compatible singular MOUNTPOINT presets. RHEL 9 and 10 also offer MOUNTPOINTS so a device mounted in more than one place can show every mount point. This is an inspection command only; use pvs, vgs and lvs to confirm LVM state before changing it."
   },
   {
    "id": "gen-pvcreate-initialize",
@@ -820,7 +880,7 @@
    "fields": [
     {
      "name": "name",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     },
     {
@@ -872,12 +932,12 @@
     },
     {
      "name": "name",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     },
     {
      "name": "vg",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     }
    ],
@@ -1194,14 +1254,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-systemctl-query.json"
+     "capture": "tests/captures/8/gen-systemctl-query.json",
+     "command_as_run": "systemctl 'status' 'sshd.service'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-systemctl-query.json"
+     "capture": "tests/captures/10/gen-systemctl-query.json",
+     "command_as_run": "systemctl 'status' 'sshd.service'"
     }
    }
   },
@@ -1539,14 +1601,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-chage-list.json"
+     "capture": "tests/captures/8/gen-chage-list.json",
+     "command_as_run": "chage -l 'adm-linux'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-chage-list.json"
+     "capture": "tests/captures/10/gen-chage-list.json",
+     "command_as_run": "chage -l 'adm-linux'"
     }
    }
   },
@@ -1735,14 +1799,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-ausearch-by-key.json"
+     "capture": "tests/captures/8/gen-ausearch-by-key.json",
+     "command_as_run": "ausearch -k 'identity' -ts 'today'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-ausearch-by-key.json"
+     "capture": "tests/captures/10/gen-ausearch-by-key.json",
+     "command_as_run": "ausearch -k 'identity' -ts 'today'"
     }
    }
   },
@@ -1788,14 +1854,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-rsyslogd-test-config.json"
+     "capture": "tests/captures/8/gen-rsyslogd-test-config.json",
+     "command_as_run": "rsyslogd -N1 -f '/etc/rsyslog.conf'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-rsyslogd-test-config.json"
+     "capture": "tests/captures/10/gen-rsyslogd-test-config.json",
+     "command_as_run": "rsyslogd -N1 -f '/etc/rsyslog.conf'"
     }
    }
   },
@@ -1807,7 +1875,7 @@
    "fields": [
     {
      "name": "directive",
-     "type": "comment",
+     "type": "chrony_directive",
      "required": true
     }
    ],
@@ -1883,14 +1951,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-podman-ps.json"
+     "capture": "tests/captures/8/gen-podman-ps.json",
+     "command_as_run": "podman ps -a"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-podman-ps.json"
+     "capture": "tests/captures/10/gen-podman-ps.json",
+     "command_as_run": "podman ps -a"
     }
    },
    "versions": [
@@ -1908,7 +1978,7 @@
    "fields": [
     {
      "name": "container",
-     "type": "service",
+     "type": "container_name",
      "required": true
     }
    ],
@@ -3131,38 +3201,9 @@
    "id": "export-shell-variable",
    "tool": "export",
    "category": "coreutils",
-   "intent": "Make a shell variable visible to every command this shell launches from now on",
-   "rhel_versions": {
-    "7": {
-     "command": "export PATH=\"$PATH:/opt/tool/bin\"",
-     "notes": "A shell builtin: an ordinary variable is local to this shell process; export marks it so child processes inherit it too. The change lasts only for this shell session unless it is also written into a shell init file."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-n",
-     "explain": "Remove the export attribute from a variable without unsetting its value.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-p",
-     "explain": "List every currently exported variable.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "A newly launched command (e.g. `env | grep VARNAME`) shows the expected value.",
-   "undo": "Unset the variable with `unset VARNAME`, or restart the shell -- the change never persists past the session unless also placed in a shell init file.",
+   "intent": "Mark an existing shell variable for inheritance by commands launched from this shell",
+   "verify": "A newly launched `env` command shows the variable and its expected value.",
+   "undo": "Remove the export attribute with `export -n <variable>`, unset that variable if appropriate, or start a new shell.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -3178,90 +3219,29 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "variable",
+     "type": "shell_variable",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "export"
+    },
+    {
+     "field": "variable"
+    }
+   ],
+   "notes": "This form exports the current value of an already-set variable. Set or update the variable separately before exporting it."
   },
   {
    "id": "grep-search-text",
    "tool": "grep",
    "category": "text-processing",
    "intent": "Find which lines, or which files, contain a pattern instead of reading everything by eye",
-   "rhel_versions": {
-    "7": {
-     "command": "grep -rn -i \"pattern\" /etc",
-     "notes": "Prints every matching line by default. -r walks a directory tree, -i folds case, -n prefixes the line number, and -E switches the pattern language to extended regular expressions (so +, ?, | and () need no backslash). Reads only; never modifies the files it searches."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-r",
-     "explain": "Recurse into a directory tree instead of requiring a single file.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-i",
-     "explain": "Case-insensitive match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-n",
-     "explain": "Prefix each match with its line number.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-E",
-     "explain": "Use extended regular expressions (grep -E, same engine as egrep).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Invert the match: print lines that do NOT match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-l",
-     "explain": "Print only the names of matching files, not the matching lines.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Print a count of matching lines per file instead of the lines themselves.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-A",
-     "explain": "Print N lines of context AFTER each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-B",
-     "explain": "Print N lines of context BEFORE each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-C",
-     "explain": "Print N lines of context on both sides of each match.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The printed matches (or file list, or count) match what a manual read of the target would show.",
    "undo": "Nothing to undo -- read-only.",
    "blast": "green",
@@ -3270,7 +3250,7 @@
     "id": "src-man-grep",
     "title": "man page for grep, as installed on the reference host",
     "url_or_man": "man grep(1)",
-    "version": "coreutils 8.32-git",
+    "version": "GNU grep 2.20-3.11",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -3279,7 +3259,70 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "recursive",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "line_numbers",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "ignore_case",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "pattern",
+     "type": "comment",
+     "required": true
+    },
+    {
+     "name": "target",
+     "type": "path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "grep"
+    },
+    {
+     "lit": "-r",
+     "requires": "recursive"
+    },
+    {
+     "lit": "-n",
+     "requires": "line_numbers"
+    },
+    {
+     "lit": "-i",
+     "requires": "ignore_case"
+    },
+    {
+     "field": "pattern"
+    },
+    {
+     "field": "target"
+    }
+   ],
+   "notes": "Select only the flags the task needs. The pattern and absolute target path are emitted as separate, shell-quoted operands."
   },
   {
    "id": "sed-substitute",
@@ -3675,44 +3718,9 @@
    "id": "tr-translate-characters",
    "tool": "tr",
    "category": "text-processing",
-   "intent": "Translate, squeeze, or delete individual characters in a stream -- case-folding, stripping CR, collapsing whitespace",
-   "rhel_versions": {
-    "7": {
-     "command": "tr -d '\\r' < dos.txt > unix.txt",
-     "notes": "Operates on standard input only (no filename argument) and writes to standard output, so the usual shape redirects both ends as shown. -d deletes every character in the given set; with two sets and no -d, tr replaces each character in the first set with the character in the same position of the second (e.g. tr 'a-z' 'A-Z' upper-cases)."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-d",
-     "explain": "Delete every character in the given set instead of translating it.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-s",
-     "explain": "Squeeze runs of a repeated character down to one.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Complement the given set: act on every character NOT listed.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "The output stream no longer contains the deleted/translated characters (e.g. `file` reports the CR-stripped file as ASCII text, not CRLF).",
-   "undo": "Nothing to undo directly -- tr never edits a file in place; keep the original input file until the redirected output is confirmed correct.",
+   "intent": "Delete selected characters from standard input and write the transformed stream to standard output",
+   "verify": "The output stream no longer contains the selected characters.",
+   "undo": "Nothing to undo in the command itself because tr reads one stream and writes another; keep the source until redirected output is verified.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -3728,7 +3736,26 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "characters",
+     "type": "comment",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "tr"
+    },
+    {
+     "lit": "-d"
+    },
+    {
+     "field": "characters"
+    }
+   ],
+   "notes": "This command reads standard input and writes standard output. Add it to a pipeline and use the pipeline redirection control when a file output is needed."
   },
   {
    "id": "diff-compare-files",
@@ -4133,7 +4160,7 @@
    ],
    "verify": "The destination exists and matches the source (`diff -r source dest` reports no differences).",
    "undo": "Delete the copy at the destination -- the source is untouched by cp itself. If the destination overwrote something that already existed there, that prior content is gone unless it was itself backed up first.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-cp",
@@ -4316,7 +4343,7 @@
    ],
    "verify": "`ls -ld <path>` shows the new directory with the expected permissions.",
    "undo": "Remove it with `rmdir <path>` if empty, or `rm -r <path>` if it now has contents -- rmdir is the safer choice since it refuses to remove a non-empty directory.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-mkdir",
@@ -4375,7 +4402,7 @@
    ],
    "verify": "`ls -l` on the link shows it pointing at the intended target (symlink), or `stat` shows the same inode number as the original (hard link).",
    "undo": "Remove the link itself with `rm <link-path>` -- this never touches the target file's data either way.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-ln",
@@ -5013,49 +5040,8 @@
    "id": "kill-send-signal",
    "tool": "kill",
    "category": "process",
-   "intent": "Ask a process, by PID, to stop -- gracefully by default, or unconditionally with -9",
-   "rhel_versions": {
-    "7": {
-     "command": "kill -TERM 12345",
-     "notes": "With no signal, kill sends SIGTERM, which asks the process to exit and gives it the chance to catch the signal, flush buffers, and clean up. kill -9 (SIGKILL) cannot be caught, blocked, or ignored -- the kernel tears the process down immediately with no chance for it to release locks or finish writing. content/dangerous.json's dp-kill-9 pattern forces the red confirmation banner on any kill -9."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-TERM",
-     "explain": "The default, catchable request to terminate (signal 15).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-9",
-     "explain": "SIGKILL: unconditional, uncatchable termination -- no cleanup, no chance to ignore it.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-HUP",
-     "explain": "Signal 1, traditionally used to ask a daemon to reload its configuration without restarting.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-l",
-     "explain": "List the signal names kill understands, with their numbers.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "`ps -p <pid>` no longer shows the process (or, for a reload signal like -HUP, the service's logs show it re-read its configuration).",
+   "intent": "Ask a process, by PID, to stop gracefully with SIGTERM",
+   "verify": "`ps -p <pid>` no longer shows the process after the SIGTERM request has completed.",
    "undo": "None -- a terminated process is gone; if it was a managed service, undo means starting it again (systemctl start), not un-killing the old process instance.",
    "blast": "yellow",
    "stig": [],
@@ -5072,7 +5058,26 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "pid",
+     "type": "pid",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "kill"
+    },
+    {
+     "lit": "-TERM"
+    },
+    {
+     "field": "pid"
+    }
+   ],
+   "notes": "Sends SIGTERM, the catchable request to exit. Confirm the PID immediately before copying because process IDs can be reused."
   },
   {
    "id": "pkill-signal-by-name",
@@ -5606,62 +5611,9 @@
    "tool": "curl",
    "category": "network",
    "intent": "Fetch or post to a URL from the command line -- HTTP status, headers, and body, or a file download",
-   "rhel_versions": {
-    "7": {
-     "command": "curl -sS -o output.bin https://example.invalid/file",
-     "notes": "-s silences the progress meter, -S still shows an error if one occurs, -o writes the response body to a file instead of stdout. On an air-gapped or network-segmented host, curl against anything outside the lab's own segment will simply time out or fail to resolve -- that is the network boundary working as designed, not a curl problem, and is not something to route around by relaxing firewall or DNS controls without going through change control."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-s",
-     "explain": "Silent mode: suppress the progress meter (but not errors).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-S",
-     "explain": "Show an error message on failure even with -s.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-o",
-     "explain": "Write output to the named file instead of stdout.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-I",
-     "explain": "Fetch headers only (HTTP HEAD), for checking status without downloading the body.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-X",
-     "explain": "Set the HTTP method explicitly (e.g. -X POST).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-k",
-     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee and should not be used to work around a certificate problem that needs its own fix.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The expected HTTP status is returned and, for a download, the output file's size/checksum matches what was expected.",
-   "undo": "For a plain fetch, nothing to undo -- read-only against the remote. A downloaded file can simply be deleted; curl itself makes no change on the local host beyond the file it was told to write.",
-   "blast": "green",
+   "undo": "If <output>.mdcr-before-download exists, restore it to <output>. Otherwise remove <output> only after confirming it did not exist before the run.",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-curl",
@@ -5676,57 +5628,48 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "output",
+     "type": "path",
+     "required": true,
+     "write_target": true
+    },
+    {
+     "name": "url",
+     "type": "http_url",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "curl"
+    },
+    {
+     "lit": "-s"
+    },
+    {
+     "lit": "-S"
+    },
+    {
+     "flag": "-o",
+     "field": "output"
+    },
+    {
+     "field": "url"
+    }
+   ],
+   "notes": "The destination path and HTTP(S) URL are editable. The output is classified as a write target, execution-directory destinations are refused, and TLS certificate verification remains enabled."
   },
   {
    "id": "wget-download-url",
    "tool": "wget",
    "category": "network",
    "intent": "Download a file (or mirror a small site) from a URL, with built-in retry and resume that curl leaves to the caller",
-   "rhel_versions": {
-    "7": {
-     "command": "wget -q -O output.bin https://example.invalid/file",
-     "notes": "-q suppresses the normal progress/status chatter; -O sets the output filename (- means stdout). wget resumes an interrupted download with -c and retries transient failures on its own, which is why it is often preferred over curl for one-shot large-file pulls. Same air-gap caveat as curl: a lab host with no route to the target network will simply fail here, by design."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-q",
-     "explain": "Quiet mode: suppress the normal status output.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-O",
-     "explain": "Write output to the named file (or - for stdout) instead of deriving a name from the URL.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-c",
-     "explain": "Continue/resume a partially downloaded file instead of starting over.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "--no-check-certificate",
-     "explain": "Skip TLS certificate verification -- weakens the connection's integrity guarantee; do not use to work around a certificate problem that needs its own fix.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "The downloaded file's size/checksum matches what was expected.",
-   "undo": "Delete the downloaded file -- wget makes no other change on the local host.",
-   "blast": "green",
+   "undo": "If <output>.mdcr-before-download exists, restore it to <output>. Otherwise remove <output> only after confirming it did not exist before the run.",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-wget",
@@ -5741,61 +5684,43 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "output",
+     "type": "path",
+     "required": true,
+     "write_target": true
+    },
+    {
+     "name": "url",
+     "type": "http_url",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "wget"
+    },
+    {
+     "lit": "-q"
+    },
+    {
+     "flag": "-O",
+     "field": "output"
+    },
+    {
+     "field": "url"
+    }
+   ],
+   "notes": "The destination path and HTTP(S) URL are editable. The output is classified as a write target, execution-directory destinations are refused, and TLS certificate verification remains enabled."
   },
   {
    "id": "ssh-remote-shell",
    "tool": "ssh",
    "category": "network",
-   "intent": "Open an interactive shell, or run one command, on a remote host over an encrypted channel",
-   "rhel_versions": {
-    "7": {
-     "command": "ssh -i ~/.ssh/id_ed25519 user@host",
-     "notes": "With no trailing command, opens an interactive login shell on the remote host; given a command after the host, runs just that command and returns. -i selects a specific private key instead of the agent/default identity files. The remote host's own STIG posture (pam_faillock, banner, key vs password auth policy) governs what happens on repeated failed attempts -- this entry does not change that policy, only connects to whatever it already is."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-i",
-     "explain": "Use a specific private key file for authentication instead of the default identity files.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-p",
-     "explain": "Connect to a non-default port.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Verbose: print connection/negotiation diagnostics, useful when a connection fails and the reason is not obvious.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-L",
-     "explain": "Local port forward: bind a local port that tunnels to a destination reachable from the remote host.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-o",
-     "explain": "Set an ssh_config option for just this invocation (e.g. -o StrictHostKeyChecking=no, which should be used deliberately, not as a default habit).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "A shell prompt (or the command's output) returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
+   "intent": "Open an interactive shell on a remote host over an encrypted channel",
+   "verify": "An interactive shell prompt returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
    "undo": "Exit the remote shell (Ctrl-D or `exit`) to return to the local session; ssh itself changes nothing on either host beyond the transient connection.",
    "blast": "green",
    "stig": [],
@@ -5812,56 +5737,51 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "identity",
+     "type": "path",
+     "required": false
+    },
+    {
+     "name": "username",
+     "type": "username",
+     "required": false
+    },
+    {
+     "name": "hostname",
+     "type": "hostname",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "ssh"
+    },
+    {
+     "flag": "-i",
+     "field": "identity",
+     "optional": true
+    },
+    {
+     "flag": "-l",
+     "field": "username",
+     "optional": true
+    },
+    {
+     "field": "hostname"
+    }
+   ],
+   "notes": "Username and hostname are validated separately. Host-key checking is not weakened by this generator."
   },
   {
    "id": "scp-secure-copy",
    "tool": "scp",
    "category": "network",
-   "intent": "Copy a file to or from a remote host over the same encrypted channel ssh uses",
-   "rhel_versions": {
-    "7": {
-     "command": "scp -p /etc/app/config.yml user@host:/etc/app/config.yml",
-     "notes": "-p preserves modification time, access time, and mode from the source. Like mv/cp locally, scp overwrites an existing destination file with no prompt -- there is no built-in dry-run or confirmation step. rsync (below) is generally the better tool for anything larger than a one-off file, since it can resume and only transfers changed data."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-p",
-     "explain": "Preserve the source file's modification time, access time, and permission mode.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-r",
-     "explain": "Recurse into directories, copying a whole tree.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-i",
-     "explain": "Use a specific private key file for authentication.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-C",
-     "explain": "Compress data during the transfer.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "The file exists at the destination with the expected size/checksum.",
-   "undo": "Delete the copy at the destination (or restore the destination's own prior version from a backup, if it was overwritten and something was already there).",
+   "intent": "Copy a local file to a remote host over the same encrypted channel ssh uses",
+   "verify": ": 'Confirm the remote file has the expected size and checksum.'; : 'After accepting the new state, finalize the trusted rollback transaction.'; printf '%s\\n' '# MDCR_SCP_FINALIZE' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' '[ ! -L \"$parent\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked transaction parent'\"'\"' >&2; exit 1; }' 'parent_mode=$(stat -c '\"'\"'%a'\"'\"' -- \"$parent\")' 'parent_bits=$((0$parent_mode))' '[ $((parent_bits & 18)) -eq 0 ] || [ $((parent_bits & 512)) -ne 0 ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: transaction parent is writable without sticky protection'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"$owner:700\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted SCP transaction for $target\" >&2; exit 1; }' '[ -f \"$txn/state\" ] && [ ! -L \"$txn/state\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/state\")\" = \"$owner\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted SCP transaction state for $target\" >&2; exit 1; }' 'rm -rf -- \"$txn\"' | ssh <remote_identity> -- sh -s -- <remote_destination_path> <remote_source_basename>",
+   "undo": "printf '%s\\n' '# MDCR_SCP_RECOVER' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' '[ ! -L \"$parent\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked transaction parent'\"'\"' >&2; exit 1; }' 'parent_mode=$(stat -c '\"'\"'%a'\"'\"' -- \"$parent\")' 'parent_bits=$((0$parent_mode))' '[ $((parent_bits & 18)) -eq 0 ] || [ $((parent_bits & 512)) -ne 0 ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: transaction parent is writable without sticky protection'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"$owner:700\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted SCP transaction for $target\" >&2; exit 1; }' '[ -f \"$txn/state\" ] && [ ! -L \"$txn/state\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/state\")\" = \"$owner\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted SCP transaction state for $target\" >&2; exit 1; }' 'IFS= read -r prior < \"$txn/state\"' 'case $prior in' '  present)' '    [ -e \"$txn/before\" ] && [ ! -L \"$txn/before\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: trusted saved target is missing'\"'\"' >&2; exit 1; }' '    [ ! -e \"$txn/after\" ] && [ ! -L \"$txn/after\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: recovery swap already exists'\"'\"' >&2; exit 1; }' '    replace_target() {' '      saved=$1' '      target_path=$2' '      attempts=0' '      while [ \"$attempts\" -lt 3 ]; do' '        if mv -T -- \"$saved\" \"$target_path\"; then return 0; fi' '        [ -L \"$target_path\" ] || return 1' '        rm -f -- \"$target_path\" || return 1' '        attempts=$((attempts + 1))' '      done' '      return 1' '    }' '    moved=0' '    if [ -e \"$target\" ] || [ -L \"$target\" ]; then mv -T -- \"$target\" \"$txn/after\"; moved=1; fi' '    if replace_target \"$txn/before\" \"$target\"; then' '      rm -rf -- \"$txn\"' '    else' '      if [ \"$moved\" -eq 1 ]; then replace_target \"$txn/after\" \"$target\"; fi' '      exit 1' '    fi' '    ;;' '  absent)' '    [ ! -e \"$txn/before\" ] && [ ! -L \"$txn/before\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: absent-state transaction contains a backup'\"'\"' >&2; exit 1; }' '    rm -rf -- \"$target\"' '    rm -rf -- \"$txn\"' '    ;;' '  *) printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: invalid SCP transaction state'\"'\"' >&2; exit 1 ;;' esac | ssh <remote_identity> -- sh -s -- <remote_destination_path> <remote_source_basename>",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5877,62 +5797,53 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "preserve",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "source",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "destination",
+     "type": "remote_path",
+     "required": true,
+     "write_target": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "scp"
+    },
+    {
+     "lit": "-p",
+     "requires": "preserve"
+    },
+    {
+     "field": "source"
+    },
+    {
+     "field": "destination"
+    }
+   ],
+   "notes": "The source is a local absolute path. The remote destination is restricted to [user@]host:/absolute/path with no remote-shell metacharacters."
   },
   {
    "id": "rsync-sync-files",
    "tool": "rsync",
    "category": "network",
-   "intent": "Synchronize a file tree to a local path or a remote host over ssh, transferring only what changed",
-   "rhel_versions": {
-    "7": {
-     "command": "rsync -avh --dry-run /etc/app/ user@host:/etc/app/",
-     "notes": "-a (archive) preserves permissions/ownership/timestamps/symlinks and recurses; -v is verbose, -h human-readable sizes. --dry-run reports exactly what WOULD be transferred, added, or deleted without touching anything -- always worth running once before the real sync, especially before adding --delete (which removes destination files that no longer exist on the source and is otherwise the one flag that turns this into a red-rated deletion, not a copy)."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "-a",
-     "explain": "Archive mode: recursive, and preserve permissions/ownership/timestamps/symlinks.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-v",
-     "explain": "Verbose: list each file as it is transferred.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-n",
-     "explain": "Dry run: report what would happen without changing anything (same as --dry-run).",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-z",
-     "explain": "Compress data during transfer.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "--delete",
-     "explain": "Delete files at the destination that no longer exist at the source -- turns a copy into a synchronized mirror, and is where rsync stops being purely additive.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
-   "undo": "Without --delete, rsync only adds/updates files, so undo is the same as cp: remove or restore the files it wrote. With --delete, anything it removed at the destination is gone the same way rm's targets are, unless backed up first -- treat --delete with the same caution as rm -rf.",
+   "intent": "Synchronize a local file tree to a remote host over ssh, transferring only what changed",
+   "verify": ": 'Confirm the destination has the expected size and checksum.'; : 'After accepting the new state, finalize the trusted rollback transaction.'; printf '%s\\n' '# MDCR_RSYNC_FINALIZE' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync destination'\"'\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-rsync.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' '[ ! -L \"$parent\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked transaction parent'\"'\"' >&2; exit 1; }' 'parent_mode=$(stat -c '\"'\"'%a'\"'\"' -- \"$parent\")' 'parent_bits=$((0$parent_mode))' '[ $((parent_bits & 18)) -eq 0 ] || [ $((parent_bits & 512)) -ne 0 ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: transaction parent is writable without sticky protection'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"$owner:700\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted RSYNC transaction for $target\" >&2; exit 1; }' '[ -f \"$txn/state\" ] && [ ! -L \"$txn/state\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/state\")\" = \"$owner\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted RSYNC transaction state for $target\" >&2; exit 1; }' 'rm -rf -- \"$txn\"' | ssh <remote_identity> -- sh -s -- <remote_destination_path>",
+   "undo": "printf '%s\\n' '# MDCR_RSYNC_RECOVER' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync destination'\"'\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-rsync.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' '[ ! -L \"$parent\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked transaction parent'\"'\"' >&2; exit 1; }' 'parent_mode=$(stat -c '\"'\"'%a'\"'\"' -- \"$parent\")' 'parent_bits=$((0$parent_mode))' '[ $((parent_bits & 18)) -eq 0 ] || [ $((parent_bits & 512)) -ne 0 ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: transaction parent is writable without sticky protection'\"'\"' >&2; exit 1; }' '[ -d \"$txn\" ] && [ ! -L \"$txn\" ] && [ \"$(stat -c '\"'\"'%u:%a'\"'\"' -- \"$txn\")\" = \"$owner:700\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted RSYNC transaction for $target\" >&2; exit 1; }' '[ -f \"$txn/state\" ] && [ ! -L \"$txn/state\" ] && [ \"$(stat -c '\"'\"'%u'\"'\"' -- \"$txn/state\")\" = \"$owner\" ] || { printf '\"'\"'%s\\n'\"'\"' \"Refusing: no trusted RSYNC transaction state for $target\" >&2; exit 1; }' 'IFS= read -r prior < \"$txn/state\"' 'case $prior in' '  present)' '    [ -e \"$txn/before\" ] && [ ! -L \"$txn/before\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: trusted saved destination is missing'\"'\"' >&2; exit 1; }' '    [ ! -e \"$txn/after\" ] && [ ! -L \"$txn/after\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: recovery swap already exists'\"'\"' >&2; exit 1; }' '    replace_target() {' '      saved=$1' '      target_path=$2' '      attempts=0' '      while [ \"$attempts\" -lt 3 ]; do' '        if mv -T -- \"$saved\" \"$target_path\"; then return 0; fi' '        [ -L \"$target_path\" ] || return 1' '        rm -f -- \"$target_path\" || return 1' '        attempts=$((attempts + 1))' '      done' '      return 1' '    }' '    moved=0' '    if [ -e \"$target\" ] || [ -L \"$target\" ]; then mv -T -- \"$target\" \"$txn/after\"; moved=1; fi' '    if replace_target \"$txn/before\" \"$target\"; then' '      rm -rf -- \"$txn\"' '    else' '      if [ \"$moved\" -eq 1 ]; then replace_target \"$txn/after\" \"$target\"; fi' '      exit 1' '    fi' '    ;;' '  absent)' '    [ ! -e \"$txn/before\" ] && [ ! -L \"$txn/before\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: absent-state transaction contains a backup'\"'\"' >&2; exit 1; }' '    rm -rf -- \"$target\"' '    rm -rf -- \"$txn\"' '    ;;' '  *) printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: invalid RSYNC transaction state'\"'\"' >&2; exit 1 ;;' esac | ssh <remote_identity> -- sh -s -- <remote_destination_path>",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5948,7 +5859,57 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "dry_run",
+     "type": "enum",
+     "required": false,
+     "options": [
+      "yes"
+     ],
+     "control": "checkbox"
+    },
+    {
+     "name": "source",
+     "type": "path",
+     "required": true
+    },
+    {
+     "name": "destination",
+     "type": "remote_path",
+     "required": true,
+     "write_target": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "rsync"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "lit": "-v"
+    },
+    {
+     "lit": "-h"
+    },
+    {
+     "lit": "-s"
+    },
+    {
+     "lit": "--dry-run",
+     "requires": "dry_run"
+    },
+    {
+     "field": "source"
+    },
+    {
+     "field": "destination"
+    }
+   ],
+   "notes": "Archive, verbose, human-readable, and --protect-args (-s) behavior are fixed. Start with Dry run selected, inspect the file list, then clear it only when ready to transfer."
   },
   {
    "id": "git-clone",
@@ -5992,7 +5953,7 @@
    ],
    "verify": "The new directory exists, `git log` shows commit history, and `git remote -v` shows the expected origin URL.",
    "undo": "Delete the cloned directory -- nothing outside it was touched, since clone only creates a new directory tree.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6104,7 +6065,7 @@
    ],
    "verify": "`git status` shows the intended files (or hunks) moved from unstaged/untracked into staged.",
    "undo": "`git restore --staged <path>` (or the older `git reset HEAD <path>`) unstages a file without touching its content in the working tree.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6169,7 +6130,7 @@
    ],
    "verify": "`git log -1` shows the new commit with the expected message, and `git status` reports nothing left staged.",
    "undo": "If not yet pushed anywhere: `git reset --soft HEAD~1` removes the commit and puts its changes back in the staging area, ready to re-commit or edit -- see the 'undo the last commit but keep changes' recovery entry. If already pushed and shared, use `git revert` instead of rewriting the commit away.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6287,7 +6248,7 @@
    ],
    "verify": "`git status` reports the new branch as current, and the working tree matches that branch's last commit.",
    "undo": "Switch back to the previous branch with `git switch -` (or the branch's name) -- switching itself does not create or delete commits.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6309,35 +6270,6 @@
    "tool": "git",
    "category": "git",
    "intent": "Throw away uncommitted changes to specific tracked files, restoring them to their last-committed content",
-   "rhel_versions": {
-    "7": {
-     "command": "git checkout -- path/to/file",
-     "notes": "This is git checkout's OTHER job, distinct from switching branches: given one or more paths after --, it overwrites those files in the working tree with their content from HEAD (or a given commit), discarding whatever was edited and never committed. The newer, less ambiguous spelling for this specific job is `git restore <path>`. Either way, there is no staging step and no confirmation prompt -- the previous uncommitted content is simply gone."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [
-    {
-     "flag": "--",
-     "explain": "Separates the commit/branch argument (if any) from the pathspec, so a path that happens to share a name with a branch is never misread as one.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "<commit>",
-     "explain": "Restore the path from a specific commit instead of from HEAD.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
    "verify": "`git diff <path>` shows no difference between the working tree and the last commit for that path.",
    "undo": "None -- the discarded edits were never committed, so there is nothing for git itself to recover them from. Recovery, if any, comes only from an editor's own local backup/undo history or a copy kept outside git.",
    "blast": "red",
@@ -6355,7 +6287,32 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "path",
+     "type": "git_path",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "--literal-pathspecs"
+    },
+    {
+     "lit": "checkout"
+    },
+    {
+     "lit": "--"
+    },
+    {
+     "field": "path"
+    }
+   ],
+   "notes": "This uses a literal repository-relative path and overwrites its uncommitted changes with content from HEAD. Copy remains blocked until the destructive-operation acknowledgement is checked."
   },
   {
    "id": "git-merge",
@@ -6677,7 +6634,7 @@
    ],
    "verify": "`git stash list` shows the expected entry after push, or `git status` shows the restored changes after pop/apply.",
    "undo": "A pushed stash can be dropped unapplied with `git stash drop` (or restored with pop/apply) -- the changes are not lost until the stash itself is explicitly dropped or the stack is cleared.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6742,7 +6699,7 @@
    ],
    "verify": "`git tag -l` lists the tag, and `git show <tag>` shows the expected commit (and, for an annotated tag, the message).",
    "undo": "Delete the local tag with `git tag -d <name>` -- if it was already pushed, the remote copy needs its own explicit delete (see git-push's notes on deleting a pushed ref); deleting a tag never touches the commit it pointed at.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -7249,7 +7206,7 @@
    ],
    "verify": "Git reports the single first-bad commit at the end of the session, and testing that commit confirms it introduces the bug.",
    "undo": "`git bisect reset` at any point ends the session and returns to the original branch -- bisect only checks out commits for testing, it never creates or discards any.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -7382,25 +7339,9 @@
    "id": "git-recovery-wrong-branch",
    "tool": "git",
    "category": "git",
-   "intent": "Recovery scenario: 'I committed to the wrong branch' -- move a commit that was just made on the wrong branch onto the right one",
-   "rhel_versions": {
-    "7": {
-     "command": "git log -1  # note the hash, then: git checkout right-branch && git cherry-pick <hash> && git checkout wrong-branch && git reset --hard HEAD~1",
-     "notes": "The commit itself is not damaged -- it exists as an object regardless of which branch pointed at it. The fix is additive-then-subtractive: cherry-pick the commit onto the branch it belongs on (a new commit object, same content), THEN remove it from the wrong branch with reset. Doing the cherry-pick BEFORE the reset means the commit is safely copied before anything is removed, so an interruption partway through never leaves the work existing nowhere. If the wrong-branch commit was already pushed, treat removing it there the same as any other push --force: only safe if nobody else has already fetched it."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [],
-   "verify": "`git log` on the correct branch shows the commit, and `git log` on the originally-wrong branch no longer shows it.",
-   "undo": "If interrupted after the cherry-pick but before the reset, the commit now simply exists on both branches -- re-running just the reset half finishes the cleanup; nothing is lost either way since the cherry-pick step never removes anything.",
+   "intent": "Replay a known commit on the currently checked-out correct branch before removing it from the wrong branch",
+   "verify": "git show HEAD displays the expected copied commit on the correct branch.",
+   "undo": "If the cherry-pick was wrong and has not been pushed, run git reset --hard HEAD~1 only after confirming HEAD is the new cherry-pick and the original commit still exists on the source branch.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -7416,32 +7357,35 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "revision",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "cherry-pick"
+    },
+    {
+     "field": "revision"
+    }
+   ],
+   "notes": "First check out the branch that should receive the commit. This step copies the commit there; remove it from the wrong branch only after verifying the copied work."
   },
   {
    "id": "git-recovery-lost-commit",
    "tool": "git",
    "category": "git",
    "intent": "Recovery scenario: 'I lost a commit' -- a hard reset, a rebase, or a deleted branch removed a commit from every branch's visible history",
-   "rhel_versions": {
-    "7": {
-     "command": "git reflog  # find the commit's hash, then: git branch recovered-work <hash>",
-     "notes": "A commit that no longer appears in `git log` on any branch is not necessarily gone: as long as it has not been garbage-collected (git's default grace period is long, on the order of weeks, unless someone has run `git gc --prune=now`), it is still a real object in the repository, and `git reflog` almost always still has a line recording the moment HEAD pointed at it. Once the hash is found there, `git branch <new-name> <hash>` recreates a branch pointing at it, or `git cherry-pick <hash>` replays just that commit onto the current branch -- either way the 'lost' commit was never actually deleted, only unreferenced."
-    },
-    "8": {
-     "same_as": "7"
-    },
-    "9": {
-     "same_as": "7"
-    },
-    "10": {
-     "same_as": "7"
-    }
-   },
-   "flags": [],
-   "verify": "`git log <new-branch-or-hash>` shows the recovered commit and its content matches what was expected to be lost.",
+   "verify": "git show <recovered_branch> displays the recovered commit and git branch --contains <lost_revision> includes the new branch.",
    "undo": "Nothing further to undo -- this recovery only reads the reflog and creates a new reference; it does not remove anything.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -7456,7 +7400,34 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "recovered_branch",
+     "type": "git_refname",
+     "required": true
+    },
+    {
+     "name": "lost_revision",
+     "type": "git_revision",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "git"
+    },
+    {
+     "lit": "branch"
+    },
+    {
+     "field": "recovered_branch"
+    },
+    {
+     "field": "lost_revision"
+    }
+   ],
+   "notes": "Use git reflog to identify the lost revision, then create a named branch pointing to it so the commit is reachable again."
   },
   {
    "id": "gen-git-clone",
@@ -7466,12 +7437,12 @@
    "fields": [
     {
      "name": "repository",
-     "type": "comment",
+     "type": "git_repository",
      "required": true
     },
     {
      "name": "directory",
-     "type": "service",
+     "type": "directory_name",
      "required": false
     }
    ],
@@ -7492,7 +7463,7 @@
    ],
    "verify": "In the new directory, git status identifies the checked-out branch and git remote -v shows the expected origin.",
    "undo": "Delete the new clone directory after confirming it contains no local work you need to keep.",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "id": "src-git-htmldocs",
     "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
@@ -7507,7 +7478,7 @@
     "9": false,
     "10": false
    },
-   "notes": "Repository accepts HTTPS, SSH, file, and local-path forms. The value is emitted as one shell-quoted operand; Git decides whether the address is reachable."
+   "notes": "Repository accepts only HTTPS, SSH, SCP-like user@host:path, or an absolute local path. The optional destination is one directory name."
   },
   {
    "id": "gen-git-branch",
@@ -9119,25 +9090,6 @@
    "tool": "id",
    "category": "Users & sudo",
    "intent": "See a user's UID, groups, and SELinux context",
-   "rhel_versions": {
-    "7": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "8": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "9": {
-     "command": "id alice",
-     "notes": "Groups shown are current; a user added to a group mid-session must log out/in (or newgrp) to pick it up - the classic 'I added them to the group but it doesn't work'. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
-     "changed_in_note": null
-    },
-    "10": {
-     "same_as": "9",
-     "changed_in_note": null
-    }
-   },
    "verify": "Expected groups listed.",
    "undo": "none - read-only",
    "blast": "green",
@@ -9154,48 +9106,31 @@
     "8": false,
     "9": false,
     "10": false
-   }
+   },
+   "fields": [
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "id"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "notes": "Reports the selected account UID, primary group, and supplementary groups without changing the account."
   },
   {
    "id": "r-usermod-ag",
    "tool": "usermod",
    "category": "Users & sudo",
    "intent": "Add a user to a group without destroying their other groups",
-   "rhel_versions": {
-    "7": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "8": {
-     "same_as": "9",
-     "changed_in_note": null
-    },
-    "9": {
-     "command": "usermod -aG wheel alice",
-     "notes": "-a APPENDS; -G alone REPLACES the supplementary group list - the most destructive missing letter in Linux administration. wheel = sudo rights on RHEL. Mentor: usermod -G without -a has ended careers. The tool's generator will never emit it bare. Carried across from the Grey Beard Ansible field kit (same owner, orbit/grey-beard-ansible), which is single-version and was authored and used on RHEL 9: this is the RHEL 9 row, and the other releases repeat it unchanged. No release of this entry is host-verified yet - `verified` is false on all four until a capture run says otherwise.",
-     "changed_in_note": null
-    },
-    "10": {
-     "same_as": "9",
-     "changed_in_note": null
-    }
-   },
-   "flags": [
-    {
-     "flag": "-a",
-     "explain": "Append supplementary groups instead of replacing the account's existing supplementary-group list; use together with -G.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    },
-    {
-     "flag": "-G",
-     "explain": "Set the account's supplementary groups. Without -a, groups omitted from this list are removed from the account.",
-     "source_ref": null,
-     "license_class": "paraphrase-only"
-    }
-   ],
-   "verify": "id alice shows wheel plus all previous groups.",
-   "undo": "gpasswd -d alice wheel",
+   "verify": "`id <username>` shows <groups> plus all previously recorded supplementary groups.",
+   "undo": "Restore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> <username>`.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-usermod-ag",
@@ -9211,7 +9146,35 @@
     "9": false,
     "10": false
    },
-   "privilege": "root"
+   "privilege": "root",
+   "fields": [
+    {
+     "name": "groups",
+     "type": "group_list",
+     "required": true
+    },
+    {
+     "name": "username",
+     "type": "username",
+     "required": true
+    }
+   ],
+   "template": [
+    {
+     "lit": "usermod"
+    },
+    {
+     "lit": "-a"
+    },
+    {
+     "flag": "-G",
+     "field": "groups"
+    },
+    {
+     "field": "username"
+    }
+   ],
+   "notes": "The required -a keeps existing supplementary groups while -G adds the selected group list."
   },
   {
    "id": "r-visudo-c",
@@ -10711,7 +10674,7 @@
    ],
    "verify": "evidence/<host>/etc/ssh/sshd_config exists per host; diff -r evidence/web01 evidence/web02 shows the drift you're hunting.",
    "undo": "rm -r evidence/ locally - targets were never written to",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "id": "src-greybeard-a-fetch",
     "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-fetch' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc fetch/slurp (core 2.21.1)",
@@ -11947,7 +11910,7 @@
    "fields": [
     {
      "name": "description",
-     "type": "service",
+     "type": "unit_description",
      "required": true
     },
     {

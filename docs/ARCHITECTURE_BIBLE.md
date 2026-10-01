@@ -31,8 +31,8 @@ check) against the built artifact and fails the build loud on any defect a gate
 can see; `docs/QA_GATES.md` states what each gate proves and, as important, what
 it does not.
 
-As built (`v1.0.0-alpha.5`, 2026-09-22): 199 curated command
-entries across 102 tools (43 guided-form generators and 156 static checks), 14,439
+As built (`v1.0.0-alpha.6`, 2026-10-01): 200 curated command
+entries across 102 tools (58 guided-form generators and 142 static checks), 14,439
 distinct mined reference commands, 1,492 embedded STIG rules across all four RHEL
 releases, 200 CCI-to-NIST mappings, and a content fingerprint identifying this
 exact data payload. `docs/USER_GUIDE.md` states the remaining evidence and
@@ -113,7 +113,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `extract/extract_ansible_doc.py` | Regenerates `content/modules.json` and `content/flags.json` from `ansible-doc --json`. **Not consumed by `build.py`'s `CONTENT` map** -- leftover from the Grey Beard Ansible fork this product started from. See Section 23. | |
 | `extract/import_captures.py` | Walks `tests/captures/<rhel_version>/<entry_id>.json`, validates every record against the content validation protocol's field set, verifies `command_hash_at_capture`, and folds STIG-mapped captures into `content/expected_output.json`. `--check` re-runs into a temp dir and diffs (Q15). | The canonical capture path, per Eli Cross's ruling -- see `docs/WORKFLOW.md`. |
 | `extract/make_pending_skeletons.py` | Writes empty, honestly-`pending` skeletons for content that has no source yet. | |
-| `content/commands.json` | The 199 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 43 generators and 156 static checks. |
+| `content/commands.json` | The 200 command entries -- the core curated catalog. Hand-authored; schema in Section 4. | 58 generators and 142 static checks. |
 | `content/tools.json` | The 102 tools, their labels, and per-RHEL-version availability (`available`, `reason`, `alternative`). | |
 | `content/dangerous.json` | The 15-row destructive-pattern table `blastFor()` matches against every assembled command, both quoted and unquoted. | |
 | `content/glossary.json` | Loaded into the data island (`DATASETS.GLOSSARY`) but **never read by any renderer in `template.html`**. Inherited from the Grey Beard Ansible fork; its terms (implicit localhost, delegation, pipelining) are Ansible concepts, not RHEL ones. See Section 23. | |
@@ -125,7 +125,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `content-src/flag_coverage_baseline.json` | The dated, ratcheting acceptance baseline Q20 measures flag-dictionary completeness against. Expires 2026-09-25 (`docs/POAM.md`). | |
 | `content-src/raw/rhel<N>/*.man.txt` | Staged, git-ignored raw `man`/`--help` captures -- the source of record for licensing review and for Q14's paraphrase-collision check. Never read by `build.py`. | |
 | `content/checklists.json`, `dossier.json`, `drills.json`, `errors.json`, `letter.md`, `modules.json`, `rhel_flags.json`, `scars.json`, `snippets.json`, `trees.json`, `flags.json` | Present under `content/` but **absent from `build.py`'s `CONTENT` map** -- none of these reach the shipped artifact. Leftover from the Grey Beard Ansible fork (`modules.json`/`flags.json` are `extract_ansible_doc.py`'s own output). | See Section 23. |
-| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 339 unittest cases and 101,957 harness checks pass on this build. |
+| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 480 unittest cases and 168,697 harness checks pass on this build. |
 | `stig-src/` | The pinned DISA STIG/CCI zip sources and their SHA-256 sums -- the source of record `extract/parse_xccdf.py` reads from. | |
 | `NOTICE` | The per-family licensing derivation statement (public-domain vs. paraphrase-only, and where each family's raw source is staged). | |
 
@@ -141,7 +141,7 @@ example).
 
 **Command entry** (`content/commands.json`, one of two shapes):
 
-*Static (fixed per-RHEL-version command)* -- 156 of 199 entries:
+*Static (fixed per-RHEL-version command)* -- 142 of 200 entries:
 ```
 {
   id, tool, explain_tool?, category, intent,
@@ -156,13 +156,13 @@ example).
 ```
 A `slot` is one of: `{command, notes?, changed_in_note?}`, `{same_as: "<version>",
 changed_in_note?}`, or `{unavailable: {reason, alternative?}}`. A `receipt` is
-`{by, on, host, capture}` -- see Section 6.
+`{by, on, host, capture, command_as_run}` -- see Section 6.
 
-*Generator (guided form)* -- 43 of 199 entries:
+*Generator (guided form)* -- 58 of 200 entries:
 ```
 {
   id, tool, category, intent,
-  fields: [ {name, type, required, options?, versions?} ],
+  fields: [ {name, type, required, options?, versions?, write_target?} ],
   template: [ token, token, ... ],
   doc?: { kind: "yaml"|"ini"|"lines", filename, lines: [...] },
   versions?: ["7","8","9","10"],   // omitted means offered on all four
@@ -290,11 +290,15 @@ true and a "changed in RHEL X" note when the current entry's slot carries one.
 **Verification is per RHEL version, not per entry** (a CEO ruling closing a real
 review finding: a single whole-entry flag could not be set without overclaiming a
 version nobody independently ran). `entry.verified[version]` is either `false` or
-a receipt `{by, on, host, capture}`. `verificationStatusForVersion()` is the one
-function that turns that plus a joined capture into the three UI states
+a receipt `{by, on, host, capture, command_as_run}`. `verificationStatusForVersion()` is the one
+function that turns that plus the currently assembled command into the three UI states
 documented in `docs/USER_GUIDE.md` (Verified / Captured / Not host-verified) --
 read by the Inspector, the status bar, and the evidence exporter, so the three
-places cannot disagree. A `same_as` or `unavailable` version can never carry its
+places cannot disagree. Q16 checks that the receipt's `command_as_run` equals
+the governed capture for the same entry and RHEL version. The browser displays
+**Verified** only when that byte-exact captured command equals the current result. Changing a
+generator field therefore changes the command and immediately removes the
+Verified claim. A `same_as` or `unavailable` version can never carry its
 own receipt (`extract/schema.py`'s `verified_errors()` refuses it at build time):
 it was never independently run, even when its command text is identical to a
 version that was.
@@ -319,7 +323,7 @@ never spliced into the caller's accumulator.
 
 Regions and their owning renderer: rail (`renderRail`), version selector
 (`renderVersionSelector`), sidebar/tool list (`renderToolList`,
-`renderFavoritesSidebar`), editor (`renderEditor`, `renderGeneratorEditor` +
+`renderFavoritesSidebar`), task-centered Home (`renderHome`), editor (`renderEditor`, `renderGeneratorEditor` +
 `renderGeneratorForm` + `renderGeneratorResult` for generators, `renderAbout` for
 the About rail), blast banner (`renderBlastBanner`), inspector
 (`renderInspector`), STIG panel (`renderStigPanel`, writing both the on-screen
@@ -424,12 +428,24 @@ path from `localStorage` back into `innerHTML`.
 
 ## 12. Keyboard & Accessibility
 
-One delegated `keydown` listener and one binding table (`KEYMAP`) implement the
-entire keyboard surface -- `docs/USER_GUIDE.md`'s keyboard table is checked
-against this exact array, which is the only place a binding can be added or
-changed. Palette-local navigation (arrow keys, Enter, a `Tab` focus trap) and
-gutter-line activation are handled ahead of the table because they are contextual
-to an open overlay or a specific element, not a global shortcut. Every focusable
+The delegated primary `keydown` listener and one binding table (`KEYMAP`)
+implement the global shortcuts. `docs/USER_GUIDE.md`'s shortcut table is checked
+against this exact array, which is the only place a global binding can be added
+or changed. That listener also handles palette-local navigation (arrow keys,
+Enter, a `Tab` focus trap) and gutter-line activation ahead of the table because
+they are contextual to an open overlay or a specific element. Clipboard and
+runbook-copy controls use native button semantics for single-fire Enter and
+Space activation. A full-template structural test requires the only literal
+keyboard-event registration to be that `keydown` listener; it rejects literal
+`keyup`/`keypress`, inline/property/setAttribute/object-assignment, and Function
+call/apply registration forms. The shell may not synthesize click/dispatch
+activation through direct, bracketed, or call/apply click forms. Outside comments,
+`KEYMAP` may appear only in its declaration, length check, and indexed read, and
+every declared key array may contain only quoted string literals;
+the approved handler also may not directly route copy actions. Literal
+Enter/Space bindings, including template-literal values, are rejected in the declared table. These are source-shape
+guards for the named forms, not a call-graph analysis or proof against
+arbitrarily obfuscated JavaScript. Every focusable
 control shows a visible focus ring (`:focus`/`:focus-visible`, never removed
 without a replacement); the icon-only rail buttons reveal their text label on
 both focus and hover so a keyboard user reads the same word a mouse user does.
@@ -444,7 +460,7 @@ rather than inflated (Section 23).
 
 ## 13. Ansible Generators
 
-The activity rail's **Ansible** item (`Ctrl+Alt+3`) is live. It uses the same
+The activity rail's **Ansible** item (`Ctrl+Alt+4`) is live. It uses the same
 generator registry and renderer as the Command Builder, filtered to the Ansible
 tool category. Three entries generate a playbook plus its invocation, an
 inventory plus `ansible-inventory --graph`, and an `ansible.cfg` plus
@@ -471,7 +487,7 @@ line exactly with the operator values that were supplied.
 
 ## 14. Git Command Generator
 
-The activity rail's **Git** item (`Ctrl+Alt+4`) is live. It renders the existing
+The activity rail's **Git** item (`Ctrl+Alt+5`) is live. It renders the existing
 static Git catalog together with eight guided forms for clone, branch, merge,
 rebase, annotated tag creation, bounded log review, bisect startup, and
 lost-commit recovery. The forms use the same declarative command assembler and

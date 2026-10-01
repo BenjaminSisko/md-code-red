@@ -2779,10 +2779,11 @@ CAPTURE_REQUIRED_FIELDS = (
 )
 
 
-# {by, on, host, capture} — extract/schema.py's VERIFIED_RECEIPT_FIELDS, kept
+# {by, on, host, capture, command_as_run} — extract/schema.py's
+# VERIFIED_RECEIPT_FIELDS, kept
 # textually identical (CEO ruling, per-version verified; capture-review-run1-
 # 2026-09-18.md RILEY-F1).
-VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
+VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture", "command_as_run")
 
 
 # J3 (VER-003): closed grammars for the two receipt fields that had none.
@@ -2978,6 +2979,10 @@ def gate_q16(ctx):
                     f.append("entry %s verified['%s']: capture '%s' command_hash_at_capture does "
                              "not match sha256(command_as_run) — tampered or hand-edited capture "
                              "record" % (eid, v, cap_path))
+            if receipt.get("command_as_run") != cap.get("command_as_run"):
+                f.append("entry %s verified['%s']: receipt command_as_run does not match the "
+                         "named capture's command_as_run — the browser trust label must be bound "
+                         "to the exact reviewed command" % (eid, v))
             if host and cap.get("host") and host != cap.get("host"):
                 f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
                          "capture's own host ('%s') — a receipt's host claims where it was "
@@ -4070,6 +4075,21 @@ def build_ctx():
         "build_consts": load_build_constants(),
     }
     return ctx
+
+
+def build_ctx_if_current():
+    """Return a loaded artifact context only when the tracked artifact is current.
+
+    Source-level unittest discovery intentionally runs before ``build.py`` in
+    CI. A Git checkout can assign source files mtimes after the tracked artifact,
+    and an edited tree is expected to do so. Artifact-backed unit tests use this
+    helper to skip until the build step instead of calling ``build_ctx()`` and
+    letting its release-gate ``SystemExit`` abort the entire source test suite.
+    The release gate itself continues to call ``build_ctx()`` and fail closed.
+    """
+    if not find_artifact() or dist_integrity_failures():
+        return None
+    return build_ctx()
 
 
 def load_sources(ctx):

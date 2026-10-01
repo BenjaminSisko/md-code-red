@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>MD CODE RED — UX/UI Revamp Review</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23171a1e'/%3E%3Cpath d='M15 18h34v7H15zm0 21h24v7H15z' fill='%23d63c35'/%3E%3Cpath d='M42 32l7 7-7 7' fill='none' stroke='%23e7b44b' stroke-width='5' stroke-linecap='square'/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+:root{
+  --bg:#f3f0e8;--surface:#fffdf8;--surface2:#ebe6dc;--ink:#1d2024;--muted:#585d63;
+  --line:#c9c1b4;--line-strong:#8b8377;--brand:#b82e2a;--brand-soft:#f3dedb;
+  --amber:#9b6500;--amber-soft:#faedc9;--green:#146c43;--green-soft:#dcefe5;
+  --blue:#245c9d;--blue-soft:#dce8f6;--danger:#a61b1b;--danger-soft:#f6dddd;
+  --code:#171a1e;--code-ink:#f4f0e8;--focus:#0969da;
+  --ui:"Avenir Next","Segoe UI",Tahoma,sans-serif;
+  --display:"Arial Narrow","Avenir Next Condensed","Franklin Gothic Medium",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#131518;--surface:#1d2024;--surface2:#272b30;--ink:#f2eee6;--muted:#c5c9cd;
+  --line:#464b52;--line-strong:#777d85;--brand:#ff7168;--brand-soft:#4b2625;
+  --amber:#f1ba54;--amber-soft:#46381d;--green:#72d7a7;--green-soft:#193c2d;
+  --blue:#8dc1ff;--blue-soft:#19334f;--danger:#ff8581;--danger-soft:#4c2222;
+  --code:#090b0d;--code-ink:#f3efe7;--focus:#8dc1ff;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--ui)}
+body{overflow:hidden}
+button,a{font:inherit}
+button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.skip{position:fixed;left:12px;top:-80px;z-index:500;background:var(--ink);color:var(--bg);padding:12px 16px}
+.skip:focus{top:12px}
+.deck{height:100dvh;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth}
+.slide{height:100dvh;min-height:100dvh;scroll-snap-align:start;position:relative;overflow:hidden;display:flex;align-items:center;padding:clamp(42px,6vh,74px) clamp(44px,7vw,108px);isolation:isolate}
+.slide::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(to right,color-mix(in srgb,var(--line) 28%,transparent) 1px,transparent 1px),linear-gradient(to bottom,color-mix(in srgb,var(--line) 20%,transparent) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.25),transparent 70%);z-index:-2}
+.slide::after{content:attr(data-index);position:absolute;right:5vw;top:4vh;font:700 clamp(42px,8vw,110px)/1 var(--display);color:color-mix(in srgb,var(--brand) 8%,transparent);z-index:-1}
+.slide-inner{width:min(1180px,100%);margin:0 auto;min-width:0;transform-origin:center}
+.js .slide{opacity:.15;transform:translateY(18px);transition:opacity .4s ease,transform .4s ease}
+.js .slide.visible{opacity:1;transform:none}
+.kicker{font:800 clamp(11px,1.2vw,14px)/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:12px}
+h1,h2,h3,p{margin-top:0}
+h1{font:800 clamp(44px,8.2vw,100px)/.92 var(--display);letter-spacing:-.035em;text-wrap:balance;margin-bottom:20px}
+h2{font:800 clamp(30px,5vw,56px)/1 var(--display);letter-spacing:-.025em;text-wrap:balance;margin-bottom:20px}
+h3{font-size:clamp(17px,2vw,23px);line-height:1.15;margin-bottom:8px}
+.lede{font-size:clamp(18px,2.2vw,26px);line-height:1.45;color:var(--muted);max-width:76ch}
+.small{font-size:clamp(12px,1.25vw,15px);line-height:1.5;color:var(--muted)}
+.mono{font-family:var(--mono)}
+.red{color:var(--brand)}.amber{color:var(--amber)}.green{color:var(--green)}.blue{color:var(--blue)}
+.rule{height:4px;width:min(420px,55vw);background:linear-gradient(90deg,var(--brand) 0 34%,var(--amber) 34% 66%,var(--green) 66%);margin:22px 0}
+.grid{display:grid;gap:clamp(12px,2vw,24px)}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{min-width:0;background:color-mix(in srgb,var(--surface) 96%,transparent);border:1px solid var(--line);padding:clamp(14px,2vw,24px);box-shadow:3px 3px 0 color-mix(in srgb,var(--line) 55%,transparent)}
+.card strong{display:block;margin-bottom:7px}.card p:last-child,.card ul:last-child{margin-bottom:0}
+.card--brand{border-top:5px solid var(--brand)}.card--amber{border-top:5px solid var(--amber)}.card--green{border-top:5px solid var(--green)}.card--blue{border-top:5px solid var(--blue)}
+.metric{font:800 clamp(32px,5vw,66px)/1 var(--display);color:var(--brand);font-variant-numeric:tabular-nums}
+.metric-label{font:700 clamp(11px,1.2vw,14px)/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:9px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid currentColor;padding:7px 10px;font:700 12px/1 var(--mono);background:var(--surface)}
+.chip.read{color:var(--green)}.chip.change{color:var(--amber)}.chip.destroy{color:var(--danger)}.chip.info{color:var(--blue)}
+ul.clean{list-style:none;padding:0;margin:0}.clean li{position:relative;padding:7px 0 7px 22px;font-size:clamp(14px,1.45vw,18px);line-height:1.35}.clean li::before{content:"";position:absolute;left:0;top:14px;width:8px;height:8px;background:var(--brand)}
+.command{background:var(--code);color:var(--code-ink);border-left:6px solid var(--green);padding:clamp(13px,1.7vw,20px);font:600 clamp(12px,1.35vw,17px)/1.55 var(--mono);overflow-wrap:anywhere;box-shadow:6px 6px 0 color-mix(in srgb,var(--ink) 18%,transparent)}
+.command .flag{color:#ffd57d}.command .value{color:#8ee0b9}
+.compare{width:100%;border-collapse:collapse;background:var(--surface);font-size:clamp(10px,1.15vw,14px);line-height:1.35;table-layout:fixed}
+.compare th,.compare td{border:1px solid var(--line);padding:clamp(7px,1vw,12px);text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.compare th{background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:.9em;letter-spacing:.04em}
+.compare code{font-family:var(--mono);font-size:.9em;color:var(--blue)}
+.flow{display:grid;grid-template-columns:repeat(7,auto);align-items:center;justify-content:center;gap:clamp(6px,1.2vw,16px);margin:24px 0}
+.flow-step{border:1px solid var(--line-strong);background:var(--surface);padding:clamp(12px,2vw,22px);min-width:0;text-align:center}.flow-step strong{display:block}.arrow{font:800 24px var(--mono);color:var(--brand)}
+.bar-demo{display:grid;grid-template-columns:160px 240px minmax(160px,1fr) 320px;border:2px solid var(--line-strong);height:150px;background:var(--surface);margin:24px 0}.bar-demo>div{display:grid;place-items:center;border-right:1px solid var(--line);padding:8px;text-align:center;font:700 13px var(--mono)}.bar-demo>div:last-child{border:0}.bar-demo .work{background:var(--amber-soft)}
+.ia{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.ia .card{padding:16px}.ia .num{font:800 28px var(--display);color:var(--brand)}
+.wire-desktop{display:grid;grid-template-columns:180px minmax(0,1fr) 38%;grid-template-rows:58px 1fr;grid-template-areas:"head head head" "nav form result";height:min(58vh,520px);border:2px solid var(--ink);background:var(--surface);box-shadow:10px 10px 0 var(--line)}
+.wf{border:1px solid var(--line);padding:12px;min-width:0;overflow:hidden}.wf-head{grid-area:head;display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--bg)}.wf-nav{grid-area:nav}.wf-form{grid-area:form}.wf-result{grid-area:result;background:var(--surface2)}
+.ghost{height:12px;background:var(--line);margin:9px 0}.ghost.s{width:42%}.ghost.m{width:68%}.ghost.dark{background:var(--line-strong)}.box{border:1px solid var(--line-strong);padding:12px;margin:10px 0}.wf-command{background:var(--code);border-left:5px solid var(--green);padding:14px;margin:10px 0}.wf-command .ghost{background:#737b84}
+.mock-shell{display:grid;grid-template-columns:190px minmax(0,1fr);grid-template-rows:62px 1fr;grid-template-areas:"brand top" "nav main";height:min(61vh,550px);border:2px solid var(--ink);background:var(--surface);box-shadow:10px 10px 0 var(--line);font-size:11px;overflow:hidden}.mock-brand{grid-area:brand;background:var(--ink);color:#fff;padding:17px;border-bottom:4px solid var(--brand);font:800 16px var(--display)}.mock-top{grid-area:top;display:flex;align-items:center;gap:9px;padding:10px;border-bottom:1px solid var(--line)}.mock-search{flex:1;border:1px solid var(--line-strong);padding:10px;color:var(--muted)}.mock-nav{grid-area:nav;background:var(--surface2);padding:12px;border-right:1px solid var(--line)}.mock-nav div{padding:9px;border-left:3px solid transparent}.mock-nav .on{background:var(--surface);border-color:var(--brand);font-weight:800}.mock-main{grid-area:main;padding:14px;overflow:hidden}.mock-work{display:grid;grid-template-columns:1fr 44%;gap:12px}.mock-panel{border:1px solid var(--line);background:var(--surface)}.mock-ph{padding:9px 11px;border-bottom:1px solid var(--line);font-weight:800}.mock-body{padding:10px}.mock-field{margin-bottom:8px}.mock-field b{display:block;margin-bottom:4px}.mock-input{border:1px solid var(--line-strong);background:var(--surface);padding:8px}.mock-code{background:var(--code);color:var(--code-ink);border-left:5px solid var(--green);padding:12px;font:600 10px/1.5 var(--mono)}.mock-action{display:inline-block;background:var(--brand);color:#fff;padding:8px 10px;margin:8px 3px 0 0;font-weight:800}.mock-tabs{display:flex;border-top:1px solid var(--line);margin-top:8px}.mock-tabs span{flex:1;padding:8px;text-align:center}.mock-tabs .on{border-bottom:3px solid var(--amber);font-weight:800}
+.mobile-pair{display:grid;grid-template-columns:1fr 390px;gap:clamp(20px,5vw,70px);align-items:center}.phone{width:300px;max-width:100%;height:min(69vh,620px);margin:auto;border:8px solid var(--ink);border-radius:28px;background:var(--surface2);overflow:hidden;box-shadow:10px 14px 0 color-mix(in srgb,var(--ink) 15%,transparent);font-size:10px}.phone-head{background:var(--ink);color:#fff;padding:14px;border-bottom:4px solid var(--brand);font-weight:800}.phone-body{padding:10px}.phone-search,.phone-card{background:var(--surface);border:1px solid var(--line);padding:9px;margin-bottom:8px}.phone-command{background:var(--code);color:#fff;border-left:4px solid var(--green);padding:10px;font:600 9px/1.45 var(--mono);margin:8px 0}.phone-action{display:flex;gap:6px}.phone-action span{flex:1;padding:9px;text-align:center;font-weight:800;border:1px solid var(--line-strong)}.phone-action span:first-child{background:var(--brand);color:#fff;border-color:var(--brand)}
+.roadmap{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:stretch}.phase{border-top:6px solid var(--brand);background:var(--surface);border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px;min-width:0}.phase:nth-child(2n){border-top-color:var(--amber)}.phase:nth-child(3n){border-top-color:var(--green)}.phase b{font:800 26px var(--display);display:block}.phase strong{font-size:12px;display:block;margin:4px 0 8px}.phase p{font-size:11px;line-height:1.35;color:var(--muted);margin:0}
+.source-list a{color:var(--blue);text-decoration-thickness:2px;text-underline-offset:3px}
+.title-layout{display:grid;grid-template-columns:1.4fr .6fr;gap:40px;align-items:center}.terminal-mark{border:2px solid var(--line-strong);background:var(--code);color:var(--code-ink);padding:20px;min-height:260px;box-shadow:12px 12px 0 var(--brand-soft);font:600 clamp(12px,1.3vw,16px)/1.6 var(--mono)}.terminal-mark .prompt{color:#8ee0b9}.terminal-mark .accent{color:#ffd57d}
+.verdict{font:800 clamp(36px,6vw,80px)/.95 var(--display);color:var(--brand);text-wrap:balance}.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,4vw,56px);align-items:center}
+.quote{font:800 clamp(27px,4.4vw,52px)/1.12 var(--display);text-wrap:balance}.quote em{color:var(--brand);font-style:normal}
+.review-list{counter-reset:item;display:grid;grid-template-columns:1fr 1fr;gap:9px}.review-item{counter-increment:item;background:var(--surface);border:1px solid var(--line);padding:11px 13px;font-size:clamp(11px,1.15vw,14px);line-height:1.35}.review-item::before{content:counter(item,decimal-leading-zero);font:800 12px var(--mono);color:var(--brand);margin-right:8px}
+
+.progress{position:fixed;left:0;top:0;height:4px;background:var(--brand);z-index:200;transition:width .2s}
+.counter{position:fixed;right:18px;bottom:14px;z-index:210;background:color-mix(in srgb,var(--bg) 88%,transparent);padding:6px 9px;font:700 12px var(--mono);color:var(--muted)}
+.navbtn{position:fixed;bottom:12px;z-index:210;width:42px;height:42px;border:1px solid var(--line-strong);background:color-mix(in srgb,var(--surface) 92%,transparent);color:var(--ink);cursor:pointer}.prev{left:14px}.next{left:62px}.outline-btn,.help-btn{position:fixed;top:14px;z-index:210;height:40px;border:1px solid var(--line-strong);background:color-mix(in srgb,var(--surface) 94%,transparent);color:var(--ink);padding:0 12px;cursor:pointer;font:700 11px var(--mono)}.outline-btn{right:64px}.help-btn{right:14px;width:40px;padding:0}
+.rail{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:205;display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;padding:8px;background:color-mix(in srgb,var(--bg) 80%,transparent);border:1px solid var(--line);backdrop-filter:blur(4px)}.rail button{width:12px;height:12px;border:1px solid var(--line-strong);background:var(--surface);padding:0;cursor:pointer}.rail button[aria-current=true]{background:var(--brand);border-color:var(--brand)}
+.overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.66);display:none;align-items:center;justify-content:center;padding:20px}.overlay.open{display:flex}.dialog{width:min(720px,92vw);max-height:82vh;overflow:auto;background:var(--surface);color:var(--ink);border:2px solid var(--line-strong);padding:22px;box-shadow:12px 12px 0 rgba(0,0,0,.25)}.dialog h2{font-size:30px}.outline-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}.outline-list button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:10px;text-align:left;cursor:pointer}.dialog-close{float:right;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);width:40px;height:40px;cursor:pointer}.help-grid{display:grid;grid-template-columns:1fr auto;gap:10px;border-bottom:1px solid var(--line);padding:8px 0}.help-grid kbd{font-family:var(--mono);background:var(--surface2);padding:3px 7px}
+
+@media(max-width:900px){
+  .slide{padding:46px 34px 62px}.grid-4{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr}.title-layout,.split,.mobile-pair{grid-template-columns:1fr}.terminal-mark{display:none}.bar-demo{grid-template-columns:80px 110px 1fr 130px}.wire-desktop{grid-template-columns:130px 1fr;grid-template-areas:"head head" "nav form"}.wf-result{display:none}.mock-shell{grid-template-columns:120px 1fr}.roadmap{grid-template-columns:repeat(3,1fr)}.mobile-pair>div:first-child{display:none}.phone{height:min(67vh,600px)}
+}
+@media(max-width:620px){
+  .slide{padding:52px 20px 68px}.grid-2,.grid-3,.grid-4,.ia{grid-template-columns:1fr 1fr}.card{padding:11px}.card p,.clean li{font-size:12px}.compare{font-size:8px}.compare th,.compare td{padding:5px}.flow{grid-template-columns:1fr 18px 1fr;gap:4px}.flow-step{padding:8px;font-size:11px}.flow .arrow:nth-of-type(4),.flow .flow-step:nth-of-type(5){display:none}.bar-demo{grid-template-columns:58px 76px 1fr 90px;height:110px}.bar-demo>div{font-size:8px}.wire-desktop,.mock-shell{height:55vh}.roadmap{grid-template-columns:repeat(2,1fr)}.phase{padding:8px}.review-list{grid-template-columns:1fr}.review-item{font-size:10px;padding:7px}.rail{display:none}.outline-btn{right:60px}.counter{font-size:10px}.lede{font-size:16px}.quote{font-size:28px}.outline-list{grid-template-columns:1fr}.phone{width:260px}
+}
+@media(max-height:720px){
+  .slide{padding-top:40px;padding-bottom:54px}h1{font-size:clamp(38px,7vw,74px)}h2{font-size:clamp(28px,4vw,44px);margin-bottom:12px}.lede{font-size:clamp(15px,1.8vw,20px)}.card{padding:12px}.clean li{padding-top:4px;padding-bottom:4px}.wire-desktop,.mock-shell{height:52vh}.phone{height:58vh}.roadmap .phase p{font-size:9px}.compare th,.compare td{padding:6px}
+}
+@media(prefers-reduced-motion:reduce){.deck{scroll-behavior:auto}.js .slide,.js .slide.visible{opacity:1;transform:none;transition:none}.slide[data-slide-check]{outline:5px solid var(--danger);outline-offset:-5px}.slide[data-slide-check]::before{content:attr(data-slide-check-label);position:absolute;inset:auto auto 8px 50%;transform:translateX(-50%);z-index:500;background:var(--danger);color:#fff;padding:6px 10px;font:700 11px var(--mono);mask-image:none}}
+@media print{body{overflow:visible}.deck{height:auto;overflow:visible}.slide{height:7.5in;min-height:7.5in;break-after:page}.progress,.counter,.navbtn,.rail,.outline-btn,.help-btn,.overlay{display:none!important}.js .slide{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#slide-1">Skip to presentation</a>
+<div class="progress" aria-hidden="true"></div>
+<button class="navbtn prev" type="button" aria-label="Previous slide">←</button>
+<button class="navbtn next" type="button" aria-label="Next slide">→</button>
+<button class="outline-btn" type="button">Outline</button>
+<button class="help-btn" type="button" aria-label="Presentation help">?</button>
+<div class="counter" aria-live="polite"><span class="current">1</span> / <span class="total">18</span></div>
+<nav class="rail" aria-label="Slide navigation"></nav>
+
+<main class="deck" aria-label="MD CODE RED UX redesign presentation">
+  <section class="slide" id="slide-1" data-index="01" data-title="Title">
+    <div class="slide-inner title-layout">
+      <div>
+        <div class="kicker">UX/UI revamp review · 30 September 2026</div>
+        <h1>MD <span class="red">CODE RED</span></h1>
+        <p class="lede">Make the command the hero. Reveal the evidence when it earns attention.</p>
+        <div class="rule"></div>
+        <div class="chips"><span class="chip info">Offline</span><span class="chip info">RHEL 7–10</span><span class="chip read">Deterministic</span><span class="chip change">Operator reviewed</span></div>
+      </div>
+      <div class="terminal-mark" aria-label="Illustrative terminal command">
+        <span class="prompt">$</span> md-code-red find <span class="accent">"show SSH errors"</span><br><br>
+        ✓ reviewed task<br>
+        ✓ RHEL 9 compatible<br>
+        ✓ read-only<br>
+        ✓ source available<br><br>
+        <span class="prompt">$</span> journalctl --no-pager \<br>
+        &nbsp;&nbsp;--unit='sshd.service' \<br>
+        &nbsp;&nbsp;--priority='err' \<br>
+        &nbsp;&nbsp;--since='today'
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-2" data-index="02" data-title="Executive decision">
+    <div class="slide-inner split">
+      <div>
+        <div class="kicker">Executive decision</div>
+        <div class="verdict">Preserve the trust engine. Redesign the hierarchy.</div>
+      </div>
+      <div>
+        <p class="lede">MD CODE RED already provides stronger operational context than the competitors. Its interface exposes nearly all of that context at once.</p>
+        <ul class="clean">
+          <li>Task-first entry instead of a tool-first wall</li>
+          <li>One decision at a time</li>
+          <li>Persistent command and compact trust bar</li>
+          <li>Runbook, evidence, and teaching on demand</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-3" data-index="03" data-title="Evidence base">
+    <div class="slide-inner">
+      <div class="kicker">Evidence base</div>
+      <h2>Five views of the same operator problem</h2>
+      <div class="grid grid-3">
+        <div class="card card--brand"><strong>Live competitor test</strong><p class="small">Four equivalent Linux tasks completed on Cmd Generator, MarkdownMe, and the alpha.6 build.</p></div>
+        <div class="card card--amber"><strong>Product architecture</strong><p class="small">Current shell, content model, guided builders, references, STIG, evidence, learning, and pipeline flows.</p></div>
+        <div class="card card--green"><strong>Accessibility review</strong><p class="small">Keyboard, focus, semantics, announcements, contrast, reflow, target size, and scrolling.</p></div>
+        <div class="card card--blue"><strong>Operator research lens</strong><p class="small">Admin, instructor, automation, and compliance behavior; trust and skip patterns.</p></div>
+        <div class="card card--brand"><strong>Independent review</strong><p class="small">Strongest-model Claude Code review of the actual branch, generated artifact, tests, and release evidence.</p></div>
+        <div class="card card--amber"><strong>Design system review</strong><p class="small">SALM UX/UI skills plus accessibility-first interaction and responsive design guidance.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-4" data-index="04" data-title="Same task comparison">
+    <div class="slide-inner">
+      <div class="kicker">Live benchmark</div>
+      <h2>Same journal task, three paths</h2>
+      <table class="compare">
+        <thead><tr><th style="width:18%">Product</th><th style="width:41%">Generated command</th><th>What the operator receives</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Cmd Generator</strong></td><td><code>journalctl --no-pager -u sshd.service -p err --since today</code></td><td>Fast live preview and Basic/Advanced controls. No release, privilege, source, verification, or recovery context.</td></tr>
+          <tr><td><strong>MarkdownMe</strong></td><td><code>journalctl -u sshd.service -p err --since today --no-pager</code></td><td>Two-action natural-language flow with summary and flag explanations. Server AI, variable output, and network dependence.</td></tr>
+          <tr><td><strong>MD CODE RED</strong></td><td><code>journalctl --no-pager --unit='sshd.service' --priority='err' --since='today'</code></td><td>Deterministic quoting, RHEL context, validation, risk, source, verify, recover, and evidence. Too much supporting material is visible at once.</td></tr>
+        </tbody>
+      </table>
+      <p class="small" style="margin-top:12px">Task: show <code>sshd.service</code> errors since today without a pager. Live-tested 2026-09-30.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-5" data-index="05" data-title="First 30 seconds">
+    <div class="slide-inner split">
+      <div>
+        <div class="kicker">First-use comprehension</div>
+        <p class="quote">The competitors win the <em>first 30 seconds.</em></p>
+        <p class="lede">One job, one input surface, one visible result.</p>
+      </div>
+      <div class="grid">
+        <div class="card card--blue"><strong>Cmd Generator</strong><p class="small">Command preview stays at the top. Controls are roomy. Advanced fields wait until requested.</p></div>
+        <div class="card card--amber"><strong>MarkdownMe</strong><p class="small">The user describes intent without knowing the binary. The answer appears beside the prompt.</p></div>
+        <div class="card card--green"><strong>MD CODE RED opportunity</strong><p class="small">Use its offline index to map intent to curated tasks, then keep its stronger proof model.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-6" data-index="06" data-title="Density problem">
+    <div class="slide-inner">
+      <div class="kicker">Current-state diagnosis</div>
+      <h2>At 1280 pixels, 720 are reserved before the work begins</h2>
+      <div class="bar-demo" role="img" aria-label="Current desktop width allocation: 160 pixel rail, 240 pixel sidebar, 560 pixel editor, 320 pixel inspector">
+        <div>160 px<br>rail</div><div>240 px<br>catalog</div><div class="work">≈560 px<br>command workspace</div><div>320 px<br>inspector</div>
+      </div>
+      <div class="grid grid-4">
+        <div><div class="metric">102</div><div class="metric-label">tool groups</div></div>
+        <div><div class="metric">199</div><div class="metric-label">curated entries</div></div>
+        <div><div class="metric">14,439</div><div class="metric-label">reference commands</div></div>
+        <div><div class="metric">4×</div><div class="metric-label">help blocks per field</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-7" data-index="07" data-title="Operator behavior">
+    <div class="slide-inner">
+      <div class="kicker">SALM user-research lens</div>
+      <h2>Busy operators skip different things</h2>
+      <div class="grid grid-4">
+        <div class="card card--brand"><h3>Administrator</h3><p class="small">Skips long explanations. Needs exact prerequisites, an honest consequence, and recovery when the change fails.</p></div>
+        <div class="card card--amber"><h3>Instructor</h3><p class="small">Needs progressive reveal, expected output, release comparison, and a distraction-free teaching surface.</p></div>
+        <div class="card card--blue"><h3>Automation engineer</h3><p class="small">Needs stable fields, predictable quoting, stage composition, output-path risk, and exact copy behavior.</p></div>
+        <div class="card card--green"><h3>Compliance staff</h3><p class="small">Needs a visible chain from requirement to command to capture to verified execution.</p></div>
+      </div>
+      <p class="lede" style="margin:22px 0 0">The design must let experts move quickly while keeping verification and recovery within one action.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-8" data-index="08" data-title="Information architecture">
+    <div class="slide-inner">
+      <div class="kicker">Outcome-based information architecture</div>
+      <h2>Six destinations replace the content-type rail</h2>
+      <div class="ia">
+        <div class="card"><span class="num">01</span><h3>Home</h3><p class="small">Task search, recent work, favorites, and quick starts.</p></div>
+        <div class="card"><span class="num">02</span><h3>Build</h3><p class="small">Commands, bundles, pipelines, Ansible, Git, and configuration files.</p></div>
+        <div class="card"><span class="num">03</span><h3>Troubleshoot</h3><p class="small">Read-only diagnostic decision trees by symptom.</p></div>
+        <div class="card"><span class="num">04</span><h3>Compliance</h3><p class="small">STIG, CCI, NIST, capture state, and evidence.</p></div>
+        <div class="card"><span class="num">05</span><h3>Learn</h3><p class="small">Paths, drills, lessons, glossary, and release comparison.</p></div>
+        <div class="card"><span class="num">06</span><h3>Library</h3><p class="small">Reviewed tasks and clearly separated reference material.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-9" data-index="09" data-title="Progressive disclosure">
+    <div class="slide-inner">
+      <div class="kicker">Progressive disclosure</div>
+      <h2>One operational decision at a time</h2>
+      <div class="flow" aria-label="Four disclosure layers">
+        <div class="flow-step"><strong>Act</strong><span class="small">Task · command · copy</span></div><div class="arrow">→</div>
+        <div class="flow-step"><strong>Assess</strong><span class="small">RHEL · risk · root · state</span></div><div class="arrow">→</div>
+        <div class="flow-step"><strong>Operate</strong><span class="small">Run · verify · recover</span></div><div class="arrow">→</div>
+        <div class="flow-step"><strong>Understand</strong><span class="small">Flags · source · STIG · versions</span></div>
+      </div>
+      <div class="grid grid-3">
+        <div class="card card--green"><strong>Always visible</strong><p class="small">Exact command, Copy, RHEL, state-change class, privilege, verification/source state.</p></div>
+        <div class="card card--amber"><strong>One action away</strong><p class="small">Operational runbook, expected result, recovery, and clipboard preview.</p></div>
+        <div class="card card--blue"><strong>On demand</strong><p class="small">Teaching detail, compliance mapping, provenance, flags, and cross-release comparison.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-10" data-index="10" data-title="Desktop wireframe">
+    <div class="slide-inner">
+      <div class="kicker">Low-fidelity desktop wireframe</div>
+      <h2>Configure left. Review right. Proof below.</h2>
+      <div class="wire-desktop" role="img" aria-label="Desktop wireframe with task navigation, configuration form, and sticky command preview">
+        <div class="wf wf-head"><strong>MD CODE RED</strong><span>Task search · RHEL · Help</span></div>
+        <div class="wf wf-nav"><strong>Outcomes</strong><div class="ghost dark"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost s"></div></div>
+        <div class="wf wf-form"><strong>Configure essentials</strong><div class="box"><div class="ghost m"></div><div class="ghost dark"></div></div><div class="box"><div class="ghost s"></div><div class="ghost dark"></div></div><div class="box"><strong>＋ Advanced options</strong></div><div class="box"><strong>＋ Why these fields?</strong></div></div>
+        <div class="wf wf-result"><strong>Sticky command preview</strong><div class="wf-command"><div class="ghost dark"></div><div class="ghost dark m"></div></div><div class="box"><div class="ghost s"></div><div class="ghost"></div><div class="ghost m"></div></div><div class="box"><strong>Runbook · Explain · Compliance · Versions</strong></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-11" data-index="11" data-title="Desktop mockup">
+    <div class="slide-inner">
+      <div class="kicker">High-fidelity direction</div>
+      <h2>Operational field manual</h2>
+      <div class="mock-shell" role="img" aria-label="High-fidelity desktop mockup of a journalctl command builder">
+        <div class="mock-brand">MD <span class="red">CODE RED</span></div>
+        <div class="mock-top"><div class="mock-search">What do you need to do? &nbsp; <span>show SSH errors since today</span></div><b>RHEL 9</b><span class="green">● Offline</span></div>
+        <div class="mock-nav"><b>Work by outcome</b><div class="on">Diagnose</div><div>Change</div><div>Automate</div><div>Comply</div><div>Learn</div><br><b>System logs</b><div class="on">journalctl</div><div>rsyslog</div></div>
+        <div class="mock-main"><b>Diagnose / System logs / journalctl</b><h3 style="margin:7px 0">Show service errors in the system journal</h3><div class="chips"><span class="chip read">Read-only</span><span class="chip info">RHEL 9</span><span class="chip info">Documented</span></div><div class="mock-work" style="margin-top:10px"><div class="mock-panel"><div class="mock-ph">Essential fields</div><div class="mock-body"><div class="mock-field"><b>Service unit</b><div class="mock-input">sshd.service</div></div><div class="mock-field"><b>Minimum priority</b><div class="mock-input">error (err)</div></div><div class="mock-field"><b>Starting time</b><div class="mock-input">today</div></div><div class="mock-input"><b>＋ Advanced output options</b></div></div></div><div class="mock-panel"><div class="mock-ph">Command preview</div><div class="mock-code">journalctl --no-pager<br>--unit='sshd.service'<br>--priority='err' --since='today'</div><span class="mock-action">Copy command</span><div class="mock-tabs"><span class="on">Runbook</span><span>Explain</span><span>Versions</span></div><div class="mock-body">Expected: SSH daemon error entries. No host state changes.</div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-12" data-index="12" data-title="Mobile mockup">
+    <div class="slide-inner mobile-pair">
+      <div>
+        <div class="kicker">Mobile interaction model</div>
+        <h2>One reading order. One document scroll.</h2>
+        <ul class="clean">
+          <li>Task navigation opens as a drawer</li>
+          <li>Command appears before the editable fields</li>
+          <li>Configure, Review, and Verify become explicit states</li>
+          <li>No horizontally scrolling primary navigation</li>
+          <li>Copy and Review stay reachable without hiding content</li>
+        </ul>
+      </div>
+      <div class="phone" role="img" aria-label="Mobile command builder mockup">
+        <div class="phone-head">☰ &nbsp; MD <span style="color:#ff7168">CODE RED</span><span style="float:right">RHEL 9</span></div>
+        <div class="phone-body"><div class="phone-search">What do you need to do?</div><div class="small">Diagnose / System logs</div><h3 style="margin:8px 0 2px">Show service errors</h3><div class="chips"><span class="chip read">Read-only</span><span class="chip info">Documented</span></div><div class="phone-command">journalctl --no-pager<br>--unit='sshd.service'<br>--priority='err' --since='today'</div><div class="phone-card"><b>Service unit</b><div class="mock-input">sshd.service</div></div><div class="phone-card"><b>Minimum priority</b><div class="mock-input">error (err)</div></div><div class="phone-card"><b>＋ Advanced options</b></div><div class="phone-action"><span>Copy</span><span>Review</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-13" data-index="13" data-title="Accessibility blockers">
+    <div class="slide-inner">
+      <div class="kicker">Accessibility and interaction review</div>
+      <h2>Fix these before calling the new shell complete</h2>
+      <div class="review-list">
+        <div class="review-item">Evidence dialog needs focus entry, containment, background isolation, Escape, and focus return.</div>
+        <div class="review-item">Search needs a complete accessible combobox/listbox contract.</div>
+        <div class="review-item">Rerenders currently destroy focus after several state changes.</div>
+        <div class="review-item">Command lines expose “Line N” instead of the command text to assistive technology.</div>
+        <div class="review-item">The entire editor is a live region and can announce a large page on every keystroke.</div>
+        <div class="review-item">Copy, validation, and refusal messages need a small stable status region.</div>
+        <div class="review-item">Hints and errors need programmatic association with fields.</div>
+        <div class="review-item">Muted text, success text, focus rings, and form boundaries include measured contrast failures.</div>
+        <div class="review-item">The 1025-pixel state can leave roughly 305 pixels for the editor.</div>
+        <div class="review-item">Mobile primary navigation and nested scrolling create reflow and focus risks.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-14" data-index="14" data-title="Operation bundles">
+    <div class="slide-inner">
+      <div class="kicker">Capability model</div>
+      <h2>Generate an operation, not a disposable line</h2>
+      <div class="grid grid-3">
+        <div class="card card--brand"><h3>Run</h3><div class="command">firewall-cmd<br>--permanent<br>--add-service=https</div><p class="small">State-changing · requires root</p></div>
+        <div class="card card--amber"><h3>Apply and verify</h3><div class="command" style="border-color:var(--amber)">firewall-cmd --reload<br>firewall-cmd<br>--query-service=https</div><p class="small">Keep every required step visible.</p></div>
+        <div class="card card--green"><h3>Recover</h3><div class="command">firewall-cmd<br>--permanent<br>--remove-service=https</div><p class="small">State limitations and reload requirement.</p></div>
+      </div>
+      <p class="lede" style="margin:18px 0 0">Copy one step or the reviewed bundle. Never replace the Run command when the operator opens Verify.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-15" data-index="15" data-title="Capability gaps">
+    <div class="slide-inner">
+      <div class="kicker">High-value capability fixes</div>
+      <h2>Close the gaps the benchmark exposed</h2>
+      <div class="grid grid-3">
+        <div class="card card--green"><strong>Guided storage inspection</strong><p class="small">Presets for Filesystems, Capacity, Topology, LVM relationships, and Advanced columns.</p><div class="command">lsblk -T -o<br>NAME,TYPE,FSTYPE,<br>SIZE,MOUNTPOINTS</div></div>
+        <div class="card card--amber"><strong>Unified firewall templates</strong><p class="small">Allow service, Open port, and Rich rule share one editable model and generate apply-now bundles.</p></div>
+        <div class="card card--blue"><strong>Exposed existing content</strong><p class="small">Render the nine troubleshooting trees and provide dedicated Compliance and Learn workspaces.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-16" data-index="16" data-title="Roadmap">
+    <div class="slide-inner">
+      <div class="kicker">Implementation sequence</div>
+      <h2>Six gated phases</h2>
+      <div class="roadmap">
+        <div class="phase"><b>0</b><strong>Validate</strong><p>Clickable flows, terminology, destination map, two people per audience.</p></div>
+        <div class="phase"><b>1</b><strong>Foundation</strong><p>Shell, tokens, landmarks, dialog, combobox, focus, Home.</p></div>
+        <div class="phase"><b>2</b><strong>Builder</strong><p>Task search, progressive form, command card, trust bar, bundles.</p></div>
+        <div class="phase"><b>3</b><strong>Evidence</strong><p>Troubleshoot, STIG, controls, capture state, provenance.</p></div>
+        <div class="phase"><b>4</b><strong>Specialists</strong><p>Pipeline canvas, Ansible/Git starts, Learn, instructor view.</p></div>
+        <div class="phase"><b>5</b><strong>Harden</strong><p>AT, zoom, browsers, CSP, hostile input, exact output, release.</p></div>
+      </div>
+      <p class="small" style="margin-top:14px">Each phase has an operator outcome and a technical regression gate. Passing unit tests alone does not prove usability.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-17" data-index="17" data-title="Success measures">
+    <div class="slide-inner">
+      <div class="kicker">Definition of success</div>
+      <h2>Measure task completion and trust comprehension</h2>
+      <div class="grid grid-4">
+        <div class="card"><div class="metric">≥85%</div><div class="metric-label">unassisted completion</div></div>
+        <div class="card"><div class="metric">&lt;45s</div><div class="metric-label">expert first valid command</div></div>
+        <div class="card"><div class="metric">≥90%</div><div class="metric-label">trust-state interpretation</div></div>
+        <div class="card"><div class="metric">≥80</div><div class="metric-label">SUS target</div></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:16px">
+        <div class="card card--green"><strong>Interaction gates</strong><p class="small">Keyboard, VoiceOver, NVDA, 200%/400% zoom, forced colors, reduced motion, text spacing, 320-pixel reflow.</p></div>
+        <div class="card card--blue"><strong>Trust gates</strong><p class="small">Exact output, quoting, RHEL availability, destructive interlock, clipboard parity, CSP, air gap, provenance, hostile inputs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="slide-18" data-index="18" data-title="Decision and sources">
+    <div class="slide-inner split">
+      <div>
+        <div class="kicker">Recommendation</div>
+        <h2>Use PR #17 as a bridge after its three pre-merge fixes. Plan the task-first shell as the next product milestone.</h2>
+        <ul class="clean">
+          <li>Before merge: retain toggle focus, fix new text contrast, and add direct UI regression tests.</li>
+          <li>Validate the new architecture before rewriting the full single-file shell.</li>
+          <li>Keep every deterministic, offline, release-aware trust capability.</li>
+        </ul>
+      </div>
+      <div class="card source-list">
+        <h3>Review artifacts and sources</h3>
+        <p class="small"><a href="UX_REDESIGN_PLAN.md">Full UX/UI revamp plan</a></p>
+        <p class="small"><a href="UX_REDESIGN_CONCEPT.html">Interactive wireframes and mockups</a></p>
+        <p class="small"><a href="CLAUDE_OPUS_REVIEW.md">Independent Claude Opus review</a></p>
+        <p class="small"><a href="https://cmdgenerator.org/">Cmd Generator</a> · <a href="https://cmdgenerator.org/cmd-generators/journalctl/">journalctl page</a></p>
+        <p class="small"><a href="https://markdownme.com/tools/linux-command-generator">MarkdownMe Linux Command Generator</a></p>
+        <p class="small"><a href="https://github.com/ToseaAI/awesome-html-slide-skills">Awesome HTML Slide Skills</a> · visual-explainer workflow</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay outline-overlay" role="dialog" aria-modal="true" aria-labelledby="outline-title" hidden>
+  <div class="dialog" tabindex="-1"><button class="dialog-close" type="button" aria-label="Close outline">×</button><h2 id="outline-title">Presentation outline</h2><div class="outline-list"></div></div>
+</div>
+<div class="overlay help-overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+  <div class="dialog" tabindex="-1"><button class="dialog-close" type="button" aria-label="Close help">×</button><h2 id="help-title">Presentation controls</h2><div class="help-grid"><span>Next slide</span><kbd>→ PageDown Space</kbd></div><div class="help-grid"><span>Previous slide</span><kbd>← PageUp</kbd></div><div class="help-grid"><span>First / last slide</span><kbd>Home / End</kbd></div><div class="help-grid"><span>Open outline</span><kbd>O</kbd></div><div class="help-grid"><span>Open help</span><kbd>?</kbd></div><div class="help-grid"><span>Close panel</span><kbd>Escape</kbd></div></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var deck=document.querySelector('.deck');
+  var slides=Array.from(document.querySelectorAll('.slide'));
+  var rail=document.querySelector('.rail');
+  var progress=document.querySelector('.progress');
+  var currentOut=document.querySelector('.current');
+  var totalOut=document.querySelector('.total');
+  var current=0,lastFocus=null;
+  totalOut.textContent=String(slides.length);
+
+  slides.forEach(function(slide,i){
+    var b=document.createElement('button');
+    b.type='button';b.setAttribute('aria-label','Go to slide '+(i+1)+': '+slide.dataset.title);
+    b.addEventListener('click',function(){go(i)});rail.appendChild(b);
+  });
+  var dots=Array.from(rail.querySelectorAll('button'));
+  var outlineList=document.querySelector('.outline-list');
+  slides.forEach(function(slide,i){
+    var b=document.createElement('button');b.type='button';b.textContent=(i+1)+'. '+slide.dataset.title;
+    b.addEventListener('click',function(){closePanels();go(i)});outlineList.appendChild(b);
+  });
+
+  function go(i){
+    i=Math.max(0,Math.min(slides.length-1,i));
+    slides[i].scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    history.replaceState(null,'','#slide-'+(i+1));
+  }
+  function update(i){
+    current=i;currentOut.textContent=String(i+1);progress.style.width=((i+1)/slides.length*100)+'%';
+    dots.forEach(function(d,j){d.setAttribute('aria-current',j===i?'true':'false')});
+    try{localStorage.setItem('mdcr-ux-deck-slide',String(i))}catch(e){}
+  }
+  var observer=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add('visible');update(slides.indexOf(entry.target))}});
+  },{root:deck,threshold:.58});
+  slides.forEach(function(s){observer.observe(s)});
+
+  function openPanel(selector,invoker){
+    var ov=document.querySelector(selector);lastFocus=invoker;ov.hidden=false;ov.classList.add('open');document.body.querySelectorAll('.deck,.progress,.counter,.navbtn,.rail,.outline-btn,.help-btn').forEach(function(n){n.setAttribute('inert','')});ov.querySelector('.dialog').focus();
+  }
+  function closePanels(){
+    document.querySelectorAll('.overlay.open').forEach(function(ov){ov.classList.remove('open');ov.hidden=true});document.querySelectorAll('[inert]').forEach(function(n){n.removeAttribute('inert')});if(lastFocus){lastFocus.focus();lastFocus=null}
+  }
+  document.querySelector('.outline-btn').addEventListener('click',function(){openPanel('.outline-overlay',this)});
+  document.querySelector('.help-btn').addEventListener('click',function(){openPanel('.help-overlay',this)});
+  document.querySelectorAll('.dialog-close').forEach(function(b){b.addEventListener('click',closePanels)});
+  document.querySelectorAll('.overlay').forEach(function(ov){ov.addEventListener('click',function(e){if(e.target===ov)closePanels()})});
+  document.querySelector('.prev').addEventListener('click',function(){go(current-1)});
+  document.querySelector('.next').addEventListener('click',function(){go(current+1)});
+  document.addEventListener('keydown',function(e){
+    var panel=document.querySelector('.overlay.open');
+    if(panel){
+      if(e.key==='Escape'){e.preventDefault();closePanels();return}
+      if(e.key==='Tab'){
+        var fs=Array.from(panel.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')).filter(function(n){return !n.disabled});
+        if(!fs.length)return;var first=fs[0],last=fs[fs.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+      }
+      return;
+    }
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(current+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(current-1)}
+    else if(e.key==='Home'){e.preventDefault();go(0)}
+    else if(e.key==='End'){e.preventDefault();go(slides.length-1)}
+    else if(e.key==='o'||e.key==='O'){e.preventDefault();document.querySelector('.outline-btn').click()}
+    else if(e.key==='?'){e.preventDefault();document.querySelector('.help-btn').click()}
+  });
+
+  function deliveryCheck(){
+    slides.forEach(function(slide){
+      slide.removeAttribute('data-slide-check');slide.removeAttribute('data-slide-check-label');
+      var inner=slide.querySelector('.slide-inner');if(!inner)return;
+      var cs=getComputedStyle(slide);var avail=slide.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+      if(inner.scrollHeight>avail+3){slide.dataset.slideCheck='overflow';slide.dataset.slideCheckLabel='Delivery check: content exceeds this viewport by '+Math.ceil(inner.scrollHeight-avail)+'px';console.warn(slide.id+' exceeds viewport',inner.scrollHeight,avail)}
+    });
+  }
+  addEventListener('resize',function(){clearTimeout(window.__fitTimer);window.__fitTimer=setTimeout(deliveryCheck,120)});
+  addEventListener('load',deliveryCheck);
+  var hash=location.hash.match(/^#slide-(\d+)$/);if(hash){go(Number(hash[1])-1)}else{try{var saved=Number(localStorage.getItem('mdcr-ux-deck-slide'));if(Number.isInteger(saved)&&saved>0&&saved<slides.length)go(saved)}catch(e){}}
+})();
+</script>
+</body>
+</html>
