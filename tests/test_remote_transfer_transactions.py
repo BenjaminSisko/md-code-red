@@ -89,7 +89,16 @@ outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
 marker=os.environ.get('MDCR_TEST_RACE_RECOVERY_MV_MARKER','')
 if race and marker and not os.path.exists(marker) and len(words)==2 and words[0].endswith('/before') and os.path.abspath(words[1])==os.path.abspath(race):
     open(marker,'w').close()
-    if not os.path.lexists(race): os.symlink(outside,race,target_is_directory=True)
+    if not os.path.lexists(race):
+        if os.environ.get('MDCR_TEST_RACE_RECOVERY_PLANT_DIRECTORY')=='yes':
+            os.mkdir(race)
+            open(os.path.join(race,'sentinel'),'w').write('do not touch\\n')
+        else:
+            os.symlink(outside,race,target_is_directory=True)
+if (os.environ.get('MDCR_TEST_RACE_RECOVERY_MV_FAIL_ON_LINK')=='yes' and
+        len(words)==2 and race and os.path.abspath(words[1])==os.path.abspath(race) and
+        os.path.islink(race)):
+    raise SystemExit(1)
 real=os.environ['MDCR_TEST_REAL_MV']
 os.execv(real,[real]+args)
 """)
@@ -99,17 +108,23 @@ os.execv(real,[real]+args)
 import os, subprocess, sys
 args=sys.argv[1:]
 words=[word for word in args if word not in ('-f','--')]
+fail_target=os.environ.get('MDCR_TEST_RACE_RECOVERY_RM_FAIL_TARGET','')
+if len(words)==1 and fail_target and os.path.abspath(words[0])==os.path.abspath(fail_target):
+    raise SystemExit(1)
 result=subprocess.run(['/bin/rm']+args)
 race=os.environ.get('MDCR_TEST_RACE_RECOVERY_TARGET','')
 outside=os.environ.get('MDCR_TEST_RACE_RECOVERY_OUTSIDE','')
 marker=os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT','')
 always=os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT_ALWAYS')=='yes'
+limit=int(os.environ.get('MDCR_TEST_RACE_RECOVERY_REPLANT_LIMIT','0') or '0')
 countfile=os.environ.get('MDCR_TEST_RACE_RECOVERY_RM_COUNT','')
 if result.returncode==0 and len(words)==1 and race and os.path.abspath(words[0])==os.path.abspath(race):
+    count=0
     if countfile:
         count=int(open(countfile).read() or '0') if os.path.exists(countfile) else 0
         open(countfile,'w').write(str(count+1))
-    if always or (marker and not os.path.exists(marker)):
+        count+=1
+    if always or (limit and count<=limit) or (marker and not os.path.exists(marker)):
         if marker: open(marker,'w').close()
         if not os.path.lexists(race): os.symlink(outside,race,target_is_directory=True)
 raise SystemExit(result.returncode)
@@ -420,6 +435,7 @@ raise SystemExit(result.returncode)
                     self.assertNotEqual(result.returncode,0)
                     self.assertIn(f'symlinked {prefix}',result.stderr.lower())
                     self.assertEqual(sentinel.read_text(),'do not touch\n')
+                    self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
                     self.assertTrue(txn.exists())
 
     def test_recovery_and_finalize_refuse_parent_that_becomes_unsafe(self):
@@ -479,6 +495,7 @@ raise SystemExit(result.returncode)
                 self.assertEqual(result.returncode,0,result.stderr)
                 self.assertFalse(target.is_symlink())
                 self.assertEqual(sentinel.read_text(),'do not touch\n')
+                self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
                 if is_dir: self.assertEqual((target/'old').read_text(),'before\n')
                 else: self.assertEqual(target.read_text(),'before\n')
                 self.env.pop('MDCR_TEST_RACE_RECOVERY_TARGET',None)
@@ -506,6 +523,7 @@ raise SystemExit(result.returncode)
         self.assertFalse(target.is_symlink())
         self.assertEqual((target/'old').read_text(),'before\n')
         self.assertEqual(sentinel.read_text(),'do not touch\n')
+        self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
         for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE','MDCR_TEST_RACE_RECOVERY_REPLANT','MDCR_TEST_RACE_RECOVERY_MV_MARKER'):
             self.env.pop(key,None)
 
@@ -532,6 +550,7 @@ raise SystemExit(result.returncode)
         self.assertTrue(target.is_symlink())
         self.assertEqual(target.resolve(),outside.resolve())
         self.assertEqual(sentinel.read_text(),'do not touch\n')
+        self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
         self.assertEqual(int(countfile.read_text()),6)
         self.assertEqual((txn/'state').read_text(),'present\n')
         self.assertTrue((txn/'before').is_dir())
@@ -540,6 +559,111 @@ raise SystemExit(result.returncode)
                     'MDCR_TEST_RACE_RECOVERY_REPLANT_ALWAYS','MDCR_TEST_RACE_RECOVERY_RM_COUNT',
                     'MDCR_TEST_RACE_RECOVERY_MV_MARKER'):
             self.env.pop(key,None)
+
+    def test_recovery_fails_closed_when_raced_link_cannot_be_removed(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                parent=self.tmp/f'{prefix}-sticky-parent'; parent.mkdir(mode=0o1777); parent.chmod(0o1777)
+                target=parent/'target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                self.run_command(self.command(entry_id,'preflight',target))
+                txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                if is_dir: (target/'old').write_text('after\n')
+                else: target.write_text('after\n')
+                outside=self.tmp/f'{prefix}-rm-fail-outside'; outside.mkdir()
+                sentinel=outside/'sentinel'; sentinel.write_text('do not touch\n')
+                marker=self.tmp/f'{prefix}-rm-fail.marker'
+                self.env.update({
+                    'MDCR_TEST_RACE_RECOVERY_TARGET':str(target),
+                    'MDCR_TEST_RACE_RECOVERY_OUTSIDE':str(outside),
+                    'MDCR_TEST_RACE_RECOVERY_MV_MARKER':str(marker),
+                    'MDCR_TEST_RACE_RECOVERY_MV_FAIL_ON_LINK':'yes',
+                    'MDCR_TEST_RACE_RECOVERY_RM_FAIL_TARGET':str(target),
+                })
+                result=self.run_command(self.command(entry_id,'recover',target),check=False,timeout=5)
+                self.assertEqual(result.returncode,1,result.stderr)
+                self.assertTrue(marker.exists(),'mv wrapper did not plant the raced link')
+                self.assertTrue(target.is_symlink())
+                self.assertEqual(target.resolve(),outside.resolve())
+                self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
+                self.assertEqual((txn/'state').read_text(),'present\n')
+                self.assertTrue((txn/'before').exists())
+                self.assertTrue((txn/'after').exists())
+                for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE',
+                            'MDCR_TEST_RACE_RECOVERY_MV_MARKER','MDCR_TEST_RACE_RECOVERY_MV_FAIL_ON_LINK',
+                            'MDCR_TEST_RACE_RECOVERY_RM_FAIL_TARGET'):
+                    self.env.pop(key,None)
+
+    def test_recovery_fails_closed_when_non_link_directory_is_planted(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                target=self.tmp/f'{prefix}-planted-directory-target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                self.run_command(self.command(entry_id,'preflight',target))
+                txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                if is_dir: (target/'old').write_text('after\n')
+                else: target.write_text('after\n')
+                marker=self.tmp/f'{prefix}-planted-directory.marker'
+                self.env.update({
+                    'MDCR_TEST_RACE_RECOVERY_TARGET':str(target),
+                    'MDCR_TEST_RACE_RECOVERY_OUTSIDE':str(self.tmp/'unused-outside'),
+                    'MDCR_TEST_RACE_RECOVERY_MV_MARKER':str(marker),
+                    'MDCR_TEST_RACE_RECOVERY_PLANT_DIRECTORY':'yes',
+                })
+                result=self.run_command(self.command(entry_id,'recover',target),check=False,timeout=5)
+                self.assertEqual(result.returncode,1,result.stderr)
+                self.assertTrue(marker.exists(),'mv wrapper did not plant the directory')
+                self.assertTrue(target.is_dir())
+                self.assertFalse(target.is_symlink())
+                self.assertEqual(sorted(p.name for p in target.iterdir()),['sentinel'])
+                self.assertEqual((txn/'state').read_text(),'present\n')
+                self.assertTrue((txn/'before').exists())
+                self.assertTrue((txn/'after').exists())
+                for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE',
+                            'MDCR_TEST_RACE_RECOVERY_MV_MARKER','MDCR_TEST_RACE_RECOVERY_PLANT_DIRECTORY'):
+                    self.env.pop(key,None)
+
+    def test_recovery_exhaustion_restores_after_but_preserves_rollback(self):
+        for entry_id,prefix,is_dir in (
+                ('scp-secure-copy','scp',False),('rsync-sync-files','rsync',True)):
+            with self.subTest(entry=entry_id):
+                target=self.tmp/f'{prefix}-three-replants-target'
+                if is_dir: target.mkdir(); (target/'old').write_text('before\n')
+                else: target.write_text('before\n')
+                self.run_command(self.command(entry_id,'preflight',target))
+                txn=Path(str(target)+f'.mdcr-{prefix}.txn')
+                if is_dir: (target/'old').write_text('after\n')
+                else: target.write_text('after\n')
+                outside=self.tmp/f'{prefix}-three-replants-outside'; outside.mkdir()
+                (outside/'sentinel').write_text('do not touch\n')
+                marker=self.tmp/f'{prefix}-three-replants.marker'
+                countfile=self.tmp/f'{prefix}-three-replants.count'
+                self.env.update({
+                    'MDCR_TEST_RACE_RECOVERY_TARGET':str(target),
+                    'MDCR_TEST_RACE_RECOVERY_OUTSIDE':str(outside),
+                    'MDCR_TEST_RACE_RECOVERY_MV_MARKER':str(marker),
+                    'MDCR_TEST_RACE_RECOVERY_MV_FAIL_ON_LINK':'yes',
+                    'MDCR_TEST_RACE_RECOVERY_REPLANT_LIMIT':'3',
+                    'MDCR_TEST_RACE_RECOVERY_RM_COUNT':str(countfile),
+                })
+                result=self.run_command(self.command(entry_id,'recover',target),check=False,timeout=5)
+                self.assertEqual(result.returncode,1,result.stderr)
+                self.assertEqual(int(countfile.read_text()),4)
+                self.assertFalse(target.is_symlink())
+                if is_dir: self.assertEqual((target/'old').read_text(),'after\n')
+                else: self.assertEqual(target.read_text(),'after\n')
+                self.assertEqual(sorted(p.name for p in outside.iterdir()),['sentinel'])
+                self.assertEqual((txn/'state').read_text(),'present\n')
+                self.assertTrue((txn/'before').exists())
+                self.assertFalse((txn/'after').exists(),'current state should have been moved back to the target')
+                for key in ('MDCR_TEST_RACE_RECOVERY_TARGET','MDCR_TEST_RACE_RECOVERY_OUTSIDE',
+                            'MDCR_TEST_RACE_RECOVERY_MV_MARKER','MDCR_TEST_RACE_RECOVERY_MV_FAIL_ON_LINK',
+                            'MDCR_TEST_RACE_RECOVERY_REPLANT_LIMIT','MDCR_TEST_RACE_RECOVERY_RM_COUNT'):
+                    self.env.pop(key,None)
 
     def test_each_signal_cleans_each_remote_transaction_and_fails_pipeline(self):
         for entry_id,prefix,is_dir in (

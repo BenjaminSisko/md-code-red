@@ -6,6 +6,24 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Build the HTML before unit discovery in Forgejo CI so all artifact-backed
+  tests execute, while preserving the committed candidate provenance instead
+  of regenerating toolchain-specific bytes with the runner's Python and Node
+  versions.
+- Cover every fail-closed branch in SCP/rsync target replacement: an
+  unremovable raced link in a sticky parent, a planted non-link directory, and
+  exhaustion after three replants. The tests require exact status `1`, preserve
+  trusted rollback state, and prove an outside directory contains only its
+  original sentinel. Existing link-race cases now enforce the same exact
+  directory inventory so writes through an attacker link cannot pass unseen.
+- Scan the complete shell for keyboard listener registrations, allowing one
+  delegated `keydown` listener and no `keyup` or property handler, so a second
+  handler cannot synthesize copy-button clicks after the audited region.
+- Give each rendered-browser audit an optional `AUDIT_OUTPUT` path so standalone
+  and HTTP runs can retain separate raw results without overwriting one another.
+- Document the `after` state left by a failed remote Recover and the trusted
+  administrator procedure that moves it back to an absent target before the
+  generated Recover step is retried.
 - Keep descriptive runbook prose visible while disabling its Copy control;
   Preflight now copies only authored commands, and Verify/Recover copy only
   closed transaction scripts. Red-rated evidence and plan copying share the

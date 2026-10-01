@@ -69,7 +69,17 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertIn('el("palette-input").value="STIG"',self.template)
 
     def test_native_copy_buttons_have_no_keyboard_retrigger_handler(self):
+        listeners=list(re.finditer(
+            r'\.addEventListener\(\s*([\'\"])(keydown|keyup)\1',self.template))
+        self.assertEqual([match.group(2) for match in listeners],['keydown'],
+                         'the complete shell must have one keydown listener and no keyup listener')
         self.assertEqual(self.template.count('document.addEventListener("keydown"'),1)
+        self.assertNotRegex(self.template,r'\.onkey(?:down|up)\s*=')
+        self.assertNotRegex(
+            self.template,
+            r'addEventListener\.call\([^,]+,\s*([\'\"])(?:keydown|keyup)\1',
+            'keyboard handlers may not be registered through Function.call',
+        )
         start=self.template.index('document.addEventListener("keydown"')
         end=self.template.index('/* ============ boot ============ */',start)
         handler=self.template[start:end]

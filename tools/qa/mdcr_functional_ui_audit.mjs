@@ -9,7 +9,8 @@
  *   node tools/qa/mdcr_functional_ui_audit.mjs <repo> <app-url> <cdp-port>
  *
  * The machine-readable result is written to
- * /tmp/mdcr_functional_audit_results.json.
+ * the path in AUDIT_OUTPUT, or
+ * /tmp/mdcr_functional_audit_results.json when AUDIT_OUTPUT is unset.
  */
 
 import fs from 'node:fs';
@@ -20,6 +21,7 @@ import {spawnSync} from 'node:child_process';
 const repo = process.argv[2] || process.cwd();
 const baseUrl = process.argv[3] || 'http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html';
 const cdpPort = Number(process.argv[4] || 9232);
+const outputPath=process.env.AUDIT_OUTPUT||'/tmp/mdcr_functional_audit_results.json';
 const artifactPath=path.join(repo,'dist','md-code-red_v1.0.0-alpha.6.html');
 const artifactBytes=fs.readFileSync(artifactPath);
 const artifactText=artifactBytes.toString('utf8');
@@ -572,6 +574,6 @@ if(exceptions.length===0&&consoleErrors.length===0)pass('TC-CONSOLE-001','Reliab
 const summary={total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length,bySeverity:{}};
 for(const r of results.filter(x=>x.status==='FAIL'))summary.bySeverity[r.severity]=(summary.bySeverity[r.severity]||0)+1;
 const output={meta:{tool:'MD CODE RED',version:'v1.0.0-alpha.6',date:'2026-10-01',browser:'Google Chrome headless via CDP',url:baseUrl,commit:process.env.AUDIT_COMMIT||'',artifactBytes:artifactBytes.length,artifactSha256,contentFingerprint,entries:entries.length,generators:entries.filter(e=>Object.hasOwn(e,'template')).length,staticEntries:entries.filter(e=>!Object.hasOwn(e,'template')).length},summary,exceptions,consoleErrors,results};
-fs.writeFileSync('/tmp/mdcr_functional_audit_results.json',JSON.stringify(output,null,2));
+fs.writeFileSync(outputPath,JSON.stringify(output,null,2));
 console.log(JSON.stringify(summary));
 ws.close();

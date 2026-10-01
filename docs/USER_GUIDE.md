@@ -178,7 +178,23 @@ Finalize and do not delete `<target>.mdcr-scp.txn` or
 `before`, and any `after` entry; resolve the reported symlink, owner, mode, or
 parent-directory problem; then retry the generated Recover step. A refusal is
 designed to preserve all rollback material rather than guess which path is
-safe. For NetworkManager, apply the same rule to
+safe.
+
+If the transaction contains an `after` entry, Recover already moved the current
+target aside before it refused. A direct retry will correctly stop with
+`recovery swap already exists`. Have an administrator work on the remote host
+from a trusted console. After validating that the transaction directory is the
+expected owner and mode `0700`, that `state` and `before` are trusted, and that
+`after` is not a symlink, remove only the hostile link or resolve the reported
+path problem. If the target is then absent, use GNU `mv -T` to move
+`<target>.mdcr-scp.txn/after` or `<target>.mdcr-rsync.txn/after` back to the
+original target path. Do not delete `state` or `before`. Verify the restored
+current target, then retry the generated Recover step; it can now recreate
+`after`, install `before`, and remove the completed transaction. If the target
+is not absent, any transaction path is a symlink, or the owner/mode check does
+not match, stop and reconcile the paths manually instead of overwriting them.
+
+For NetworkManager, apply the same preserve-and-inspect rule to
 `/var/lib/md-code-red/nmcli-static-ipv4.txn` and keep local or out-of-band
 access until the saved profile has been restored and reactivated.
 
