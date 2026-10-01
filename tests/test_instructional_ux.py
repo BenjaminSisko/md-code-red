@@ -74,28 +74,48 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertEqual([match.group(2) for match in event_literals],['keydown'],
                          'the complete shell must have one literal keydown registration and no keyup/keypress registration')
         self.assertEqual(template.count('document.addEventListener("keydown"'),1)
-        self.assertNotRegex(template,r'\.onkey(?:down|up|press)\s*=')
-        self.assertNotRegex(template,r'\[\s*([\'\"`])onkey(?:down|up|press)\1\s*\]\s*=')
+        self.assertNotRegex(
+            template,r'onkey(?:down|up|press)',
+            'inline, property, setAttribute, and object-assignment keyboard handlers are forbidden',
+        )
         self.assertNotRegex(
             template,
             r'addEventListener(?:\.|\[\s*([\'\"`]))(?:call|apply)',
             'keyboard handlers may not be registered through Function.call/apply',
         )
+        self.assertNotRegex(
+            template,
+            r'KEYMAP\s*(?:\.\s*(?:push|unshift|splice)\b|\[\s*([\'\"`])(?:push|unshift|splice)\1\s*\])',
+            'the checked KEYMAP declaration may not be extended later',
+        )
+        for forbidden in ('dispatchEvent','MouseEvent','.click('):
+            self.assertNotIn(
+                forbidden,template,
+                'the shell may not synthesize activation through '+forbidden,
+            )
         start=template.index('document.addEventListener("keydown"')
         end=template.index('/* ============ boot ============ */',start)
         handler=template[start:end]
         for forbidden in (
             'data-action','data-plan-step','doCopyPlanStep(','doCopy(',
-            'copyText(','dispatchEvent','MouseEvent','.click(',
+            'copyText(',
             '["click"]',"['click']",
         ):
             self.assertNotIn(forbidden,handler,
                              'native buttons must keep browser Enter/Space semantics: '+forbidden)
-        keymap=template[
-            template.index('var KEYMAP=['):template.index('];',template.index('var KEYMAP=['))+2
-        ]
+        keymap_start=template.index('var KEYMAP=[')
+        keymap=template[keymap_start:template.index('function modsMatch(',keymap_start)]
+        key_properties=list(re.finditer(
+            r'(?<![\w$])(?:(?:[\'\"]keys[\'\"])|keys)\s*:',keymap))
+        literal_key_properties=list(re.finditer(
+            r'(?<![\w$])(?:(?:[\'\"]keys[\'\"])|keys)\s*:\s*\[([^\]]*)\]',
+            keymap,re.DOTALL))
+        self.assertEqual(
+            len(key_properties),len(literal_key_properties),
+            'every KEYMAP keys property must remain a directly inspectable array literal',
+        )
         key_values=[]
-        for match in re.finditer(r'keys:\[([^\]]*)\]',keymap):
+        for match in literal_key_properties:
             key_values.extend(value for _quote,value in re.findall(r'([\'\"])(.*?)\1',match.group(1)))
         self.assertNotIn('Enter',key_values,'Enter must remain native outside contextual overlay handling')
         self.assertNotIn(' ',key_values,'Space must remain native outside contextual gutter handling')
@@ -118,6 +138,22 @@ class InstructionalSchemaTests(unittest.TestCase):
                 listener,listener+'\n  ev.target.dispatchEvent(new MouseEvent("click"));',1),
             'Enter in KEYMAP':self.template.replace(
                 keymap,keymap+'\n  {id:"bad-enter",keys:["Enter"],mods:"none",whenTyping:true,run:function(e){e.target.dispatchEvent(new MouseEvent("click"));}},',1),
+            'spaced quoted keys in KEYMAP':self.template.replace(
+                keymap,keymap+'\n  {id:"bad-space","keys" : [ "Enter" ],mods:"none",whenTyping:true,run:function(){}},',1),
+            'shared key constant in KEYMAP':self.template.replace(
+                keymap,'var BAD_KEYS=["Enter"];\n'+keymap+'\n  {id:"bad-shared",keys:BAD_KEYS,mods:"none",whenTyping:true,run:function(){}},',1),
+            'KEYMAP push':self.template.replace(
+                boot,'KEYMAP.push({id:"bad-push",keys:["Enter"],mods:"none",whenTyping:true,run:function(){}});\n'+boot),
+            'inner terminator before bad key':self.template.replace(
+                keymap,keymap+'\n  {id:"safe-inner",keys:["x"],mods:"none",whenTyping:true,run:function(){var x=[];}},\n  {id:"bad-after-inner",keys:["Enter"],mods:"none",whenTyping:true,run:function(){}},',1),
+            'inline onkeyup':self.template.replace(
+                boot,'<button onkeyup="doCopy()">bad</button>\n'+boot),
+            'setAttribute onkeyup':self.template.replace(
+                boot,'document.body.setAttribute("onkeyup","doCopy()");\n'+boot),
+            'object onkeydown':self.template.replace(
+                boot,'Object.assign(document.body,{onkeydown:function(){doCopy();}});\n'+boot),
+            'helper synthetic click':self.template.replace(
+                boot,'function badHelper(e){e.target.click();}\n'+boot),
         }
         for name,mutant in mutants.items():
             with self.subTest(mutant=name),self.assertRaises(AssertionError):

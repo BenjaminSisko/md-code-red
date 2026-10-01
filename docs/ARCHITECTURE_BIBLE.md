@@ -437,9 +437,12 @@ they are contextual to an open overlay or a specific element. Clipboard and
 runbook-copy controls use native button semantics for single-fire Enter and
 Space activation. A full-template structural test requires the only literal
 keyboard-event registration to be that `keydown` listener; it rejects literal
-`keyup`/`keypress`, property, and Function call/apply registration forms. The
-approved handler may not route copy actions, call click/dispatch APIs, or place
-Enter/Space in `KEYMAP`. This is a source-shape guard, not a proof against
+`keyup`/`keypress`, inline/property/setAttribute/object-assignment, and Function
+call/apply registration forms. The shell may not synthesize click/dispatch
+activation, extend `KEYMAP` with mutation methods, or use nonliteral key arrays;
+the approved handler also may not directly route copy actions. Literal
+Enter/Space bindings are rejected in the declared table. These are source-shape
+guards for the named forms, not a call-graph analysis or proof against
 arbitrarily obfuscated JavaScript. Every focusable
 control shows a visible focus ring (`:focus`/`:focus-visible`, never removed
 without a replacement); the icon-only rail buttons reveal their text label on

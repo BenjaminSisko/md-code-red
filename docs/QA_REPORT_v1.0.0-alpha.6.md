@@ -95,9 +95,12 @@ the external instruction-binding probe, refuses any Preflight or Finalize
 marker in that payload, and counts exactly one keyboard activation and one
 clipboard write. Its structural companion scans the complete shell and permits
 one literal delegated `keydown` listener, rejects literal `keyup`/`keypress`,
-property, and call/apply registration forms, forbids copy or synthetic-event
-routing in the approved handler, and keeps Enter and Space out of the global
-shortcut table. Forgejo CI builds the HTML before test discovery but preserves the
+inline/property/setAttribute/object-assignment and call/apply registration forms,
+forbids synthetic click/dispatch APIs throughout the shell, rejects common
+`KEYMAP` mutation forms and nonliteral key arrays, and excludes literal Enter and
+Space from the declared global shortcut table. It is a source-shape check for
+those named forms, not a JavaScript call-graph proof. Forgejo CI builds the HTML
+before test discovery but preserves the
 committed, release-workstation provenance rather than dirtying protected
 evidence with runner-specific toolchain versions. Standalone and HTTP audits
 write separate raw result files and compare the main-document bytes returned by

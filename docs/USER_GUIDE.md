@@ -172,11 +172,12 @@ remote filesystem has room for two copies plus a safety margin. Recover restores
 absent. After the operator accepts the verified result, the finalization command
 removes the transaction directory so the next transfer can begin.
 
-If Recover refuses, stop and keep the transaction directory. Do not run
+If Recover exits nonzero or prints a refusal, stop and keep the transaction directory. Do not run
 Finalize and do not delete `<target>.mdcr-scp.txn` or
 `<target>.mdcr-rsync.txn`. From a trusted console, inspect its `state`,
 `before`, and any `after` entry; resolve the reported symlink, owner, mode, or
-parent-directory problem; then retry the generated Recover step. A refusal is
+parent-directory problem, including any shell `rm` error that prevented removal
+of an untrusted link; then retry the generated Recover step. A nonzero exit is
 designed to preserve all rollback material rather than guess which path is
 safe.
 

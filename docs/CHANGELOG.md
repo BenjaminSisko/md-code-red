@@ -6,6 +6,13 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Close the final Opus PASS observations: a stamped provenance SHA must be a
+  commit at or after the browser-reviewed implementation, both placeholder and
+  stamped manifests must retain canonical JSON bytes, and only the exact current
+  provenance path is exempted from protected-path drift. The keyboard guard now
+  rejects inline/property handlers, synthetic activation APIs, common `KEYMAP`
+  mutations, nonliteral key arrays, and whitespace/quoted-property variations;
+  its documentation states the exact source forms it checks.
 - Keep post-merge provenance stamping compatible with release readiness while
   allowing only the now-knowable `git_commit` field to differ from the reviewed
   placeholder manifest. The stamp must be committed, name an ancestor of the

@@ -19,7 +19,8 @@ make_provenance = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(make_provenance)
 
 
-def canonical_placeholder_provenance(current_blob, baseline_blob, head="HEAD"):
+def canonical_placeholder_provenance(
+        current_blob, baseline_blob, implementation_commit, head="HEAD"):
     """Validate the one permitted post-review manifest stamp and normalize it.
 
     The release procedure learns the immutable tag-target SHA only after merge.
@@ -34,27 +35,46 @@ def canonical_placeholder_provenance(current_blob, baseline_blob, head="HEAD"):
         raise ValueError("provenance must be valid JSON") from exc
     if not isinstance(current,dict) or not isinstance(baseline,dict):
         raise ValueError("provenance must be a JSON object")
+    canonical_current=(json.dumps(
+        current,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+    canonical_baseline=(json.dumps(
+        baseline,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+    if current_blob!=canonical_current or baseline_blob!=canonical_baseline:
+        raise ValueError("provenance must use canonical JSON encoding")
     commit=current.get("git_commit")
     if commit!=make_provenance.PLACEHOLDER_COMMIT:
         if not isinstance(commit,str) or not re.fullmatch(r"[0-9a-f]{40}",commit):
             raise ValueError("git_commit must be the placeholder or a full lowercase SHA")
-        exists=subprocess.run(
-            ["git","cat-file","-e",commit+"^{commit}"],cwd=REPO,
-            stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+        object_type=subprocess.run(
+            ["git","cat-file","-t",commit],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,
         )
-        if exists.returncode!=0:
-            raise ValueError("stamped git_commit does not resolve to a commit")
+        if object_type.returncode!=0:
+            raise ValueError("stamped git_commit does not resolve")
+        if object_type.stdout.strip()!="commit":
+            raise ValueError("stamped git_commit must name a commit object")
         ancestor=subprocess.run(
             ["git","merge-base","--is-ancestor",commit,head],cwd=REPO,
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,
         )
         if ancestor.returncode!=0:
             raise ValueError("stamped git_commit is not an ancestor of the release tree")
+        candidate_ancestor=subprocess.run(
+            ["git","merge-base","--is-ancestor",implementation_commit,commit],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+        )
+        if candidate_ancestor.returncode!=0:
+            raise ValueError(
+                "stamped git_commit predates the reviewed implementation commit")
     current["git_commit"]=make_provenance.PLACEHOLDER_COMMIT
     baseline["git_commit"]=make_provenance.PLACEHOLDER_COMMIT
-    if current!=baseline:
+    normalized=(json.dumps(
+        current,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+    normalized_baseline=(json.dumps(
+        baseline,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+    if normalized!=normalized_baseline:
         raise ValueError("stamped provenance changed fields other than git_commit")
-    return (json.dumps(current,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
+    return normalized
 
 
 class ReleaseReadinessTests(unittest.TestCase):
@@ -113,7 +133,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,
         ).stdout
         normalized_provenance=canonical_placeholder_provenance(
-            provenance_blob,baseline)
+            provenance_blob,baseline,implementation_source)
         with open(summary_path,encoding="utf-8") as fh:
             summary=fh.read()
         fingerprint=re.search(
@@ -175,8 +195,9 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertRegex(implementation_source,r"^[0-9a-f]{40}$")
         subprocess.run(["git","cat-file","-e",implementation_source+"^{commit}"],
                        cwd=REPO,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        provenance_rel="dist/md-code-red_%s.provenance.json" % version
         protected=("template.html","content","extract","build.py","qa.py","tools/qa",
-                   "tests","dist",":(exclude)dist/*.provenance.json",
+                   "tests","dist",":(top,exclude)"+provenance_rel,
                    ".forgejo/workflows")
         unchanged=subprocess.run(
             ["git","diff","--quiet",implementation_source+"..HEAD","--",*protected],
@@ -191,7 +212,6 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertEqual(working.stdout,"",
                          "protected implementation paths have uncommitted changes:\n"+
                          working.stdout)
-        provenance_rel="dist/md-code-red_%s.provenance.json" % version
         provenance_path=os.path.join(REPO,provenance_rel)
         provenance_working=subprocess.run(
             ["git","status","--porcelain","--untracked-files=all","--",provenance_rel],
@@ -207,7 +227,8 @@ class ReleaseReadinessTests(unittest.TestCase):
             ["git","show",implementation_source+":"+provenance_rel],cwd=REPO,
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True,
         ).stdout
-        canonical_placeholder_provenance(current_provenance,baseline_provenance)
+        canonical_placeholder_provenance(
+            current_provenance,baseline_provenance,implementation_source)
         stamped=json.loads(current_provenance)
         stamped["git_commit"]=subprocess.run(
             ["git","rev-parse","HEAD"],cwd=REPO,stdout=subprocess.PIPE,
@@ -215,20 +236,36 @@ class ReleaseReadinessTests(unittest.TestCase):
         ).stdout.strip()
         stamped_blob=(json.dumps(stamped,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
         self.assertEqual(
-            canonical_placeholder_provenance(stamped_blob,baseline_provenance),
-            canonical_placeholder_provenance(current_provenance,baseline_provenance),
+            canonical_placeholder_provenance(
+                stamped_blob,baseline_provenance,implementation_source),
+            canonical_placeholder_provenance(
+                current_provenance,baseline_provenance,implementation_source),
             "a documented post-merge git_commit stamp must preserve candidate provenance",
         )
         drifted=json.loads(stamped_blob)
         drifted["toolchain"]["python3"]="0.0-review-drift"
         with self.assertRaisesRegex(ValueError,"other than git_commit"):
             canonical_placeholder_provenance(
-                (json.dumps(drifted)+"\n").encode("utf-8"),baseline_provenance)
+                (json.dumps(drifted,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8"),
+                baseline_provenance,implementation_source)
         nonancestor=json.loads(stamped_blob)
         nonancestor["git_commit"]="0"*40
         with self.assertRaisesRegex(ValueError,"does not resolve"):
             canonical_placeholder_provenance(
-                (json.dumps(nonancestor)+"\n").encode("utf-8"),baseline_provenance)
+                (json.dumps(nonancestor,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8"),
+                baseline_provenance,implementation_source)
+        stale=json.loads(stamped_blob)
+        stale["git_commit"]=subprocess.run(
+            ["git","rev-parse",implementation_source+"^"],cwd=REPO,
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=True,
+        ).stdout.strip()
+        with self.assertRaisesRegex(ValueError,"predates the reviewed implementation"):
+            canonical_placeholder_provenance(
+                (json.dumps(stale,indent=1,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8"),
+                baseline_provenance,implementation_source)
+        with self.assertRaisesRegex(ValueError,"canonical JSON"):
+            canonical_placeholder_provenance(
+                current_provenance+b"\n",baseline_provenance,implementation_source)
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
         suite=unittest.defaultTestLoader.discover(
             os.path.join(REPO,"tests"),pattern="test*.py")

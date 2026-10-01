@@ -236,9 +236,11 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    carries that now-knowable fact; it is deliberately not the tag target. Use
    the same release-workstation Python and Node toolchain that produced the
    reviewed placeholder manifest. The committed stamp may change only
-   `git_commit`; the readiness test normalizes that field to the placeholder,
-   requires the stamped SHA to be an ancestor of the current tree, and compares
-   every other manifest field with the reviewed implementation. Because
+   `git_commit`; the readiness test requires canonical generator-formatted JSON,
+   requires that field to name a commit object at or after the reviewed
+   implementation and in the current tree's ancestry, normalizes it to the
+   placeholder, and compares every other manifest field byte-for-byte with the
+   reviewed implementation. Because
    release artifacts under `dist/` are ignored, stage the exact manifest with
    `git add -f dist/md-code-red_<version>.provenance.json` and stage the release
    report normally; do not force-add any other path. Rerun the full Section 5
@@ -263,11 +265,16 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    deploy receipt per artifact/host pair. When development of the next version
    begins, archive the just-released three-file set byte-for-byte under
    `releases/<version>/`; until then, the current release remains in `dist/`.
+   In that same next-version change, archive or retarget the candidate-specific
+   readiness tests and browser-evidence paths so CI no longer opens the released
+   version under `dist/`.
 
 The browser-evidence binding is deliberately candidate-specific. A later change
 to HTML, content, extractors, tests, QA tooling, build logic, or CI must create a
 new candidate and refresh its browser evidence; a post-review documentation
 commit or the validated one-field provenance stamp can keep the current binding.
+Because Forgejo runs this binding on every push and pull request, a protected-path
+change stays red on every branch until its new candidate evidence is committed.
 
 ## Quarterly STIG Refresh Cycle
 

@@ -70,14 +70,16 @@ The release adds or changes:
   directory containing only its original sentinel; targeted mutants prove the
   guarded success and transaction-retention paths cannot silently regress.
 - CI preserves the committed candidate provenance while building the HTML
-  before unit discovery, full-shell keyboard-listener coverage prevents a late
-  synthetic copy handler, and the browser auditor retains distinct standalone
+  before unit discovery. Full-shell source-shape coverage rejects the named
+  late listener, inline/property handler, synthetic activation, and `KEYMAP`
+  mutation forms without claiming arbitrary call-graph analysis. The browser auditor retains distinct standalone
   and HTTP result files while proving the browser's main-document bytes equal
   the audited artifact.
 - The post-merge provenance stamp is release-safe: readiness normalizes only
-  `git_commit`, requires its SHA to be an ancestor of the release tree, compares
-  every other manifest field with the reviewed implementation, and refuses an
-  uncommitted stamp. This keeps the documented post-stamp CI run green without
+  `git_commit`, requires canonical JSON and a commit SHA at or after the reviewed
+  implementation in the release tree's ancestry, compares every other manifest
+  field with the reviewed implementation, and refuses an uncommitted stamp.
+  This keeps the documented post-stamp CI run green without
   weakening protection for HTML, sidecar, tests, extraction, or workflow files.
 
 The final candidate passed all 896 pass/fail rendered-browser assertions and
