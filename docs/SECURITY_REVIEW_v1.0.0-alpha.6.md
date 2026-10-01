@@ -21,9 +21,9 @@ This candidate adds or strengthens the following security properties:
   local path; command-running `ext::` transports are refused.
 - Curl, wget, SCP, and rsync destination fields are classified as write targets.
   Execution sinks are refused, protected system and sensitive user startup or
-  authentication targets are red, directory-source or possible remote-directory
-  destinations are red, and
-  other writes are at least yellow. RHEL usrmerge aliases (`/bin`, `/sbin`,
+  authentication targets are red, possible SCP directory destinations and every
+  rsync remote write are red, and other writes are at least yellow. RHEL usrmerge
+  aliases (`/bin`, `/sbin`,
   `/lib`, and `/lib64`), `/var/run`, and `/etc/rc0.d` through `/etc/rc6.d`
   classify like their real targets.
 - Instructional preflight, verify, and recovery commands bind the operator's
@@ -35,19 +35,22 @@ This candidate adds or strengthens the following security properties:
   destructive-child reasons survive composition and appear in the red banner.
 - A destructive acknowledgement is bound to the current command. Any field,
   pipeline, operator, or release change clears it and disables Copy again.
-- Download, SCP, and rsync runbooks preserve an existing destination before
-  transfer and create an absence marker for a new target. Recovery restores the
-  saved target first and removes a created target only when the marker proves it
-  was absent. SCP is explicitly local-to-remote, and rsync recovery does not
-  prescribe `--delete`.
+- SCP and rsync use single-stdin remote transaction scripts whose argument
+  binding was executed through a fake SSH transport that reproduces OpenSSH's
+  joined remote-command semantics. Preflight refuses stale transaction state,
+  atomically publishes either a complete backup or an `absent` record, and rsync
+  checks capacity for two copies plus a margin. Recovery restores through an
+  `after` path or removes a created target only when recorded state proves it was
+  absent; explicit finalization clears the transaction. SCP remains
+  local-to-remote, and rsync recovery does not prescribe `--delete`.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
   host-verified; the command cannot keep a receipt merely because its entry and
   RHEL release match.
-- The hostile-input harness executes 165,361 checks over all 40 field types,
+- The hostile-input harness executes 168,697 checks over all 41 field types,
   every generator field, multi-stage pipelines, redirect targets, file
   generators, quoting domains, and positive controls; zero failed. This includes
-  26,992 pipeline checks, 717 pipeline-oracle comparisons, and 232 one-stage
+  27,652 pipeline checks, 741 pipeline-oracle comparisons, and 232 one-stage
   invariants.
 - The final standalone and HTTP rendered-browser audits each produced zero
   exceptions and zero console errors across 893 assertions, including 109

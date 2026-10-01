@@ -9,7 +9,7 @@ last_verified: 2026-10-01
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
 offline, provenance-backed RHEL command catalog. It closes the complete
-functional audit and addresses the findings recorded by four independent
+functional audit and addresses the findings recorded by five independent
 Claude Opus release reviews, including real-input, risk-label, validation,
 safety-reason, focus, contrast, and recovery findings. The final exact-head
 review remains a separate gate.
@@ -17,13 +17,13 @@ review remains a separate gate.
 | Release fact | Candidate value |
 |---|---|
 | Version / date | `v1.0.0-alpha.6` / 2026-10-01 |
-| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,922,170 bytes |
-| Artifact SHA-256 | `fa9e08f011aee4fe197cae0af55ca6018bdf6f05b219a17655b2c68fc4f54851` |
-| Content fingerprint | `ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0` |
+| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,928,004 bytes |
+| Artifact SHA-256 | `fd21f27561b03e9dc17e892dbef7845b0621ad0751d571d903d70129277d0feb` |
+| Content fingerprint | `13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2` |
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 431 unit tests; 165,361 hostile checks; 893 browser assertions in each of standalone and HTTP modes |
-| Implementation source | `be95fe8eb99090eeca52049fddea6f8905e82636` |
+| Verification | Q1-Q26 + JS; 439 unit tests; 168,697 hostile checks; 896 browser assertions in each of standalone and HTTP modes |
+| Implementation source | `95c9d9ebf05d9cb9aad294d26a388b9ffb708f6b` |
 
 The release adds or changes:
 
@@ -38,7 +38,7 @@ The release adds or changes:
 - Purpose-specific remote, URL, Git repository, Git path, shell-variable, PID, and write-target
   validation with exact golden-command and hostile-input coverage.
 - A stage-oriented pipeline inspector whose composed result has an independent
-  verification state and evidence context, plus 26,992 hostile pipeline checks,
+  verification state and evidence context, plus 27,652 hostile pipeline checks,
   717 token-position oracle comparisons, and 232 one-stage invariants.
 - Search, keyboard, focus, dialog, live-announcement, pressed-state, landmark,
   contrast, mobile, evidence, and reference-library improvements from the UX
@@ -49,14 +49,15 @@ The release adds or changes:
 - Red acknowledgements tied to current command bytes; expanded write-target
   classification and preserved composition reasons; safer transfer recovery.
 
-The final candidate passed 893 of 893 rendered-browser assertions in both its
+The final candidate passed 896 of 896 rendered-browser assertions in both its
 standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
-or console errors. Two consecutive clean builds produced the same 8,922,170-byte
-artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first through fourth independent Opus reviews and
+or console errors. Two consecutive clean builds produced the same 8,928,004-byte
+artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first through fifth independent Opus reviews and
 their HOLD findings are preserved in `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD.md` and
 `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_2.md`, and
 `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_3.md`, and
-`docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_4.md`. Exact-head independent
+`docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_4.md`, and
+`docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD_5.md`. Exact-head independent
 review runs only after this evidence is committed.
 
 Publication does not establish deployment, receiving-host acceptance, or command

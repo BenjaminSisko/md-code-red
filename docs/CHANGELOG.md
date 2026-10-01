@@ -6,6 +6,18 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Rebuilt SCP and rsync recovery around remotely executed transaction scripts
+  that survive OpenSSH argument joining, reject stale state, stage backups
+  atomically, restore through a rollback-safe `after` path, and require explicit
+  finalization. Rsync preflight also refuses insufficient remote capacity.
+- Corrected NetworkManager recovery to preserve the actual backing profile,
+  accepted real connection names and systemd descriptions containing spaces,
+  constrained chronyd directives to `server` or `pool`, and conservatively
+  classified ambiguous rsync destinations, `/etc/rc.local`, and `.bashrc.d`.
+- Added six executable fake-SSH transaction tests, browser assertions for both
+  remote runbooks and linked STIG selection, current-artifact evidence gates,
+  and an explicit harness exception only for the two valid space-bearing field
+  grammars.
 - Made guided edits and pipeline-field edits idempotent across `input` and
   deferred `change` events. The first real pointer click after typing now reaches
   Copy, destructive acknowledgement, and Add to pipeline; Tab keeps its next

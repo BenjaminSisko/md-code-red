@@ -5,14 +5,14 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "file:///private/tmp/md-code-red-ux.qIMM6w/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "be95fe8eb99090eeca52049fddea6f8905e82636",
+    "commit": "95c9d9ebf05d9cb9aad294d26a388b9ffb708f6b",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
   },
   "summary": {
-    "total": 893,
-    "pass": 893,
+    "total": 896,
+    "pass": 896,
     "fail": 0,
     "bySeverity": {}
   },
@@ -52,7 +52,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1208 ms",
+      "actual": "1213 ms",
       "severity": ""
     },
     {
@@ -340,7 +340,7 @@
       "description": "gen-nmcli-static-ipv4 renders through its UI on RHEL 7",
       "status": "PASS",
       "expected": "",
-      "actual": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+      "actual": "nmcli connection modify 'Wired connection 1' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
       "severity": ""
     },
     {
@@ -349,7 +349,7 @@
       "description": "gen-nmcli-static-ipv4 renders through its UI on RHEL 8",
       "status": "PASS",
       "expected": "",
-      "actual": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+      "actual": "nmcli connection modify 'Wired connection 1' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
       "severity": ""
     },
     {
@@ -358,7 +358,7 @@
       "description": "gen-nmcli-static-ipv4 renders through its UI on RHEL 9",
       "status": "PASS",
       "expected": "",
-      "actual": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+      "actual": "nmcli connection modify 'Wired connection 1' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
       "severity": ""
     },
     {
@@ -367,7 +367,7 @@
       "description": "gen-nmcli-static-ipv4 renders through its UI on RHEL 10",
       "status": "PASS",
       "expected": "",
-      "actual": "nmcli connection modify 'lab-eth0' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
+      "actual": "nmcli connection modify 'Wired connection 1' connection.interface-name 'eth0' ipv4.addresses '192.168.1.50/24' ipv4.gateway '192.168.1.1' ipv4.method manual",
       "severity": ""
     },
     {
@@ -7441,7 +7441,7 @@
       "description": "Rendered placeholder text meets normal-text contrast in both themes",
       "status": "PASS",
       "expected": "",
-      "actual": "[{\"theme\":\"light\",\"ratio\":5.59537064042819,\"color\":\"rgb(83, 101, 125)\",\"background\":\"rgb(246, 248, 250)\"},{\"theme\":\"dark\",\"ratio\":7.54113370301418,\"color\":\"rgb(161, 161, 170)\",\"background\":\"rgb(10, 14, 21)\"}]",
+      "actual": "[{\"theme\":\"light\",\"id\":\"genf-grep-search-text-pattern\",\"ratio\":5.706993202468818,\"color\":\"rgb(83, 101, 125)\",\"background\":\"rgb(250, 250, 250)\"},{\"theme\":\"light\",\"id\":\"genf-grep-search-text-target\",\"ratio\":5.706993202468818,\"color\":\"rgb(83, 101, 125)\",\"background\":\"rgb(250, 250, 250)\"},{\"theme\":\"light\",\"id\":\"palette-input\",\"ratio\":5.59537064042819,\"color\":\"rgb(83, 101, 125)\",\"background\":\"rgb(246, 248, 250)\"},{\"theme\":\"dark\",\"id\":\"genf-grep-search-text-pattern\",\"ratio\":7.762805693682826,\"color\":\"rgb(161, 161, 170)\",\"background\":\"rgb(9, 9, 11)\"},{\"theme\":\"dark\",\"id\":\"genf-grep-search-text-target\",\"ratio\":7.762805693682826,\"color\":\"rgb(161, 161, 170)\",\"background\":\"rgb(9, 9, 11)\"},{\"theme\":\"dark\",\"id\":\"palette-input\",\"ratio\":7.54113370301418,\"color\":\"rgb(161, 161, 170)\",\"background\":\"rgb(10, 14, 21)\"}]",
       "severity": ""
     },
     {
@@ -7450,7 +7450,7 @@
       "description": "Theme, Navigator, and Inspector update while preserving focus",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"title\":\"What do you need to do?\",\"copy\":false,\"theme\":\"light\",\"sidebar\":\"off\",\"inspector\":\"on\",\"themeFocus\":true,\"sideFocus\":true,\"inspFocus\":true}",
+      "actual": "{\"title\":\"Find which lines, or which files, contain a pattern instead of reading everything by eye\",\"copy\":false,\"theme\":\"light\",\"sidebar\":\"off\",\"inspector\":\"on\",\"themeFocus\":true,\"sideFocus\":true,\"inspFocus\":true}",
       "severity": ""
     },
     {
@@ -7603,7 +7603,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9\"}",
       "severity": ""
     },
     {
@@ -7630,7 +7630,7 @@
       "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7639,7 +7639,7 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103a0\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2\nVerification (RHEL 8): Composed — not host-verified — the",
       "severity": ""
     },
     {
@@ -7648,7 +7648,7 @@
       "description": "A standalone searched STIG is visibly on-screen while pipeline export stays identity-free",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): ee66dd869084216485f70d1169bcf40c760956fead632589992d5fe8c96103\"}",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9\"}",
       "severity": ""
     },
     {
@@ -7667,6 +7667,15 @@
       "status": "PASS",
       "expected": "",
       "actual": "",
+      "severity": ""
+    },
+    {
+      "id": "TC-STIG-SELECT-001",
+      "area": "Accessibility",
+      "description": "A searched STIG linked to a command opens with a visible Inspector",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"found\":true,\"id\":\"RHEL-08-040101\",\"inspector\":\"on\",\"visible\":true,\"text\":\"STIG RHEL-08-040101, Category IICCI-002314NIST AC-17 (1)A firewall must be active on RHEL 8.Check textVerify that \\\"firewalld\\\" is active with the following commands:\\n\\n$ sudo systemctl is-active firewalld\\n\\nactive\\n\\nIf the \\\"firewalld\\\" package is not \\\"active\\\", ask the System Administrator if another firewall is installed. If no firewall is installed and active this is a finding.Fix textConfigure \\\"firewalld\\\" to protect the operating system with the following command:\\n\\n$ sudo systemctl enable firewalldExpected compliant output (captured)active\",\"title\":\"Prove the host firewall is running before claiming the boundary control is in place\"}",
       "severity": ""
     },
     {
@@ -7744,10 +7753,10 @@
     {
       "id": "TC-BLAST-ACK-001",
       "area": "Safety",
-      "description": "The first real acknowledgement click after typing works, and a later edit invalidates it",
+      "description": "The first real acknowledgement click after typing works, clears stale status, and a later edit invalidates it",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
+      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true,\"toast\":\"\"},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
       "severity": ""
     },
     {
@@ -7766,6 +7775,24 @@
       "status": "PASS",
       "expected": "",
       "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nIf the output path exists, preserve it at /tmp/pkg.rpm.mdcr-before-download before downloading.\nif [ -e /tmp/pkg.rpm ]; then test ! -e /tmp/pkg.rpm.mdcr-before-download && cp -a -- /tmp/pkg.rpm /tmp/pkg.rpm.mdcr-before-download; fiCopy PreflightRuncurl -s -S -o '/tmp/pkg.rpm' 'https://example.invalid/pkg.rpm'Copy RunVerifyThe expected HTTP status is returned and, for a download, the output file's size/chec",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-REMOTE-001",
+      "area": "Runbook",
+      "description": "SCP renders a bound transaction preflight, recovery, and finalization protocol",
+      "status": "PASS",
+      "expected": "",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nCreate one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Existing or partial transaction state is refused.\nprintf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'target=$1' 'if [ -d \"$target\" ]; then target=$target/$2; fi' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished SCP transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-REMOTE-002",
+      "area": "Runbook",
+      "description": "Rsync renders a bound capacity-checked transaction protocol and an ambiguous directory source is red",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"risk\":\"Destructive\",\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRun the assembled command with Dry run selected and review every listed change before clearing it.\\nCreate one atomic remote transaction containing the destination tree or an absent-state record. Existing transaction state and insufficient rollback capacity are refused.\\nprintf '%s\\\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'target=$1' 'txn=$target.mdcr-rsync.txn' 'preparing=$txn.preparing' 'if [ -e \\\"$txn\\\" ] || [ -L \\\"$txn\\\" ] || [ -e \\\"$preparing\\\" ] || [ -L \\\"$preparing\\\" ]; then' '  printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' \\\"Refusing: an unfinished rsync transaction exists at $txn\\\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \\\"$prepar\"}",
       "severity": ""
     },
     {
@@ -8035,7 +8062,7 @@
       "description": "Architecture and test-plan counts match the suite values supplied to this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "431 unit; 165,361 hostile; 26,992 pipeline",
+      "actual": "439 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8044,7 +8071,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":10000000,\"resources\":0,\"nav\":{\"dom\":43,\"load\":45.700000047683716}}",
+      "actual": "{\"heap\":19300000,\"resources\":0,\"nav\":{\"dom\":46.10000002384186,\"load\":47.60000002384186}}",
       "severity": ""
     },
     {

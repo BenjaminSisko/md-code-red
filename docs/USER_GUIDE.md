@@ -149,13 +149,22 @@ shows as **unrated** -- not green. Green in this tool means a person curated tha
 entry and said so; a path nobody has ever classified is unclassified, not safe,
 and you are entitled to see the difference.
 
-SCP also classifies the possible destination joined with the local source name,
-because a remote path can be an existing directory even without a trailing
-slash. Rsync directory sources are red for the same reason. `/var/run` and the
-RHEL `/etc/rc0.d` through `/etc/rc6.d` aliases classify like their real execution
-directories. The SCP and rsync preflight steps preserve an existing bound remote
-destination, or record that it was absent, before the transfer; Recover restores
-the saved target first and removes a new target only when that absence marker exists.
+SCP classifies the possible destination formed by joining the validated local
+source basename to the remote path, because that remote path may already be a
+directory even without a trailing slash. Every rsync remote write is red: a
+local directory written without a trailing slash changes destination semantics,
+and the browser cannot inspect the operator's filesystem to distinguish that
+case. `/var/run`, `/etc/rc.local`, `/etc/rc0.d` through `/etc/rc6.d`, and user
+startup paths such as `.bashrc.d/` classify like their actual sensitive targets.
+
+The SCP and rsync preflight steps create an adjacent transaction directory on
+the remote host. They refuse a stale transaction, stage either a complete saved
+target or an explicit `absent` state, and publish the staged record atomically.
+Rsync also refuses the operation unless the remote filesystem has room for two
+copies plus a safety margin. Recover restores a saved target through a temporary
+`after` path, or removes a new target only when the recorded state proves it was
+absent. After the operator accepts the verified result, the finalization command
+removes the transaction directory so the next transfer can begin.
 
 ### Journey 2: Build STIG evidence for an audit package
 

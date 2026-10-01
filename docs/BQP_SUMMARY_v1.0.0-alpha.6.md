@@ -10,20 +10,20 @@ The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
 The resulting bytes also match the artifact committed with implementation
-source `19274c4f99a6a9b73ffd504d2bc2053957453a45`.
+source `95c9d9ebf05d9cb9aad294d26a388b9ffb708f6b`.
 
 | Item | Result |
 |---|---|
-| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,913,823 bytes |
-| HTML SHA-256 | `69ec4e6bcce72fc1ad4c05f632702120b4d983527a93d6c917da372c6568d18c` |
-| Content fingerprint | `e377c108f895bf4ca26b476e26f246e0d6b80a2156f1b5a1cea0039019224225` |
-| Sidecar SHA-256 | `4f9e6081d9c565e8f0da2d1b858fa1bc5eb1769a1cd8907fa2c2f1d4dcd3ea90` |
-| Placeholder provenance SHA-256 | `df95b0b4885f3422354b502776bc74fd4e77ac8a9d5ae76833b4c8fc86ee2e8c` |
+| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,928,004 bytes |
+| HTML SHA-256 | `fd21f27561b03e9dc17e892dbef7845b0621ad0751d571d903d70129277d0feb` |
+| Content fingerprint | `13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2` |
+| Sidecar SHA-256 | `643224222fd015c23c5fdb301ddfff4c6bfba88de53c8020e47a293906737644` |
+| Placeholder provenance SHA-256 | `d0709855360c411242666176229ad6cf5d05b3b87888b0b7182e70ce8962ff2e` |
 | Build identity | MD CODE RED `v1.0.0-alpha.6`, built 2026-10-01, UNCLASSIFIED |
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Implementation source | `19274c4f99a6a9b73ffd504d2bc2053957453a45` |
+| Implementation source | `95c9d9ebf05d9cb9aad294d26a388b9ffb708f6b` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,
