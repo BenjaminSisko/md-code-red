@@ -38,6 +38,33 @@ shift
 exec /bin/sh -c "$*"
 """)
         ssh.chmod(0o755)
+        stat_cmd=fakebin/'stat'
+        stat_cmd.write_text("""#!/usr/bin/env python3
+import os, stat, sys
+fmt=sys.argv[sys.argv.index('-c')+1]
+path=os.path.abspath(sys.argv[-1])
+st=os.stat(path)
+uid=st.st_uid
+bad=os.environ.get('MDCR_TEST_BAD_OWNER_PATH','')
+if bad and path.startswith(os.path.abspath(bad)): uid+=1
+mode=format(stat.S_IMODE(st.st_mode),'o')
+if fmt=='%u:%a': print(str(uid)+':'+mode)
+elif fmt=='%u': print(uid)
+elif fmt=='%a': print(mode)
+else: raise SystemExit(64)
+""")
+        stat_cmd.chmod(0o755)
+        mkdir_cmd=fakebin/'mkdir'
+        mkdir_cmd.write_text("""#!/usr/bin/env python3
+import os, subprocess, sys
+target=os.path.abspath(sys.argv[-1])
+race=os.environ.get('MDCR_TEST_RACE_TXN','')
+if race and target==os.path.abspath(race):
+    subprocess.run(['/bin/mkdir','-m','0700','--',target],check=True)
+    raise SystemExit(1)
+os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
+""")
+        mkdir_cmd.chmod(0o755)
         self.env=os.environ.copy()
         self.env['PATH']=str(fakebin)+os.pathsep+self.env.get('PATH','')
 
@@ -79,7 +106,9 @@ exec /bin/sh -c "$*"
     def test_scp_existing_file_is_restored_and_transaction_removed(self):
         target=self.tmp/'config.yml'; target.write_text('before\n')
         self.run_command(self.command('scp-secure-copy','preflight',target))
-        self.assertEqual((self.tmp/'config.yml.mdcr-scp.txn/state').read_text(),'present\n')
+        txn=self.tmp/'config.yml.mdcr-scp.txn'
+        self.assertEqual((txn/'state').read_text(),'present\n')
+        self.assertEqual(txn.stat().st_mode & 0o777,0o700)
         target.write_text('after\n')
         self.run_command(self.command('scp-secure-copy','recover',target))
         self.assertEqual(target.read_text(),'before\n')
@@ -148,6 +177,35 @@ exec /bin/sh -c "$*"
         self.assertIn('symlinked rsync',result.stderr)
         self.assertFalse(self.tmp.joinpath('link-tree.mdcr-rsync.txn').exists())
         self.assertEqual((real/'old').read_text(),'before\n')
+
+    def test_recovery_refuses_transaction_with_foreign_owner(self):
+        target=self.tmp/'config.yml'; target.write_text('before\n')
+        self.run_command(self.command('scp-secure-copy','preflight',target))
+        txn=self.tmp/'config.yml.mdcr-scp.txn'
+        target.write_text('after\n')
+        self.env['MDCR_TEST_BAD_OWNER_PATH']=str(txn)
+        result=self.run_command(self.command('scp-secure-copy','recover',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('no trusted SCP transaction',result.stderr)
+        self.assertEqual(target.read_text(),'after\n')
+        self.assertTrue(txn.exists())
+
+    def test_atomic_transaction_mkdir_refuses_midflight_race(self):
+        target=self.tmp/'config.yml'; target.write_text('before\n')
+        txn=self.tmp/'config.yml.mdcr-scp.txn'
+        self.env['MDCR_TEST_RACE_TXN']=str(txn)
+        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertTrue(txn.is_dir())
+        self.assertFalse((txn/'before').exists())
+
+    def test_transaction_refuses_writable_parent_without_sticky_bit(self):
+        shared=self.tmp/'shared'; shared.mkdir(mode=0o777); shared.chmod(0o777)
+        target=shared/'config.yml'; target.write_text('before\n')
+        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('writable without sticky protection',result.stderr)
+        self.assertFalse(shared.joinpath('config.yml.mdcr-scp.txn').exists())
 
 
 if __name__=='__main__':

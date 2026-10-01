@@ -118,12 +118,18 @@ class ReleaseReadinessTests(unittest.TestCase):
             modes.append({row["id"] for row in result["results"]})
         self.assertEqual(modes[0],modes[1],"browser modes did not run the same assertion IDs")
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
+        verification_line=(
+            "Verification totals: 451 unit tests; 168,697 hostile-input checks; "
+            "27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode."
+        )
         for prefix in required:
             path=os.path.join(REPO,"docs",prefix+version+".md")
             with open(path,encoding="utf-8") as fh:
                 text=fh.read()
-            for expected in ("443", "168,697", "27,652", "897"):
-                self.assertIn(expected,text,"%s lacks current verification count %s" % (path,expected))
+            self.assertEqual(
+                text.count(verification_line),1,
+                "%s lacks exactly one canonical verification-total line" % path,
+            )
 
 
 if __name__ == "__main__":

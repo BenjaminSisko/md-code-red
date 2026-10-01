@@ -3911,6 +3911,7 @@ var THEME=(function(){
 
 /* ============ clipboard — air-gapped: a selection and execCommand, nothing else ============ */
 function copyText(text){
+  var previous=document.activeElement;
   var ta=document.createElement("textarea");
   ta.value=String(text);
   ta.setAttribute("readonly","readonly");
@@ -3921,6 +3922,7 @@ function copyText(text){
   var ok=false;
   try{ ok=document.execCommand("copy")===true; }catch(e){ ok=false; }
   document.body.removeChild(ta);
+  if(previous&&previous.focus&&document.contains(previous)) previous.focus();
   return ok;
 }
 function toast(msg){
@@ -3947,8 +3949,7 @@ function doCopyPlanStep(which){
   if(!entry||!res||!isGeneratorEntry(entry)){ toast("No complete guided plan is assembled."); return; }
   if(res.blast==="red"&&!STATE.acked){ toast("Destructive command — tick the review box first."); return; }
   var plan=operationalPlan(entry,res),payload;
-  if(which==="all") payload="PREFLIGHT\n"+plan.preflight+"\n\nRUN\n"+plan.run+"\n\nVERIFY\n"+plan.verify+"\n\nRECOVER\n"+plan.recover;
-  else payload=plan[which];
+  payload=plan[which];
   if(payload===undefined){ toast("That plan step is unavailable."); return; }
   if(!instructionIsBound(payload)){ toast("Copy refused — this step still contains an unresolved placeholder."); return; }
   toast(copyText(payload)?"Copied operational plan step":"Copy failed — select the displayed plan text and copy it manually.");
@@ -5442,7 +5443,7 @@ function renderGeneratorResult(){
             "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
             (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
     }
-    html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div></details>";
+    html+="<p class=\"muted\">Copy and complete one step at a time. Recovery is kept separate so it cannot run immediately after the change.</p></div></details>";
     html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
     for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
       var compareVersion=RHEL_VERSIONS[cv];

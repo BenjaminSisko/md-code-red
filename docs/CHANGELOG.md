@@ -8,8 +8,16 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 - Quote form values separately for runnable runbook commands, including ordinary
   NetworkManager names with spaces. Static-address recovery now resolves exactly
-  one documented FILENAME/NAME/UUID row and keeps its root-only snapshot outside
-  NetworkManager profile directories.
+  one documented FILENAME/NAME/UUID row, atomically creates its transaction under
+  root-owned mode-0700 `/var/lib/md-code-red`, validates the state before recovery
+  or finalization, and reloads and reactivates the saved profile.
+- Create SCP and rsync transactions atomically at mode `0700`, validate their
+  ownership before recovery or finalization, and refuse writable non-sticky
+  transaction parents. Recovery can no longer trust a directory created by a
+  different remote user.
+- Preserve keyboard focus after clipboard actions, require the mobile STIG test
+  to observe a closed search palette, and replace the unsafe all-steps clipboard
+  action with explicit step-by-step guidance that keeps Recover separate.
 - Refuse top-level symlink destinations before SCP or rsync backup, capacity,
   recovery, or finalization work; refuse remote `.` path segments; and execute
   these cases through the shipped instruction binder in the fake-SSH suite.

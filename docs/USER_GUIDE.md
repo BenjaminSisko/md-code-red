@@ -519,8 +519,11 @@ DNF/RPM, NetworkManager, firewalld, LVM/filesystems, SELinux AVCs, time sync and
 rsyslog are maintained in `content/rhel_troubleshooting.json`. The NetworkManager
 static-address runbook resolves one unique connection name or UUID from
 `nmcli -g FILENAME,NAME,UUID connection show`, quotes the identifier as one shell
-word, and keeps its root-only rollback transaction under `/var/tmp`, outside
-NetworkManager's profile directories. They preserve
+word, and creates its rollback transaction atomically beneath the root-owned,
+mode-`0700` `/var/lib/md-code-red` state directory. Recover and Finalize refuse
+symlinked, non-root-owned, incorrectly permissioned, or incomplete state, and
+recovery reloads and reactivates the saved profile from the required local or
+out-of-band session. They preserve
 unknowns and stop before destructive repair. They are operator data in this
 release and are not yet rendered as an in-browser rail.
 
