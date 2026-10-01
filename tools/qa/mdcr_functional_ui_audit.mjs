@@ -429,7 +429,7 @@ const gitDiscard=entries.find(e=>e.id==='git-checkout-discard-changes');
 await evaluate(`__qa.open('git','git','git-checkout-discard-changes','8',${JSON.stringify(gitDiscard.intent)})`);
 await evaluate(`__qa.set('[data-field="path"]','config/prod.yml')`);
 const gitPlan=await evaluate(`document.querySelector('#gen-result .opplan')?.textContent||''`);
-if(gitPlan.includes('git diff -- config/prod.yml')&&!gitPlan.includes('src/app.py'))pass('TC-RUNBOOK-002','Runbook','Destructive Git preflight binds the current path',gitPlan.slice(0,240));else fail('TC-RUNBOOK-002','Runbook','Destructive Git preflight binds the current path','config/prod.yml and no golden src/app.py',gitPlan.slice(0,300),'Critical');
+if(gitPlan.includes("git diff -- 'config/prod.yml'")&&!gitPlan.includes('src/app.py'))pass('TC-RUNBOOK-002','Runbook','Destructive Git preflight binds the current path as one quoted word',gitPlan.slice(0,240));else fail('TC-RUNBOOK-002','Runbook','Destructive Git preflight binds the current path as one quoted word',"git diff -- 'config/prod.yml' and no golden src/app.py",gitPlan.slice(0,300),'Critical');
 const gitTypedBeforeAck=await typeCharacters('[data-field="path"]','x');
 await realClick('[data-action="ack"]');
 const gitAck=await evaluate(`(()=>({enabled:!document.querySelector('[data-action="copy"]').disabled,focused:document.activeElement?.getAttribute('data-action')==='ack',checked:!!document.querySelector('[data-action="ack"]')?.checked,toast:document.querySelector('.toast')?.textContent||''}))()`);
@@ -463,7 +463,7 @@ const usermod=entries.find(e=>e.id==='r-usermod-ag');
 await evaluate(`__qa.open('builder','usermod','r-usermod-ag','8',${JSON.stringify(usermod.intent)})`);
 await evaluate(`__qa.set('[data-field="groups"]','docker');__qa.set('[data-field="username"]','bob')`);
 const userPlan=await evaluate(`(()=>{const p=document.querySelector('#gen-result .opplan');const recover=[...document.querySelectorAll('[data-plan-step]')].find(x=>x.getAttribute('data-plan-step')==='recover');return {text:p?.textContent||'',recoverDisabled:!!recover?.disabled}})()`);
-if(userPlan.text.includes('id bob')&&userPlan.text.includes('docker')&&!userPlan.text.includes('id alice')&&userPlan.recoverDisabled)pass('TC-RUNBOOK-003','Runbook','User/group guidance binds current values and blocks unresolved recovery',JSON.stringify(userPlan));else fail('TC-RUNBOOK-003','Runbook','User/group guidance binds current values and blocks unresolved recovery','bob/docker, no alice, disabled unresolved recovery',JSON.stringify(userPlan),'Critical');
+if(userPlan.text.includes("id 'bob'")&&userPlan.text.includes("'docker'")&&!userPlan.text.includes("id 'alice'")&&userPlan.recoverDisabled)pass('TC-RUNBOOK-003','Runbook','User/group guidance quotes current values and blocks unresolved recovery',JSON.stringify(userPlan));else fail('TC-RUNBOOK-003','Runbook','User/group guidance quotes current values and blocks unresolved recovery','quoted bob/docker, no alice, disabled unresolved recovery',JSON.stringify(userPlan),'Critical');
 
 // Home task cards are direct, functioning routes into reviewed work.
 await send('Page.navigate',{url:baseUrl});await delay(650);

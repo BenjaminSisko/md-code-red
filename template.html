@@ -5960,7 +5960,7 @@ function focusStigPanel(){
   if(!panel||!panel.textContent.trim()) return;
   panel.setAttribute("tabindex","-1");
   panel.focus();
-  panel.scrollIntoView({block:"start",inline:"nearest"});
+  panel.scrollIntoView({block:"center",inline:"nearest"});
 }
 function setRail(name){
   if(name==="stig"){
