@@ -88,7 +88,7 @@ recorded two informational performance observations in both its standalone
 errors. Two consecutive builds produced the same 8,944,791-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. Prior
 independent Opus review records are preserved in `docs/design/`, including the
-eighth-, fourteenth-, and fifteenth-review PASS reports and the intervening HOLD reports.
+eighth-, fourteenth-, fifteenth-, and sixteenth-review PASS reports and the intervening HOLD reports.
 This candidate closes their
 transaction, signal, trust-check, native-keyboard, bounded-failure, exact
 clipboard, CI toolchain, write-through-link, fail-closed recovery,
@@ -96,10 +96,10 @@ release-integrity, and operator-guidance findings. Exact-head independent
 review runs only after this evidence is committed.
 
 A refreshed post-merge simulation created disposable no-ff merge
-`edc5e1b4c2afbd1dc4949fc4ff20f1691dbc4ca5`, containing implementation
-`d1b0a44fe293f3933e998630917ee0af6c60c078` and candidate
-`3f210fc04ceaeafc164d85d673313b613685beaa`. Stamp commit
-`f8b3c07d660849ad6e35897a74930bd4a109e1f4` changed only canonical
+`d9a176b9057d4c6a8c114b8066eb484a29aa2434`, containing implementation
+`92542dd5619c57c3d65a35225a3c7d6623a5355f` and candidate
+`dcc33a9f359e2ec4dbf00e418473e217a1fb2d5d`. Stamp commit
+`dda80e9c81843ece9b3931c5be1a60c5989ae95a` changed only canonical
 `git_commit` plus the released-status report, rebuilt the same HTML, and passed
 480 of 480 unit tests plus Q1-Q26 + JS with a clean tree.
 

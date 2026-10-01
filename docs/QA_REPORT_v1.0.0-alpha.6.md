@@ -41,7 +41,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Pipeline hostile-input checks | PASS; 27,652 checks plus 232 one-stage invariants |
 | Real reference-export snapshot | PASS after deliberate date and fingerprint refresh |
 | Generated release facts | PASS; current against source data |
-| Post-merge stamp simulation | PASS; disposable merge `edc5e1b4c2afbd1dc4949fc4ff20f1691dbc4ca5` contains reviewed implementation `d1b0a44fe293f3933e998630917ee0af6c60c078`; committed stamp `f8b3c07d660849ad6e35897a74930bd4a109e1f4`, 480 of 480 unit tests, Q1-Q26 + JS, clean post-build tree |
+| Post-merge stamp simulation | PASS; disposable merge `d9a176b9057d4c6a8c114b8066eb484a29aa2434` contains reviewed implementation `92542dd5619c57c3d65a35225a3c7d6623a5355f`; committed stamp `dda80e9c81843ece9b3931c5be1a60c5989ae95a`, 480 of 480 unit tests, Q1-Q26 + JS, clean post-build tree |
 | `git diff --check` | PASS |
 
 The candidate contains 200 curated entries across 102 tools: 58 guided

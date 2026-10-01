@@ -25,7 +25,7 @@ source `92542dd5619c57c3d65a35225a3c7d6623a5355f`.
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Forgejo CI candidate build | PASS; Python 3.12 rebuild leaves HTML and sidecar clean while preserving committed toolchain-specific provenance for release-readiness checks |
-| Post-merge stamp simulation | PASS; disposable no-ff merge `edc5e1b4c2afbd1dc4949fc4ff20f1691dbc4ca5` contains implementation `d1b0a44fe293f3933e998630917ee0af6c60c078` and exact candidate `3f210fc04ceaeafc164d85d673313b613685beaa`; committed stamp `f8b3c07d660849ad6e35897a74930bd4a109e1f4` passed all 480 tests and Q1-Q26 + JS with a clean tree |
+| Post-merge stamp simulation | PASS; disposable no-ff merge `d9a176b9057d4c6a8c114b8066eb484a29aa2434` contains implementation `92542dd5619c57c3d65a35225a3c7d6623a5355f` and exact candidate `dcc33a9f359e2ec4dbf00e418473e217a1fb2d5d`; committed stamp `dda80e9c81843ece9b3931c5be1a60c5989ae95a` passed all 480 tests and Q1-Q26 + JS with a clean tree |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
 | Implementation source | `92542dd5619c57c3d65a35225a3c7d6623a5355f` |
 

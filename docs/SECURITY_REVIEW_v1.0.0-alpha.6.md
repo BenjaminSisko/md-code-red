@@ -118,9 +118,9 @@ This candidate adds or strengthens the following security properties:
   the release workstation toolchain; regenerating it with runner-specific
   Python or Node versions would dirty the protected evidence before tests run.
 - The refreshed post-merge release simulation created disposable no-ff merge
-  `edc5e1b4c2afbd1dc4949fc4ff20f1691dbc4ca5`, which contains reviewed
-  implementation `d1b0a44fe293f3933e998630917ee0af6c60c078`, stamped that merge into
-  provenance, committed the one-field change as `f8b3c07d660849ad6e35897a74930bd4a109e1f4`
+  `d9a176b9057d4c6a8c114b8066eb484a29aa2434`, which contains reviewed
+  implementation `92542dd5619c57c3d65a35225a3c7d6623a5355f`, stamped that merge into
+  provenance, committed the one-field change as `dda80e9c81843ece9b3931c5be1a60c5989ae95a`
   with the released-status report, rebuilt the identical HTML, and passed all
   480 unit tests plus Q1-Q26 + JS. The readiness gate rejects an uncommitted
   stamp, a noncommit or stale/nonancestor SHA, noncanonical JSON, toolchain
