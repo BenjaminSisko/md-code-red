@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # QA Report -- v1.0.0-alpha.6
 
-Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 457 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 The final candidate completed the full verification sequence on 2026-10-01.
 The detailed rendered-browser record is available in
@@ -21,7 +21,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 451 tests |
+| Python unit suite | PASS; 457 tests |
 | Hostile-input harness | PASS; 168,697 checks, zero failures |
 | Standalone rendered-browser audit | PASS; 897 of 897 assertions, zero runtime exceptions, zero console errors |
 | HTTP rendered-browser audit | PASS; 897 of 897 assertions, zero runtime exceptions, zero console errors |
@@ -53,15 +53,17 @@ acknowledgement, partial re-renders retain focus, the first valid input announce
 readiness, rendered warning/control/placeholder contrast exceeds 4.5:1, linked
 STIG selection closes the palette and focuses evidence in view at 390 pixels,
 keyboard Copy retains focus, target-specific blast reasons survive composition,
-and the browser renders bound transfer protocols. Eleven
+and the browser renders bound transfer protocols. Thirteen
 fake-SSH execution tests use the app's own instruction binder, reproduce OpenSSH
 argument joining, and exercise existing-target restore, directory-target
 resolution, absent-target recovery, stale-state refusal, rsync tree restore,
 transaction finalization, SCP/rsync symlink refusal, atomic race handling,
-foreign-owner refusal, and unsafe shared-parent refusal. Six separate execution
+foreign-owner refusal, unsafe shared-parent refusal, explicit symlinked-parent
+refusal, and nonzero SIGTERM cleanup. Nine separate execution
 tests prove a space-bearing NetworkManager name backs up and restores the actual
-profile, while pre-existing, symlinked, raced, or incorrectly permissioned
-transaction state is refused through the app-bound command. The user-reported
+profile, while missing/duplicate/numeric-looking names and pre-existing,
+symlinked, raced, incorrectly permissioned, or forged-owner transaction state
+are handled through the app-bound command. The user-reported
 grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 

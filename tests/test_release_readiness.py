@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import unittest
 
 
@@ -118,9 +120,21 @@ class ReleaseReadinessTests(unittest.TestCase):
             modes.append({row["id"] for row in result["results"]})
         self.assertEqual(modes[0],modes[1],"browser modes did not run the same assertion IDs")
         required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
+        suite=unittest.defaultTestLoader.discover(
+            os.path.join(REPO,"tests"),pattern="test*.py")
+        unit_count=suite.countTestCases()
+        node=shutil.which("node")
+        self.assertIsNotNone(node,"Node is required to derive current harness totals")
+        harness=subprocess.run(
+            [node,os.path.join(REPO,"tests","hostile_harness.js"),artifact,"--json"],
+            stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=True)
+        hostile=json.loads(harness.stdout)
+        browser_total=len(standalone["results"])
         verification_line=(
-            "Verification totals: 451 unit tests; 168,697 hostile-input checks; "
-            "27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode."
+            "Verification totals: %s unit tests; %s hostile-input checks; "
+            "%s pipeline checks; %s rendered-browser assertions in each delivery mode."
+            % (format(unit_count,","),format(hostile["checks"],","),
+               format(hostile["pipeline_checks"],","),format(browser_total,","))
         )
         for prefix in required:
             path=os.path.join(REPO,"docs",prefix+version+".md")

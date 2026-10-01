@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 457 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -43,8 +43,11 @@ This candidate adds or strengthens the following security properties:
   strings execute through a fake SSH transport that reproduces OpenSSH's joined
   remote-command semantics. Field validation refuses remote dot segments before
   those scripts run. Preflight refuses symlink targets, unsafe writable parents,
-  foreign-owned or stale transaction state,
-  atomically publishes either a complete backup or an `absent` record, and rsync
+  symlinked transaction parents, foreign-owned or stale transaction state, and
+  non-mode-`0700` transaction directories. It atomically creates the final
+  protected directory, writes a complete backup or an `absent` record, and
+  writes the owner-validated state file last. A preserved backup owner is safe
+  because access is controlled by the trusted mode-`0700` parent. Rsync
   checks capacity for two copies plus a margin. Recovery restores through an
   `after` path or removes a created target only when recorded state proves it was
   absent; explicit finalization clears the transaction. SCP remains
@@ -54,6 +57,11 @@ This candidate adds or strengthens the following security properties:
   non-root-owned, incorrectly permissioned, or incomplete state. Recovery reloads
   and reactivates the saved connection from a required console or out-of-band
   session.
+- Runbook prose is never treated as a runnable clipboard payload. Preflight Copy
+  includes only authored command fields; Verify and Recover Copy are enabled
+  only for closed transaction scripts carrying an MDCR marker. Red-rated command,
+  runbook, generated-file, and evidence-copy controls all share the exact-command
+  acknowledgement gate.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
   host-verified; the command cannot keep a receipt merely because its entry and

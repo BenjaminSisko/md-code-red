@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Build Quality Protocol Summary -- v1.0.0-alpha.6
 
-Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 457 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
@@ -16,11 +16,11 @@ source `1bedeba652a3197be10adae371b5c99fc7b2e49e`.
 
 | Item | Result |
 |---|---|
-| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,941,777 bytes |
-| HTML SHA-256 | `7e49fcbfae2b9c4985602ce9fc28cd99175d2b6ee598a9fd8caeddd2c0972164` |
-| Content fingerprint | `8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d271` |
-| Sidecar SHA-256 | `8b34f67c2f1cb9967f56fd74ab34e0dce6f85f2db154556f463fff334906e991` |
-| Placeholder provenance SHA-256 | `edd3f1560890989eb5575afc933d9d506ed96c1dfe437eb0990425e08085398a` |
+| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,458 bytes |
+| HTML SHA-256 | `0ef9e0351c685605580a5733f18bcbdd9e61ba68b4e3d9a62ad2fd9504ae8bcc` |
+| Content fingerprint | `d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa94` |
+| Sidecar SHA-256 | `80f18b7ed806fb280b885fa6f0ad054c7b83009e7bb9e487d8ea30c3f4767344` |
+| Placeholder provenance SHA-256 | `bfad46891414f89f366d0177fcf258fd96e22c6a5f25e3d5f21ec3b8521fc4ef` |
 | Build identity | MD CODE RED `v1.0.0-alpha.6`, built 2026-10-01, UNCLASSIFIED |
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |

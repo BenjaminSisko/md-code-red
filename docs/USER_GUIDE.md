@@ -160,10 +160,14 @@ startup paths such as `.bashrc.d/` classify like their actual sensitive targets.
 Remote paths containing `.` or `..` segments are refused so the displayed
 path, classified target, and transaction location cannot diverge. The SCP and
 rsync preflight steps create an adjacent transaction directory on the remote
-host. They refuse top-level symlink destinations and stale transactions, stage
-either a complete saved target or an explicit `absent` state, and publish the
-staged record atomically. Rsync also refuses the operation unless the remote
-filesystem has room for two copies plus a safety margin. Recover restores a saved target through a temporary
+host. They refuse symlinked destinations and transaction parents, unsafe
+world/group-writable parents without sticky protection, stale or foreign-owned
+transaction state, and non-mode-`0700` transaction directories. The final
+transaction directory is created atomically, then it receives either the
+complete saved target or an explicit `absent` state; the state file is written
+last. The protected transaction directory, rather than the saved target's
+preserved owner, establishes trust. Rsync also refuses the operation unless the
+remote filesystem has room for two copies plus a safety margin. Recover restores a saved target through a temporary
 `after` path, or removes a new target only when the recorded state proves it was
 absent. After the operator accepts the verified result, the finalization command
 removes the transaction directory so the next transfer can begin.
@@ -217,6 +221,10 @@ All three exercise the confirmation flow with real catalog content.
    comment**, and there is no checkbox to tick. Read the **Changes system** trust
    label, the recovery warning, and the entry's **Verify** / **Recover** runbook
    steps before you run anything that changes host state.
+   In the expanded runbook, descriptive prose remains visible but cannot be
+   copied as a shell command. A step's Copy button is enabled only for an
+   authored runnable command. Preflight copies only its command lines, without
+   adjoining prose.
 2. A red rating can come from the entry's curated rating, a destructive-pattern
    match (`rm -rf`, `wipefs`, `lvremove`, `pvcreate`, `vgcreate`, `dnf remove`,
    and the rest of `content/dangerous.json`), a protected write target, a remote
@@ -224,7 +232,8 @@ All three exercise the confirmation flow with real catalog content.
    `xargs` child. It opens a red bordered
    banner above the command: **"Destructive operation -- review before running,"**
    naming every reason and, for a pipeline, its stage. **Copy** and **Copy with comment** are
-   both disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
+   command, runbook command steps, generated files, and evidence text are
+   disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
    have reviewed this command."** The banner is evaluated over the *entire*
    clipboard payload, including the comment header, not just the command line --
    so a destructive word hidden only in a comment header still trips it.

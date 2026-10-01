@@ -3284,10 +3284,12 @@ function fieldInstruction(entry,name){
 }
 /* ===== MCR-INSTRUCTION-BINDING-BEGIN ===================================== */
 function bindInstruction(text,values){
-  return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>/g,function(_m,name){
-    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"<"+name+">";
-  }).replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,function(_m,name){
-    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"{{"+name+"}}";
+  /* Bind both placeholder syntaxes in one pass. A value containing text that
+     happens to look like the other placeholder syntax is operator data, not a
+     second template, and must remain byte-for-byte unchanged. */
+  return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>|\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,function(match,angle,braces){
+    var name=angle||braces;
+    return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):match;
   });
 }
 function bindInstructionCommand(text,values){
@@ -3305,7 +3307,7 @@ function bindInstructionCommand(text,values){
 }
 /* ===== MCR-INSTRUCTION-BINDING-END ======================================= */
 function operationalPlan(entry,res){
-  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],i,item,match;
+  var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],preCopy=[],i,item,match;
   for(var valueName in formValues){
     if(Object.prototype.hasOwnProperty.call(formValues,valueName)) values[valueName]=formValues[valueName];
   }
@@ -3327,13 +3329,26 @@ function operationalPlan(entry,res){
   }
   for(i=0;i<(ins.prerequisites||[]).length;i++){
     item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
+    if(item.command) preCopy.push(bindInstructionCommand(item.command,values));
   }
   for(i=0;i<(ins.preflight||[]).length;i++){
     item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
+    if(item.command) preCopy.push(bindInstructionCommand(item.command,values));
   }
-  return {preflight:pre.join("\n"),run:res.command,
-          verify:bindInstructionCommand(entry.verify||"No curated verification step.",values),
-          recover:bindInstructionCommand(entry.undo||"No curated recovery step.",values)};
+  var verify=bindInstructionCommand(entry.verify||"No curated verification step.",values);
+  var recover=bindInstructionCommand(entry.undo||"No curated recovery step.",values);
+  /* Displayed runbook prose is useful guidance, but it is not automatically a
+     shell program. Only authored command fields and the transaction scripts
+     carrying a closed MDCR marker are offered to the clipboard. */
+  function markedScript(text){
+    var marker=String(text).search(/# MDCR_[A-Z0-9_]+_(?:FINALIZE|RECOVER)(?:\n|'|$)/);
+    if(marker<0) return null;
+    var start=String(text).lastIndexOf("printf",marker);
+    return start<0?null:String(text).slice(start);
+  }
+  return {preflight:pre.join("\n"),run:res.command,verify:verify,recover:recover,
+          copy:{preflight:preCopy.length?preCopy.join("\n"):null,run:res.command,
+                verify:markedScript(verify),recover:markedScript(recover)}};
 }
 function instructionIsBound(text){
   /* Hyphenated and plain-English placeholders previously escaped the narrow
@@ -3949,8 +3964,9 @@ function doCopyPlanStep(which){
   if(!entry||!res||!isGeneratorEntry(entry)){ toast("No complete guided plan is assembled."); return; }
   if(res.blast==="red"&&!STATE.acked){ toast("Destructive command — tick the review box first."); return; }
   var plan=operationalPlan(entry,res),payload;
-  payload=plan[which];
+  payload=plan.copy[which];
   if(payload===undefined){ toast("That plan step is unavailable."); return; }
+  if(payload===null){ toast("This step is guidance; only runnable command steps can be copied."); return; }
   if(!instructionIsBound(payload)){ toast("Copy refused — this step still contains an unresolved placeholder."); return; }
   toast(copyText(payload)?"Copied operational plan step":"Copy failed — select the displayed plan text and copy it manually.");
 }
@@ -4067,11 +4083,14 @@ function renderEvidenceModal(){
     stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
+  STATE._evidenceRequiresAck=!!(ctx.res&&ctx.res.blast==="red"&&!STATE.acked);
   var html="<p class=\"region-label\">Command and control reference — plain text</p>";
   html+="<pre class=\"evidencepre\" aria-label=\"Evidence export preview — exactly what Copy copies\">"+
         esc(text)+"</pre>";
   html+="<div class=\"toolbar\">";
-  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-copy\">Copy evidence text</button>";
+  html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-copy\""+
+        (STATE._evidenceRequiresAck?" disabled aria-disabled=\"true\" title=\"Tick the review box before copying a destructive command\"":"")+
+        ">Copy evidence text</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"evidence-close\">Close</button>";
   html+="</div>";
   el("evidence-modal-body").innerHTML=html;
@@ -4084,6 +4103,7 @@ function renderEvidenceModal(){
 function closeEvidenceModal(){
   STATE.evidenceOpen=false;
   STATE._evidenceText=null;
+  STATE._evidenceRequiresAck=false;
   el("evidence-modal").hidden=true;
   el("evidence-modal-body").innerHTML="";
   setEvidenceBackgroundInert(false);
@@ -4093,6 +4113,7 @@ function closeEvidenceModal(){
 }
 function doCopyEvidence(){
   if(!STATE._evidenceText){ toast("Nothing to copy."); return; }
+  if(STATE._evidenceRequiresAck){ toast("Destructive command — tick the review box first."); return; }
   var ok=copyText(STATE._evidenceText);
   toast(ok?"Evidence copied to clipboard.":
            "Copy failed — select the text in the preview and use your browser's copy.");
@@ -5438,10 +5459,16 @@ function renderGeneratorResult(){
     for(var pk=0;pk<planKeys.length;pk++){
       var planText=plan[planKeys[pk]];
       var planBound=instructionIsBound(planText);
+      var planCopy=plan.copy[planKeys[pk]];
+      var planCopyBound=planCopy!==null&&planCopy!==undefined&&instructionIsBound(planCopy);
+      var planCopyEnabled=planCopyBound&&!blocked;
       html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
             (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
+            (planBound&&!planCopyBound?"<p class=\"muted\">This step is guidance. Copy is available only for an authored runnable command.</p>":"")+
             "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
-            (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
+            (planCopyEnabled?"":" disabled aria-disabled=\"true\"")+
+            (blocked&&planCopyBound?" title=\"Tick the review box to unlock copy\"":"")+
+            ">Copy "+esc(planLabels[pk])+"</button></div>";
     }
     html+="<p class=\"muted\">Copy and complete one step at a time. Recovery is kept separate so it cannot run immediately after the change.</p></div></details>";
     html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
@@ -6242,10 +6269,10 @@ document.addEventListener("input",function(ev){
 });
 document.addEventListener("change",onFieldChange);
 
-/* ============ keyboard controller — ONE delegated keydown, ONE binding table ============ */
-/* UI spec §5. Every binding lives in KEYMAP; nothing in this file attaches a
-   second keydown listener, so the map is the whole truth about what a key does
-   and docs/USER_GUIDE.md can be checked against it by reading one array. */
+/* ============ keyboard controller — primary delegated shortcut table ============ */
+/* UI spec §5. Application shortcuts live in KEYMAP. A separate, narrowly
+   scoped keydown handler below gives keyboard activation to code lines and
+   clipboard buttons without duplicating shortcut behavior. */
 function isTypingTarget(node){
   if(!node||!node.tagName) return false;
   var tag=node.tagName.toLowerCase();
@@ -6289,9 +6316,8 @@ var KEYMAP=[
    doc:"Export command and control reference",run:function(){ exportEvidence(); }},
   /* CR-T-31. Ctrl+Shift+P adds the command on screen as the next stage;
      Ctrl+Shift+Backspace clears the pipeline. Both are listed in KEYMAP like
-     every other binding, so docs/USER_GUIDE.md stays checkable against one
-     array (UI spec section 5) and nothing in this file attaches a second
-     keydown listener. */
+     every other application shortcut, so docs/USER_GUIDE.md stays checkable
+     against one array (UI spec section 5). */
   {id:"pipeline-add",keys:["p","P"],mods:"ctrlShift",whenTyping:true,
    doc:"Add the command on screen to the pipeline as the next stage",
    run:function(){ pipelineAdd(); }},

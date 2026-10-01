@@ -4,16 +4,14 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import tempfile
+import time
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
 BINDER=ROOT/'tests'/'instruction_binding_probe.js'
-
-
-def shell_quote(value):
-    return "'"+value.replace("'", "'\\''")+"'"
 
 
 class RemoteTransferTransactionTests(unittest.TestCase):
@@ -40,7 +38,7 @@ exec /bin/sh -c "$*"
         ssh.chmod(0o755)
         stat_cmd=fakebin/'stat'
         stat_cmd.write_text("""#!/usr/bin/env python3
-import os, stat, sys
+import os, stat, sys, time
 fmt=sys.argv[sys.argv.index('-c')+1]
 path=os.path.abspath(sys.argv[-1])
 st=os.stat(path)
@@ -48,6 +46,10 @@ uid=st.st_uid
 bad=os.environ.get('MDCR_TEST_BAD_OWNER_PATH','')
 if bad and path.startswith(os.path.abspath(bad)): uid+=1
 mode=format(stat.S_IMODE(st.st_mode),'o')
+pause=os.environ.get('MDCR_TEST_SIGNAL_TXN','')
+if pause and path==os.path.abspath(pause):
+    open(pause+'.ready','w').close()
+    time.sleep(30)
 if fmt=='%u:%a': print(str(uid)+':'+mode)
 elif fmt=='%u': print(uid)
 elif fmt=='%a': print(mode)
@@ -72,12 +74,8 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         shutil.rmtree(self.tmp,ignore_errors=True)
 
     def values(self, target, basename='config.yml'):
-        return {
-            'remote_identity':'operator@example.test',
-            'remote_destination_path':shell_quote(str(target)),
-            'remote_source_basename':shell_quote(basename),
-            'con':'Wired connection 1',
-        }
+        source=str(self.tmp/basename)
+        return {'source':source,'destination':'operator@example.test:'+str(target)}
 
     def app_bind(self, text, values):
         proc=subprocess.run(['node',str(BINDER),str(ROOT/'template.html')],
@@ -85,23 +83,29 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
                             stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True)
         return json.loads(proc.stdout)['bound']
 
+    def app_plan(self, entry_id, values):
+        proc=subprocess.run(['node',str(BINDER),str(ROOT/'template.html')],
+                            input=json.dumps({'entry_id':entry_id,'version':'8','values':values}),
+                            text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True)
+        return json.loads(proc.stdout)['plan']
+
     def command(self, entry_id, kind, target, basename='config.yml'):
-        if kind=='preflight':
-            row=next(x for x in self.instructions[entry_id]['preflight'] if x.get('command'))
-            raw=row['command']
-        elif kind=='recover':
-            raw=self.entries[entry_id]['undo']
-        elif kind=='finalize':
-            verify=self.entries[entry_id]['verify']
-            raw=verify[verify.index("printf "):]
-        else:
-            raise AssertionError(kind)
-        return self.app_bind(raw,self.values(target,basename))
+        plan=self.app_plan(entry_id,self.values(target,basename))
+        key={'preflight':'preflight','recover':'recover','finalize':'verify'}.get(kind)
+        if key is None: raise AssertionError(kind)
+        command=plan['copy'][key]
+        if not command: raise AssertionError('operationalPlan returned no runnable '+kind)
+        return command
 
     def run_command(self, command, check=True):
         return subprocess.run(command,shell=True,executable='/bin/sh',env=self.env,
                               text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                               check=check)
+
+    def start_command(self, command):
+        return subprocess.Popen(command,shell=True,executable='/bin/sh',env=self.env,
+                                text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                                start_new_session=True)
 
     def test_scp_existing_file_is_restored_and_transaction_removed(self):
         target=self.tmp/'config.yml'; target.write_text('before\n')
@@ -165,7 +169,7 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         target=self.tmp/'link.conf'; target.symlink_to(real.name)
         result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
         self.assertNotEqual(result.returncode,0)
-        self.assertIn('symlinked SCP',result.stderr)
+        self.assertIn('symlinked scp',result.stderr)
         self.assertFalse(self.tmp.joinpath('link.conf.mdcr-scp.txn').exists())
         self.assertEqual(real.read_text(),'before\n')
 
@@ -206,6 +210,30 @@ os.execv('/bin/mkdir',['mkdir']+sys.argv[1:])
         self.assertNotEqual(result.returncode,0)
         self.assertIn('writable without sticky protection',result.stderr)
         self.assertFalse(shared.joinpath('config.yml.mdcr-scp.txn').exists())
+
+    def test_transaction_refuses_symlinked_parent_explicitly(self):
+        real=self.tmp/'real-parent'; real.mkdir()
+        link=self.tmp/'linked-parent'; link.symlink_to(real.name,target_is_directory=True)
+        target=link/'config.yml'; target.write_text('before\n')
+        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('symlinked transaction parent',result.stderr)
+        self.assertFalse(real.joinpath('config.yml.mdcr-scp.txn').exists())
+
+    def test_sigterm_cleans_transaction_and_returns_failure(self):
+        target=self.tmp/'config.yml'; target.write_text('before\n')
+        txn=self.tmp/'config.yml.mdcr-scp.txn'
+        self.env['MDCR_TEST_SIGNAL_TXN']=str(txn)
+        proc=self.start_command(self.command('scp-secure-copy','preflight',target))
+        ready=Path(str(txn)+'.ready')
+        deadline=time.monotonic()+5
+        while not ready.exists() and proc.poll() is None and time.monotonic()<deadline:
+            time.sleep(0.02)
+        self.assertTrue(ready.exists(),'preflight never reached its armed transaction')
+        os.killpg(proc.pid,signal.SIGTERM)
+        _out,_err=proc.communicate(timeout=5)
+        self.assertNotEqual(proc.returncode,0)
+        self.assertFalse(txn.exists())
 
 
 if __name__=='__main__':

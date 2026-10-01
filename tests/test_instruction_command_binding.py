@@ -51,10 +51,12 @@ os.chmod(target,0o700)
         (fakebin/'stat').write_text("""#!/usr/bin/env python3
 import os, stat, sys
 fmt=sys.argv[sys.argv.index('-c')+1]
-st=os.stat(sys.argv[-1])
+path=os.path.abspath(sys.argv[-1])
+st=os.stat(path)
 mode=format(stat.S_IMODE(st.st_mode),'o')
-if fmt=='%u:%a': print('0:'+mode)
-elif fmt=='%u': print('0')
+uid=1 if os.environ.get('MDCR_TEST_BAD_UID_PATH') and path.startswith(os.path.abspath(os.environ['MDCR_TEST_BAD_UID_PATH'])) else 0
+if fmt=='%u:%a': print(str(uid)+':'+mode)
+elif fmt=='%u': print(uid)
 else: raise SystemExit(64)
 """)
         (fakebin/'restorecon').write_text('#!/bin/sh\nexit 0\n')
@@ -65,7 +67,16 @@ if [ "$1" = "-g" ] && [ "$2" = "FILENAME,NAME,UUID" ]; then
   if [ "${MDCR_TEST_RACE_CREATE_TXN:-}" = yes ]; then
     mkdir -m 0700 -- "$MDCR_TEST_STATE_ROOT/nmcli-static-ipv4.txn"
   fi
-  printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" 'Wired connection 1' '11111111-2222-3333-4444-555555555555'
+  case "${MDCR_TEST_NMCLI_MODE:-single}" in
+    missing) exit 0 ;;
+    duplicate)
+      printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" 'Wired connection 1' '11111111-2222-3333-4444-555555555555'
+      printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" 'Wired connection 1' 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' ;;
+    numeric)
+      printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" '10' '11111111-2222-3333-4444-555555555555'
+      printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" '1e1' 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' ;;
+    *) printf '%s:%s:%s\\n' "$MDCR_TEST_PROFILE" 'Wired connection 1' '11111111-2222-3333-4444-555555555555' ;;
+  esac
 elif [ "$1" = "connection" ] && [ "$2" = "reload" ]; then
   exit 0
 elif [ "$1" = "connection" ] && [ "$2" = "up" ] && [ "$3" = "Wired connection 1" ]; then
@@ -85,8 +96,8 @@ fi
     def tearDown(self):
         shutil.rmtree(self.tmp,ignore_errors=True)
 
-    def run_bound(self,text,check=True):
-        command=app_bind(text,{'con':'Wired connection 1'})
+    def run_bound(self,text,check=True,con='Wired connection 1'):
+        command=app_bind(text,{'con':con})
         result=subprocess.run(command,shell=True,executable='/bin/sh',env=self.env,text=True,
                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=check)
         return command,result
@@ -124,6 +135,13 @@ fi
         calls=self.nmcli_log.read_text()
         self.assertIn('connection reload',calls)
         self.assertIn('connection up Wired connection 1',calls)
+
+    def test_instruction_values_are_bound_once(self):
+        bound=app_bind('<first> {{second}}',{
+            'first':'{{second}}',
+            'second':'<first>',
+        })
+        self.assertEqual(bound,"'{{second}}' '<first>'")
 
     def test_nmcli_preflight_refuses_preexisting_transaction_directory(self):
         self.state_root.mkdir(mode=0o700)
@@ -168,6 +186,29 @@ fi
         outside=self.tmp/'outside-state'; outside.mkdir(mode=0o700)
         self.state_root.symlink_to(outside,target_is_directory=True)
         _,result=self.run_bound(self.entries['gen-nmcli-static-ipv4']['undo'],check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('state root is not root-owned mode 0700',result.stderr)
+
+    def test_nmcli_preflight_reports_missing_and_duplicate_matches(self):
+        for mode in ('missing','duplicate'):
+            with self.subTest(mode=mode):
+                self.env['MDCR_TEST_NMCLI_MODE']=mode
+                _,result=self.run_bound(self.preflight(),check=False)
+                self.assertNotEqual(result.returncode,0)
+                self.assertIn('did not resolve exactly once',result.stderr)
+                self.assertFalse(self.txn.exists())
+        self.env.pop('MDCR_TEST_NMCLI_MODE',None)
+
+    def test_nmcli_numeric_looking_name_uses_string_equality(self):
+        self.env['MDCR_TEST_NMCLI_MODE']='numeric'
+        _,result=self.run_bound(self.preflight(),check=False,con='1e1')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertTrue(self.txn.is_dir())
+
+    def test_nmcli_refuses_forged_state_ownership(self):
+        self.state_root.mkdir(mode=0o700)
+        self.env['MDCR_TEST_BAD_UID_PATH']=str(self.state_root)
+        _,result=self.run_bound(self.preflight(),check=False)
         self.assertNotEqual(result.returncode,0)
         self.assertIn('state root is not root-owned mode 0700',result.stderr)
 

@@ -6,6 +6,20 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Keep descriptive runbook prose visible while disabling its Copy control;
+  Preflight now copies only authored commands, and Verify/Recover copy only
+  closed transaction scripts. Red-rated evidence and plan copying share the
+  exact-command acknowledgement gate.
+- Exit nonzero and clean partial remote transactions on HUP, INT, or TERM;
+  explicitly refuse symlinked transaction parents; and allow `cp -a` to
+  preserve the saved target owner inside the trusted mode-`0700` directory.
+- Resolve NetworkManager names and UUIDs with forced string comparison, report
+  zero and multiple matches, and test missing, duplicate, numeric-looking, and
+  forged-owner cases through the shipped binder.
+- Bind instruction placeholders once so operator values cannot become a second
+  template pass. Fake-SSH transaction tests now obtain their runnable scripts
+  from the app's `operationalPlan()` output and include a real SIGTERM cleanup
+  test.
 - Quote form values separately for runnable runbook commands, including ordinary
   NetworkManager names with spaces. Static-address recovery now resolves exactly
   one documented FILENAME/NAME/UUID row, atomically creates its transaction under

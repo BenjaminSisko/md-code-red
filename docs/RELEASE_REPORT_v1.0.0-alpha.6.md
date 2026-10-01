@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Release Report -- v1.0.0-alpha.6
 
-Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 457 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 This candidate replaces the dense tool-first interface with a task-centered
 Home and guided Configure, Review, and Verify workflow while retaining the
@@ -19,12 +19,12 @@ review remains a separate gate.
 | Release fact | Candidate value |
 |---|---|
 | Version / date | `v1.0.0-alpha.6` / 2026-10-01 |
-| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,941,777 bytes |
-| Artifact SHA-256 | `7e49fcbfae2b9c4985602ce9fc28cd99175d2b6ee598a9fd8caeddd2c0972164` |
-| Content fingerprint | `8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d271` |
+| Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,458 bytes |
+| Artifact SHA-256 | `0ef9e0351c685605580a5733f18bcbdd9e61ba68b4e3d9a62ad2fd9504ae8bcc` |
+| Content fingerprint | `d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa94` |
 | Provenance | `TAG_COMMIT_PLACEHOLDER` until the reviewed merge SHA exists |
 | Signing | Unsigned; no authorized publisher key is provisioned |
-| Verification | Q1-Q26 + JS; 451 unit tests; 168,697 hostile checks; 897 browser assertions in each of standalone and HTTP modes |
+| Verification | Q1-Q26 + JS; 457 unit tests; 168,697 hostile checks; 897 browser assertions in each of standalone and HTTP modes |
 | Implementation source | `1bedeba652a3197be10adae371b5c99fc7b2e49e` |
 
 The release adds or changes:
@@ -53,12 +53,13 @@ The release adds or changes:
   and rsync recovery state that refuses unsafe shared parents.
 - Root-owned, mode-0700 NetworkManager rollback state with atomic creation,
   strict Recover/Finalize validation, and saved-connection reactivation.
-- Step-by-step runbook copying that keeps Recover separate, deterministic
-  keyboard clipboard activation, and retained focus after copying.
+- Step-by-step runbooks that expose Copy only for authored runnable commands,
+  keep Recover separate, gate red evidence copying, and retain focus after
+  deterministic keyboard clipboard activation.
 
 The final candidate passed 897 of 897 rendered-browser assertions in both its
 standalone `file://` delivery mode and a local HTTP delivery, with no exceptions
-or console errors. Two consecutive clean builds produced the same 8,941,777-byte
+or console errors. Two consecutive clean builds produced the same 8,944,458-byte
 artifact, SHA-256 sidecar, and provenance manifest byte for byte. The first
 through seventh independent Opus reviews and their HOLD findings are preserved in
 `docs/design/CLAUDE_OPUS_ALPHA6_RC_REVIEW_HOLD.md` through
