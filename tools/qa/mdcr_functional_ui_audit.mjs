@@ -75,6 +75,11 @@ async function pressKey(key,code=key){
   await send('Input.dispatchKeyEvent',{type:'keyDown',key,code});
   await send('Input.dispatchKeyEvent',{type:'keyUp',key,code});
 }
+async function pressNativeEnter(){
+  const event={key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13};
+  await send('Input.dispatchKeyEvent',{type:'rawKeyDown',...event});
+  await send('Input.dispatchKeyEvent',{type:'keyUp',...event});
+}
 async function realClick(selector){
   const point=await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;e.scrollIntoView({block:'center',inline:'center'});const r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2}})()`);
   if(!point)return false;
@@ -234,7 +239,7 @@ const grepExpected=golden.generators['grep-search-text'].commands['8'];
 const grepState=await evaluate(`(()=>({command:__qa.command(),fields:document.querySelectorAll('[data-field]').length,flagControls:document.querySelectorAll('select[data-field],input[data-field]').length}))()`);
 if(grepState.command===grepExpected&&grepState.fields===grepEntry.fields.length&&grepState.flagControls>=3) pass('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”',JSON.stringify(grepState)); else fail('TC-TASK-GREP-001','Task completion','Build a flagged grep search for “laundry”',grepExpected+' with editable pattern, target, and flags',JSON.stringify(grepState),'Major');
 const gutterStart=await evaluate(`(()=>{const e=document.querySelector('#editor-card [data-line]');if(!e)return null;e.focus();return e.getAttribute('data-line')})()`);
-await pressKey('Enter','Enter');
+await pressNativeEnter();
 const gutterEnd=await evaluate(`document.activeElement?.getAttribute('data-line')||null`);
 if(gutterStart!==null&&gutterEnd===gutterStart)pass('TC-A11Y-FOCUS-003','Accessibility','Keyboard line selection retains focus after the command review re-renders',`line ${gutterEnd}`);else fail('TC-A11Y-FOCUS-003','Accessibility','Keyboard line selection retains focus after the command review re-renders','same focused command line',JSON.stringify({gutterStart,gutterEnd}),'Major');
 

@@ -6138,6 +6138,22 @@ document.addEventListener("click",function(ev){
   }
 });
 
+/* CDP, switch devices, and some assistive input paths do not always synthesize
+   a native button click from their key event. Make clipboard actions explicit
+   and prevent the browser default so real keyboards still activate exactly
+   once. copyText() restores the same button after its temporary textarea. */
+document.addEventListener("keydown",function(ev){
+  if(ev.key!=="Enter"&&ev.key!==" ") return;
+  var b=ev.target&&ev.target.closest?ev.target.closest(
+    "button[data-action=\"copy\"], button[data-action=\"copy-comment\"], button[data-action=\"copy-doc\"], "+
+    "button[data-action=\"ref-copy\"], button[data-action=\"ref-copy-comment\"], button[data-action=\"evidence-copy\"], "+
+    "button[data-plan-step]"
+  ):null;
+  if(!b||b.disabled) return;
+  ev.preventDefault();
+  b.click();
+});
+
 /* A line click or the red-blast ack checkbox only needs the RESULT re-drawn,
    not the whole region: for a generator entry a full renderEditor() would
    rebuild the field inputs from scratch (safe — they re-read STATE.formValues
