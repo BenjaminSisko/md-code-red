@@ -2,26 +2,19 @@
   "meta": {
     "tool": "MD CODE RED",
     "version": "v1.0.0-alpha.6",
-    "date": "2026-09-30",
+    "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
-    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "271fc9f08d048d9f3da038f6dc487d8187480b0b",
+    "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html?rc=669924a",
+    "commit": "669924a6df0208f7e239985091ff227de9713168",
     "entries": 200,
     "generators": 58,
-    "staticEntries": 142,
-    "artifactSha256": "e25e88a7ced014aa45273bd865a27d8860aa56126b03e1867ca7d0cadd12c1e9",
-    "contentFingerprint": "327324da688bf7c04bad4952832671958f16d64824c7e5839166397422a4557e",
-    "execution": "Post-fix regression against the built standalone artifact"
+    "staticEntries": 142
   },
   "summary": {
-    "total": 867,
-    "pass": 867,
+    "total": 873,
+    "pass": 873,
     "fail": 0,
-    "bySeverity": {},
-    "uniqueDefects": 0,
-    "closedDefects": 4,
-    "releaseRecommendation": "READY FOR EXACT-HEAD REVIEW",
-    "functionalGate": "CLEARED"
+    "bySeverity": {}
   },
   "exceptions": [],
   "consoleErrors": [],
@@ -59,7 +52,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1208 ms",
+      "actual": "1240 ms",
       "severity": ""
     },
     {
@@ -3371,7 +3364,7 @@
       "description": "ssh-remote-shell renders through its UI on RHEL 7",
       "status": "PASS",
       "expected": "",
-      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' -l 'alice' 'server.example.test'",
       "severity": ""
     },
     {
@@ -3380,7 +3373,7 @@
       "description": "ssh-remote-shell renders through its UI on RHEL 8",
       "status": "PASS",
       "expected": "",
-      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' -l 'alice' 'server.example.test'",
       "severity": ""
     },
     {
@@ -3389,7 +3382,7 @@
       "description": "ssh-remote-shell renders through its UI on RHEL 9",
       "status": "PASS",
       "expected": "",
-      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' -l 'alice' 'server.example.test'",
       "severity": ""
     },
     {
@@ -3398,7 +3391,7 @@
       "description": "ssh-remote-shell renders through its UI on RHEL 10",
       "status": "PASS",
       "expected": "",
-      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' 'alice@server.example.test'",
+      "actual": "ssh -i '/home/alice/.ssh/id_ed25519' -l 'alice' 'server.example.test'",
       "severity": ""
     },
     {
@@ -3443,7 +3436,7 @@
       "description": "rsync-sync-files renders through its UI on RHEL 7",
       "status": "PASS",
       "expected": "",
-      "actual": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+      "actual": "rsync -a -v -h -s --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
       "severity": ""
     },
     {
@@ -3452,7 +3445,7 @@
       "description": "rsync-sync-files renders through its UI on RHEL 8",
       "status": "PASS",
       "expected": "",
-      "actual": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+      "actual": "rsync -a -v -h -s --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
       "severity": ""
     },
     {
@@ -3461,7 +3454,7 @@
       "description": "rsync-sync-files renders through its UI on RHEL 9",
       "status": "PASS",
       "expected": "",
-      "actual": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+      "actual": "rsync -a -v -h -s --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
       "severity": ""
     },
     {
@@ -3470,7 +3463,7 @@
       "description": "rsync-sync-files renders through its UI on RHEL 10",
       "status": "PASS",
       "expected": "",
-      "actual": "rsync -a -v -h --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
+      "actual": "rsync -a -v -h -s --dry-run '/etc/app/' 'alice@server.example.test:/tmp/app/'",
       "severity": ""
     },
     {
@@ -3695,7 +3688,7 @@
       "description": "git-checkout-discard-changes renders through its UI on RHEL 7",
       "status": "PASS",
       "expected": "",
-      "actual": "git checkout -- 'src/app.py'",
+      "actual": "git --literal-pathspecs checkout -- 'src/app.py'",
       "severity": ""
     },
     {
@@ -3704,7 +3697,7 @@
       "description": "git-checkout-discard-changes renders through its UI on RHEL 8",
       "status": "PASS",
       "expected": "",
-      "actual": "git checkout -- 'src/app.py'",
+      "actual": "git --literal-pathspecs checkout -- 'src/app.py'",
       "severity": ""
     },
     {
@@ -3713,7 +3706,7 @@
       "description": "git-checkout-discard-changes renders through its UI on RHEL 9",
       "status": "PASS",
       "expected": "",
-      "actual": "git checkout -- 'src/app.py'",
+      "actual": "git --literal-pathspecs checkout -- 'src/app.py'",
       "severity": ""
     },
     {
@@ -3722,7 +3715,7 @@
       "description": "git-checkout-discard-changes renders through its UI on RHEL 10",
       "status": "PASS",
       "expected": "",
-      "actual": "git checkout -- 'src/app.py'",
+      "actual": "git --literal-pathspecs checkout -- 'src/app.py'",
       "severity": ""
     },
     {
@@ -7328,7 +7321,7 @@
     {
       "id": "TC-TASK-GREP-001",
       "area": "Task completion",
-      "description": "Build a flagged grep search for \u201claundry\u201d",
+      "description": "Build a flagged grep search for “laundry”",
       "status": "PASS",
       "expected": "",
       "actual": "{\"command\":\"grep -r -n -i 'laundry' '/etc'\",\"fields\":5,\"flagControls\":5}",
@@ -7349,7 +7342,7 @@
       "description": "Copy with comment includes metadata and the exact command",
       "status": "PASS",
       "expected": "",
-      "actual": "# MD CODE RED v1.0.0-alpha.6 \u2014 RHEL 8\n# intent: Find which lines, or which files, contain a pattern instead of reading everything by eye\n# blast: green\ngrep -r -n -i 'laundry' '/et",
+      "actual": "# MD CODE RED v1.0.0-alpha.6 — RHEL 8\n# intent: Find which lines, or which files, contain a pattern instead of reading everything by eye\n# blast: green\ngrep -r -n -i 'laundry' '/et",
       "severity": ""
     },
     {
@@ -7412,7 +7405,7 @@
       "description": "tool/command query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "journalctl / systemd-journaldTool \u00b7 journalctl | Prove the systemd journal is running before trusting anything journalctl printsCommand \u00b7 journalctl | Read the systemd journal, filtered by unit, minimum priority and time windowCommand \u00b7 journalctl | Read the logs for one serviceCommand \u00b7 journalctl",
+      "actual": "journalctl / systemd-journaldTool · journalctl | Prove the systemd journal is running before trusting anything journalctl printsCommand · journalctl | Read the systemd journal, filtered by unit, minimum priority and time windowCommand · journalctl | Read the logs for one serviceCommand · journalctl",
       "severity": ""
     },
     {
@@ -7421,7 +7414,7 @@
       "description": "STIG query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon -- requires root: sshd_config is not world-readable on a STIG'd hostCommand \u00b7 sshd | sudo update-crypto-policies --set FIPS:STIGReference \u00b7 RHEL 8 \u00b7 update-crypto-policies | auditctl -R /usr/share/audit/sample-rules/30-stig.rulesReference \u00b7 RHEL 8 \u00b7 auditctl | cp 10-base-config.rules 30-stig.rules 31-privileged.rules 99-finalize.rules /etc/audit/rules.d/Reference \u00b7 RHEL 8 \u00b7 cp",
+      "actual": "Parse an sshd_config file and print the effective merged configuration, without binding a port or restarting the daemon -- requires root: sshd_config is not world-readable on a STIG'd hostCommand · sshd | sudo update-crypto-policies --set FIPS:STIGReference · RHEL 8 · update-crypto-policies | auditctl -R /usr/share/audit/sample-rules/30-stig.rulesReference · RHEL 8 · auditctl | cp 10-base-config.rules 30-stig.rules 31-privileged.rules 99-finalize.rules /etc/audit/rules.d/Reference · RHEL 8 · cp",
       "severity": ""
     },
     {
@@ -7430,7 +7423,7 @@
       "description": "CCI query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "The Red Hat Enterprise Linux operating system must not allow accounts configured with blank or null passwords.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must be configured so that the delay between logon prompts following a failed console logon attempt is at least four seconds.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must not allow an unattended or automatic logon to the system via a graphical user interface.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must not allow an unrestricted logon to the system.STIG \u00b7 RHEL 7",
+      "actual": "The Red Hat Enterprise Linux operating system must not allow accounts configured with blank or null passwords.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must be configured so that the delay between logon prompts following a failed console logon attempt is at least four seconds.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must not allow an unattended or automatic logon to the system via a graphical user interface.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must not allow an unrestricted logon to the system.STIG · RHEL 7",
       "severity": ""
     },
     {
@@ -7439,7 +7432,7 @@
       "description": "NIST query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/passwd.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/group.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/gshadow.STIG \u00b7 RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/shadow.STIG \u00b7 RHEL 7",
+      "actual": "The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/passwd.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/group.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/gshadow.STIG · RHEL 7 | The Red Hat Enterprise Linux operating system must generate audit records for all account creations, modifications, disabling, and termination events that affect /etc/shadow.STIG · RHEL 7",
       "severity": ""
     },
     {
@@ -7448,7 +7441,7 @@
       "description": "Flag query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "cat perf.pipe | perf --no-pager script -i -Reference \u00b7 RHEL 8 \u00b7 cat | journalctl -t ignition --no-pagerReference \u00b7 RHEL 10 \u00b7 journalctl | journalctl -t vmcore-analysis --no-pagerReference \u00b7 RHEL 10 \u00b7 journalctl | journalctl -u myapp.service --no-pagerReference \u00b7 RHEL 10 \u00b7 journalctl",
+      "actual": "cat perf.pipe | perf --no-pager script -i -Reference · RHEL 8 · cat | journalctl -t ignition --no-pagerReference · RHEL 10 · journalctl | journalctl -t vmcore-analysis --no-pagerReference · RHEL 10 · journalctl | journalctl -u myapp.service --no-pagerReference · RHEL 10 · journalctl",
       "severity": ""
     },
     {
@@ -7457,7 +7450,7 @@
       "description": "Reference query returns a relevant result",
       "status": "PASS",
       "expected": "",
-      "actual": "RHEL 9 subscription-manager package must be installed.STIG \u00b7 RHEL 9 | RHEL 10 must have the \"subscription-manager\" package installed.STIG \u00b7 RHEL 10 | dnf list --installed subscription-managerReference \u00b7 RHEL 9 \u00b7 dnf | sudo dnf -y install subscription-managerReference \u00b7 RHEL 10 \u00b7 dnf",
+      "actual": "RHEL 9 subscription-manager package must be installed.STIG · RHEL 9 | RHEL 10 must have the \"subscription-manager\" package installed.STIG · RHEL 10 | dnf list --installed subscription-managerReference · RHEL 9 · dnf | sudo dnf -y install subscription-managerReference · RHEL 10 · dnf",
       "severity": ""
     },
     {
@@ -7493,7 +7486,7 @@
       "description": "Reference family hydrates and unrated copy is gated by acknowledgement",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"family\":true,\"tool\":true,\"record\":true,\"before\":1,\"title\":\"Vendor reference \u2014 not host-verified, not assembled by this tool\",\"ack\":true,\"copyDisabled\":true,\"evidence\":false}",
+      "actual": "{\"family\":true,\"tool\":true,\"record\":true,\"before\":1,\"title\":\"Vendor reference — not host-verified, not assembled by this tool\",\"ack\":true,\"copyDisabled\":true,\"evidence\":false}",
       "severity": ""
     },
     {
@@ -7511,7 +7504,7 @@
       "description": "Eligible governing text exposes byte-exact evidence copy",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":true,\"title\":\"Vendor reference \u2014 not host-verified, not assembled by this tool\",\"evidence\":true}",
+      "actual": "{\"hit\":true,\"title\":\"Vendor reference — not host-verified, not assembled by this tool\",\"evidence\":true}",
       "severity": ""
     },
     {
@@ -7520,7 +7513,7 @@
       "description": "A guided command can be added as stage 1",
       "status": "PASS",
       "expected": "",
-      "actual": "Pipeline \u2014 1 of 8 stagesStage 1 \u2014 editinggreenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveAdd current command as a stageAdd a redirectionClear pipel",
+      "actual": "Pipeline — 1 of 8 stagesStage 1 — editinggreenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveAdd current command as a stageAdd a redirectionClear pipel",
       "severity": ""
     },
     {
@@ -7529,7 +7522,25 @@
       "description": "A second guided command can be added and composed",
       "status": "PASS",
       "expected": "",
-      "actual": "Pipeline \u2014 2 of 8 stagesStage 1greenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveStage 2 \u2014 editinggreenjoined by|  \u2014  pipe stdout into the next command&&  \u2014  run the next command only if this one succeeds||  \u2014  run the next comma",
+      "actual": "Pipeline — 2 of 8 stagesStage 1greenjournalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --bootEdit fieldsMove upMove downRemoveStage 2 — editinggreenjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next comma",
+      "severity": ""
+    },
+    {
+      "id": "TC-PIPE-TRUST-001",
+      "area": "Pipeline",
+      "description": "Pipeline trust signals and evidence remain composed and unverified",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"trust\":[\"Read only\",\"RHEL 8\",\"Composed — not host-verified\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Dark\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 552816ec5cab1416f3463f3b43e247a58e1de9ffd17577916b4600435c0d98\"}",
+      "severity": ""
+    },
+    {
+      "id": "TC-PIPE-INCOMPLETE-001",
+      "area": "Pipeline",
+      "description": "Incomplete pipeline names the pipeline problem instead of blaming the selected entry",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"editor\":\"Build / journalctl / guided taskRead the systemd journal, filtered by unit, minimum priority and time windowBuild a release-aware command from typed, validated fields.1 Configure2 Review3 VerifyEssential fieldsConfigure the operation. The command preview updates without rebuilding these controls.Unit (optional)The systemd unit name to inspect or manage.Why this field?Example: sshd.serviceDiscover: systemctl list-unit-filesConsequence: This value limits what the read-only command inspe",
       "severity": ""
     },
     {
@@ -7565,7 +7576,34 @@
       "description": "Invalid generator input is refused with a field-specific explanation",
       "status": "PASS",
       "expected": "",
-      "actual": "Fill in the required fieldsusername: is not a valid POSIX user nameCopy is not rendered at all until a complete command is assembled \u2014 there is no dead control to tab through.",
+      "actual": "Fill in the required fieldsusername: is not a valid POSIX user nameCopy is not rendered at all until a complete command is assembled — there is no dead control to tab through.",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-001",
+      "area": "Runbook",
+      "description": "Process preflight binds the current PID",
+      "status": "PASS",
+      "expected": "",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nRecheck the process owner and command immediately before sending the signal.\nps -p 54321 -o pid,user,comm,argsCopy PreflightRunki",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-002",
+      "area": "Runbook",
+      "description": "Destructive Git preflight binds the current path",
+      "status": "PASS",
+      "expected": "",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nReview and save the exact uncommitted changes before discarding them.\ngit diff -- config/prod.ymlCopy PreflightRungit --literal-pathspecs checkout --",
+      "severity": ""
+    },
+    {
+      "id": "TC-RUNBOOK-003",
+      "area": "Runbook",
+      "description": "User/group guidance binds current values and blocks unresolved recovery",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecord the complete current group list before making the change.\\nid bobCopy PreflightRunusermod -a -G 'docker' 'bob'Copy RunVerify`id bob` shows docker plus all previously recorded supplementary groups.Copy VerifyRecoverRestore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> bob`.Copy is unavailable because this guidance still contains an unresolved placeholder.Copy RecoverCopy complete plan\",\"recoverDisabled\":true}",
       "severity": ""
     },
     {
@@ -7574,7 +7612,16 @@
       "description": "All six common-task cards open reviewed work",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"ids\":[\"gen-journalctl-unit-logs\",\"gen-systemctl-manage\",\"gen-useradd-create\",\"gen-fw-allow-service\",\"gen-lsblk-inspect-storage\",\"r-dnf-install\"],\"outcomes\":[true,true,true,true,true,true]}",
+      "actual": "{\"ids\":[\"gen-journalctl-unit-logs\",\"gen-systemctl-manage\",\"gen-useradd-create\",\"gen-fw-allow-service\",\"gen-lsblk-inspect-storage\",\"gen-dnf-package\"],\"outcomes\":[true,true,true,true,true,true]}",
+      "severity": ""
+    },
+    {
+      "id": "TC-HOME-002",
+      "area": "Home",
+      "description": "Package task routes to a guided form for each release family",
+      "status": "PASS",
+      "expected": "",
+      "actual": "{\"r7\":\"gen-yum-package\",\"r8\":\"gen-dnf-package\"}",
       "severity": ""
     },
     {
@@ -7709,7 +7756,7 @@
       "description": "ssh-remote-shell represents user-specific data as editable fields",
       "status": "PASS",
       "expected": "",
-      "actual": "2 guided field(s)",
+      "actual": "3 guided field(s)",
       "severity": ""
     },
     {
@@ -7817,7 +7864,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":5866742,\"resources\":0,\"nav\":{\"dom\":39.299999952316284,\"load\":42.39999997615814}}",
+      "actual": "{\"heap\":22906951,\"resources\":0,\"nav\":{\"dom\":55.10000002384186,\"load\":58.700000047683716}}",
       "severity": ""
     },
     {
@@ -7828,122 +7875,6 @@
       "expected": "",
       "actual": "0",
       "severity": ""
-    }
-  ],
-  "coverage": {
-    "catalogEntries": 200,
-    "rhelReleases": [
-      "7",
-      "8",
-      "9",
-      "10"
-    ],
-    "entryReleaseCases": 800,
-    "availableGeneratorReleaseCases": 229,
-    "gatedGeneratorReleaseCases": 3,
-    "availableStaticReleaseCases": 564,
-    "gatedStaticReleaseCases": 4,
-    "viewports": [
-      320,
-      390,
-      768,
-      1024,
-      1440
-    ]
-  },
-  "gates": [
-    {
-      "name": "Full rendered browser audit",
-      "result": "PASS",
-      "detail": "867/867 assertions; zero runtime exceptions and zero console errors"
-    },
-    {
-      "name": "Repository QA gate",
-      "result": "PASS",
-      "detail": "Q1\u2013Q26 and JavaScript syntax"
-    },
-    {
-      "name": "Python unit suite",
-      "result": "PASS",
-      "detail": "419 tests"
-    },
-    {
-      "name": "Hostile-input harness",
-      "result": "PASS",
-      "detail": "128,449 checks; zero failures"
-    },
-    {
-      "name": "Diff hygiene",
-      "result": "PASS",
-      "detail": "git diff --check"
-    }
-  ],
-  "supplementalResults": [
-    {
-      "id": "TC-FILE-REGRESSION-001",
-      "area": "Offline delivery",
-      "status": "PASS",
-      "description": "The repaired guided grep workflow opens from the standalone file artifact with no network resources or horizontal overflow.",
-      "actual": "command=grep -r -n -i 'laundry' '/etc'; fields=5; copy=true; resources=0; overflow=false",
-      "evidence": "evidence/alpha6-rc-grep.png"
-    },
-    {
-      "id": "TC-PIPELINE-REGRESSION-001",
-      "area": "Pipeline",
-      "status": "PASS",
-      "description": "A generated command can be added to the pipeline and its stage-oriented inspector renders without an exception.",
-      "actual": "stageVisible=true; inspectorVisible=true; exceptions=0",
-      "evidence": "evidence/alpha6-rc-pipeline.png"
-    }
-  ],
-  "closedDefects": [
-    {
-      "id": "DEF-MDCR-001",
-      "previousSeverity": "Critical",
-      "title": "Pipeline inspector renderer crash",
-      "status": "CLOSED",
-      "fix": "Pipeline results now take a stage-oriented inspector path before catalog-entry lookup. The inspector reports stage verification, source, flags, and release comparison.",
-      "verification": [
-        "TC-PIPE-001",
-        "TC-PIPE-002",
-        "TC-PIPE-003",
-        "TC-PIPE-004",
-        "TC-CONSOLE-001",
-        "TC-PIPELINE-REGRESSION-001"
-      ]
-    },
-    {
-      "id": "DEF-MDCR-002",
-      "previousSeverity": "Major",
-      "title": "Fixed examples where user-specific values should be editable",
-      "status": "CLOSED",
-      "fix": "All 14 affected recipes are guided generators with validated fields, exact golden commands, instructional metadata, and release-aware rendering. Grep now exposes three flags, pattern, and target.",
-      "verification": [
-        "TC-TASK-GREP-001",
-        "TC-PARAM-*",
-        "TC-MATRIX-*",
-        "TC-FILE-REGRESSION-001"
-      ]
-    },
-    {
-      "id": "DEF-MDCR-003",
-      "previousSeverity": "Major",
-      "title": "Test-plan safety and validation facts were stale",
-      "status": "CLOSED",
-      "fix": "The test plan now lists the seven red-rated entries, current generator/static split, pipeline coverage, receipt progress, and current validation totals.",
-      "verification": [
-        "TC-DOCS-001"
-      ]
-    },
-    {
-      "id": "DEF-MDCR-004",
-      "previousSeverity": "Minor",
-      "title": "Architecture validation totals were stale",
-      "status": "CLOSED",
-      "fix": "The architecture guide now reports 419 unit tests and 128,449 hostile-input checks.",
-      "verification": [
-        "TC-DOCS-002"
-      ]
     }
   ]
 }

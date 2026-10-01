@@ -1,27 +1,29 @@
 ---
 type: release-evidence
 status: candidate
-last_verified: 2026-09-30
+last_verified: 2026-10-01
 ---
 
 # Build Quality Protocol Summary -- v1.0.0-alpha.6
 
-The release candidate was assembled from the pinned `APP_VERSION` and
-`APP_BUILD_DATE` in `build.py`. Two consecutive clean build and placeholder-
+The final candidate is assembled from the pinned `APP_VERSION` and
+`APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
+The resulting bytes also match the artifact committed with implementation
+source `669924a6df0208f7e239985091ff227de9713168`.
 
 | Item | Result |
 |---|---|
-| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,895,469 bytes |
-| HTML SHA-256 | `e25e88a7ced014aa45273bd865a27d8860aa56126b03e1867ca7d0cadd12c1e9` |
-| Content fingerprint | `327324da688bf7c04bad4952832671958f16d64824c7e5839166397422a4557e` |
-| Sidecar SHA-256 | `e896ed436bac0fce002035ba70da61d1b83ba3dce4cdc88c51b3a1a8e9cd8b9f` |
-| Placeholder provenance SHA-256 | `74f00e8b3b9e84c0766e7d36f1255a8473204135da5db67f1cb63d3cf2d39d43` |
-| Build identity | MD CODE RED `v1.0.0-alpha.6`, built 2026-09-30, UNCLASSIFIED |
-| Reproducibility | PASS; two consecutive clean cycles matched all three files byte for byte |
+| HTML | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,902,185 bytes |
+| HTML SHA-256 | `d1949c9e16b6b479167058a38c6bfd3062e480c22ea029386da1e7aca4f65a04` |
+| Content fingerprint | `552816ec5cab1416f3463f3b43e247a58e1de9ffd17577916b4600435c0d982a` |
+| Sidecar SHA-256 | `9059fb60fdee797daa66a4e02f3be0f023280a83a8232b2ad3ca8b1d14dd12ab` |
+| Placeholder provenance SHA-256 | `954c9138fad7e1ef671391ffb92e22c1ba8c8c0be3299497fa38940b2b4f5d4d` |
+| Build identity | MD CODE RED `v1.0.0-alpha.6`, built 2026-10-01, UNCLASSIFIED |
+| Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Candidate source | `271fc9f08d048d9f3da038f6dc487d8187480b0b` |
+| Implementation source | `669924a6df0208f7e239985091ff227de9713168` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,

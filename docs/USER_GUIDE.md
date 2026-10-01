@@ -1,7 +1,7 @@
 ---
 type: user-guide
 status: current
-last_verified: 2026-09-30
+last_verified: 2026-10-01
 ---
 
 # MD CODE RED User Guide
