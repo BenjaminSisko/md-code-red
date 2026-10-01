@@ -6,6 +6,31 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Made guided edits and pipeline-field edits idempotent across `input` and
+  deferred `change` events. The first real pointer click after typing now reaches
+  Copy, destructive acknowledgement, and Add to pipeline; Tab keeps its next
+  focus target, and changing command bytes clears any stale copy-success message.
+- Re-rated twelve file- and state-changing catalogue entries yellow and renamed
+  the green trust label to **Low impact**. Green remains a curated risk class and
+  no longer claims that every command is literally read-only.
+- Added a closed Git repository grammar for HTTPS, SSH, SCP-like
+  `user@host:path`, and absolute local paths. Git remote-helper `ext::` values,
+  whitespace, percent escapes, leading options, and unapproved schemes are refused.
+- Classify `/var/run` and `/etc/rc0.d` through `/etc/rc6.d` through their RHEL
+  execution-directory aliases. Remote copy classification now considers the
+  source basename and directory-source semantics, with added zsh, X session,
+  and `environment.d` startup targets.
+- Added bound SCP and rsync preflight backups and absence markers, with
+  restore-first recovery using the current remote identity, destination, and
+  source basename. Purpose-specific field types now produce accurate errors for
+  NetworkManager, LVM, Podman, Git destinations, and systemd descriptions.
+- Standalone searched STIG rules now open the Inspector automatically. Placeholder
+  colors meet rendered 4.5:1 contrast in both themes, pipeline reasons are
+  de-duplicated and stage-attributed, and generator completion announcements are
+  independent of any existing pipeline.
+- Expanded the browser release gate with real CDP key-down/key-up and pointer
+  sequences for copy, acknowledgement, pipeline addition, Tab focus, stale toast
+  invalidation, visible STIG text, and placeholder contrast.
 - Replaced open-ended SSH, SCP, rsync, URL, Git path, shell-variable, and PID
   operands with purpose-specific closed grammars. Remote copy/sync forms now
   accept a local source and one validated remote destination; rsync also emits

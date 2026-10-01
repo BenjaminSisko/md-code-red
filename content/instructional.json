@@ -1823,8 +1823,8 @@
    },
    "preflight": [
     {
-     "command": null,
-     "text": "Confirm whether a file already exists at the remote destination and preserve it if needed."
+     "command": "ssh <remote_identity> -- 'target=$1; [ -d \"$target\" ] && target=$target/$2; if [ -e \"$target\" ]; then test ! -e \"$target.mdcr-before-scp\" && cp -a -- \"$target\" \"$target.mdcr-before-scp\"; else test ! -e \"$target.mdcr-was-absent\" && : > \"$target.mdcr-was-absent\"; fi' sh <remote_destination_path> <remote_source_basename>",
+     "text": "Resolve the actual remote target, then preserve an existing target or record that it was absent before copying."
     }
    ],
    "prerequisites": [
@@ -1863,6 +1863,10 @@
     {
      "command": null,
      "text": "Run the assembled command with Dry run selected and review every listed change before clearing it."
+    },
+    {
+     "command": "ssh <remote_identity> -- 'target=$1; if [ -e \"$target\" ]; then test ! -e \"$target.mdcr-before-rsync\" && cp -a -- \"$target\" \"$target.mdcr-before-rsync\"; else test ! -e \"$target.mdcr-was-absent\" && : > \"$target.mdcr-was-absent\"; fi' sh <remote_destination_path>",
+     "text": "Preserve the remote destination tree, or record that it was absent, before the real synchronization."
     }
    ],
    "prerequisites": [

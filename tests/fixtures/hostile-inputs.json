@@ -83,6 +83,24 @@
   "group_list": {
    "benign": "wheel"
   },
+  "git_repository": {
+   "benign": "ssh://git@git.example.test/team/project.git"
+  },
+  "connection_name": {
+   "benign": "Production-LAN"
+  },
+  "lvm_name": {
+   "benign": "vg_data"
+  },
+  "container_name": {
+   "benign": "web-01"
+  },
+  "directory_name": {
+   "benign": "project-clone"
+  },
+  "unit_description": {
+   "benign": "Managed-application-service"
+  },
   "enum": {
    "benign": "alpha",
    "options": [

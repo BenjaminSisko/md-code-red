@@ -605,7 +605,7 @@
    "fields": [
     {
      "name": "con",
-     "type": "service",
+     "type": "connection_name",
      "required": true
     },
     {
@@ -880,7 +880,7 @@
    "fields": [
     {
      "name": "name",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     },
     {
@@ -932,12 +932,12 @@
     },
     {
      "name": "name",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     },
     {
      "name": "vg",
-     "type": "service",
+     "type": "lvm_name",
      "required": true
     }
    ],
@@ -1978,7 +1978,7 @@
    "fields": [
     {
      "name": "container",
-     "type": "service",
+     "type": "container_name",
      "required": true
     }
    ],
@@ -4160,7 +4160,7 @@
    ],
    "verify": "The destination exists and matches the source (`diff -r source dest` reports no differences).",
    "undo": "Delete the copy at the destination -- the source is untouched by cp itself. If the destination overwrote something that already existed there, that prior content is gone unless it was itself backed up first.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-cp",
@@ -4343,7 +4343,7 @@
    ],
    "verify": "`ls -ld <path>` shows the new directory with the expected permissions.",
    "undo": "Remove it with `rmdir <path>` if empty, or `rm -r <path>` if it now has contents -- rmdir is the safer choice since it refuses to remove a non-empty directory.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-mkdir",
@@ -4402,7 +4402,7 @@
    ],
    "verify": "`ls -l` on the link shows it pointing at the intended target (symlink), or `stat` shows the same inode number as the original (hard link).",
    "undo": "Remove the link itself with `rm <link-path>` -- this never touches the target file's data either way.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-ln",
@@ -5781,7 +5781,7 @@
    "category": "network",
    "intent": "Copy a local file to a remote host over the same encrypted channel ssh uses",
    "verify": "The file exists at the destination with the expected size/checksum.",
-   "undo": "Delete the copy at the destination (or restore the destination's own prior version from a backup, if it was overwritten and something was already there).",
+   "undo": "Restore an overwritten remote target first with ssh <remote_identity> -- 'target=$1; [ -d \"$target\" ] && target=$target/$2; if [ -e \"$target.mdcr-before-scp\" ]; then test ! -e \"$target.mdcr-after-scp\" && mv -- \"$target\" \"$target.mdcr-after-scp\" && mv -- \"$target.mdcr-before-scp\" \"$target\"; elif [ -e \"$target.mdcr-was-absent\" ]; then rm -rf -- \"$target\" && rm -f -- \"$target.mdcr-was-absent\"; else exit 1; fi' sh <remote_destination_path> <remote_source_basename>. The newly copied target is removed only when the preflight absence marker proves it did not exist.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5843,7 +5843,7 @@
    "category": "network",
    "intent": "Synchronize a local file tree to a remote host over ssh, transferring only what changed",
    "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
-   "undo": "Restore overwritten destination files from the backups kept before the run. Remove newly created destination files only after confirming they did not exist before the run.",
+   "undo": "Restore the protected remote destination first with ssh <remote_identity> -- 'target=$1; if [ -e \"$target.mdcr-before-rsync\" ]; then test ! -e \"$target.mdcr-after-rsync\" && mv -- \"$target\" \"$target.mdcr-after-rsync\" && mv -- \"$target.mdcr-before-rsync\" \"$target\"; elif [ -e \"$target.mdcr-was-absent\" ]; then rm -rf -- \"$target\" && rm -f -- \"$target.mdcr-was-absent\"; else exit 1; fi' sh <remote_destination_path>. The synchronized destination is removed only when the preflight absence marker proves it did not exist.",
    "blast": "yellow",
    "stig": [],
    "source": {
@@ -5953,7 +5953,7 @@
    ],
    "verify": "The new directory exists, `git log` shows commit history, and `git remote -v` shows the expected origin URL.",
    "undo": "Delete the cloned directory -- nothing outside it was touched, since clone only creates a new directory tree.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6065,7 +6065,7 @@
    ],
    "verify": "`git status` shows the intended files (or hunks) moved from unstaged/untracked into staged.",
    "undo": "`git restore --staged <path>` (or the older `git reset HEAD <path>`) unstages a file without touching its content in the working tree.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6130,7 +6130,7 @@
    ],
    "verify": "`git log -1` shows the new commit with the expected message, and `git status` reports nothing left staged.",
    "undo": "If not yet pushed anywhere: `git reset --soft HEAD~1` removes the commit and puts its changes back in the staging area, ready to re-commit or edit -- see the 'undo the last commit but keep changes' recovery entry. If already pushed and shared, use `git revert` instead of rewriting the commit away.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6248,7 +6248,7 @@
    ],
    "verify": "`git status` reports the new branch as current, and the working tree matches that branch's last commit.",
    "undo": "Switch back to the previous branch with `git switch -` (or the branch's name) -- switching itself does not create or delete commits.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6634,7 +6634,7 @@
    ],
    "verify": "`git stash list` shows the expected entry after push, or `git status` shows the restored changes after pop/apply.",
    "undo": "A pushed stash can be dropped unapplied with `git stash drop` (or restored with pop/apply) -- the changes are not lost until the stash itself is explicitly dropped or the stack is cleared.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -6699,7 +6699,7 @@
    ],
    "verify": "`git tag -l` lists the tag, and `git show <tag>` shows the expected commit (and, for an annotated tag, the message).",
    "undo": "Delete the local tag with `git tag -d <name>` -- if it was already pushed, the remote copy needs its own explicit delete (see git-push's notes on deleting a pushed ref); deleting a tag never touches the commit it pointed at.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -7206,7 +7206,7 @@
    ],
    "verify": "Git reports the single first-bad commit at the end of the session, and testing that commit confirms it introduces the bug.",
    "undo": "`git bisect reset` at any point ends the session and returns to the original branch -- bisect only checks out commits for testing, it never creates or discards any.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -7437,12 +7437,12 @@
    "fields": [
     {
      "name": "repository",
-     "type": "comment",
+     "type": "git_repository",
      "required": true
     },
     {
      "name": "directory",
-     "type": "service",
+     "type": "directory_name",
      "required": false
     }
    ],
@@ -7463,7 +7463,7 @@
    ],
    "verify": "In the new directory, git status identifies the checked-out branch and git remote -v shows the expected origin.",
    "undo": "Delete the new clone directory after confirming it contains no local work you need to keep.",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "id": "src-git-htmldocs",
     "title": "Git manual pages (git-htmldocs, staged corpus copy, Saratoga vendor-repos/git-htmldocs)",
@@ -7478,7 +7478,7 @@
     "9": false,
     "10": false
    },
-   "notes": "Repository accepts HTTPS, SSH, file, and local-path forms. The value is emitted as one shell-quoted operand; Git decides whether the address is reachable."
+   "notes": "Repository accepts only HTTPS, SSH, SCP-like user@host:path, or an absolute local path. The optional destination is one directory name."
   },
   {
    "id": "gen-git-branch",
@@ -10674,7 +10674,7 @@
    ],
    "verify": "evidence/<host>/etc/ssh/sshd_config exists per host; diff -r evidence/web01 evidence/web02 shows the drift you're hunting.",
    "undo": "rm -r evidence/ locally - targets were never written to",
-   "blast": "green",
+   "blast": "yellow",
    "source": {
     "id": "src-greybeard-a-fetch",
     "title": "Grey Beard Ansible field kit, content/commands.json entry 'a-fetch' (orbit/grey-beard-ansible, same owner); its own source line: ansible-doc fetch/slurp (core 2.21.1)",
@@ -11910,7 +11910,7 @@
    "fields": [
     {
      "name": "description",
-     "type": "service",
+     "type": "unit_description",
      "required": true
     },
     {

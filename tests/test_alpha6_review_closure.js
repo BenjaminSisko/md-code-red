@@ -40,6 +40,12 @@ check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root
       'remote execution sink was not refused');
 check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/lib/systemd/system/x.service'})===null,
       'usrmerge /lib execution-sink alias was not refused');
+check(assemble('scp-secure-copy',{source:'/tmp/.bashrc',destination:'root@host:/var/www'})?.blast==='red',
+      'remote directory possibility did not classify the source basename');
+check(assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/tmp/app'})?.blast==='red',
+      'directory rsync source without a destination slash was not red');
+check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/var/run/systemd/system/x.service'})===null,
+      '/var/run execution-sink alias was not refused');
 
 // A pipeline write is never read-only. Ordinary files are yellow, sensitive
 // login/startup files are red, and delayed-execution sinks are refused.
@@ -57,7 +63,16 @@ check(redirected('/srv/app/.ssh/authorized_keys')?.blast==='red','pipeline SSH t
 check(redirected('/home/alice/.bash_logout')?.blast==='red','pipeline logout startup file was not red');
 check(redirected('/lib64/libc.so.6')?.blast==='red','usrmerge /lib64 alias was not red');
 check(redirected('/lib/systemd/system/x.service')===null,'usrmerge /lib execution sink was not refused');
+check(redirected('/var/run/systemd/system/x.service')===null,'/var/run execution sink alias was not refused');
+for(const level of ['0','1','2','3','4','5','6']){
+  check(redirected('/etc/rc'+level+'.d/S99job')===null,'SysV rc'+level+' alias was not refused');
+}
 check(redirected('/etc/cron.d/job')===null,'pipeline execution sink was not refused');
+for(const leaf of ['.zshenv','.zlogin','.zlogout','.xinitrc','.xsession','.Xclients','.xprofile']){
+  check(redirected('/home/alice/'+leaf)?.blast==='red',leaf+' startup target was not red');
+}
+check(redirected('/home/alice/.config/environment.d/session.conf')?.blast==='red',
+      'environment.d startup target was not red');
 check(pipelineStartup&&pipelineStartup.blast_reasons.some(r=>r.id==='WRITE-TARGET'&&r.why.includes('/root/.bashrc')),
       'pipeline red banner reason omitted the write target');
 const attributedFlags=mod.assemblePipeline([
@@ -85,6 +100,13 @@ check(assemble('kill-send-signal',{pid:'0'})===null,'kill accepted PID 0');
 check(assemble('export-shell-variable',{variable:'my-var'})===null,'export accepted an invalid shell identifier');
 check(assemble('git-checkout-discard-changes',{path:'*.py'})===null,'git discard accepted pathspec globbing');
 check(assemble('git-checkout-discard-changes',{path:':/config'})===null,'git discard accepted pathspec magic');
+for(const bad of ['ext::sh -c touch% /tmp/pwned','file:///tmp/repo','https://host/repo%20name','helper:path']){
+  check(assemble('gen-git-clone',{repository:bad,directory:'clone'})===null,'Git clone accepted unsafe repository '+bad);
+}
+for(const good of ['https://git.example.test/team/repo.git','ssh://git@git.example.test/team/repo.git',
+                   'git@git.example.test:team/repo.git','/srv/git/repo.git']){
+  check(assemble('gen-git-clone',{repository:good,directory:'clone'})!==null,'Git clone refused supported repository '+good);
+}
 
 // Optional-subset controls exercise shapes the all-options golden fixture does
 // not: each omitted field must disappear with its own option and no neighbour.

@@ -565,7 +565,7 @@
     "repository": "ssh://git@git.internal/team/project.git",
     "directory": "project"
    },
-   "blast": "green",
+   "blast": "yellow",
    "flags": [],
    "commands": {
     "7": "git clone 'ssh://git@git.internal/team/project.git' 'project'",

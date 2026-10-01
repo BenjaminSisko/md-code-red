@@ -138,7 +138,7 @@ the line appears.
 * **Eight stages, maximum.** Not a technical limit -- a refusal to render
   something nobody will read before running it as root.
 
-**Ratings, when a pipeline writes.** A pipeline is not rated as the worst of its
+**Ratings, when a command writes.** A pipeline is not rated as the worst of its
 stages. Every ordinary file write rates at least **yellow**, including targets
 under `/tmp`, `/var/tmp`, `/home`, or `/root`. Shell startup files, SSH trust
 files, and targets under `/etc`, `/boot`, `/dev`, `/usr`, `/var/lib`, `/sys`, or
@@ -148,6 +148,14 @@ sudoers, and executable directories are refused. `| xargs rm` and friends are
 shows as **unrated** -- not green. Green in this tool means a person curated that
 entry and said so; a path nobody has ever classified is unclassified, not safe,
 and you are entitled to see the difference.
+
+SCP also classifies the possible destination joined with the local source name,
+because a remote path can be an existing directory even without a trailing
+slash. Rsync directory sources are red for the same reason. `/var/run` and the
+RHEL `/etc/rc0.d` through `/etc/rc6.d` aliases classify like their real execution
+directories. The SCP and rsync preflight steps preserve an existing bound remote
+destination, or record that it was absent, before the transfer; Recover restores
+the saved target first and removes a new target only when that absence marker exists.
 
 ### Journey 2: Build STIG evidence for an audit package
 
@@ -159,8 +167,9 @@ and you are entitled to see the difference.
    screen.
 2. Press `Enter` or click a result. A **STIG** hit opens the rule directly: if a
    command in this build's catalog is linked to it, the command assembles and the
-   Inspector shows the full panel; otherwise the rule opens on its own -- the panel
-   still renders in full, and the editor says plainly that no command is catalogued
+   Inspector shows the full panel; otherwise the rule opens on its own and the
+   Inspector opens automatically so the rule is visible on screen. The panel still
+   renders in full, and the editor says plainly that no command is catalogued
    for it yet. A **CCI** or **NIST** hit resolves to the first embedded rule that
    cites it, current RHEL version searched first, then the other three.
 3. The Inspector's STIG panel (also mirrored below the command for printing) shows
@@ -182,12 +191,13 @@ and you are entitled to see the difference.
 
 ### Journey 3: Review a state-changing command before you copy it
 
-Every assembled command carries a blast rating -- **green** (read-only), **yellow**
-(a reversible state change), or **red** (destructive, confirmation required) -- shown
-in the trust bar above the exact command.
-Of the 58 guided entries, 36 are yellow (add a user, download a file, create a
+Every assembled command carries a blast rating -- **green** (low impact), **yellow**
+(a state change), or **red** (destructive or lockout-prone, confirmation required) --
+shown in the trust bar above the exact command. Green is a curated risk rating;
+it is not a promise that every command is literally read-only.
+Of the 58 guided entries, 37 are yellow (add a user, download a file, create a
 recovery branch, merge or rebase Git history, extend a logical volume, write a
-privileged configuration, and so on), 19 are green, and three
+privileged configuration, and so on), 18 are green, and three
 are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
 block device; the guided `git checkout -- <path>` task discards uncommitted edits.
 All three exercise the confirmation flow with real catalog content.
@@ -196,12 +206,13 @@ All three exercise the confirmation flow with real catalog content.
    comment**, and there is no checkbox to tick. Read the **Changes system** trust
    label, the recovery warning, and the entry's **Verify** / **Recover** runbook
    steps before you run anything that changes host state.
-2. A red rating (from an entry's own content, or from the destructive-pattern table
-   matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `pvcreate`,
-   `vgcreate`, `dnf remove`, and the rest of `content/dangerous.json`'s fifteen
-   rows) opens a red bordered
+2. A red rating can come from the entry's curated rating, a destructive-pattern
+   match (`rm -rf`, `wipefs`, `lvremove`, `pvcreate`, `vgcreate`, `dnf remove`,
+   and the rest of `content/dangerous.json`), a protected write target, a remote
+   directory whose final writes cannot be known in advance, or a destructive
+   `xargs` child. It opens a red bordered
    banner above the command: **"Destructive operation -- review before running,"**
-   naming which pattern matched and why. **Copy** and **Copy with comment** are
+   naming every reason and, for a pipeline, its stage. **Copy** and **Copy with comment** are
    both disabled (`aria-disabled`, with a tooltip saying so) until you tick **"I
    have reviewed this command."** The banner is evaluated over the *entire*
    clipboard payload, including the comment header, not just the command line --
@@ -222,7 +233,10 @@ proposed changes without applying them. The **Git** rail
 forms, including clone, branching, merge, rebase, tagging, bounded log, bisect,
 literal-path checkout, reset, and recovery workflows. Branch and tag fields reject invalid ref shapes; revision fields
 accept conservative commit expressions such as `main`, `origin/main`, `HEAD~1`,
-and `HEAD@{1}`. Git values remain single shell-quoted operands in the assembled
+and `HEAD@{1}`. Clone repositories accept only HTTPS, SSH, SCP-like
+`user@host:path`, or absolute local paths; command-running `ext::` transports,
+whitespace, percent escapes, and option-shaped values are refused. Git values
+remain single shell-quoted operands in the assembled
 command.
 
 ## UI Reference

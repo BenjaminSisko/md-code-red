@@ -133,6 +133,7 @@ body[data-sidebar="off"] #sidebar,body[data-inspector="off"] #inspector{display:
   border-radius:8px; width:min(640px,92vw); padding:12px;}
 #palette input{width:100%; padding:7px 9px; font:inherit; color:var(--text-primary);
   background:var(--bg-editor); border:1px solid var(--border-primary); border-radius:5px;}
+input::placeholder,textarea::placeholder{color:var(--text-muted);opacity:1}
 .region-label{font-size:11px; letter-spacing:.08em; text-transform:uppercase;
   color:var(--text-muted); margin:0 0 8px;}
 .railbtn{position:relative; width:100%; height:34px; border:1px solid transparent; border-radius:6px;
@@ -857,6 +858,37 @@ function isGitRevision(s){
   if(s.indexOf("..")>=0||s.indexOf("//")>=0||s.charAt(s.length-1)==="/") return false;
   return true;
 }
+function isGitRepository(s){
+  /* Git repositories are parsed by Git a second time, after the shell has
+     removed our quoting. Keep transports to a closed set so legacy Git cannot
+     interpret an ext:: value as a command. */
+  if(s.indexOf("::")>=0||/[\s%]/.test(s)||s.charAt(0)==="-") return false;
+  if(s.charAt(0)==="/") return isPath(s);
+  if(s.indexOf("https://")===0) return isHttpUrl(s);
+  if(s.indexOf("ssh://")===0){
+    var rest=s.slice(6),slash=rest.indexOf("/"),authority,path,at,user,host,colon,port="";
+    if(slash<1) return false;
+    authority=rest.slice(0,slash); path=rest.slice(slash+1);
+    if(!path||!/^[A-Za-z0-9._~+\/-]+$/.test(path)||path.indexOf("//")>=0) return false;
+    at=authority.indexOf("@");
+    if(at>=0){
+      if(authority.indexOf("@",at+1)>=0) return false;
+      user=authority.slice(0,at); authority=authority.slice(at+1);
+      if(!USERNAME_RE.test(user)) return false;
+    }
+    colon=authority.lastIndexOf(":"); host=authority;
+    if(colon>=0){ host=authority.slice(0,colon); port=authority.slice(colon+1); }
+    return (HOSTNAME_RE.test(host)||isIpv4(host))&&(port===""||isPort(port));
+  }
+  /* SCP-like Git syntax requires an explicit user so a bare `scheme:path`
+     cannot silently select a remote helper. */
+  var sep=s.indexOf(":"),left,repo,mark;
+  if(sep<1||s.indexOf(":",sep+1)>=0) return false;
+  left=s.slice(0,sep); repo=s.slice(sep+1); mark=left.indexOf("@");
+  if(mark<1||left.indexOf("@",mark+1)>=0||!repo||
+     !/^[A-Za-z0-9._~+\/-]+$/.test(repo)||repo.indexOf("//")>=0) return false;
+  return USERNAME_RE.test(left.slice(0,mark))&&HOSTNAME_RE.test(left.slice(mark+1));
+}
 
 /* The field TYPE system (threat-model-v1 §3.1). Allow-list, full match, capped.
    'comment' is the ONLY free-text type in the product, it is the only type that
@@ -883,11 +915,17 @@ var FIELD_TYPES={
   path:{cap:255,label:"absolute path",fn:isPath},
   remote_path:{cap:509,label:"remote path in [user@]host:/absolute/path form",fn:isRemotePath},
   http_url:{cap:1024,label:"HTTP or HTTPS URL",fn:isHttpUrl},
+  git_repository:{cap:1024,label:"Git repository (https://, ssh://, user@host:path, or absolute local path)",fn:isGitRepository},
   git_path:{cap:255,label:"literal repository-relative Git path",fn:isGitPath},
   shell_variable:{cap:128,label:"shell variable name",re:/^[A-Za-z_][A-Za-z0-9_]*$/},
   pid:{cap:10,label:"process ID greater than zero",fn:isPid},
   zone:{cap:17,label:"firewalld zone",re:/^[A-Za-z0-9_-]{1,17}$/},
   service:{cap:64,label:"firewalld service name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/},
+  connection_name:{cap:128,label:"NetworkManager connection name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
+  lvm_name:{cap:128,label:"LVM volume name",re:/^[A-Za-z0-9][A-Za-z0-9+_.-]{0,127}$/},
+  container_name:{cap:128,label:"container name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
+  directory_name:{cap:128,label:"directory name",re:/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/},
+  unit_description:{cap:128,label:"systemd unit description",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
   package:{cap:128,label:"package name",re:/^[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}$/},
   selinux_boolean:{cap:64,label:"SELinux boolean",re:/^[a-z][a-z0-9_]{0,63}$/},
   audit_key:{cap:31,label:"audit rule key",re:/^[A-Za-z0-9_-]{1,31}$/},
@@ -1205,7 +1243,8 @@ var DOC_LINE_VALUE_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
 var INI_VALUE_RE=/^[A-Za-z0-9_./:@+-]+$/;
 /* Closed grammars only, for the reason above the function. */
 var INI_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
-                     "interface","package","unit","service","ipv4","ipv6","ipaddr"];
+                     "interface","package","unit","service","unit_description",
+                     "ipv4","ipv6","ipaddr"];
 var LINE_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
                       "interface","package","unit","service","ipv4","ipv6","ipaddr",
                       "cron_minute","cron_hour"];
@@ -1703,14 +1742,34 @@ function assembleCommand(spec,version,values,opts){
                   (writeField.type==="remote_path"?remoteWritePath(writeValue):null);
     if(writePath===null||isExecutionSink(writePath)) return null;
     var writeClass=redirectTargetBlast(writePath);
-    /* A remote directory operand takes the local source's basename, so the
-       exact file written is not stated in the destination field. Rate that
-       uncertainty at the strongest class the directory can contain. */
-    if(writeField.type==="remote_path"&&/\/$/.test(writePath)) writeClass="red";
+    var writeWhy="The command writes to "+writeValue+" ("+writeClass+" target class).";
+    if(writeField.type==="remote_path"){
+      var sourceValue=v.resolved.source,sourceBase="",candidateClass="unrated";
+      /* A remote destination may already be a directory even without a final
+         slash. Classify the possible destination/basename path as well as the
+         literal operand. A directory rsync source writes a set of names whose
+         final targets cannot be reviewed here, so it receives the red floor. */
+      if(typeof sourceValue==="string"&&sourceValue!==""){
+        var sourceParts=lexicalPath(sourceValue).split("/");
+        sourceBase=sourceParts[sourceParts.length-1]||"";
+        if(sourceBase!==""){
+          var possiblePath=lexicalPath(writePath+"/"+sourceBase);
+          if(isExecutionSink(possiblePath)) return null;
+          candidateClass=redirectTargetBlast(possiblePath);
+          if(PIPE_TARGET_RANK[candidateClass]>PIPE_TARGET_RANK[writeClass]) writeClass=candidateClass;
+        }
+      }
+      if((typeof sourceValue==="string"&&/\/$/.test(sourceValue))||/\/$/.test(writePath)){
+        writeClass="red";
+        writeWhy="The remote operand can name a directory, so the exact files written below "+writeValue+" cannot be classified in advance.";
+      }else if(candidateClass==="red"){
+        writeWhy="The remote destination may be a directory; joining it with source name "+sourceBase+" reaches a sensitive target.";
+      }
+    }
     var writeFloor=writeClass==="red"?"red":"yellow";
     if(BLAST_RANK[writeFloor]>BLAST_RANK[b.blast]) b.blast=writeFloor;
     b.reasons.push({id:"WRITE-TARGET",label:"File write target",
-                    why:"The command writes to "+writeValue+" ("+writeClass+" target class).",
+                    why:writeWhy,
                     floor:writeFloor});
   }
   return {id:spec.id,tool:spec.tool,command:command,flags:flags,blast:b.blast,
@@ -2186,7 +2245,12 @@ function lexicalPath(target){
        This is lexical policy, not a filesystem lookup: the four aliases are
        part of the supported platform contract. */
     var aliases=[["/bin","/usr/bin"],["/sbin","/usr/sbin"],
-                 ["/lib","/usr/lib"],["/lib64","/usr/lib64"]];
+                 ["/lib","/usr/lib"],["/lib64","/usr/lib64"],
+                 ["/var/run","/run"],
+                 ["/etc/rc0.d","/etc/rc.d/rc0.d"],["/etc/rc1.d","/etc/rc.d/rc1.d"],
+                 ["/etc/rc2.d","/etc/rc.d/rc2.d"],["/etc/rc3.d","/etc/rc.d/rc3.d"],
+                 ["/etc/rc4.d","/etc/rc.d/rc4.d"],["/etc/rc5.d","/etc/rc.d/rc5.d"],
+                 ["/etc/rc6.d","/etc/rc.d/rc6.d"]];
     for(i=0;i<aliases.length;i++){
       if(normalized===aliases[i][0]||normalized.indexOf(aliases[i][0]+"/")===0){
         return aliases[i][1]+normalized.slice(aliases[i][0].length);
@@ -2218,13 +2282,16 @@ function isExecutionSink(target){
    remote-copy destinations. */
 function isSensitiveUserTarget(target){
   var t=lexicalPath(target),parts=t.split("/"),leaf=parts.length?parts[parts.length-1]:"";
-  if(t.indexOf("/.ssh/")>=0||/\/.ssh$/.test(t)) return true;
+  if(t.indexOf("/.ssh/")>=0||/\/\.ssh$/.test(t)) return true;
   if(inList([".bashrc",".bash_profile",".bash_login",".bash_logout",".profile",
-             ".zshrc",".zprofile",".cshrc",".tcshrc",".login",".kshrc",
+             ".zshrc",".zprofile",".zshenv",".zlogin",".zlogout",
+             ".cshrc",".tcshrc",".login",".kshrc",".xinitrc",".xsession",
+             ".Xclients",".xprofile",
              ".k5login",".shosts",".rhosts"],leaf)) return true;
-  if(t.indexOf("/.config/systemd/user/")>=0||/\/.config\/systemd\/user$/.test(t)) return true;
+  if(t.indexOf("/.config/systemd/user/")>=0||/\/\.config\/systemd\/user$/.test(t)) return true;
   if(t.indexOf("/.local/share/systemd/user/")>=0||/\/.local\/share\/systemd\/user$/.test(t)) return true;
-  if(t.indexOf("/.config/autostart/")>=0||/\/.config\/autostart$/.test(t)) return true;
+  if(t.indexOf("/.config/autostart/")>=0||/\/\.config\/autostart$/.test(t)) return true;
+  if(t.indexOf("/.config/environment.d/")>=0||/\/\.config\/environment\.d$/.test(t)) return true;
   /* A remote copy to a home directory names no final file; the source basename
      may itself be a startup or trust file. */
   if(t==="/root"||/^\/home\/[^/]+$/.test(t)) return true;
@@ -2389,6 +2456,11 @@ function assemblePipeline(stages,version,opts){
                     stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
       }
       if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
+      if(res.blast==="red"&&!(res.blast_reasons||[]).length){
+        reasons.push({id:"CATALOGUE-RED",label:"Catalogue risk rating",
+                      why:"Stage "+(i+1)+" ("+(st.spec.intent||st.spec.id)+") is catalogued as destructive or lockout-prone.",
+                      floor:"red"});
+      }
       reasons=mergeBlastReasons(reasons,res.blast_reasons);
       stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
                   blast:res.blast,spec:st.spec});
@@ -2453,6 +2525,11 @@ function assemblePipeline(stages,version,opts){
                       why:"Stage "+(i+1)+" runs "+(childBase||"a destructive command")+
                           " once per input batch.",floor:"red"});
       }
+      if(child.blast==="red"&&!(child.blast_reasons||[]).length){
+        reasons.push({id:"CATALOGUE-RED",label:"Catalogue risk rating",
+                      why:"Stage "+(i+1)+" xargs child ("+(st.spec.intent||st.spec.id)+") is catalogued as destructive or lockout-prone.",
+                      floor:"red"});
+      }
       reasons=mergeBlastReasons(reasons,child.blast_reasons);
       if(xrank>rank) rank=xrank;
       words.push(xcmd);
@@ -2483,8 +2560,15 @@ function assemblePipeline(stages,version,opts){
      visible in the DE-QUOTED projection of the whole pipeline is classified by
      redirectTargetBlast() again, whether or not it came through a validated
      `path` field. Raises only. */
-  var projected=projectedRedirectTargets(unquoteCommand(command)),pi;
+  var projected=projectedRedirectTargets(unquoteCommand(command)),pi,si,alreadyRecorded;
   for(pi=0;pi<projected.length;pi++){
+    alreadyRecorded=false;
+    for(si=0;si<stageRecords.length;si++){
+      if(stageRecords[si].target!==null&&lexicalPath(stageRecords[si].target)===lexicalPath(projected[pi])){
+        alreadyRecorded=true; break;
+      }
+    }
+    if(alreadyRecorded) continue;
     var ptb=redirectTargetBlast(projected[pi]);
     if(PIPE_TARGET_RANK[ptb]>rank) rank=PIPE_TARGET_RANK[ptb];
     reasons.push({id:"WRITE-TARGET",label:"File write target",
@@ -3194,6 +3278,17 @@ function operationalPlan(entry,res){
      same rule instead of leaving an operator to reconstruct it by hand. */
   match=String((res&&res.command)||"").match(/--add-rich-rule=('[^']*')/);
   if(match) values.generated_rule_arg=match[1];
+  if(typeof values.destination==="string"&&validateField("remote_path",values.destination,null).ok){
+    var remoteColon=values.destination.indexOf(":");
+    var remotePath=values.destination.slice(remoteColon+1);
+    if(remotePath.length>1&&/\/$/.test(remotePath)) remotePath=remotePath.slice(0,-1);
+    values.remote_identity=values.destination.slice(0,remoteColon);
+    values.remote_destination_path=shQuote(remotePath);
+    if(typeof values.source==="string"&&validateField("path",values.source,null).ok){
+      var remoteSourceParts=lexicalPath(values.source).split("/");
+      values.remote_source_basename=shQuote(remoteSourceParts[remoteSourceParts.length-1]);
+    }
+  }
   for(i=0;i<(ins.prerequisites||[]).length;i++){
     item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
   }
@@ -3277,6 +3372,7 @@ function setVersion(v){
   if(RHEL_VERSIONS.indexOf(v)<0) return;
   STATE.version=v;
   STATE.acked=false;                              /* a new version is a new command */
+  STATE.toast="";
   STORE.setSession("version",v);
   renderAll();
 }
@@ -4579,7 +4675,7 @@ function cloneValues(v){
   for(k in v){ if(Object.prototype.hasOwnProperty.call(v,k)) out[k]=v[k]; }
   return out;
 }
-function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; }
+function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; STATE.toast=""; }
 /* The assembler's stage array, built fresh from STATE. Every command stage
    hands over the ENTRY as its spec -- the same object assembleCommand() is
    given for a single command -- so a stage is assembled by exactly the code a
@@ -4760,10 +4856,14 @@ function pipelineSetField(i,field,value){
   var focusIdentity=renderedFocusIdentity();
   var row=STATE.pipeline[i];
   if(!row) return;
-  if(field==="target"){ row.target=value; }
-  else if(field==="maxargs"){ row.xargs.maxArgs=value; }
-  else if(field==="nul"){ row.xargs.nul=(value==="1"); }
-  else if(field==="replace"){ row.xargs.replace=(value==="1"); }
+  if(field==="target"){ if(row.target===value) return; row.target=value; }
+  else if(field==="maxargs"){ if(row.xargs.maxArgs===value) return; row.xargs.maxArgs=value; }
+  else if(field==="nul"){
+    var nulValue=(value==="1"); if(row.xargs.nul===nulValue) return; row.xargs.nul=nulValue;
+  }
+  else if(field==="replace"){
+    var replaceValue=(value==="1"); if(row.xargs.replace===replaceValue) return; row.xargs.replace=replaceValue;
+  }
   else return;
   bumpPipeline();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
@@ -5068,7 +5168,7 @@ function renderEditor(){
   html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
-  var riskLabelA=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
+  var riskLabelA=res.blast==="green"?"Low impact":(res.blast==="yellow"?"Changes system":"Destructive");
   var vstatusA=verificationStatusForResult(res,entry,res.version);
   html+="<div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+esc(riskLabelA)+"</span>"+
         "<span class=\"trustfact\">RHEL "+esc(res.version)+"</span><span class=\"trustfact\">"+esc(vstatusA.label)+"</span>";
@@ -5243,7 +5343,7 @@ function renderGeneratorResult(){
     return;
   }
   var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
-  var riskLabelG=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
+  var riskLabelG=res.blast==="green"?"Low impact":(res.blast==="yellow"?"Changes system":"Destructive");
   var vstatusG=verificationStatusForResult(res,entry,res.version);
   html+="<p class=\"region-label\">Command preview</p><div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+
         esc(riskLabelG)+"</span><span class=\"trustfact\">RHEL "+esc(res.version)+"</span>"+
@@ -5711,6 +5811,7 @@ function selectTool(id,toggle){
   else STATE.rail="builder";
   STATE.entryId=null;
   STATE.acked=false;
+  STATE.toast="";
   STORE.set("lasttool",STATE.toolId);
   renderAll();
 }
@@ -5723,6 +5824,7 @@ function selectRefCommand(id){
   STATE.refId=id;
   STATE.refAck=false;
   STATE.entryId=null;
+  STATE.toast="";
   STATE.stigRuleId=null;
   STATE.rail="reference";
   STATE.line=0;
@@ -5776,6 +5878,7 @@ function selectEntry(id){
   STATE.stigRuleId=null;                            /* an entry selection replaces a standalone rule */
   STATE.line=0;
   STATE.acked=false;
+  STATE.toast="";
   STATE.formValues={};                              /* a new entry starts with a blank form */
   STATE.announcementComplete=null;
   if(entry.tool==="git") STATE.rail="git";
@@ -5802,6 +5905,8 @@ function selectStigRule(ruleId,version){
   STATE.stigRuleId=ruleId;
   STATE.stigRuleVersion=version;
   STATE.rail="builder";
+  STATE.toast="";
+  document.body.setAttribute("data-inspector","on");
   setVersion(version);
 }
 function setRail(name){
@@ -6001,7 +6106,9 @@ function reRenderEditorAndInspector(){
 function announceGeneratorCompletion(){
   var live=el("gen-announcement");
   if(!live) return;
-  var complete=!!currentResult();
+  var entry=STATE.entryId?entryById(STATE.entryId):null;
+  var complete=!!(entry&&isGeneratorEntry(entry)&&
+                  assembleCommand(entry,STATE.version,STATE.formValues,{patterns:PATTERNS}));
   if(STATE.announcementComplete===null){
     STATE.announcementComplete=complete;
     return;
@@ -6040,7 +6147,14 @@ function onFieldChange(ev){
   if(!f) return;
   var name=f.getAttribute("data-field");
   var val=(f.type==="checkbox"&&!f.checked)?"":f.value;
+  var had=Object.prototype.hasOwnProperty.call(STATE.formValues,name);
+  var previous=had?STATE.formValues[name]:"";
+  /* Text controls emit `input` while editing and then an identical `change`
+     on blur. Re-rendering on that duplicate replaces the button between its
+     mousedown and mouseup, swallowing the click and dropping keyboard focus. */
+  if(previous===val&&((val!=="")||!had)) return;
   STATE.acked=false;                            /* review applies to exact bytes */
+  STATE.toast="";                              /* a copy message applies to old bytes */
   if(val===""){ delete STATE.formValues[name]; }else{ STATE.formValues[name]=val; }
   /* When a stage is being edited, STATE.formValues IS that stage's values
      object, so the line above has already changed the pipeline: bump the

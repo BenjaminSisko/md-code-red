@@ -138,7 +138,9 @@ class ResponsiveControlsTests(unittest.TestCase):
         self.assertIn("renderInspector();", body)
         self.assertIn("renderStatusBar();", body)
         self.assertIn("STATE.acked=false", body)
-        self.assertIn("function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; }", self.source)
+        self.assertIn("function bumpPipeline(){ STATE.pipelineRev++; STATE.acked=false; STATE.toast=\"\"; }", self.source)
+        self.assertIn("if(previous===val", body)
+        self.assertIn('STATE.toast=""', body)
 
     def test_partial_renders_preserve_focus_and_pipeline_status(self):
         pipeline = re.search(

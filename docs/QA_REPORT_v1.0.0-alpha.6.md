@@ -19,17 +19,17 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 429 tests |
-| Hostile-input harness | PASS; 145,345 checks, zero failures |
-| Standalone rendered-browser audit | PASS; 889 of 889 assertions, zero runtime exceptions, zero console errors |
-| HTTP rendered-browser audit | PASS; 889 of 889 assertions, zero runtime exceptions, zero console errors |
-| Real-keystroke guided-field matrix | PASS; 109 text controls, complete values, retained focus, zero exceptions |
+| Python unit suite | PASS; 431 tests |
+| Hostile-input harness | PASS; 165,361 checks, zero failures |
+| Standalone rendered-browser audit | PASS; 893 of 893 assertions, zero runtime exceptions, zero console errors |
+| HTTP rendered-browser audit | PASS; 893 of 893 assertions, zero runtime exceptions, zero console errors |
+| Real-key guided-field matrix | PASS; 109 text controls entered with CDP key-down/key-up sequences, complete values, retained focus, zero exceptions |
 | Entry/release matrix | PASS; all 200 entries across RHEL 7, 8, 9, and 10 |
 | Responsive layouts | PASS; 320, 390, 768, 1024, and 1440 pixel widths |
 | Standalone file delivery | PASS; zero network resources, no overflow, editable grep result exact |
 | Generator golden commands | PASS; 232 release-specific comparisons |
 | Command syntax oracle | PASS; 869 simple invocations, 420 release-specific grammar rows |
-| Pipeline hostile-input checks | PASS; 23,032 checks plus 232 one-stage invariants |
+| Pipeline hostile-input checks | PASS; 26,992 checks plus 232 one-stage invariants |
 | Real reference-export snapshot | PASS after deliberate date and fingerprint refresh |
 | Generated release facts | PASS; current against source data |
 | `git diff --check` | PASS |
@@ -40,14 +40,17 @@ clipboard payloads, evidence export, persisted state, reference acknowledgement,
 generated files, invalid input, task routes, responsive reading order, pipeline
 composition, composed-command verification state, incomplete pipelines, Home
 package routing, exact receipt binding, form-driven status-bar refresh, and
-value-bound runbooks. The third independent review's real-input reproduction is
-now a release gate: every guided text control is typed character by character,
+value-bound runbooks. The independent reviews' real-input reproductions are now
+release gates: every guided text control is typed with key-down/key-up pairs,
 and the pipeline redirect path and xargs batch size have dedicated CDP checks.
-The audit also verifies that editing a red command clears its acknowledgement,
-partial re-renders retain focus, the first valid input announces readiness,
-rendered warning/control contrast exceeds 4.5:1, searched STIG rules remain
-visible beside a pipeline, target-specific blast reasons survive composition,
-and download recovery preserves an existing destination. The user-reported grep task produced
+The audit also uses real pointer input to prove that the first Copy,
+acknowledgement, and Add-to-pipeline click after typing is not swallowed; the
+clipboard matches the changed command; stale success text clears; and Tab moves
+to the next control. It verifies that editing a red command clears its
+acknowledgement, partial re-renders retain focus, the first valid input announces
+readiness, rendered warning/control/placeholder contrast exceeds 4.5:1, searched
+STIG rules are on screen, target-specific blast reasons survive composition,
+and transfer recovery preserves an existing destination. The user-reported grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 
 Known evidence limits remain visible: RHEL 7 and RHEL 9 have no independently

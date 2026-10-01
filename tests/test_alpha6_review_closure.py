@@ -35,5 +35,32 @@ class Alpha6ReviewClosureTests(unittest.TestCase):
             errors=schema.spec_fields_errors('spec',[broken],set())
             self.assertTrue(any('write_target' in e for e in errors),errors)
 
+    def test_state_changing_entries_are_not_green(self):
+        with open(os.path.join(ROOT,'content','commands.json'),encoding='utf-8') as fh:
+            entries={e['id']:e for e in json.load(fh)['entries']}
+        state_changing={
+            'cp-copy','mkdir-create-directory','ln-links','git-clone','gen-git-clone',
+            'git-add','git-commit','git-switch-branch','git-stash','git-tag','git-bisect','a-fetch',
+        }
+        self.assertEqual({eid:entries[eid]['blast'] for eid in state_changing},
+                         {eid:'yellow' for eid in state_changing})
+
+    def test_purpose_specific_field_types_replace_firewalld_service_errors(self):
+        with open(os.path.join(ROOT,'content','commands.json'),encoding='utf-8') as fh:
+            entries={e['id']:e for e in json.load(fh)['entries']}
+        expected={
+            ('gen-nmcli-static-ipv4','con'):'connection_name',
+            ('gen-vgcreate-new-vg','name'):'lvm_name',
+            ('gen-lvcreate-new-lv','name'):'lvm_name',
+            ('gen-lvcreate-new-lv','vg'):'lvm_name',
+            ('gen-podman-stop','container'):'container_name',
+            ('gen-git-clone','repository'):'git_repository',
+            ('gen-git-clone','directory'):'directory_name',
+            ('gen-systemd-unit','description'):'unit_description',
+        }
+        for (eid,name),want in expected.items():
+            field=next(f for f in entries[eid]['fields'] if f['name']==name)
+            self.assertEqual(field['type'],want,(eid,name))
+
 if __name__=='__main__':
     unittest.main()

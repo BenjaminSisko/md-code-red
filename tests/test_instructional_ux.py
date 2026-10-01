@@ -70,7 +70,8 @@ class InstructionalSchemaTests(unittest.TestCase):
 
     def test_generator_plan_placeholders_are_bindable_and_broadly_detected(self):
         placeholder=re.compile(r'<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}')
-        special={'generated_rule_arg','previous_group_list'}
+        special={'generated_rule_arg','previous_group_list','remote_identity',
+                 'remote_destination_path','remote_source_basename'}
         for entry in (e for e in self.commands if 'template' in e):
             names={f['name'] for f in entry['fields']}|special
             for field in ('verify','undo'):
@@ -133,6 +134,14 @@ class InstructionalSchemaTests(unittest.TestCase):
             'Copy a local file to a remote host over the same encrypted channel ssh uses',
         )
         self.assertNotIn('--delete',by_id['rsync-sync-files']['undo'])
+        for eid,suffix in (('scp-secure-copy','scp'),('rsync-sync-files','rsync')):
+            preflight='\n'.join((item.get('command') or '') for item in self.data['entries'][eid]['preflight'])
+            self.assertIn('<remote_identity>',preflight)
+            self.assertIn('<remote_destination_path>',preflight)
+            self.assertIn('.mdcr-before-'+suffix,preflight)
+            self.assertIn('.mdcr-was-absent',preflight)
+            self.assertIn('.mdcr-before-'+suffix,by_id[eid]['undo'])
+            self.assertIn('.mdcr-was-absent',by_id[eid]['undo'])
 
 
 if __name__=='__main__':

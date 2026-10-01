@@ -300,8 +300,10 @@ def resolved_command(entry, version):
 # ---------------------------------------------------------------------------
 FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portrange",
                     "protocol", "family", "action", "unit", "username", "groupname",
-                    "path", "remote_path", "http_url", "git_path", "shell_variable", "pid",
-                    "zone", "service", "package", "selinux_boolean", "audit_key", "interface",
+                    "path", "remote_path", "http_url", "git_repository", "git_path",
+                    "shell_variable", "pid", "zone", "service", "connection_name", "lvm_name",
+                    "container_name", "directory_name", "unit_description", "package",
+                    "selinux_boolean", "audit_key", "interface",
                     "integer", "lvm_size", "group_list", "git_refname", "git_revision",
                     "cron_minute", "cron_hour", "enum", "comment")
 
@@ -589,7 +591,8 @@ DOC_LINE_LIT_RE = re.compile(r"^[A-Za-z0-9_./:@%*(),=+-]+$")
 DOC_LINE_VALUE_RE = re.compile(r"^[A-Za-z0-9_./:@%*(),=+-]+$")
 DOC_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 INI_FIELD_TYPES = ("path", "username", "groupname", "integer", "port", "hostname",
-                   "interface", "package", "unit", "service", "ipv4", "ipv6", "ipaddr")
+                   "interface", "package", "unit", "service", "unit_description",
+                   "ipv4", "ipv6", "ipaddr")
 LINE_FIELD_TYPES = ("path", "username", "groupname", "integer", "port", "hostname",
                     "interface", "package", "unit", "service", "ipv4", "ipv6", "ipaddr",
                     "cron_minute", "cron_hour")
