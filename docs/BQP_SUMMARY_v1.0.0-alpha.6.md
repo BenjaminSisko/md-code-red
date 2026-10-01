@@ -25,6 +25,7 @@ source `11b167159cb2246004e5f457df6f0c155d1c32cb`.
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Forgejo CI candidate build | PASS; Python 3.12 rebuild leaves HTML and sidecar clean while preserving committed toolchain-specific provenance for release-readiness checks |
+| Post-merge stamp simulation | PASS; a committed `git_commit=c97a614b39fb8edf14e411b79dc32864fdf46a47` manifest and released-status report passed all 480 tests and Q1-Q26 + JS while preserving every other manifest field |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
 | Implementation source | `11b167159cb2246004e5f457df6f0c155d1c32cb` |
 

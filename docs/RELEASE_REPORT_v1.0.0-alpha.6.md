@@ -93,6 +93,12 @@ clipboard, CI toolchain, write-through-link, fail-closed recovery,
 release-integrity, and operator-guidance findings. Exact-head independent
 review runs only after this evidence is committed.
 
+A separate post-merge simulation stamped this candidate SHA into the manifest,
+changed the release report to released state, committed both files, rebuilt the
+same HTML, and passed 480 of 480 unit tests plus Q1-Q26 + JS from the resulting
+tree. The stamped manifest retained the reviewed release-workstation toolchain
+and every semantic field other than `git_commit`.
+
 Publication does not establish deployment, receiving-host acceptance, or command
 execution. The release must remain labeled lab-only and unsigned. After merge,
 the tag must target the reviewed merge exactly, the full gates must be rerun on

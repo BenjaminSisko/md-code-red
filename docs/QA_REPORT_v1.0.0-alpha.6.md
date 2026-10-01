@@ -41,6 +41,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Pipeline hostile-input checks | PASS; 27,652 checks plus 232 one-stage invariants |
 | Real reference-export snapshot | PASS after deliberate date and fingerprint refresh |
 | Generated release facts | PASS; current against source data |
+| Post-merge stamp simulation | PASS; committed ancestor stamp, 480 of 480 unit tests, Q1-Q26 + JS, clean post-build tree |
 | `git diff --check` | PASS |
 
 The candidate contains 200 curated entries across 102 tools: 58 guided

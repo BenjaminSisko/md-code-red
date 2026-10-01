@@ -10,7 +10,9 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   allowing only the now-knowable `git_commit` field to differ from the reviewed
   placeholder manifest. The stamp must be committed, name an ancestor of the
   release tree, and preserve the release-workstation toolchain and every other
-  manifest field.
+  manifest field. The documented step now names the exact force-add command for
+  the ignored release manifest, and a simulated committed stamp passes all 480
+  tests plus Q1-Q26 + JS.
 - Hash the main-document bytes Chrome actually loaded and compare them with the
   audited artifact before a rendered-browser result can be recorded. Browser
   evidence now distinguishes 896 pass/fail assertions from two informational

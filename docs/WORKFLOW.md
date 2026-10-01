@@ -238,8 +238,11 @@ approved channel and `docs/DEPLOY_RECEIPT_TEMPLATE.md`.
    reviewed placeholder manifest. The committed stamp may change only
    `git_commit`; the readiness test normalizes that field to the placeholder,
    requires the stamped SHA to be an ancestor of the current tree, and compares
-   every other manifest field with the reviewed implementation. Rerun the full
-   Section 5 sequence on the committed post-stamp tree before pushing it.
+   every other manifest field with the reviewed implementation. Because
+   release artifacts under `dist/` are ignored, stage the exact manifest with
+   `git add -f dist/md-code-red_<version>.provenance.json` and stage the release
+   report normally; do not force-add any other path. Rerun the full Section 5
+   sequence on the committed post-stamp tree before pushing it.
 7. **Create and mirror the immutable tag.** Create an annotated tag named exactly
    like `APP_VERSION`, explicitly targeting the merge SHA from step 5, and push
    the same tag plus the post-stamp `main` commit to GitHub and Forgejo. Existing
