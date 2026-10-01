@@ -129,7 +129,7 @@ class ReleaseReadinessTests(unittest.TestCase):
             [node,os.path.join(REPO,"tests","hostile_harness.js"),artifact,"--json"],
             stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,check=True)
         hostile=json.loads(harness.stdout)
-        browser_total=len(standalone["results"])
+        browser_total=len(result["results"])
         verification_line=(
             "Verification totals: %s unit tests; %s hostile-input checks; "
             "%s pipeline checks; %s rendered-browser assertions in each delivery mode."

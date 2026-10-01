@@ -5,10 +5,10 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "1bedeba652a3197be10adae371b5c99fc7b2e49e",
-    "artifactBytes": 8941777,
-    "artifactSha256": "7e49fcbfae2b9c4985602ce9fc28cd99175d2b6ee598a9fd8caeddd2c0972164",
-    "contentFingerprint": "8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d271",
+    "commit": "7498685ec1a6e474ac2d1b0e1f38bd6fac11c9fe",
+    "artifactBytes": 8944458,
+    "artifactSha256": "0ef9e0351c685605580a5733f18bcbdd9e61ba68b4e3d9a62ad2fd9504ae8bcc",
+    "contentFingerprint": "d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa94",
     "entries": 200,
     "generators": 58,
     "staticEntries": 142
@@ -55,7 +55,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1219 ms",
+      "actual": "1211 ms",
       "severity": ""
     },
     {
@@ -7360,10 +7360,10 @@
     {
       "id": "TC-COPY-001",
       "area": "Clipboard",
-      "description": "Keyboard Copy writes the exact command and retains focus",
+      "description": "One keyboard activation writes the exact command once and retains focus",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"clipboard\":\"grep -r -n -i 'laundry' '/etc'\",\"focus\":\"copy\",\"body\":false}",
+      "actual": "{\"clipboard\":\"grep -r -n -i 'laundry' '/etc'\",\"calls\":1,\"focus\":\"copy\",\"body\":false}",
       "severity": ""
     },
     {
@@ -7606,7 +7606,7 @@
       "description": "Pipeline trust signals and evidence remain composed and unverified",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d2\"}",
+      "actual": "{\"trust\":[\"Changes system\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa\"}",
       "severity": ""
     },
     {
@@ -7633,7 +7633,7 @@
       "description": "A sensitive shell-startup write is visibly red, explains the target, refreshes status, and keeps root privilege",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d271\\nVerification (RHEL 8): Composed — not\"}",
+      "actual": "{\"trust\":[\"Destructive\",\"RHEL 8\",\"Composed — not host-verified\",\"requires root\"],\"banner\":\"Destructive operation — review before runningFile write target — Stage 3 writes to /root/.bashrc (red target class). I have reviewed this command\",\"status\":\"RHEL 8Composed — not host-verifiedSTIG V2R8 · benchmark 01 Jul 2026MD CODE RED v1.0.0-alpha.6built 2026-10-01UNCLASSIFIEDNavigator: OffInspector: OnTheme: Light\",\"row\":\"Stage 3redjoined by|  —  pipe stdout into the next command&&  —  run the next command only if this one succeeds||  —  run the next command only if this one fails;  —  run the next command either way>  —  write stdout to a file, replacing it>>  —  append stdout to a file2>  —  write stderr to a file, replacing it2>&1  —  send stderr wherever stdout is going| tee  —  write stdout to a file and keep it flowing| tee -a  —  append stdout to a file and keep it flowingfileMove upMove downRemove\",\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa94\\nVerification (RHEL 8): Composed — not\"}",
       "severity": ""
     },
     {
@@ -7642,7 +7642,7 @@
       "description": "Active pipelines suppress selected-entry control identity on screen, print, and export",
       "status": "PASS",
       "expected": "",
-      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): 8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d271\nVerification (RHEL 8): Composed — not host-verified — the",
+      "actual": "MD CODE RED — Command and Control Reference Export\nTool version: v1.0.0-alpha.6  built 2026-10-01\nContent fingerprint (sha256 of every embedded data island): d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa94\nVerification (RHEL 8): Composed — not host-verified — the",
       "severity": ""
     },
     {
@@ -7651,7 +7651,7 @@
       "description": "A standalone searched STIG is visibly on-screen while pipeline export stays identity-free",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":282.8125,\"width\":299,\"height\":248.875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): 8ee4a5e9eb86489f1730ef4b71e18ca620284f266ae0fa029e7ff71cc649d2\"}",
+      "actual": "{\"hit\":\"RHEL 8 must be a vendor-supported release.STIG · RHEL 8\",\"screen\":\"STIG RHEL-08-010000, Category ICCI-000366NIST CM-6 bRHEL 8 must be a vendor-supported release.Check textVerify the version of the operating system is vendor supported.\\n\\nNote: The lifecycle time spans and dates are subjec\",\"visible\":true,\"rect\":{\"top\":33.9375,\"bottom\":301.65625,\"width\":284,\"height\":267.71875},\"evidence\":\"MD CODE RED — Command and Control Reference Export\\nTool version: v1.0.0-alpha.6  built 2026-10-01\\nContent fingerprint (sha256 of every embedded data island): d079b65452ad7611fa328a77880422bb12a3d261807b46e2f1fcb9e62b71aa\"}",
       "severity": ""
     },
     {
@@ -7756,10 +7756,10 @@
     {
       "id": "TC-BLAST-ACK-001",
       "area": "Safety",
-      "description": "Acknowledgement revocation and later edits clear real copy-success state",
+      "description": "Acknowledgement gates command and evidence copying, and edits revoke it",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true,\"toast\":\"\"},\"gitCopiedToast\":\"Copied to clipboard — RHEL 8\",\"gitUnacked\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\"},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\",\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
+      "actual": "{\"gitTypedBeforeAck\":{\"value\":\"config/prod.ymlx\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitEvidenceBeforeAck\":{\"disabled\":true,\"aria\":\"true\"},\"gitAck\":{\"enabled\":true,\"focused\":true,\"checked\":true,\"toast\":\"\"},\"gitEvidenceAfterAck\":{\"enabled\":true,\"aria\":\"\"},\"gitCopiedToast\":\"Copied to clipboard — RHEL 8\",\"gitUnacked\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\"},\"gitEdited\":{\"value\":\"config/prod.ymlxy\",\"active\":\"genf-git-checkout-discard-changes-path\",\"focused\":true,\"paletteHidden\":true},\"gitAckAfterEdit\":{\"checked\":false,\"copyDisabled\":true,\"toast\":\"\",\"command\":\"git --literal-pathspecs checkout -- 'config/prod.ymlxy'\"}}",
       "severity": ""
     },
     {
@@ -7786,7 +7786,7 @@
       "description": "SCP renders an atomic owner-validated transaction with recovery and finalization",
       "status": "PASS",
       "expected": "",
-      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nCreate an atomically owned mode-0700 transaction containing the exact pre-transfer target or an absent-state record. Symlinked targets, unsafe shared parents, untrusted transaction state, and existing transaction state are refused.\nprintf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'umask 077' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' 'parent_mode=$(stat -c '\"'\"'%a'\"'\"' -- \"$parent\")' 'parent_bits=$((0$parent_mode))' '[ $((parent_bits & 18)) -eq 0 ] || [ $((parent_bits ",
+      "actual": "PreflightConfirm that the selected RHEL release and cited source apply to the target host.\nCreate an atomically owned mode-0700 transaction containing the exact pre-transfer target or an absent-state record. Symlinked targets, unsafe shared parents, untrusted transaction state, and existing transaction state are refused.\nprintf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'umask 077' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked scp target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'owner=$(id -u)' 'parent=$(dirname -- \"$txn\")' '[ ! -L \"$parent\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked transaction parent'\"'\"' >&2; exit 1; }' 'parent_mode=$(stat -c '\"",
       "severity": ""
     },
     {
@@ -7795,7 +7795,7 @@
       "description": "Rsync renders an atomic owner-validated, capacity-checked transaction and remains red",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"risk\":\"Destructive\",\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRun the assembled command with Dry run selected and review every listed change before clearing it.\\nCreate an atomically owned mode-0700 transaction containing the exact pre-transfer destination tree or an absent-state record. Symlinked targets, unsafe shared parents, untrusted transaction state, and insufficient rollback capacity are refused.\\nprintf '%s\\\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'umask 077' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \\\"$target\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync target'\\\"'\\\"' >&2; exit 1; }' 'txn=$target.mdcr-rsync.txn' 'owner=$(id -u)' 'parent=$(dirname -- \\\"$txn\\\")' 'parent_mode=$(stat -c '\\\"'\\\"'%a'\\\"'\\\"' -- \\\"$parent\\\")' 'parent_bits=$(\"}",
+      "actual": "{\"risk\":\"Destructive\",\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRun the assembled command with Dry run selected and review every listed change before clearing it.\\nCreate an atomically owned mode-0700 transaction containing the exact pre-transfer destination tree or an absent-state record. Symlinked targets, unsafe shared parents, untrusted transaction state, and insufficient rollback capacity are refused.\\nprintf '%s\\\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'umask 077' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \\\"$target\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync target'\\\"'\\\"' >&2; exit 1; }' 'txn=$target.mdcr-rsync.txn' 'owner=$(id -u)' 'parent=$(dirname -- \\\"$txn\\\")' '[ ! -L \\\"$parent\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: syml\"}",
       "severity": ""
     },
     {
@@ -7810,10 +7810,10 @@
     {
       "id": "TC-RUNBOOK-003",
       "area": "Runbook",
-      "description": "User/group guidance quotes current values and blocks unresolved recovery",
+      "description": "Only authored runnable user/group steps are copyable",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecord the complete current group list before making the change.\\nid 'bob'Copy PreflightRunusermod -a -G 'docker' 'bob'Copy RunVerify`id 'bob'` shows 'docker' plus all previously recorded supplementary groups.Copy VerifyRecoverRestore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> 'bob'`.Copy is unavailable because this guidance still contains an unresolved placeholder.Copy RecoverCopy and complete one step at a time. Recovery is kept separate so it cannot run immediately after the change.\",\"recoverDisabled\":true}",
+      "actual": "{\"text\":\"PreflightConfirm that the selected RHEL release and cited source apply to the target host.\\nRecord the complete current group list before making the change.\\nid 'bob'Copy PreflightRunusermod -a -G 'docker' 'bob'Copy RunVerify`id 'bob'` shows 'docker' plus all previously recorded supplementary groups.This step is guidance. Copy is available only for an authored runnable command.Copy VerifyRecoverRestore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> 'bob'`.Copy is unavailable because this guidance still contains an unresolved placeholder.Copy RecoverCopy and complete one step at a time. Recovery is kept separate so it cannot run immediately after the change.\",\"buttons\":{\"preflight\":false,\"run\":false,\"verify\":true,\"recover\":true}}",
       "severity": ""
     },
     {
@@ -8074,7 +8074,7 @@
       "description": "Architecture and test-plan counts match the suite values supplied to this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "451 unit; 168,697 hostile; 27,652 pipeline",
+      "actual": "457 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8083,7 +8083,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":6301388,\"resources\":0,\"nav\":{\"dom\":55.199999928474426,\"load\":57.199999928474426}}",
+      "actual": "{\"heap\":18483477,\"resources\":0,\"nav\":{\"dom\":59,\"load\":60.60000002384186}}",
       "severity": ""
     },
     {
