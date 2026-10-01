@@ -87,7 +87,8 @@
       "by": "Caleb Stone",
       "on": "2026-10-03",
       "host": "rhel9-lab01",
-      "capture": "tests/captures/8/fixture-service-active.json"
+      "capture": "tests/captures/8/fixture-service-active.json",
+      "command_as_run": "systemctl is-active fixtured"
      },
      "9": false,
      "10": false

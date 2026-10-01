@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified \u2014 ADR-001 \u00a75.1",
+  "schema": "entry: id, tool, explain_tool?, privilege?, category, intent, rhel_versions{7,8,9,10}, flags[], verify, undo, blast, stig[], source, verified — ADR-001 §5.1",
   "explain_tool_rule": "Optional. Set only when the entry is filed under tool as the subject the operator is asking about, but every rhel_versions command actually invokes a DIFFERENT binary (e.g. firewalld-service-active is filed under firewall-cmd for navigation, but emits systemctl). When present, the inspector and the G1 gate resolve flag explanations and the tool/binary-agreement check through explain_tool instead of tool. tool still drives the sidebar Tools rail and stays the subject; explain_tool never changes what the operator sees, only which dictionary answers the flag panel (Marcus Reed Panels review PANEL-001 / condition G1).",
   "privilege_rule": "Optional, one of extract/schema.py's PRIVILEGES (\"root\" today). Set when the entry's OWN assembled command needs elevated privilege to run on a STIG'd host that the command text itself never requests (no sudo/su in the template) -- distinct from blast, which rates what the command DOES once it runs, not what it takes to run it. The UI shows a privilege badge next to blast and the evidence exporter records a Requires: line, so the content validation protocol's safety rule (no sudo used during a capture run) can defer the entry correctly instead of silently skipping it (G4(e); gen-sshd-test-config, sshd_config not world-readable on defiant/saratoga, CR-T-34).",
   "curated": true,
@@ -10,7 +10,7 @@
    "{same_as: \"<other version key>\", changed_in_note?}",
    "{unavailable: {reason, alternative}}"
   ],
-  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified \u2014 see man page'. The extractor and this file never guess.",
+  "flag_explain_rule": "explain is null until a RHEL SME curates it from that version's own man/--help output (CR-T-09/10). The UI renders a null explain as 'unverified — see man page'. The extractor and this file never guess.",
   "entry_count": 200
  },
  "categories": [
@@ -94,7 +94,7 @@
     }
    ],
    "verify": "The command prints \"active\" (RHEL 8/9/10) or a unit block whose Active: line reads \"active (running)\" (RHEL 7).",
-   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -162,7 +162,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -172,14 +172,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/firewalld-service-active.json"
+     "capture": "tests/captures/8/firewalld-service-active.json",
+     "command_as_run": "systemctl is-active firewalld"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/firewalld-service-active.json"
+     "capture": "tests/captures/10/firewalld-service-active.json",
+     "command_as_run": "systemctl is-active firewalld"
     }
    }
   },
@@ -219,7 +221,7 @@
     }
    ],
    "verify": "The unit block reports Loaded: masked and Active: inactive (dead).",
-   "undo": "Nothing to undo \u2014 this command only reads unit state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads unit state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -283,7 +285,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -293,14 +295,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/ctrl-alt-del-target-masked.json"
+     "capture": "tests/captures/8/ctrl-alt-del-target-masked.json",
+     "command_as_run": "systemctl status ctrl-alt-del.target"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/ctrl-alt-del-target-masked.json"
+     "capture": "tests/captures/10/ctrl-alt-del-target-masked.json",
+     "command_as_run": "systemctl status ctrl-alt-del.target"
     }
    }
   },
@@ -341,7 +345,7 @@
     }
    ],
    "verify": "The command prints \"active\".",
-   "undo": "Nothing to undo \u2014 this command only reads service state and changes nothing on the host.",
+   "undo": "Nothing to undo — this command only reads service state and changes nothing on the host.",
    "blast": "green",
    "stig": [
     {
@@ -377,7 +381,7 @@
     "id": "src-stig-pinned",
     "title": "DISA Security Technical Implementation Guides for Red Hat Enterprise Linux 7, 8, 9, and 10 (pinned copies, stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -387,14 +391,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/journald-service-active.json"
+     "capture": "tests/captures/8/journald-service-active.json",
+     "command_as_run": "systemctl is-active systemd-journald"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/journald-service-active.json"
+     "capture": "tests/captures/10/journald-service-active.json",
+     "command_as_run": "systemctl is-active systemd-journald"
     }
    }
   },
@@ -426,7 +432,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 firewall-cmd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -505,7 +511,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -516,7 +522,7 @@
     "10": false
    },
    "privilege": "root",
-   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not \u201cundo\u201d an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
+   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not “undo” an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
   },
   {
    "id": "gen-fw-allow-service",
@@ -578,7 +584,7 @@
     "id": "src-man-firewall-cmd-r8",
     "title": "firewall-cmd(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/firewall-cmd.man.txt#L538",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/firewall-cmd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/firewall-cmd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -589,7 +595,7 @@
     "10": false
    },
    "privilege": "root",
-   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not \u201cundo\u201d an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
+   "notes": "This changes permanent configuration only. Record the selected zone and the exact generated rich-rule string before running it. After the add succeeds, run firewall-cmd --reload to apply permanent configuration to the running firewall. Do not “undo” an accept rule by adding reject or drop: that leaves two rules whose ordering can change the result."
   },
   {
    "id": "gen-nmcli-static-ipv4",
@@ -663,7 +669,7 @@
     "id": "src-man-nmcli-r8",
     "title": "nmcli(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 nmcli",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/nmcli.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/nmcli.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -744,13 +750,13 @@
     }
    ],
    "verify": "The command prints matching journal entries. No matches is exit status 0 with no output, not a failure.",
-   "undo": "Nothing to undo \u2014 journalctl only reads the journal and changes nothing on the host.",
+   "undo": "Nothing to undo — journalctl only reads the journal and changes nothing on the host.",
    "blast": "green",
    "source": {
     "id": "src-man-journalctl-r8",
     "title": "journalctl(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 journalctl",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/journalctl.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/journalctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -760,14 +766,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-journalctl-unit-logs.json"
+     "capture": "tests/captures/8/gen-journalctl-unit-logs.json",
+     "command_as_run": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-journalctl-unit-logs.json"
+     "capture": "tests/captures/10/gen-journalctl-unit-logs.json",
+     "command_as_run": "journalctl --no-pager --unit='sshd.service' --priority='err' --since='today' --boot"
     }
    }
   },
@@ -852,7 +860,7 @@
     "id": "src-man-pvcreate-r8",
     "title": "pvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/pvcreate.man.txt",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/pvcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/pvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -900,7 +908,7 @@
     "id": "src-man-vgcreate-r8",
     "title": "vgcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/vgcreate.man.txt",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/vgcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/vgcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -950,13 +958,13 @@
     }
    ],
    "verify": "lvs <vg>/<name> shows the new logical volume at the requested size.",
-   "undo": "lvremove destroys the new logical volume and all data written to it; use it only after lsblk, findmnt and lvs prove the LV is unmounted and no longer needed. It cannot restore the volume group\u2019s exact prior allocation or recover data; use the pre-change backup when recovery is required.",
+   "undo": "lvremove destroys the new logical volume and all data written to it; use it only after lsblk, findmnt and lvs prove the LV is unmounted and no longer needed. It cannot restore the volume group’s exact prior allocation or recover data; use the pre-change backup when recovery is required.",
    "blast": "yellow",
    "source": {
     "id": "src-man-lvcreate-r8",
     "title": "lvcreate(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvcreate",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvcreate.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvcreate.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1017,7 +1025,7 @@
     "id": "src-man-lvextend-r8",
     "title": "lvextend(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 lvextend",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/lvextend.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/lvextend.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1056,13 +1064,13 @@
     }
    ],
    "verify": "The command prints the merged, effective configuration and exits 0 with no syntax error.",
-   "undo": "Nothing to undo \u2014 test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
+   "undo": "Nothing to undo — test mode only parses and prints; it does not bind a port, fork, or restart the daemon.",
    "blast": "green",
    "source": {
     "id": "src-man-sshd-r8",
     "title": "sshd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 sshd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/sshd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/sshd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1127,13 +1135,13 @@
     }
    ],
    "verify": "getent passwd <username> shows the new account with a home directory and the requested shell.",
-   "undo": "userdel -r <username> removes the account and its home directory \u2014 blast: red, see the dangerous-pattern table (dp-userdel).",
+   "undo": "userdel -r <username> removes the account and its home directory — blast: red, see the dangerous-pattern table (dp-userdel).",
    "blast": "yellow",
    "source": {
     "id": "src-man-useradd-r8",
     "title": "useradd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 useradd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/useradd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/useradd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1184,7 +1192,7 @@
     "id": "src-man-usermod-r8",
     "title": "usermod(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 usermod",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/usermod.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/usermod.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1231,12 +1239,12 @@
     }
    ],
    "verify": "The command's own output IS the verification: is-active/is-enabled/is-failed print one word, status prints the full unit block.",
-   "undo": "Nothing to undo \u2014 every action in this generator only reads unit state.",
+   "undo": "Nothing to undo — every action in this generator only reads unit state.",
    "blast": "green",
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1246,14 +1254,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-systemctl-query.json"
+     "capture": "tests/captures/8/gen-systemctl-query.json",
+     "command_as_run": "systemctl 'status' 'sshd.service'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-systemctl-query.json"
+     "capture": "tests/captures/10/gen-systemctl-query.json",
+     "command_as_run": "systemctl 'status' 'sshd.service'"
     }
    }
   },
@@ -1299,7 +1309,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1350,7 +1360,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1406,7 +1416,7 @@
    "source": {
     "title": "DISA RHEL 7/8/9/10 STIG, pinned copies (stig-src/SOURCES.md)",
     "url_or_man": "stig-src/SOURCES.md",
-    "version": "RHEL 7 V3R15 \u00b7 RHEL 8 V2R8 \u00b7 RHEL 9 V2R9 \u00b7 RHEL 10 V1R2",
+    "version": "RHEL 7 V3R15 · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2",
     "retrieved_on": "2026-09-17",
     "license_class": "verbatim-ok"
    },
@@ -1476,7 +1486,7 @@
     "id": "src-man-setsebool-r8",
     "title": "setsebool(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 setsebool",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/setsebool.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/setsebool.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1537,9 +1547,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-semanage-port-r8",
-    "title": "semanage-port(8) manual page \u2014 a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "semanage-port(8) manual page — a separate page from semanage(8), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 8 semanage-port",
-    "version": "RHEL 8/9/10 \u2014 policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/9/10 — policycoreutils-python-utils (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1575,13 +1585,13 @@
     }
    ],
    "verify": "The command prints the account's last change, expiry and warning-day settings.",
-   "undo": "Nothing to undo \u2014 this only reads aging state.",
+   "undo": "Nothing to undo — this only reads aging state.",
    "blast": "green",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1591,14 +1601,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-chage-list.json"
+     "capture": "tests/captures/8/gen-chage-list.json",
+     "command_as_run": "chage -l 'adm-linux'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-chage-list.json"
+     "capture": "tests/captures/10/gen-chage-list.json",
+     "command_as_run": "chage -l 'adm-linux'"
     }
    }
   },
@@ -1652,14 +1664,14 @@
      "field": "username"
     }
    ],
-   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value \u2014 leave at least one filled in to get a single non-interactive command.)",
+   "verify": "chage -l <username> shows the new values. (If every optional field was left blank, chage falls back to its own interactive prompts for each value — leave at least one filled in to get a single non-interactive command.)",
    "undo": "Run this generator again with the account's previous values (read them first with chage -l).",
    "blast": "yellow",
    "source": {
     "id": "src-man-chage-r8",
     "title": "chage(1) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 1 chage",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chage.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chage.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1675,7 +1687,7 @@
    "id": "gen-auditctl-watch",
    "tool": "auditctl",
    "category": "auditctl / ausearch",
-   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot \u2014 persistent rules go in /etc/audit/rules.d/)",
+   "intent": "Add a live audit watch rule on a file or directory (not persistent across reboot — persistent rules go in /etc/audit/rules.d/)",
    "fields": [
     {
      "name": "path",
@@ -1721,13 +1733,13 @@
     }
    ],
    "verify": "auditctl -l lists the new watch rule.",
-   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule \u2014 the flags must match the rule exactly.",
+   "undo": "auditctl -W <path> -p <perms> -k <key> removes the matching watch rule — the flags must match the rule exactly.",
    "blast": "yellow",
    "source": {
     "id": "src-man-auditctl-r8",
     "title": "auditctl(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 auditctl",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/auditctl.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/auditctl.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1771,13 +1783,13 @@
     }
    ],
    "verify": "The command prints matching audit events, or exits 1 with no output if none matched.",
-   "undo": "Nothing to undo \u2014 ausearch only reads the audit log.",
+   "undo": "Nothing to undo — ausearch only reads the audit log.",
    "blast": "green",
    "source": {
     "id": "src-man-ausearch-r8",
     "title": "ausearch(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 ausearch",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/ausearch.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/ausearch.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1787,14 +1799,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-ausearch-by-key.json"
+     "capture": "tests/captures/8/gen-ausearch-by-key.json",
+     "command_as_run": "ausearch -k 'identity' -ts 'today'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-ausearch-by-key.json"
+     "capture": "tests/captures/10/gen-ausearch-by-key.json",
+     "command_as_run": "ausearch -k 'identity' -ts 'today'"
     }
    }
   },
@@ -1824,13 +1838,13 @@
     }
    ],
    "verify": "rsyslogd -N1 exits 0 and prints no error line if the configuration is valid.",
-   "undo": "Nothing to undo \u2014 -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
+   "undo": "Nothing to undo — -N (non-execute test mode) only parses and validates; it does not start the daemon or write to any log.",
    "blast": "green",
    "source": {
     "id": "src-man-rsyslogd-r8",
     "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 rsyslogd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/rsyslogd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1840,14 +1854,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-rsyslogd-test-config.json"
+     "capture": "tests/captures/8/gen-rsyslogd-test-config.json",
+     "command_as_run": "rsyslogd -N1 -f '/etc/rsyslog.conf'"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-rsyslogd-test-config.json"
+     "capture": "tests/captures/10/gen-rsyslogd-test-config.json",
+     "command_as_run": "rsyslogd -N1 -f '/etc/rsyslog.conf'"
     }
    }
   },
@@ -1879,7 +1895,7 @@
     "id": "src-man-chronyd-r8",
     "title": "chronyd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "content-src/raw/rhel8/chronyd.man.txt#L68",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/chronyd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/chronyd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1918,14 +1934,14 @@
      "requires": "all"
     }
    ],
-   "verify": "The command's own table output IS the verification \u2014 one row per container (running only, or every container with -a).",
-   "undo": "Nothing to undo \u2014 ps only lists container state.",
+   "verify": "The command's own table output IS the verification — one row per container (running only, or every container with -a).",
+   "undo": "Nothing to undo — ps only lists container state.",
    "blast": "green",
    "source": {
     "id": "src-man-podman-ps-r8",
-    "title": "podman-ps(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-ps(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-ps",
-    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1935,14 +1951,16 @@
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "defiant-rhel8",
-     "capture": "tests/captures/8/gen-podman-ps.json"
+     "capture": "tests/captures/8/gen-podman-ps.json",
+     "command_as_run": "podman ps -a"
     },
     "9": false,
     "10": {
      "by": "Riley Park",
      "on": "2026-09-18",
      "host": "saratoga-rhel10",
-     "capture": "tests/captures/10/gen-podman-ps.json"
+     "capture": "tests/captures/10/gen-podman-ps.json",
+     "command_as_run": "podman ps -a"
     }
    },
    "versions": [
@@ -1950,7 +1968,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "gen-podman-stop",
@@ -1980,9 +1998,9 @@
    "blast": "yellow",
    "source": {
     "id": "src-man-podman-stop-r8",
-    "title": "podman-stop(1) manual page \u2014 a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
+    "title": "podman-stop(1) manual page — a separate page from podman(1), which is all CR-T-09/10 captured; documented, not host-verified",
     "url_or_man": "man 1 podman-stop",
-    "version": "RHEL 8/10 \u2014 podman (package NVRA not captured by CR-T-09/10)",
+    "version": "RHEL 8/10 — podman (package NVRA not captured by CR-T-09/10)",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -1997,7 +2015,7 @@
     "9",
     "10"
    ],
-   "notes": "podman is not available on RHEL 7 \u2014 no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
+   "notes": "podman is not available on RHEL 7 — no supported package exists for it (base or Extras); podman is RHEL 8+. See the podman tool's RHEL 7 note in the sidebar."
   },
   {
    "id": "ls-listing",
@@ -3185,7 +3203,7 @@
    "category": "coreutils",
    "intent": "Mark an existing shell variable for inheritance by commands launched from this shell",
    "verify": "A newly launched `env` command shows the variable and its expected value.",
-   "undo": "Remove the export attribute with `export -n VARNAME`, unset the variable, or start a new shell.",
+   "undo": "Remove the export attribute with `export -n <variable>`, unset that variable if appropriate, or start a new shell.",
    "blast": "green",
    "stig": [],
    "source": {
@@ -5023,7 +5041,7 @@
    "tool": "kill",
    "category": "process",
    "intent": "Ask a process, by PID, to stop gracefully with SIGTERM",
-   "verify": "`ps -p <pid>` no longer shows the process (or, for a reload signal like -HUP, the service's logs show it re-read its configuration).",
+   "verify": "`ps -p <pid>` no longer shows the process after the SIGTERM request has completed.",
    "undo": "None -- a terminated process is gone; if it was a managed service, undo means starting it again (systemctl start), not un-killing the old process instance.",
    "blast": "yellow",
    "stig": [],
@@ -5798,7 +5816,8 @@
     {
      "name": "destination",
      "type": "remote_path",
-     "required": true
+     "required": true,
+     "write_target": true
     }
    ],
    "template": [
@@ -5859,7 +5878,8 @@
     {
      "name": "destination",
      "type": "remote_path",
-     "required": true
+     "required": true,
+     "write_target": true
     }
    ],
    "template": [
@@ -7708,7 +7728,7 @@
     }
    ],
    "verify": "The command prints no more than the requested number of commits and labels reachable branch and tag names.",
-   "undo": "Nothing to undo \u2014 git log only reads repository history.",
+   "undo": "Nothing to undo — git log only reads repository history.",
    "blast": "green",
    "source": {
     "id": "src-git-htmldocs",
@@ -11796,7 +11816,7 @@
     "id": "src-man-rsyslogd-r8",
     "title": "rsyslogd(8) manual page, captured on the RHEL 8 extraction host (CR-T-09/10)",
     "url_or_man": "man 8 rsyslogd",
-    "version": "RHEL 8 \u2014 content-src/raw/rhel8/rsyslogd.man.txt",
+    "version": "RHEL 8 — content-src/raw/rhel8/rsyslogd.man.txt",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },

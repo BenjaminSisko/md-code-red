@@ -25,7 +25,7 @@
 :root{
   --bg-app:#fafafa; --bg-surface:#ffffff; --bg-editor:#f6f8fa; --bg-gutter:#eef1f6;
   --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#53657d;
-  --accent:#b45309; --success:#059669; --warning:#b45309; --danger:#dc2626;
+  --accent:#b45309; --success:#047857; --warning:#b45309; --danger:#dc2626;
   --brand:#991b1b; --selected-fill:rgba(180,83,9,.10);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
   --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#a16207;
@@ -57,6 +57,9 @@
   --badge-info:#6366f1; --border-primary:#27272a; --focus-ring:#fbbf24;
 }
 *{box-sizing:border-box;}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;
+  margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;border:0!important;}
 html,body{height:100%;}
 body{
   margin:0; background:var(--bg-app); color:var(--text-primary);
@@ -241,6 +244,7 @@ code,pre{font-family:var(--font-mono);}
 .sbadge.b-unrated{border-color:var(--text-muted); color:var(--text-muted);}
 .flagrow{border-top:1px solid var(--border-primary); padding:6px 0;}
 .flagrow .tok{font-family:var(--font-mono); font-size:12px; color:var(--accent);}
+.flagrow .source{display:block; font-size:11px; color:var(--text-muted);}
 .flagrow .mean{display:block; font-size:12px; color:var(--text-secondary);}
 .unverified{color:var(--text-muted); font-style:italic;}
 /* generator guided-form fields (CR-T-17..25) — required/optional/version-gated
@@ -1680,8 +1684,10 @@ function assembleCommand(spec,version,values,opts){
     if(!writeField||writeField.write_target!==true) continue;
     var writeValue=v.resolved[writeField.name];
     if(writeValue===undefined||writeValue===null) continue;
-    if(writeField.type!=="path"||isExecutionSink(writeValue)) return null;
-    var writeClass=redirectTargetBlast(writeValue);
+    var writePath=writeField.type==="path"?writeValue:
+                  (writeField.type==="remote_path"?remoteWritePath(writeValue):null);
+    if(writePath===null||isExecutionSink(writePath)) return null;
+    var writeClass=redirectTargetBlast(writePath);
     var writeFloor=writeClass==="red"?"red":"yellow";
     if(BLAST_RANK[writeFloor]>BLAST_RANK[b.blast]) b.blast=writeFloor;
     b.reasons.push({id:"WRITE-TARGET",label:"File write target",
@@ -2081,7 +2087,7 @@ var XARGS_RED_TOOLS=["rm","unlink","rmdir","kill","pkill","killall","shred","dd"
 /* ---- where a redirect may point (conditions PL3 and PL4) -----------------
    Three classes, and the third is the one that matters most:
 
-     SCRATCH   /tmp, /var/tmp, /home, /root -- the ordinary case. Green.
+     ORDINARY  /tmp, /var/tmp, /home, /root -- a real file write. Yellow.
      SYSTEM    /etc, /boot, /dev, /usr, /var/lib -- RED. `> /etc/passwd`
                truncates the file before the command it redirects has produced
                a single byte, so the damage is done whether or not the command
@@ -2174,6 +2180,25 @@ function isExecutionSink(target){
   }
   return false;
 }
+/* User-controlled startup and authentication files are not system directories,
+   but changing them can execute code at the next shell start or replace login
+   trust. They therefore receive the red floor for both local redirects and
+   remote-copy destinations. */
+function isSensitiveUserTarget(target){
+  var t=lexicalPath(target),parts=t.split("/"),leaf=parts.length?parts[parts.length-1]:"";
+  var inHome=(t.indexOf("/home/")===0||t.indexOf("/root/")===0);
+  if(!inHome) return false;
+  if(t.indexOf("/.ssh/")>=0||/\/.ssh$/.test(t)) return true;
+  if(inList([".bashrc",".bash_profile",".bash_login",".profile",".zshrc",".zprofile"],leaf)) return true;
+  if(t.indexOf("/.config/systemd/user/")>=0||/\/.config\/systemd\/user$/.test(t)) return true;
+  return false;
+}
+/* remote_path has a closed grammar that excludes ':' from the identity and
+   host portions, so the first colon is the one structural separator. */
+function remoteWritePath(value){
+  var s=String(value),at=s.indexOf(":");
+  return at<0?null:s.slice(at+1);
+}
 /* PL3: this function takes a STRING and nothing else. It does not consult the
    `path` field type, the stage shape, or anything the form did. The field type
    is a VALIDATOR; this is the blast rule, and it has to stand on its own if a
@@ -2185,18 +2210,19 @@ function redirectTargetBlast(target){
      The exception is exact: /dev/zero, disks, descendants and look-alikes
      continue through the protected /dev classification below. */
   if(inList(["/dev/null","/dev/stdout","/dev/stderr","/dev/fd/1","/dev/fd/2"],t)) return "green";
+  if(t==="/"||isSensitiveUserTarget(t)) return "red";
   for(i=0;i<PIPE_SYSTEM_DIRS.length;i++){ if(underDir(t,PIPE_SYSTEM_DIRS[i])) return "red"; }
   for(i=0;i<PIPE_SCRATCH_DIRS.length;i++){
     if(!underDir(t,PIPE_SCRATCH_DIRS[i])) continue;
     /* PIPE-002 + PL4: scratch REACHED BY TRAVERSAL is not a curated path, and
        green is a claim somebody made about a path, not an arithmetic result. */
-    return pathTraverses(target)?"unrated":"green";
+    return pathTraverses(target)?"unrated":"yellow";
   }
   return "unrated";                             /* PL4: never green by default */
 }
 /* `unrated` is not a fourth blast colour: it is a rating the product declines to
    make, and it is ranked with the writes so it can never rate BELOW one. */
-var PIPE_TARGET_RANK={green:0,unrated:1,red:2};
+var PIPE_TARGET_RANK={green:0,yellow:1,unrated:1,red:2};
 
 var BLAST_NAMES=["green","yellow","red"];
 
@@ -2385,11 +2411,14 @@ function assemblePipeline(stages,version,opts){
       }
       if(xrank>rank) rank=xrank;
       words.push(xcmd);
-      flags.push({flag:"xargs",explain:null});
-      if(nul===true) flags.push({flag:"-0",explain:null});
-      if(maxArgs!=="") flags.push({flag:"-n",explain:null});
-      if(replace===true) flags.push({flag:"-I",explain:null});
-      for(j=0;j<(child.flags||[]).length;j++) flags.push(child.flags[j]);
+      flags.push({flag:"xargs",explain:null,stage_index:i,tool:"xargs"});
+      if(nul===true) flags.push({flag:"-0",explain:null,stage_index:i,tool:"xargs"});
+      if(maxArgs!=="") flags.push({flag:"-n",explain:null,stage_index:i,tool:"xargs"});
+      if(replace===true) flags.push({flag:"-I",explain:null,stage_index:i,tool:"xargs"});
+      for(j=0;j<(child.flags||[]).length;j++){
+        flags.push({flag:child.flags[j].flag,explain:child.flags[j].explain||null,
+                    stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
+      }
       stageRecords.push({index:i,op:opKey,kind:"xargs",command:xcmd,target:null,
                   blast:BLAST_NAMES[xrank],spec:st.spec});
       prevOpKey=opKey; prevKind="xargs"; prevCommand=xcmd;
@@ -2854,6 +2883,8 @@ function formatEvidenceText(opts){
   if(pstages&&pstages.length){
     push("Pipeline: "+pstages.length+" stages, composed in this tool. The operators between "+
          "stages are emitted by the tool from a fixed set; they are not values anyone typed.");
+    push("Pipeline STIG/control identity: none. Composition changes the evaluated command; "+
+         "review each stage's catalog record separately.");
     push("");
     for(si=0;si<pstages.length;si++){
       var ps=pstages[si];
@@ -2869,24 +2900,23 @@ function formatEvidenceText(opts){
       }else{
         push("    Source citation: not recorded on this stage.");
       }
-      var pstig=ps.stig||[];
-      for(sj=0;sj<pstig.length;sj++){
-        push("    STIG: "+(pstig[sj].stig_id||"")+"  NIST: "+
-             ((pstig[sj].nist||[]).join(", ")||"none mapped"));
-      }
     }
     push("");
   }
   if(res){
     push("Assembled command (RHEL "+(res.version||"")+", blast "+(res.blast||"")+"):");
     push(res.command||"");
-    if(entry&&entry.privilege) push("Requires: "+entry.privilege);
+    var requiredPrivilege=opts.privilege||(entry&&entry.privilege)||"";
+    if(requiredPrivilege) push("Requires: "+requiredPrivilege);
     push("");
     var flags=res.flags||[],fi;
     if(flags.length){
       push("Flags:");
       for(fi=0;fi<flags.length;fi++){
-        push("  "+flags[fi].flag+" — "+(flags[fi].explain||"unverified — see man page"));
+        var flagSource=(res.stages&&flags[fi].stage_index!==undefined)?
+          "Stage "+(Number(flags[fi].stage_index)+1)+" · "+(flags[fi].tool||"unknown tool")+" · ":"";
+        push("  "+flagSource+flags[fi].flag+" — "+
+             (flags[fi].explain||"unverified — see man page"));
       }
       push("");
     }
@@ -3137,7 +3167,7 @@ function instructionIsBound(text){
 var STATE={version:(inList(RHEL_VERSIONS,DEFAULT_VERSION)?DEFAULT_VERSION:"8"),
            rail:"favorites",toolId:null,entryId:null,line:0,acked:false,
            toast:"",paletteOpen:false,paletteSel:0,paletteHits:[],paletteGroups:[],
-           formValues:{},
+           formValues:{},announcementComplete:null,
            /* CR-T-26: a STIG rule opened from search with no associated command. */
            stigRuleId:null,stigRuleVersion:null,
            /* CR-T-28 */ evidenceOpen:false,
@@ -3630,12 +3660,8 @@ function commentHeaderLines(res,entry,blast){
       }
       lines.push("stage "+(i+1)+": "+opLabel+((stEntry&&stEntry.intent)||st.command||"")+
                  "  ["+st.blast+"]");
-      var srows=stEntry?stigRowsFor(stEntry):[];
-      for(j=0;j<srows.length;j++){
-        lines.push("  STIG: "+srows[j].stig_id+" (CAT "+catFor(srows[j])+")  NIST: "+
-                   ((srows[j].nist||[]).join(", ")||"n/a"));
-      }
     }
+    lines.push("STIG/control identity: none — composition changes the evaluated command; review each stage separately.");
     lines.push("blast: "+blast);
     return lines;
   }
@@ -3785,8 +3811,7 @@ function evidenceStageRows(res){
     rows.push({operator:st.op&&PIPE_OPERATORS[st.op]?PIPE_OPERATORS[st.op].emit:null,
                intent:stEntry?(stEntry.intent||stEntry.id):null,
                command:st.command||null,target:st.target||null,blast:st.blast||null,
-               source:stEntry?(stEntry.source||null):null,
-               stig:stEntry?stigRowsFor(stEntry):[]});
+               source:stEntry?(stEntry.source||null):null});
   }
   return rows;
 }
@@ -3796,8 +3821,9 @@ function evidenceContext(){
   var version=STATE.version,stigRow=null,rule=null;
   /* The selected entry is only editor context while a pipeline is active. It
      must not lend its receipt or STIG row to a composed command. */
-  if(res&&res.stages) entry=null;
-  if(entry){
+  if(STATE.pipeline.length){
+    entry=null;
+  }else if(entry){
     var rows=stigRowsFor(entry);
     if(rows.length) stigRow=rows[0];
   }else if(STATE.stigRuleId){
@@ -3856,6 +3882,7 @@ function renderEvidenceModal(){
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
     stigVersion:stigMeta.version||"",benchmarkDate:stigMeta.benchmark_date||"",
     source:src,operatorDate:operatorDate,vstatus:vstatus,
+    privilege:resultPrivilege(ctx.res,ctx.entry),
     stages:evidenceStageRows(ctx.res)
   });
   STATE._evidenceText=text;
@@ -3927,7 +3954,7 @@ function nistForCci(cciList){
 /* ============ per-version verification status ============
    CEO ruling closing Riley Park's first capture review (capture-review-run1-
    2026-09-18.md RILEY-F1): `verified` is an object keyed by RHEL version, each
-   value false or a {by, on, host, capture} receipt — never a single
+   value false or a {by, on, host, capture, command_as_run} receipt — never a single
    whole-entry claim. This is the ONE place that turns entry.verified[version]
    (plus, where one exists, a joined STIG capture) into the three states the
    UI ever shows for a version:
@@ -3954,12 +3981,17 @@ function nistForCci(cciList){
    never markup (Q17's audit rule — every field a caller reads off this
    crosses esc()/escapeAttr() at the call site, same as ruleFor()/
    nistForCci() above). */
-function verificationStatusForVersion(entry, version){
+function verificationStatusForVersion(entry, version, command){
   var ver=(entry&&entry.verified)||{};
   var receipt=ver[version];
   if(receipt&&typeof receipt==="object"){
-    return {state:"verified", label:"Verified",
-            text:"verified by "+receipt.by+" on "+receipt.on+" ("+receipt.host+")"};
+    if(command&&receipt.command_as_run===command){
+      return {state:"verified", label:"Verified",
+              text:"this exact command was verified by "+receipt.by+" on "+receipt.on+
+                   " ("+receipt.host+")"};
+    }
+    return {state:"unverified", label:"Not host-verified",
+            text:"the current command differs from the command in the reviewed host receipt"};
   }
   var rows=(entry&&entry.stig)||[],i;
   for(i=0;i<rows.length;i++){
@@ -3974,7 +4006,7 @@ function verificationStatusForResult(res,entry,version){
     return {state:"unverified",label:"Composed — not host-verified",
             text:"the composed pipeline has no single host-verification receipt; review each stage"};
   }
-  return entry?verificationStatusForVersion(entry,version):null;
+  return entry?verificationStatusForVersion(entry,version,res&&res.command):null;
 }
 
 /* ============ CR-T-26: the STIG panel ============
@@ -3992,6 +4024,11 @@ function verificationStatusForResult(res,entry,version){
 function renderStigPanel(){
   var html="";
   var rows=[],version=STATE.version,standalone=false;
+  if(STATE.pipeline.length){
+    el("stig-panel").innerHTML="";
+    el("print-stig-panel").innerHTML="";
+    return;
+  }
   if(STATE.entryId){
     var entry=entryById(STATE.entryId);
     rows=entry?stigRowsFor(entry):[];
@@ -4962,7 +4999,7 @@ function renderEditor(){
     return;
   }
   html+="<p class=\"taskcrumb\">Build / "+esc(res.stages?"pipeline":entry.tool)+" / reviewed command</p>";
-  html+="<h2 class=\"tasktitle\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
+  html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
   var riskLabelA=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
@@ -5208,7 +5245,7 @@ function renderGeneratorResult(){
     for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
       var compareVersion=RHEL_VERSIONS[cv];
       var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
-      var compareStatus=verificationStatusForVersion(entry,compareVersion);
+      var compareStatus=verificationStatusForVersion(entry,compareVersion,compareRes&&compareRes.command);
       html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
             "</td><td>"+esc(compareStatus.label)+"</td><td>"+
             esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
@@ -5224,11 +5261,12 @@ function renderGeneratorEditor(entry){
      result each write into their OWN sink below, as separate statements,
      never concatenated into this accumulator. */
   var html="<p class=\"taskcrumb\">Build / "+esc(entry.tool)+" / guided task</p>";
-  html+="<h2 class=\"tasktitle\">"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<h2 class=\"tasktitle\" tabindex=\"-1\">"+esc(entry.intent||entry.id)+"</h2>";
   html+="<p class=\"muted\">Build a release-aware command from typed, validated fields.</p>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
-  html+="<div class=\"builderworkspace\"><section class=\"builderfields\" id=\"gen-fields\" aria-label=\"Command fields\"></section>"+
-        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\" aria-live=\"polite\" aria-atomic=\"false\"></aside></div>";
+  html+="<div id=\"gen-announcement\" class=\"sr-only\" aria-live=\"polite\" aria-atomic=\"true\"></div>"+
+        "<div class=\"builderworkspace\"><section class=\"builderfields\" id=\"gen-fields\" aria-label=\"Command fields\"></section>"+
+        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\"></aside></div>";
   el("editor-card").innerHTML=html;
   renderGeneratorForm(entry);
   renderGeneratorResult();
@@ -5260,7 +5298,7 @@ function renderInspector(){
      here and return before the single-entry path below. */
   if(res.stages){
     html+="<p class=\"region-label\">Pipeline verification</p>";
-    html+="<p class=\"muted\">Review every stage and operator. Evidence belongs to the stage entries; the composed line has no single catalog receipt.</p>";
+    html+="<p class=\"muted\">Review every stage and operator. Source citations belong to the stage entries; the composed line has no host receipt or STIG/control identity.</p>";
     for(var ps=0;ps<res.stages.length;ps++){
       var stage=res.stages[ps],stageEntry=(stage.spec&&stage.spec.id)?entryById(stage.spec.id):null;
       html+="<div class=\"flagrow\"><span class=\"tok\">Stage "+esc(String(ps+1))+"</span>";
@@ -5269,7 +5307,7 @@ function renderInspector(){
       }else if(stage.kind==="operator"){
         html+="<span class=\"mean\">standalone operator "+esc((PIPE_OPERATORS[stage.op]||{}).emit||"")+"</span>";
       }else{
-        var stageStatus=verificationStatusForVersion(stageEntry,res.version);
+        var stageStatus=verificationStatusForVersion(stageEntry,res.version,stage.command);
         html+="<span class=\"mean\">"+esc(stage.command||"")+" · "+esc(stageStatus.label)+"</span>";
       }
       html+="</div>";
@@ -5285,6 +5323,8 @@ function renderInspector(){
       var pipelineExplain=pipelineFlags[pf].explain||
                           flagExplain(pipelineFlags[pf].tool,pipelineFlags[pf].flag,res.version)||null;
       html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(pipelineFlags[pf].flag)+"</span>"+
+            "<span class=\"source\">Stage "+esc(String(Number(pipelineFlags[pf].stage_index)+1))+
+            " · "+esc(pipelineFlags[pf].tool||"unknown tool")+"</span>"+
             "<span class=\"mean"+(pipelineExplain?"":" unverified")+"\">"+
             esc(pipelineExplain||UNVERIFIED_FLAG_COPY)+"</span></div>";
     }
@@ -5302,7 +5342,7 @@ function renderInspector(){
     return;
   }
   var entry=entryById(res.id);
-  var vstatus=verificationStatusForVersion(entry,res.version);
+  var vstatus=verificationStatusForVersion(entry,res.version,res.command);
   html+="<p class=\"region-label\">Verification</p>";
   html+="<p class=\"vline\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+"\">"+
         esc(vstatus.label)+"</span> <span class=\"muted\">"+esc(vstatus.text)+"</span></p>";
@@ -5347,7 +5387,7 @@ function renderInspector(){
   html+="<details><summary>RHEL release comparison</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Exact command</th><th>Evidence</th><th>Why changed</th></tr></thead><tbody>";
   for(var rv=0;rv<RHEL_VERSIONS.length;rv++){
     var release=RHEL_VERSIONS[rv],rr=assembleCommand(entry,release,isGeneratorEntry(entry)?STATE.formValues:{},{patterns:PATTERNS});
-    var rs=verificationStatusForVersion(entry,release),slot=(entry.rhel_versions||{})[release]||{},why="No release-specific rationale recorded.";
+    var rs=verificationStatusForVersion(entry,release,rr&&rr.command),slot=(entry.rhel_versions||{})[release]||{},why="No release-specific rationale recorded.";
     if(slot.changed_in_note) why=slot.changed_in_note;
     else if(slot.unavailable) why=slot.unavailable.reason||"Unavailable on this release.";
     else if(rr&&rr.resolved_from) why="Command text is shared with RHEL "+rr.resolved_from+"; this release remains independently unverified unless a receipt is shown.";
@@ -5412,7 +5452,7 @@ function renderStatusBar(){
   }else if(STATE.entryId){
     var statusEntry=entryById(STATE.entryId);
     if(statusEntry){
-      var vstatus=verificationStatusForVersion(statusEntry,STATE.version);
+      var vstatus=verificationStatusForVersion(statusEntry,STATE.version,statusResult&&statusResult.command);
       parts.push("<span class=\"statusitem\"><span class=\"vbadge v-"+escapeAttr(vstatus.state)+
                  "\" title=\""+escapeAttr(vstatus.text)+"\">"+esc(vstatus.label)+"</span></span>");
     }
@@ -5666,6 +5706,7 @@ function selectEntry(id){
   STATE.line=0;
   STATE.acked=false;
   STATE.formValues={};                              /* a new entry starts with a blank form */
+  STATE.announcementComplete=null;
   if(entry.tool==="git") STATE.rail="git";
   else if((toolById(entry.tool)||{}).category==="ansible") STATE.rail="ansible";
   else STATE.rail="builder";
@@ -5719,7 +5760,46 @@ function togglePanel(which){
   renderStatusBar();
 }
 
+/* Full-region renders replace the focused button node. Preserve a small,
+   closed identity for controls that survive the render; when a selection came
+   from a Home card or palette row that no longer exists, move focus to the new
+   task heading instead of silently dropping it on <body>. */
+function renderedFocusIdentity(){
+  var active=document.activeElement;
+  if(!active||active===document.body) return null;
+  if(active.id) return {id:active.id};
+  var attrs=["data-version","data-rail","data-tool","data-entry","data-ref",
+             "data-reftool","data-reffam","data-hit","data-action","data-pipe-action"];
+  for(var i=0;i<attrs.length;i++){
+    if(active.hasAttribute&&active.hasAttribute(attrs[i])){
+      return {attr:attrs[i],value:active.getAttribute(attrs[i]),
+              index:active.getAttribute("data-pipe-index")};
+    }
+  }
+  return {fallback:true};
+}
+function restoreRenderedFocus(identity){
+  if(!identity) return;
+  var node=null,i,nodes;
+  if(identity.id) node=document.getElementById(identity.id);
+  else if(identity.attr){
+    nodes=document.querySelectorAll("["+identity.attr+"]");
+    for(i=0;i<nodes.length;i++){
+      if(nodes[i].getAttribute(identity.attr)!==identity.value) continue;
+      if(identity.index!==null&&identity.index!==nodes[i].getAttribute("data-pipe-index")) continue;
+      node=nodes[i]; break;
+    }
+  }
+  if(node&&node.focus){ node.focus(); return; }
+  node=document.querySelector("#editor-card .tasktitle, #editor-card h2");
+  if(node&&node.focus){
+    if(!node.hasAttribute("tabindex")) node.setAttribute("tabindex","-1");
+    node.focus();
+  }
+}
+
 function renderAll(){
+  var focusIdentity=renderedFocusIdentity();
   invalidateResult();          /* one interaction, one assembly (MCR-SEC-012) */
   /* On narrow screens, put a selected command ahead of the long navigator so
      the result of a task choice appears immediately. The navigator remains in
@@ -5734,6 +5814,7 @@ function renderAll(){
   renderInspector();
   renderStatusBar();
   renderEvidenceModal();       /* CR-T-28: a no-op hide when the modal is not open */
+  restoreRenderedFocus(focusIdentity);
 }
 
 /* Static shell actions share one closed router so the visible data-action
@@ -5830,6 +5911,24 @@ function reRenderEditorAndInspector(){
   renderInspector();
 }
 
+/* Announce only the transition between incomplete and ready. The command
+   review itself re-renders on each keystroke, but reading that entire region
+   aloud repeatedly makes typed fields unusable with a screen reader. */
+function announceGeneratorCompletion(){
+  var live=el("gen-announcement");
+  if(!live) return;
+  var complete=!!currentResult();
+  if(STATE.announcementComplete===null){
+    STATE.announcementComplete=complete;
+    return;
+  }
+  if(complete===STATE.announcementComplete) return;
+  STATE.announcementComplete=complete;
+  live.textContent=complete?
+    "Command ready. Review the generated command before copying.":
+    "Command incomplete. Check the required fields.";
+}
+
 /* ============ generator field input -> STATE.formValues, no full re-render ============
    Only #gen-result (the assembled command, banner, toolbar, inspector) redraws
    on a keystroke; the field inputs above it are untouched, so a text input
@@ -5862,6 +5961,8 @@ function onFieldChange(ev){
   renderGeneratorResult();
   renderPipelinePanel();
   renderInspector();
+  renderStatusBar();
+  announceGeneratorCompletion();
 }
 document.addEventListener("input",function(ev){
   if(ev.target && ev.target.id==="palette-input"){ STATE.paletteSel=0; renderPalette(); return; }

@@ -112,12 +112,28 @@ class ResponsiveControlsTests(unittest.TestCase):
     def test_focus_tokens_meet_non_text_contrast(self):
         self.assertGreaterEqual(contrast("#a16207", "#ffffff"), 3.0)
         self.assertGreaterEqual(contrast("#fbbf24", "#18181b"), 3.0)
-        self.assertIn('aria-live=\\"polite\\" aria-atomic=\\"false\\"', self.source)
+        self.assertGreaterEqual(contrast("#047857", "#ffffff"), 4.5)
+        self.assertIn(
+            'id=\\"gen-announcement\\" class=\\"sr-only\\" '
+            'aria-live=\\"polite\\" aria-atomic=\\"true\\"',
+            self.source,
+        )
+        gen_result = self.source.split('id=\\"gen-result\\"', 1)[1].split(">", 1)[0]
+        self.assertNotIn("aria-live", gen_result)
 
     def test_panel_state_is_exposed_without_color(self):
         self.assertIn('"\\">Navigator: "+esc(sidebarOn?"On":"Off")', self.source)
         self.assertIn('"\\">Inspector: "+esc(inspectorOn?"On":"Off")', self.source)
         self.assertIn(".panelbtn[aria-pressed=\"true\"]", self.source)
+
+    def test_form_changes_refresh_inspector_and_status_verification(self):
+        handler = re.search(
+            r"function onFieldChange\(ev\)\{(?P<body>[\s\S]*?)\n\}", self.source
+        )
+        self.assertIsNotNone(handler)
+        body = handler.group("body")
+        self.assertIn("renderInspector();", body)
+        self.assertIn("renderStatusBar();", body)
 
 
 if __name__ == "__main__":

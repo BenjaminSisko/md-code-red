@@ -342,9 +342,9 @@ def spec_fields_errors(where, fields, names):
         if "write_target" in f:
             if f.get("write_target") is not True:
                 errs.append("%s: field '%s' write_target must be the boolean true" % (where, name))
-            elif f.get("type") != "path":
-                errs.append("%s: field '%s' is a write_target but is not an absolute path field"
-                            % (where, name))
+            elif f.get("type") not in ("path", "remote_path"):
+                errs.append("%s: field '%s' is a write_target but is neither an absolute local "
+                            "path nor a closed remote path field" % (where, name))
         vs = f.get("versions")
         if vs is not None:
             if not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs):
@@ -955,7 +955,7 @@ def stig_errors(eid, stig, ctx):
     return errs
 
 
-VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
+VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture", "command_as_run")
 
 
 def entry_has_any_receipt(ver):
@@ -983,7 +983,7 @@ def _unreceiptable_versions(entry):
     A `same_as` row's own text is borrowed from its resolved target and an
     `unavailable` row has no command at all -- neither one was independently
     run on a real host of that stated version, so neither can carry its own
-    {by, on, host, capture} receipt (CEO ruling, per verified_errors()'s
+    {by, on, host, capture, command_as_run} receipt (CEO ruling, per verified_errors()'s
     docstring). A generator spec (MCR-SEC-006, no rhel_versions block) draws
     the same line from its own `versions` restriction: a version the spec
     excludes was never offered to a form and so was never run either.
@@ -1014,7 +1014,7 @@ def _unreceiptable_versions(entry):
 
 def verified_errors(eid, ver, entry=None):
     """`verified` is an object keyed by RHEL version, each value false or a
-    {by, on, host, capture} receipt -- never a single whole-entry claim.
+    {by, on, host, capture, command_as_run} receipt -- never a single whole-entry claim.
 
     CEO ruling (capture-review-run1-2026-09-18.md RILEY-F1, closing Riley
     Park's first capture review): the old single boolean/receipt overclaimed
@@ -1037,7 +1037,7 @@ def verified_errors(eid, ver, entry=None):
     if ver is True:
         return ["commands entry %s: verified is the old boolean 'true' -- verified is now an "
                 "object keyed by RHEL version (7/8/9/10), each value false or a "
-                "{by, on, host, capture} receipt (CEO ruling: per-version, not per-entry)" % eid]
+                "{by, on, host, capture, command_as_run} receipt (CEO ruling: per-version, not per-entry)" % eid]
     if not isinstance(ver, dict):
         return ["commands entry %s: verified must be false or an object keyed by RHEL version "
                 "(7/8/9/10)" % eid]
@@ -1060,11 +1060,11 @@ def verified_errors(eid, ver, entry=None):
             continue
         if rv is True:
             errs.append("commands entry %s: verified['%s'] is true with no receipt -- it must be "
-                        "false or {by, on, host, capture}" % (eid, v))
+                        "false or {by, on, host, capture, command_as_run}" % (eid, v))
             continue
         if not isinstance(rv, dict):
             errs.append("commands entry %s: verified['%s'] must be false or "
-                        "{by, on, host, capture}" % (eid, v))
+                        "{by, on, host, capture, command_as_run}" % (eid, v))
             continue
         if v in unreceiptable:
             errs.append("commands entry %s: verified['%s'] carries a receipt, but RHEL %s is %s "

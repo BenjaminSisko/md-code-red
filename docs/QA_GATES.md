@@ -112,9 +112,9 @@ watched fire does not exist (the discipline that caught MCR-SEC-008):
 
 | Rule | Proved by |
 |---|---|
-| A `>`/`>>` to a target outside a scratch path is a WRITE: at least yellow | blast-composition checks; a green command + an unclassified target must not rate green |
+| Every ordinary file target, including `/tmp`, `/var/tmp`, `/home`, and `/root`, is a WRITE: at least yellow | blast-composition checks; a green command + a scratch or unclassified target must not rate green |
 | A target under `/etc`, `/boot`, `/dev`, `/usr`, `/var/lib`, `/sys`, `/proc` is RED | the same block, per release |
-| A target outside the protected list renders `unrated`, **never green** (PL4) | At least 68 redirect-target rating checks, including a control that an unclassified and a scratch target do not rate the same |
+| A target outside the protected and ordinary lists renders `unrated`, **never green** (PL4) | At least 68 redirect-target rating checks, including a control that an unclassified and an ordinary target do not rate the same |
 | An interpreter as final consumer is **REFUSED**, not rated (PL2) | 100 interpreter-class checks: a pipe into one, an `xargs` CHILD that is one (with and without `-0`/`-I`), and an execution sink reached by REDIRECT -- each with a legal neighbour as a control |
 | `\| xargs` feeding a destructive tool, or feeding anything that assembles red, is RED | blast-composition checks on the real `XARGS_RED_TOOLS` list |
 | `;`, `&&`, `\|\|` carry the max of their stages | blast-composition checks |

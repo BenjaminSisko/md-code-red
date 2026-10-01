@@ -2779,10 +2779,11 @@ CAPTURE_REQUIRED_FIELDS = (
 )
 
 
-# {by, on, host, capture} — extract/schema.py's VERIFIED_RECEIPT_FIELDS, kept
+# {by, on, host, capture, command_as_run} — extract/schema.py's
+# VERIFIED_RECEIPT_FIELDS, kept
 # textually identical (CEO ruling, per-version verified; capture-review-run1-
 # 2026-09-18.md RILEY-F1).
-VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture")
+VERIFIED_RECEIPT_FIELDS = ("by", "on", "host", "capture", "command_as_run")
 
 
 # J3 (VER-003): closed grammars for the two receipt fields that had none.
@@ -2978,6 +2979,10 @@ def gate_q16(ctx):
                     f.append("entry %s verified['%s']: capture '%s' command_hash_at_capture does "
                              "not match sha256(command_as_run) — tampered or hand-edited capture "
                              "record" % (eid, v, cap_path))
+            if receipt.get("command_as_run") != cap.get("command_as_run"):
+                f.append("entry %s verified['%s']: receipt command_as_run does not match the "
+                         "named capture's command_as_run — the browser trust label must be bound "
+                         "to the exact reviewed command" % (eid, v))
             if host and cap.get("host") and host != cap.get("host"):
                 f.append("entry %s verified['%s']: receipt's host ('%s') does not match the "
                          "capture's own host ('%s') — a receipt's host claims where it was "

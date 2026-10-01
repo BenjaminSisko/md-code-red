@@ -379,7 +379,7 @@ def compute_default_version(data):
 
     The metric: count, per RHEL version, how many command entries carry a REAL
     verified receipt for that version (extract/schema.py's entry_has_any_receipt
-    shape — a dict of {by, on, host, capture}, never the bare `false` every
+    shape — a dict of {by, on, host, capture, command_as_run}, never the bare `false` every
     unreceipted version also holds). The version with the most receipts is the
     one host-verified content actually backs. Ties break toward the lower RHEL
     version number, for a result that is deterministic and easy to state out

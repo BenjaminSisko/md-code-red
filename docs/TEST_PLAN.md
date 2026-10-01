@@ -29,7 +29,7 @@ implementation-dependent number.
 
 **The pipeline composer (CR-T-31)** is gated by the same suite and is documented
 in `docs/QA_GATES.md`'s own pipeline section, which is the authority. In short,
-what runs on every build: 19,732 hostile-vector checks into every field of every
+what runs on every build: 23,032 hostile-vector checks into every field of every
 stage; at least 717 pipeline-oracle comparisons with negative controls that FAIL if
 the oracle agrees with a line it should reject; 332 operator-seam refusals; 100
 interpreter-class checks; at least 68 redirect-target rating checks; 232 one-stage

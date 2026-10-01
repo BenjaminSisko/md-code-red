@@ -113,6 +113,15 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertIn('remote system',rsyslog_target['meaning'])
         self.assertEqual(rsyslog_target['discovery_command'],'getent ahosts <target>')
 
+    def test_recovery_and_verification_guidance_matches_the_generated_action(self):
+        by_id={entry['id']:entry for entry in self.commands}
+        export=by_id['export-shell-variable']
+        self.assertIn('export -n <variable>',export['undo'])
+        self.assertNotIn('VARNAME',export['undo'])
+        kill=by_id['kill-send-signal']
+        self.assertIn('SIGTERM',kill['verify'])
+        self.assertNotIn('SIGHUP',kill['verify'])
+
 
 if __name__=='__main__':
     unittest.main()

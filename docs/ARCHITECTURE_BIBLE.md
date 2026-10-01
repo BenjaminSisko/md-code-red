@@ -125,7 +125,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `content-src/flag_coverage_baseline.json` | The dated, ratcheting acceptance baseline Q20 measures flag-dictionary completeness against. Expires 2026-09-25 (`docs/POAM.md`). | |
 | `content-src/raw/rhel<N>/*.man.txt` | Staged, git-ignored raw `man`/`--help` captures -- the source of record for licensing review and for Q14's paraphrase-collision check. Never read by `build.py`. | |
 | `content/checklists.json`, `dossier.json`, `drills.json`, `errors.json`, `letter.md`, `modules.json`, `rhel_flags.json`, `scars.json`, `snippets.json`, `trees.json`, `flags.json` | Present under `content/` but **absent from `build.py`'s `CONTENT` map** -- none of these reach the shipped artifact. Leftover from the Grey Beard Ansible fork (`modules.json`/`flags.json` are `extract_ansible_doc.py`'s own output). | See Section 23. |
-| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 424 unittest cases and 145,345 harness checks pass on this build. |
+| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 427 unittest cases and 145,345 harness checks pass on this build. |
 | `stig-src/` | The pinned DISA STIG/CCI zip sources and their SHA-256 sums -- the source of record `extract/parse_xccdf.py` reads from. | |
 | `NOTICE` | The per-family licensing derivation statement (public-domain vs. paraphrase-only, and where each family's raw source is staged). | |
 
@@ -156,7 +156,7 @@ example).
 ```
 A `slot` is one of: `{command, notes?, changed_in_note?}`, `{same_as: "<version>",
 changed_in_note?}`, or `{unavailable: {reason, alternative?}}`. A `receipt` is
-`{by, on, host, capture}` -- see Section 6.
+`{by, on, host, capture, command_as_run}` -- see Section 6.
 
 *Generator (guided form)* -- 58 of 200 entries:
 ```
@@ -290,11 +290,15 @@ true and a "changed in RHEL X" note when the current entry's slot carries one.
 **Verification is per RHEL version, not per entry** (a CEO ruling closing a real
 review finding: a single whole-entry flag could not be set without overclaiming a
 version nobody independently ran). `entry.verified[version]` is either `false` or
-a receipt `{by, on, host, capture}`. `verificationStatusForVersion()` is the one
-function that turns that plus a joined capture into the three UI states
+a receipt `{by, on, host, capture, command_as_run}`. `verificationStatusForVersion()` is the one
+function that turns that plus the currently assembled command into the three UI states
 documented in `docs/USER_GUIDE.md` (Verified / Captured / Not host-verified) --
 read by the Inspector, the status bar, and the evidence exporter, so the three
-places cannot disagree. A `same_as` or `unavailable` version can never carry its
+places cannot disagree. Q16 checks that the receipt's `command_as_run` equals
+the governed capture for the same entry and RHEL version. The browser displays
+**Verified** only when that byte-exact captured command equals the current result. Changing a
+generator field therefore changes the command and immediately removes the
+Verified claim. A `same_as` or `unavailable` version can never carry its
 own receipt (`extract/schema.py`'s `verified_errors()` refuses it at build time):
 it was never independently run, even when its command text is identical to a
 version that was.

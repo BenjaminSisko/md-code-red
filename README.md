@@ -204,7 +204,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
   (`capture-review-run1-2026-09-18.md` RILEY-F1): a single whole-entry `verified` flag could not
   be set `true` for any of Caleb Stone's CR-T-34 batch without overclaiming an RHEL version
   nobody captured. `content/commands.json`'s `verified` is now an object keyed `"7"`/`"8"`/
-  `"9"`/`"10"`, each `false` or a `{by, on, host, capture}` receipt; the old boolean is rejected
+  `"9"`/`"10"`, each `false` or a `{by, on, host, capture, command_as_run}` receipt; the old boolean is rejected
   by `extract/schema.py`, and a version whose row is `unavailable` or a `same_as` pointer can
   never carry a receipt of its own (it was never independently run — a `same_as` target's
   receipt does not propagate). `qa.py`'s Q16 gate now checks each receipt against its own

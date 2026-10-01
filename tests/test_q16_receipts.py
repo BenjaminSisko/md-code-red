@@ -95,7 +95,8 @@ def make_ctx_data(receipt_by, capture_overrides=None):
         "verified": {
             "7": False,
             "8": {"by": receipt_by, "on": "2026-09-18", "host": "fixture-host",
-                 "capture": "tests/captures/8/fixture-q16.json"},
+                 "capture": "tests/captures/8/fixture-q16.json",
+                 "command_as_run": cap["command_as_run"]},
             "9": False,
             "10": False,
         },
@@ -114,7 +115,8 @@ def make_gen_ctx_data(receipt_by="Riley Park", capture_overrides=None, receipt_o
     cap.update(capture_overrides or {})
     cap["command_hash_at_capture"] = hashlib.sha256(cap["command_as_run"].encode("utf-8")).hexdigest()
     receipt = {"by": receipt_by, "on": "2026-09-18", "host": "fixture-host",
-              "capture": "tests/captures/8/fixture-gen-q16.json"}
+              "capture": "tests/captures/8/fixture-gen-q16.json",
+              "command_as_run": cap["command_as_run"]}
     receipt.update(receipt_overrides or {})
     entry = {
         "id": "fixture-gen-q16",

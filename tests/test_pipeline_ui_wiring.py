@@ -338,7 +338,7 @@ def audit_pipeline_inspector_handles_structural_results(src):
     if 'el("inspector-body").innerHTML=html;' not in pipeline_path or "return;" not in pipeline_path:
         f.append("the pipeline inspector branch does not write its stage review and return before "
                  "the single-entry renderer")
-    if "verificationStatusForVersion(stageEntry,res.version)" not in pipeline_path:
+    if "verificationStatusForVersion(stageEntry,res.version,stage.command)" not in pipeline_path:
         f.append("the pipeline inspector does not report verification per catalog-backed stage")
     if "assemblePipeline(pipelineStages(),pipelineRelease,pipelineOpts())" not in pipeline_path:
         f.append("the pipeline inspector no longer compares the composed stages across releases")

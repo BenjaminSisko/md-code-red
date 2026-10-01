@@ -139,13 +139,15 @@ the line appears.
   something nobody will read before running it as root.
 
 **Ratings, when a pipeline writes.** A pipeline is not rated as the worst of its
-stages. A write outside a scratch path (`/tmp`, `/var/tmp`, `/home`, `/root`) is
-a write and rates at least **yellow**; a target under `/etc`, `/boot`, `/dev`,
-`/usr`, `/var/lib`, `/sys` or `/proc` is **red**; `| xargs rm` and friends are
-**red** whatever the arguments say. A target in none of those lists shows as
-**unrated** -- not green. Green in this tool means a person curated that entry
-and said so; a path nobody has ever classified is unclassified, not safe, and
-you are entitled to see the difference.
+stages. Every ordinary file write rates at least **yellow**, including targets
+under `/tmp`, `/var/tmp`, `/home`, or `/root`. Shell startup files, SSH trust
+files, and targets under `/etc`, `/boot`, `/dev`, `/usr`, `/var/lib`, `/sys`, or
+`/proc` are **red**; delayed-execution targets such as cron, systemd, profile,
+sudoers, and executable directories are refused. `| xargs rm` and friends are
+**red** whatever the arguments say. A target in none of the classified lists
+shows as **unrated** -- not green. Green in this tool means a person curated that
+entry and said so; a path nobody has ever classified is unclassified, not safe,
+and you are entitled to see the difference.
 
 ### Journey 2: Build STIG evidence for an audit package
 
@@ -191,9 +193,9 @@ block device; the guided `git checkout -- <path>` task discards uncommitted edit
 All three exercise the confirmation flow with real catalog content.
 
 1. A yellow rating is informational only: it does not block **Copy** or **Copy with
-   comment**, and there is no checkbox to tick. Read the muted blast line and the
-   entry's own **Verify** / **Undo** lines (printed under the command) before you
-   run anything that changes host state.
+   comment**, and there is no checkbox to tick. Read the **Changes system** trust
+   label, the recovery warning, and the entry's **Verify** / **Recover** runbook
+   steps before you run anything that changes host state.
 2. A red rating (from an entry's own content, or from the destructive-pattern table
    matching the assembled command -- `rm -rf`, `wipefs`, `lvremove`, `pvcreate`,
    `vgcreate`, `dnf remove`, and the rest of `content/dangerous.json`'s fifteen
@@ -216,10 +218,9 @@ name; leave it unchecked when those names differ. Every typed YAML scalar is
 quoted, the two checkbox choices only add complete curated YAML blocks, and the
 offered `ansible-playbook` invocation keeps `--check --diff` so it reports the
 proposed changes without applying them. The **Git** rail
-(`Ctrl+Alt+5`) contains the curated Git reference entries plus eight guided
-forms: clone, create a branch, merge, rebase, create an annotated tag, inspect a
-bounded log, start a bisect, and recover a lost commit by creating a branch at
-its revision. Branch and tag fields reject invalid ref shapes; revision fields
+(`Ctrl+Alt+5`) contains the curated Git reference entries plus eleven guided
+forms, including clone, branching, merge, rebase, tagging, bounded log, bisect,
+literal-path checkout, reset, and recovery workflows. Branch and tag fields reject invalid ref shapes; revision fields
 accept conservative commit expressions such as `main`, `origin/main`, `HEAD~1`,
 and `HEAD@{1}`. Git values remain single shell-quoted operands in the assembled
 command.
@@ -244,7 +245,7 @@ preview, status bar, Inspector, and export cannot disagree:
 
 | Badge | Meaning | What backs it |
 |---|---|---|
-| **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
+| **Verified** (green badge) | "this exact command was verified by NAME on DATE (HOST)" | A real `{by, on, host, capture, command_as_run}` receipt sits on this exact RHEL version, and the current assembled command is byte-for-byte identical to the capture's `command_as_run`. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Changing any generator value changes the command and displays **Not host-verified**. A receipt is never inherited from a `same_as` target. |
 | **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
 | **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
 
@@ -309,7 +310,7 @@ and therefore is not proof that the command ran. Use
 3. **Verification (RHEL N): <label> -- <status text>** -- the same entry or
    pipeline state described above, for the exported version only. A pipeline
    export states that the composition has no single host-verification receipt
-   and then lists each stage separately.
+   or STIG/control identity, and then lists each stage and source separately.
 4. When a STIG row applies: STIG ID; STIG version and benchmark date; rule title;
    CAT; every cited CCI; the mapped NIST SP 800-53 controls; Check text and Fix
    text verbatim; then either the captured output, compliance result (yes/no/not
@@ -317,17 +318,17 @@ and therefore is not proof that the command ran. Use
    "Expected output: not captured yet -- no capture record exists for this STIG
    ID/RHEL version pair."
 5. The assembled command for the exported RHEL version and its blast level, a
-   `Requires: root` line when the entry declares one (currently only
-   `gen-sshd-test-config`), and every flag the command shows with its explanation
-   or `unverified -- see man page`.
+   `Requires:` line when the entry or any pipeline stage declares a privilege,
+   and every flag the command shows with its explanation or `unverified -- see
+   man page`. Pipeline flags also name their source stage and tool.
 6. The source citation (title, version, retrieval date), or "Source citation: not
    recorded on this entry."
 7. The operator's own date line (today's date, taken from the browser clock at
    export time -- there is no server to disagree with it).
 
 **Content fingerprint, and how to check it offline.** The fingerprint is the sha256
-hash of the exact bytes inside this file's own `<script id="mcr-data">` element (the
-embedded JSON data island), computed by `build.py` at build time and printed both
+hash of the exact bytes inside every embedded JSON data island, in declaration
+order, computed by `build.py` at build time and printed both
 in the file's own header comment and in the About panel. It exists because the tool
 is air-gapped: there is nowhere to look the content up to compare it against. What
 it actually proves is narrower than "this content is correct" -- it proves **this
@@ -369,7 +370,7 @@ the tool does cannot drift apart without the table changing.
 | Build reviewed commands | `Ctrl+Alt+2` | Opens the reviewed RHEL command catalog and guided builders. |
 | Compliance search | `Ctrl+Alt+3` | Opens STIG, CCI, NIST, and evidence search. |
 | Build Ansible automation | `Ctrl+Alt+4` | Opens the Ansible generator and focuses its rail button. |
-| Build Git commands | `Ctrl+Alt+5` | Opens the curated Git catalog and its eight guided scenarios, and focuses its rail button. |
+| Build Git commands | `Ctrl+Alt+5` | Opens the curated Git catalog and its eleven guided scenarios, and focuses its rail button. |
 | Reference library | `Ctrl+Alt+6` | Opens mined vendor and DISA text, kept separate from reviewed Build results. |
 | About | `Ctrl+Alt+7` | Opens version, fingerprint, provenance, and licensing details and focuses its rail button. |
 | Copy the command with its comment header | `Ctrl+Shift+C` | Blocked while a red-blast command is unreviewed, exactly like the button. |

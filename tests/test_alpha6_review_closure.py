@@ -26,6 +26,8 @@ class Alpha6ReviewClosureTests(unittest.TestCase):
         names=set()
         valid={'name':'output','type':'path','required':True,'write_target':True}
         self.assertEqual(schema.spec_fields_errors('spec',[valid],names),[])
+        remote={'name':'destination','type':'remote_path','required':True,'write_target':True}
+        self.assertEqual(schema.spec_fields_errors('spec',[remote],set()),[])
         for broken in (
             {'name':'output','type':'path','required':True,'write_target':'yes'},
             {'name':'output','type':'comment','required':True,'write_target':True},

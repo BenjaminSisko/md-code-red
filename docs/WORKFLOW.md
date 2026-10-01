@@ -79,7 +79,7 @@ this repo's code.
   whole-entry `verified` flag could not be set for a real batch of captures
   without overclaiming a version nobody actually ran). `content/commands.json`'s
   `verified` field is an object keyed `"7"`/`"8"`/`"9"`/`"10"`, each value
-  `false` or a `{by, on, host, capture}` receipt naming the QA reviewer, the
+  `false` or a `{by, on, host, capture, command_as_run}` receipt naming the QA reviewer, the
   date, the host, and the capture file that backs it. A version whose row is
   `unavailable` or a `same_as` pointer can never carry a receipt of its own --
   it was never independently run -- and a `same_as` target's receipt never

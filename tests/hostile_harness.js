@@ -2405,8 +2405,8 @@ function main() {
   }
   var blastRuleFired = {};
   var blastCases = [
-    ["a `>` into a scratch path stays the max of the stages (control)",
-     [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }], "green", "R-MAX", false],
+    ["a `>` into a scratch path is still a write and is at least yellow",
+     [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }], "yellow", "R-WRITE", true],
     ["a `>` OUTSIDE scratch is a WRITE and is at least yellow",
      [HEAD, { op: "redirect", target: "/srv/shares/out.txt" }], "yellow", "R-WRITE", true],
     ["a `>>` outside scratch is a WRITE and is at least yellow",
@@ -2525,7 +2525,7 @@ function main() {
     blastChecks++;
     var scStages = [HEAD, { op: "redirect", target: "/tmp/mcr-out.txt" }];
     var scRes = A.assemblePipeline(scStages, VERSIONS[ur2], pipeOpts({ patterns: realPatterns }));
-    if (scRes === null || scRes.stages[1].blast !== "green") {
+    if (scRes === null || scRes.stages[1].blast !== "yellow") {
       stats.failures.push("unrated target control / RHEL " + VERSIONS[ur2] + ": a scratch target " +
                           "rendered '" + (scRes ? scRes.stages[1].blast : "null") + "' -- if every " +
                           "target is unrated the rating says nothing");
@@ -2725,7 +2725,7 @@ function main() {
   }
 
   /* ---- PL4 ON THE SCREEN ------------------------------------------------
-   * The assembler rates a redirect stage green / unrated / red. The PANEL
+   * The assembler rates a redirect stage green / yellow / unrated / red. The PANEL
    * renders validatePipeline()'s per-stage diagnostic, which is a different
    * object -- so "a target outside the protected list renders unrated, never
    * green" is only true if THAT object carries the rating too, and carries the
@@ -2739,15 +2739,14 @@ function main() {
    *   (b) a target outside the protected list is exactly "unrated" -- not
    *       green, because green is a human claim in this product, and not
    *       silently yellow either;
-   *   (c) the WHOLE pipeline is at least yellow whenever the stage is not
-   *       green: a write is a write, and it cannot rate below the command it
-   *       redirects.
+   *   (c) the WHOLE pipeline is at least yellow for every ordinary file write:
+   *       a write is a write, and it cannot be labelled read-only.
    */
   var pl4Checks = 0;
   var PL4_TARGETS = [
-    ["/tmp/report.log", "green"],
-    ["/var/tmp/report.log", "green"],
-    ["/home/operator/report.log", "green"],
+    ["/tmp/report.log", "yellow"],
+    ["/var/tmp/report.log", "yellow"],
+    ["/home/operator/report.log", "yellow"],
     ["/srv/audit/report.log", "unrated"],
     ["/opt2/report.log", "unrated"],
     ["/data/report.log", "unrated"],
@@ -2789,9 +2788,10 @@ function main() {
         stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": an unclassified write " +
                             "rendered GREEN. Green is a human claim in this product");
       }
-      if (p4want !== "green" && p4res.blast === "green") {
+      if (p4t !== "/dev/null" && p4t !== "/dev/stdout" && p4t !== "/dev/stderr" &&
+          p4t !== "/dev/fd/1" && p4t !== "/dev/fd/2" && p4res.blast === "green") {
         stats.failures.push("PL4 / RHEL " + VERSIONS[p4v] + " / " + p4t + ": the whole pipeline " +
-                            "rated green while writing outside a scratch path. A write is a write");
+                            "rated green while writing an ordinary file. A write is a write");
       }
     }
   }
@@ -3225,9 +3225,9 @@ function main() {
     ["/tmp/../tmp/x", "/tmp/x", "unrated"],                /* same: scratch reached BY traversal */
     ["/usr/./bin/../../etc/passwd", "/etc/passwd", "red"],
     ["/etc/", "/etc", "red"],                              /* a trailing slash is not a new path */
-    ["/tmp/", "/tmp", "green"],
-    ["/tmp/./report.log", "/tmp/report.log", "green"],     /* . alone cannot mislead: still green */
-    ["//tmp/report.log", "/tmp/report.log", "green"]
+    ["/tmp/", "/tmp", "yellow"],
+    ["/tmp/./report.log", "/tmp/report.log", "yellow"],   /* . alone cannot mislead */
+    ["//tmp/report.log", "/tmp/report.log", "yellow"]
   ];
   for (var ps = 0; ps < PATH_SPELLINGS.length; ps++) {
     var spelling = PATH_SPELLINGS[ps][0], realPath = PATH_SPELLINGS[ps][1];
@@ -3280,8 +3280,8 @@ function main() {
   /* CONTROLS. Normalisation must not turn every path red: the ordinary ones
      keep the ratings PL4 gave them, and a path that merely LOOKS like a system
      path is still not one. */
-  var NORM_CONTROLS = [["/tmp/report.log", "green"], ["/var/tmp/x", "green"],
-                       ["/home/milo/out.txt", "green"], ["/root/out.txt", "green"],
+  var NORM_CONTROLS = [["/tmp/report.log", "yellow"], ["/var/tmp/x", "yellow"],
+                       ["/home/milo/out.txt", "yellow"], ["/root/out.txt", "yellow"],
                        ["/srv/audit/report.log", "unrated"], ["/data/x", "unrated"],
                        ["/etc/passwd", "red"], ["/boot/grub2/grub.cfg", "red"],
                        ["/tmpfoo/x", "unrated"], ["/etcetera/x", "unrated"],
@@ -3839,7 +3839,7 @@ function main() {
                 pipeNegatives + " oracle negative controls, " + report.pipeline_table_checks +
                 " operator-table integrity checks");
     console.log("  " + report.pipeline_blast_checks + " blast-composition checks (a redirect " +
-                "outside scratch is a WRITE, a system-path target is RED, xargs feeding a " +
+                "to any ordinary file is a WRITE, a system-path target is RED, xargs feeding a " +
                 "destructive tool is RED, ; && || carry the max, and dangerous.json fires across " +
                 "an operator on the de-quoted WHOLE pipeline) and " +
                 report.pipeline_refusal_checks + " refusal checks, each with its legal neighbour " +
