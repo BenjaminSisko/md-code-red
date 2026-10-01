@@ -24,11 +24,11 @@
        resolves the default at first paint with no flash of the wrong theme. -- */
 :root{
   --bg-app:#fafafa; --bg-surface:#ffffff; --bg-editor:#f6f8fa; --bg-gutter:#eef1f6;
-  --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#8494ab;
+  --text-primary:#27272a; --text-secondary:#51607a; --text-muted:#53657d;
   --accent:#b45309; --success:#059669; --warning:#b45309; --danger:#dc2626;
   --brand:#991b1b; --selected-fill:rgba(180,83,9,.10);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.06);
-  --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#f59e0b;
+  --badge-info:#3730a3; --border-primary:#d4d4d8; --focus-ring:#a16207;
   --font-ui:"Trebuchet MS","Liberation Sans",sans-serif;
   --font-display:"DejaVu Serif","Liberation Serif",Georgia,serif;
   --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
@@ -41,7 +41,7 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
-    --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
+    --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
     --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
     --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
     --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
@@ -50,7 +50,7 @@
 }
 :root[data-theme="dark"]{
   --bg-app:#09090b; --bg-surface:#18181b; --bg-editor:#0a0e15; --bg-gutter:#0d1119;
-  --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#71717a;
+  --text-primary:#d4d4d8; --text-secondary:#a1a1aa; --text-muted:#a1a1aa;
   --accent:#f59e0b; --success:#10b981; --warning:#eab308; --danger:#ef4444;
   --brand:#f87171; --selected-fill:rgba(245,158,11,.14);
   --badge-critical:#dc2626; --badge-critical-fill:rgba(220,38,38,.08);
@@ -798,6 +798,44 @@ function isPath(s){
   for(var i=0;i<segs.length;i++){ if(segs[i]==="..") return false; }  /* no traversal */
   return true;
 }
+var HOSTNAME_RE=/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
+var USERNAME_RE=/^[a-z_][a-z0-9_-]{0,31}$/;
+function isRemotePath(s){
+  /* scp/rsync remote operands are parsed again by a remote shell on the
+     legacy RHEL implementations.  Local shQuote() is therefore insufficient:
+     keep the entire [user@]host:/absolute/path operand in a closed grammar. */
+  var colon=s.indexOf(":"),left,path,at,user,host;
+  if(colon<1||s.indexOf(":",colon+1)>=0) return false;
+  left=s.slice(0,colon); path=s.slice(colon+1);
+  at=left.indexOf("@");
+  if(at>=0){
+    if(left.indexOf("@",at+1)>=0) return false;
+    user=left.slice(0,at); host=left.slice(at+1);
+    if(!USERNAME_RE.test(user)) return false;
+  }else host=left;
+  return HOSTNAME_RE.test(host)&&isPath(path);
+}
+function isHttpUrl(s){
+  /* Only HTTP(S), without credentials, fragments, whitespace, IPv6 literals,
+     or characters that can acquire syntax in another parser. */
+  var prefix=s.indexOf("https://")===0?8:(s.indexOf("http://")===0?7:0);
+  if(!prefix) return false;
+  var rest=s.slice(prefix),slash=rest.indexOf("/"),authority=slash<0?rest:rest.slice(0,slash);
+  var resource=slash<0?"":rest.slice(slash),colon=authority.lastIndexOf(":"),host=authority,port="";
+  if(authority.indexOf("@")>=0||authority.indexOf("[")>=0||authority.indexOf("]")>=0) return false;
+  if(colon>=0){ host=authority.slice(0,colon); port=authority.slice(colon+1); }
+  if(!(HOSTNAME_RE.test(host)||isIpv4(host))) return false;
+  if(port!==""&&!isPort(port)) return false;
+  return resource===""||(/^\/[A-Za-z0-9._~\/%?=&+,-]*$/.test(resource));
+}
+function isGitPath(s){
+  if(s.charAt(0)==="/"||s.charAt(0)==="-") return false;
+  if(!/^[A-Za-z0-9_./-]+$/.test(s)||s.indexOf("//")>=0) return false;
+  var parts=s.split("/");
+  for(var i=0;i<parts.length;i++){ if(!parts[i]||parts[i]==="."||parts[i]==="..") return false; }
+  return true;
+}
+function isPid(s){ return /^[1-9]\d{0,9}$/.test(s); }
 function isGitRefName(s){
   if(!/^[A-Za-z0-9][A-Za-z0-9_./-]*$/.test(s)) return false;
   if(s==="@"||s.indexOf("..")>=0||s.indexOf("//")>=0||/[/.]$/.test(s)) return false;
@@ -818,7 +856,7 @@ function isGitRevision(s){
    accepts non-ASCII text, and it is still shQuote()d before it can reach a
    shell. Everything else is a closed grammar or an enum. */
 var FIELD_TYPES={
-  hostname:{cap:253,label:"hostname (RFC 1123)",re:/^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/},
+  hostname:{cap:253,label:"hostname (RFC 1123)",re:HOSTNAME_RE},
   ipv4:{cap:15,label:"IPv4 address",fn:isIpv4},
   ipv6:{cap:45,label:"IPv6 address",fn:isIpv6},
   ipaddr:{cap:45,label:"IP address",fn:isIpAddr},
@@ -833,9 +871,14 @@ var FIELD_TYPES={
      is the one character that changes meaning between the shell, YAML, and a
      unit name. The hostile-input harness caught it here; keep it out. */
   unit:{cap:200,label:"systemd unit name",re:/^[A-Za-z0-9_.@:-]+(\.(service|socket|timer|target|mount|automount|path|slice|scope|swap|device))?$/},
-  username:{cap:32,label:"POSIX user name",re:/^[a-z_][a-z0-9_-]{0,31}$/},
+  username:{cap:32,label:"POSIX user name",re:USERNAME_RE},
   groupname:{cap:32,label:"POSIX group name",re:/^[a-z_][a-z0-9_-]{0,31}$/},
   path:{cap:255,label:"absolute path",fn:isPath},
+  remote_path:{cap:509,label:"remote path in [user@]host:/absolute/path form",fn:isRemotePath},
+  http_url:{cap:1024,label:"HTTP or HTTPS URL",fn:isHttpUrl},
+  git_path:{cap:255,label:"literal repository-relative Git path",fn:isGitPath},
+  shell_variable:{cap:128,label:"shell variable name",re:/^[A-Za-z_][A-Za-z0-9_]*$/},
+  pid:{cap:10,label:"process ID greater than zero",fn:isPid},
   zone:{cap:17,label:"firewalld zone",re:/^[A-Za-z0-9_-]{1,17}$/},
   service:{cap:64,label:"firewalld service name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/},
   package:{cap:128,label:"package name",re:/^[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}$/},
@@ -1627,6 +1670,24 @@ function assembleCommand(spec,version,values,opts){
      playbook it runs is the thing that changes hosts -- the same gap
      MCR-SEC-003 found between the command line and the clipboard header. */
   var b=blastFor(command+(doc?"\n"+doc.text:""),spec.blast,patterns);
+  /* A path used as an output operand is a write even when no shell redirect is
+     present. Apply the same target rules as the pipeline composer: execution
+     sinks are refused, protected system paths are red, and every other write
+     remains at least yellow. */
+  var specFields=spec.fields||[];
+  for(i=0;i<specFields.length;i++){
+    var writeField=specFields[i];
+    if(!writeField||writeField.write_target!==true) continue;
+    var writeValue=v.resolved[writeField.name];
+    if(writeValue===undefined||writeValue===null) continue;
+    if(writeField.type!=="path"||isExecutionSink(writeValue)) return null;
+    var writeClass=redirectTargetBlast(writeValue);
+    var writeFloor=writeClass==="red"?"red":"yellow";
+    if(BLAST_RANK[writeFloor]>BLAST_RANK[b.blast]) b.blast=writeFloor;
+    b.reasons.push({id:"WRITE-TARGET",label:"File write target",
+                    why:"The command writes to "+writeValue+" ("+writeClass+" target class).",
+                    floor:writeFloor});
+  }
   return {id:spec.id,tool:spec.tool,command:command,flags:flags,blast:b.blast,
           blast_reasons:b.reasons,notes:spec.notes||null,resolved_from:null,version:version,
           doc:doc};
@@ -2257,7 +2318,10 @@ function assemblePipeline(stages,version,opts){
       if(!stageBinaryDeclared(st.spec,res.command,toolIndex)) return null;   /* PIPE-001 */
       if(!stageCommandClean(res.command)) return null;
       words.push(res.command);
-      for(j=0;j<(res.flags||[]).length;j++) flags.push(res.flags[j]);
+      for(j=0;j<(res.flags||[]).length;j++){
+        flags.push({flag:res.flags[j].flag,explain:res.flags[j].explain||null,
+                    stage_index:i,tool:st.spec.explain_tool||st.spec.tool});
+      }
       if(BLAST_RANK[res.blast]>rank) rank=BLAST_RANK[res.blast];
       stageRecords.push({index:i,op:opKey,kind:"command",command:res.command,target:null,
                   blast:res.blast,spec:st.spec});
@@ -2738,7 +2802,7 @@ function formatEvidenceText(opts){
      function stays pure over exactly the values it is handed, same as res/
      stigRow/rule above. */
   if(opts.vstatus){
-    push("Verified (RHEL "+(opts.version||"")+"): "+opts.vstatus.text);
+    push("Verification (RHEL "+(opts.version||"")+"): "+opts.vstatus.label+" — "+opts.vstatus.text);
   }
   push("");
   if(stigRow){
@@ -3730,6 +3794,9 @@ function evidenceContext(){
   var res=currentResult();
   var entry=STATE.entryId?entryById(STATE.entryId):null;
   var version=STATE.version,stigRow=null,rule=null;
+  /* The selected entry is only editor context while a pipeline is active. It
+     must not lend its receipt or STIG row to a composed command. */
+  if(res&&res.stages) entry=null;
   if(entry){
     var rows=stigRowsFor(entry);
     if(rows.length) stigRow=rows[0];
@@ -3783,7 +3850,7 @@ function renderEvidenceModal(){
   /* verification status for THE EXPORTED VERSION ONLY (task item 4) —
      computed here, at the render call site, exactly like stigMeta/src above,
      so formatEvidenceText() stays pure over values it is handed. */
-  var vstatus=ctx.entry?verificationStatusForVersion(ctx.entry,ctx.version):null;
+  var vstatus=verificationStatusForResult(ctx.res,ctx.entry,ctx.version);
   var text=formatEvidenceText({
     res:ctx.res,entry:ctx.entry,stigRow:ctx.stigRow,rule:ctx.rule,version:ctx.version,
     appVersion:APP_VERSION,appBuildDate:APP_BUILD_DATE,contentFingerprint:CONTENT_FINGERPRINT,
@@ -3901,6 +3968,13 @@ function verificationStatusForVersion(entry, version){
     }
   }
   return {state:"unverified", label:"Not host-verified", text:"not host-verified"};
+}
+function verificationStatusForResult(res,entry,version){
+  if(res&&res.stages){
+    return {state:"unverified",label:"Composed — not host-verified",
+            text:"the composed pipeline has no single host-verification receipt; review each stage"};
+  }
+  return entry?verificationStatusForVersion(entry,version):null;
 }
 
 /* ============ CR-T-26: the STIG panel ============
@@ -4077,8 +4151,9 @@ function renderHome(){
            "<button type=\"button\" class=\"btn\" data-rail=\"stig\">Assess controls</button></div></section>";
   html+="<div class=\"homegrid\"><section class=\"homepanel\"><h3>Common RHEL tasks</h3>"+
         "<p>Open a guided builder with the selected release carried forward.</p><div class=\"taskcards\">";
-  var common=["gen-journalctl-unit-logs","gen-systemctl-manage","gen-useradd-create","gen-fw-allow-service","gen-lsblk-inspect-storage","r-dnf-install"];
-  var labels={"gen-journalctl-unit-logs":"Read service logs","gen-systemctl-manage":"Manage a service","gen-useradd-create":"Create a local user","gen-fw-allow-service":"Open firewall access","gen-lsblk-inspect-storage":"Inspect storage","r-dnf-install":"Install a package"};
+  var packageEntry=STATE.version==="7"?"gen-yum-package":"gen-dnf-package";
+  var common=["gen-journalctl-unit-logs","gen-systemctl-manage","gen-useradd-create","gen-fw-allow-service","gen-lsblk-inspect-storage",packageEntry];
+  var labels={"gen-journalctl-unit-logs":"Read service logs","gen-systemctl-manage":"Manage a service","gen-useradd-create":"Create a local user","gen-fw-allow-service":"Open firewall access","gen-lsblk-inspect-storage":"Inspect storage","gen-yum-package":"Install a package","gen-dnf-package":"Install a package"};
   for(var ci=0;ci<common.length;ci++){
     var ce=entryById(common[ci]);
     if(!ce) continue;
@@ -4868,6 +4943,14 @@ function renderEditor(){
   }
   var res=currentResult();
   if(!res){
+    if(STATE.pipeline.length){
+      var pv=validatePipeline(pipelineStages(),STATE.version,pipelineOpts());
+      html+="<div class=\"card\"><h2>Complete the pipeline</h2><p class=\"muted\">"+
+            esc(pv.reason||"One or more pipeline stages are incomplete.")+"</p>"+
+            "<p class=\"muted\">Use the pipeline panel to complete or remove the affected stage.</p></div>";
+      el("editor-card").innerHTML=html;
+      return;
+    }
     var slot=(entry.rhel_versions||{})[STATE.version]||{};
     var why=(slot.unavailable&&slot.unavailable.reason)||"";
     var alt=(slot.unavailable&&slot.unavailable.alternative)||"";
@@ -4878,18 +4961,18 @@ function renderEditor(){
     el("editor-card").innerHTML=html;
     return;
   }
-  html+="<p class=\"taskcrumb\">Build / "+esc(entry.tool)+" / reviewed command</p>";
-  html+="<h2 class=\"tasktitle\">"+esc(entry.intent||entry.id)+"</h2>";
+  html+="<p class=\"taskcrumb\">Build / "+esc(res.stages?"pipeline":entry.tool)+" / reviewed command</p>";
+  html+="<h2 class=\"tasktitle\">"+esc(res.stages?resultSubject(res,entry):(entry.intent||entry.id))+"</h2>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   var subjA=resultSubject(res,entry),privA=resultPrivilege(res,entry);
   var riskLabelA=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
-  var vstatusA=verificationStatusForVersion(entry,res.version);
+  var vstatusA=verificationStatusForResult(res,entry,res.version);
   html+="<div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+esc(riskLabelA)+"</span>"+
         "<span class=\"trustfact\">RHEL "+esc(res.version)+"</span><span class=\"trustfact\">"+esc(vstatusA.label)+"</span>";
   if(privA) html+="<span class=\"trustfact\">requires "+esc(privA)+"</span>";
   if(res.resolved_from) html+="<span class=\"trustfact\">same as RHEL "+esc(res.resolved_from)+"</span>";
   html+="</div>";
-  html+="<p class=\"muted\">"+esc(subjA)+" · reviewed task</p>";
+  html+="<p class=\"muted\">"+esc(subjA)+(res.stages?" · composed workflow":" · reviewed task")+"</p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var i=0;i<lines.length;i++){
@@ -4904,9 +4987,11 @@ function renderEditor(){
   html+="<button type=\"button\" class=\"btn primaryaction\" data-action=\"copy\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy command</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"copy-comment\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy with comment</button>";
   html+="<button type=\"button\" class=\"btn\" data-action=\"export-evidence\">Export command and control reference</button>";
-  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
-        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
-        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  if(!res.stages){
+    html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+          escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+          (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  }
   html+="</div>";
   /* threat-model-v1 §9: what is in the preview is exactly and only what gets
      copied. The comment header used to be built at click time and never shown;
@@ -4918,8 +5003,12 @@ function renderEditor(){
           esc(res.copy_comment)+"</pre>";
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
-  html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
-  html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  if(res.stages){
+    html+="<p class=\"muted\">This composed workflow has no single Verify or Undo receipt. Review every stage in the Inspector and verify each stage on the target host.</p>";
+  }else{
+    html+="<p class=\"muted\">Verify: "+esc(entry.verify||"")+"</p>";
+    html+="<p class=\"muted\">Undo: "+esc(entry.undo||"")+"</p>";
+  }
   el("editor-card").innerHTML=html;
 }
 
@@ -5023,6 +5112,14 @@ function renderGeneratorResult(){
   renderBlastBanner(res);
   var html="";
   if(!res){
+    if(STATE.pipeline.length){
+      var pipelineValidation=validatePipeline(pipelineStages(),STATE.version,pipelineOpts());
+      html+="<div class=\"card\"><h2>Complete the pipeline</h2><p class=\"muted\">"+
+            esc(pipelineValidation.reason||"One or more pipeline stages are incomplete.")+"</p>"+
+            "<p class=\"muted\">Use the pipeline panel to complete or remove the affected stage.</p></div>";
+      target.innerHTML=html;
+      return;
+    }
     if(entry.versions && !inList(entry.versions,STATE.version)){
       html+="<div class=\"card\"><h2>"+esc(GATED_COPY+STATE.version)+"</h2>"+
             "<p class=\"muted\">This generator is not offered on RHEL "+esc(STATE.version)+
@@ -5044,17 +5141,17 @@ function renderGeneratorResult(){
   }
   var subjG=resultSubject(res,entry),privG=resultPrivilege(res,entry);
   var riskLabelG=res.blast==="green"?"Read only":(res.blast==="yellow"?"Changes system":"Destructive");
-  var vstatusG=verificationStatusForVersion(entry,res.version);
+  var vstatusG=verificationStatusForResult(res,entry,res.version);
   html+="<p class=\"region-label\">Command preview</p><div class=\"trustbar\"><span class=\"trustfact risk-"+escapeAttr(res.blast)+"\">"+
         esc(riskLabelG)+"</span><span class=\"trustfact\">RHEL "+esc(res.version)+"</span>"+
         "<span class=\"trustfact\">"+esc(vstatusG.label)+"</span>";
   if(privG) html+="<span class=\"trustfact\">requires "+esc(privG)+"</span>";
   html+="</div>";
-  html+="<p class=\"muted\">"+esc(subjG)+" · reviewed task</p>";
+  html+="<p class=\"muted\">"+esc(subjG)+(res.stages?" · composed workflow":" · reviewed task")+"</p>";
   var teachingRow=instructionFor(entry)||{};
   if(res.blast==="yellow") html+="<p class=\"risknote\"><strong>State-changing operation.</strong> A reviewed recovery plan is required before use.</p>";
   if(res.blast==="red") html+="<p class=\"risknote\"><strong>Destructive or lockout-prone operation.</strong> Verify the target and recovery access independently.</p>";
-  html+="<p><span class=\"badge\">"+esc(teachingRow.proven_reversible?"Proven reversible":"Recovery not proven")+"</span></p>";
+  if(!res.stages) html+="<p><span class=\"badge\">"+esc(teachingRow.proven_reversible?"Proven reversible":"Recovery not proven")+"</span></p>";
   var lines=String(res.command).split("\n");
   html+="<div class=\"codeblock\" aria-label=\"Assembled command\">";
   for(var li=0;li<lines.length;li++){
@@ -5072,9 +5169,11 @@ function renderGeneratorResult(){
   if(res.doc){
     html+="<button type=\"button\" class=\"btn\" data-action=\"copy-doc\""+(blocked?" aria-disabled=\"true\" disabled title=\"Tick the review box to unlock copy\"":"")+">Copy "+esc(res.doc.filename)+"</button>";
   }
-  html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
-        escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
-        (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  if(!res.stages){
+    html+="<button type=\"button\" class=\"favbtn\" data-action=\"fav-toggle\" data-favid=\""+
+          escapeAttr(entry.id)+"\" aria-pressed=\""+(isFavorite(entry.id)?"true":"false")+"\">"+
+          (isFavorite(entry.id)?"Favorited":"Favorite")+"</button>";
+  }
   html+="</div>";
   /* CR-T-25. The generated file, rendered from the SAME res.doc the Copy button
      copies -- the MCR-SEC-012 rule that the screen and the clipboard read one
@@ -5091,27 +5190,31 @@ function renderGeneratorResult(){
           esc(res.copy_comment)+"</pre>";
   }
   if(res.notes) html+="<p class=\"muted\">"+esc(res.notes)+"</p>";
-  var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
-  html+="<details class=\"supportdetails\"><summary>Review runbook: Preflight, Run, Verify, Recover</summary><div class=\"opplan\">";
-  for(var pk=0;pk<planKeys.length;pk++){
-    var planText=plan[planKeys[pk]];
-    var planBound=instructionIsBound(planText);
-    html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
-          (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
-          "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
-          (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
+  if(res.stages){
+    html+="<p class=\"muted\">Pipeline runbooks and verification are stage-specific. Review every stage and its source in the Inspector before use.</p>";
+  }else{
+    var plan=operationalPlan(entry,res),planKeys=["preflight","run","verify","recover"],planLabels=["Preflight","Run","Verify","Recover"];
+    html+="<details class=\"supportdetails\"><summary>Review runbook: Preflight, Run, Verify, Recover</summary><div class=\"opplan\">";
+    for(var pk=0;pk<planKeys.length;pk++){
+      var planText=plan[planKeys[pk]];
+      var planBound=instructionIsBound(planText);
+      html+="<div class=\"planstep\"><h3>"+esc(planLabels[pk])+"</h3><pre>"+esc(planText)+"</pre>"+
+            (planBound?"":"<p class=\"muted\">Copy is unavailable because this guidance still contains an unresolved placeholder.</p>")+
+            "<button type=\"button\" class=\"btn\" data-plan-step=\""+escapeAttr(planKeys[pk])+"\""+
+            (planBound?"":" disabled aria-disabled=\"true\"")+">Copy "+esc(planLabels[pk])+"</button></div>";
+    }
+    html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div></details>";
+    html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
+    for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
+      var compareVersion=RHEL_VERSIONS[cv];
+      var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
+      var compareStatus=verificationStatusForVersion(entry,compareVersion);
+      html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
+            "</td><td>"+esc(compareStatus.label)+"</td><td>"+
+            esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
+    }
+    html+="</tbody></table></details>";
   }
-  html+="<div class=\"planstep\"><button type=\"button\" class=\"btn\" data-plan-step=\"all\">Copy complete plan</button></div></div></details>";
-  html+="<details><summary>Compare RHEL 7, 8, 9 and 10</summary><table class=\"compare\"><thead><tr><th>Release</th><th>Availability and command</th><th>Verification</th><th>Why different</th></tr></thead><tbody>";
-  for(var cv=0;cv<RHEL_VERSIONS.length;cv++){
-    var compareVersion=RHEL_VERSIONS[cv];
-    var compareRes=assembleCommand(entry,compareVersion,STATE.formValues,{patterns:PATTERNS});
-    var compareStatus=verificationStatusForVersion(entry,compareVersion);
-    html+="<tr><th>RHEL "+esc(compareVersion)+"</th><td>"+esc(compareRes?compareRes.command:"Not available or incomplete")+
-          "</td><td>"+esc(compareStatus.label)+"</td><td>"+
-          esc(compareRes?"No release-specific rationale is recorded; compare the exact command shown.":"This generator or one of its fields is not offered on this release.")+"</td></tr>";
-  }
-  html+="</tbody></table></details>";
   target.innerHTML=html;
 }
 function renderGeneratorEditor(entry){
@@ -5125,7 +5228,7 @@ function renderGeneratorEditor(entry){
   html+="<p class=\"muted\">Build a release-aware command from typed, validated fields.</p>";
   html+="<div class=\"workflowsteps\" aria-label=\"Task stages\"><span>1 Configure</span><span>2 Review</span><span>3 Verify</span></div>";
   html+="<div class=\"builderworkspace\"><section class=\"builderfields\" id=\"gen-fields\" aria-label=\"Command fields\"></section>"+
-        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\"></aside></div>";
+        "<aside class=\"commandreview\" id=\"gen-result\" aria-label=\"Command review\" aria-live=\"polite\" aria-atomic=\"false\"></aside></div>";
   el("editor-card").innerHTML=html;
   renderGeneratorForm(entry);
   renderGeneratorResult();
@@ -5164,7 +5267,7 @@ function renderInspector(){
       if(stage.kind==="redirect"){
         html+="<span class=\"mean\">redirection to "+esc(stage.target||"")+" · "+esc(stage.blast||"unrated")+" risk</span>";
       }else if(stage.kind==="operator"){
-        html+="<span class=\"mean\">standalone operator "+esc(stage.op||"")+"</span>";
+        html+="<span class=\"mean\">standalone operator "+esc((PIPE_OPERATORS[stage.op]||{}).emit||"")+"</span>";
       }else{
         var stageStatus=verificationStatusForVersion(stageEntry,res.version);
         html+="<span class=\"mean\">"+esc(stage.command||"")+" · "+esc(stageStatus.label)+"</span>";
@@ -5179,14 +5282,8 @@ function renderInspector(){
     var pipelineFlags=res.flags||[];
     if(!pipelineFlags.length) html+="<p class=\"muted\">This pipeline takes no flags.</p>";
     for(var pf=0;pf<pipelineFlags.length;pf++){
-      var pipelineExplain=pipelineFlags[pf].explain||null;
-      for(var pe=0;pe<res.stages.length&&!pipelineExplain;pe++){
-        var explainEntry=(res.stages[pe].spec&&res.stages[pe].spec.id)?entryById(res.stages[pe].spec.id):null;
-        if(explainEntry){
-          pipelineExplain=flagExplain(explainEntry.explain_tool||explainEntry.tool,
-                                      pipelineFlags[pf].flag,res.version)||null;
-        }
-      }
+      var pipelineExplain=pipelineFlags[pf].explain||
+                          flagExplain(pipelineFlags[pf].tool,pipelineFlags[pf].flag,res.version)||null;
       html+="<div class=\"flagrow\"><span class=\"tok\">"+esc(pipelineFlags[pf].flag)+"</span>"+
             "<span class=\"mean"+(pipelineExplain?"":" unverified")+"\">"+
             esc(pipelineExplain||UNVERIFIED_FLAG_COPY)+"</span></div>";
@@ -5305,7 +5402,14 @@ function renderStatusBar(){
      `if`-gated parts.push() (not a value spliced into another statusitem) so
      every segment reaching the sink is a literal or an esc()/escapeAttr()
      call, same audited shape as every other line in this function (Q17). */
-  if(STATE.entryId){
+  var statusResult=currentResult();
+  if(statusResult&&statusResult.stages){
+    var pipelineVstatus=verificationStatusForResult(statusResult,null,STATE.version);
+    parts.push("<span class=\"statusitem\"><span class=\"vbadge v-"+escapeAttr(pipelineVstatus.state)+
+               "\" title=\""+escapeAttr(pipelineVstatus.text)+"\">"+esc(pipelineVstatus.label)+"</span></span>");
+  }else if(STATE.pipeline.length){
+    parts.push("<span class=\"statusitem\"><span class=\"vbadge v-unverified\">Pipeline incomplete</span></span>");
+  }else if(STATE.entryId){
     var statusEntry=entryById(STATE.entryId);
     if(statusEntry){
       var vstatus=verificationStatusForVersion(statusEntry,STATE.version);

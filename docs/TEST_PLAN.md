@@ -91,7 +91,7 @@ captures, QA reviews, the roster and two-person rule, the closed grammars on
 ### Dangerous Operations
 
 Commands whose assembled text matches a row of `content/dangerous.json` (`rm -rf`,
-`wipefs`, `lvremove`, `dnf remove`, and 7 other rows) are rated blast red and
+`wipefs`, `lvremove`, `dnf remove`, and 11 other rows) are rated blast red and
 must show:
 - [x] Red confirmation banner in the UI, blocking Copy until reviewed
       (`renderBlastBanner()`, `docs/USER_GUIDE.md` Journey 3)

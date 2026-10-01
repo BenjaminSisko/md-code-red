@@ -60,7 +60,7 @@ RHEL 7/8 offer compatible `MOUNTPOINT` views; RHEL 9/10 also offer the
 multi-mount `MOUNTPOINTS` view. Selecting the latter produces:
 `lsblk -o 'NAME,TYPE,FSTYPE,SIZE,MOUNTPOINTS'`.
 
-A further 156 entries are **static** checks, including
+A further 142 entries are **static** checks, including
 `firewalld-service-active`, `ctrl-alt-del-target-masked`, and
 `journald-service-active`. Static checks have no form: pick the tool, pick the
 command, and the version-specific command renders directly.
@@ -182,9 +182,10 @@ you are entitled to see the difference.
 
 Every assembled command carries a blast rating -- **green** (read-only), **yellow**
 (a reversible state change), or **red** (destructive, confirmation required) -- shown
-in the muted line under the command's title (`tool . RHEL N . blast <level>`).
-Of the 58 guided entries, 33 are yellow (add a user, merge or rebase Git history,
-extend a logical volume, write a privileged configuration, and so on), 22 are green, and three
+in the trust bar above the exact command.
+Of the 58 guided entries, 36 are yellow (add a user, download a file, create a
+recovery branch, merge or rebase Git history, extend a logical volume, write a
+privileged configuration, and so on), 19 are green, and three
 are red. The red `pvcreate` and `vgcreate` forms write LVM metadata to a selected
 block device; the guided `git checkout -- <path>` task discards uncommitted edits.
 All three exercise the confirmation flow with real catalog content.
@@ -235,14 +236,17 @@ release cannot offer it (RHEL 7 has no `dnf` or `podman`, for example; the entri
 say so and point at `yum` as the alternative for package management).
 
 Every command entry's per-version verification is one of three states, shown as a
-badge in the Inspector, the status bar, and the evidence export -- read from one
-function (`verificationStatusForVersion()`) so the three places can never disagree:
+badge in the Inspector, the status bar, and the evidence export. A composed
+pipeline has its own fourth display state, **Composed -- not host-verified**, and
+never inherits the selected entry's receipt. The UI reads the state through
+`verificationStatusForResult()` and `verificationStatusForVersion()` so the
+preview, status bar, Inspector, and export cannot disagree:
 
 | Badge | Meaning | What backs it |
 |---|---|---|
 | **Verified** (green badge) | "verified by NAME on DATE (HOST)" | A real `{by, on, host, capture}` receipt sits on this exact RHEL version. QA (Riley Park, in this build) independently reviewed the SME's capture and wrote the receipt. Never inherited from a `same_as` target -- a version whose row only points at another version was never independently run, and can never carry its own receipt. |
 | **Captured** (amber badge) | "captured, awaiting QA" | A capture exists for this exact STIG ID/version pair but no QA receipt has been written yet. **No entry in this shipped build is currently in this state** -- every capture Caleb Stone ran was already cleared by Riley Park's review, so this badge is implemented and tested but not currently observable in the UI. |
-| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 guided-entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
+| **Not host-verified** (grey badge) | "not host-verified" | Neither of the above. This is the default and the honest majority case: only 18 entry/release pairs carry verified receipts in this build; the newly added Git forms are documented and test-covered but have no host-verification receipt. |
 
 A version whose command is a `same_as` pointer at another version (for example RHEL
 9 often reuses RHEL 8's command text) shows **Not host-verified** even when the text
@@ -302,8 +306,10 @@ and therefore is not proof that the command ran. Use
 
 1. Header line, tool version and build date.
 2. **Content fingerprint** (see below).
-3. **Verified (RHEL N): <status text>** -- the same three-state text described
-   above, for the exported version only.
+3. **Verification (RHEL N): <label> -- <status text>** -- the same entry or
+   pipeline state described above, for the exported version only. A pipeline
+   export states that the composition has no single host-verification receipt
+   and then lists each stage separately.
 4. When a STIG row applies: STIG ID; STIG version and benchmark date; rule title;
    CAT; every cited CCI; the mapped NIST SP 800-53 controls; Check text and Fix
    text verbatim; then either the captured output, compliance result (yes/no/not
@@ -455,20 +461,21 @@ with nine receipts each, and the documented algorithm chooses the lower release.
   (RHEL 8, RHEL 10), and `journald-service-active` (RHEL 10 only -- it has no RHEL
   8 STIG mapping at all). Every other STIG panel in the build honestly shows "No
   capture yet."
-- **Flag explanations are almost entirely uncurated.** Across the four release flag
-  dictionaries, most entries do not carry a curated
+- **Flag explanations are incomplete.** Across the four release flag
+  dictionaries, no row carries a curated
   `explain` -- the extractor writes `explain: null` by design and a human SME
-  curates prose in a separate step that has not run yet. Only 4 flags anywhere in
-  the build (on the 3 static entries' own hand-curated `flags[]`) carry a curated
-  explanation; every other flag panel entry in this build reads `unverified -- see
-  man page`. This is the no-guess rule working as intended, not a bug, but it means
-  the Inspector is not yet a teaching tool for most flags.
+  curates prose in a separate step that has not run yet. The curated command
+  entries separately contain 348 flag rows, 336 with explanations and 12 that
+  deliberately fall back to dictionary/no-guess copy. Missing prose renders
+  `unverified -- see man page`; it is never borrowed from another tool or RHEL
+  release.
 - **The "Captured, awaiting QA" verification badge is implemented and tested but
   never actually shown in this build** -- every capture on record already has a QA
   receipt.
-- **Two guided entries are rated blast red:** `pvcreate` and `vgcreate`. Both
-  write LVM metadata to a selected block device. The Copy controls stay locked
-  until the operator checks **I have reviewed this command**.
+- **Three guided entries are rated blast red:** `pvcreate`, `vgcreate`, and the
+  literal-path Git discard task. The first two write LVM metadata to a selected
+  block device; the third discards uncommitted edits in one validated repository
+  path. Copy stays locked until the operator checks **I have reviewed this command**.
 - **The Compliance rail opens focused search.** STIG, CCI, and NIST lookup today
   uses the command palette (Journey 2), not a dedicated browse dashboard. The
   Ansible and Git rails are live. Six configuration generators have shipped:
@@ -503,7 +510,7 @@ entirely) rather than looking for a missing server.
 opens.** Every `localStorage`/`sessionStorage` access is wrapped in its own
 try/catch and degrades to "nothing was saved" rather than erroring -- a hardened
 browser profile that blocks storage on `file://` pages will show this. The app
-still works; it just starts from defaults (RHEL 9, light/dark by system
+still works; it just starts from defaults (RHEL 8, light/dark by system
 preference, no favorites) every time.
 
 **Copy says "Copy failed."** The clipboard write uses a hidden, selected textarea

@@ -2,7 +2,29 @@
 
 All notable changes to MD CODE RED are documented here. This project adheres to [Keep a Changelog](https://keepachangelog.com/).
 
-## v1.0.0-alpha.6 - 2026-09-30
+## v1.0.0-alpha.6 - 2026-10-01
+
+### Fixed -- Independent release review closure
+
+- Replaced open-ended SSH, SCP, rsync, URL, Git path, shell-variable, and PID
+  operands with purpose-specific closed grammars. Remote copy/sync forms now
+  accept a local source and one validated remote destination; rsync also emits
+  `-s` so the remote shell protects validated arguments.
+- Classify generated download output paths as write targets. Executable sinks
+  are refused, protected system destinations are destructive, and other file
+  writes require the change-producing review path rather than appearing read
+  only.
+- Bound preflight, verification, and recovery instructions to the operator's
+  actual field values. Schema validation now rejects hardcoded non-enum example
+  values in instructional commands, and unresolved recovery state remains
+  visibly unavailable instead of producing unsafe placeholder text.
+- Give composed pipelines their own verification state, evidence context, and
+  flag provenance. A composed command is labeled "not host-verified" and never
+  borrows an individual stage's execution receipt or STIG identity.
+- Corrected Home package routing, light-theme text and focus contrast, live
+  result announcements, and the documented default release. Added executable
+  runtime, optional-field, runbook-binding, pipeline-trust, and Home-route
+  regressions for each review finding.
 
 ### Fixed -- Full functional QA findings
 
@@ -49,7 +71,7 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
   status, selected RHEL release, host-verification state, and required privilege.
   The primary action is now labeled **Copy command**.
 - Added an always-visible **Search all** control for tools, commands, STIGs,
-  CCIs, and NIST controls, without changing the existing keyboard shortcuts.
+  CCIs, and NIST controls, with documented keyboard shortcuts, including the updated Ctrl+Alt+1-7 rail mappings.
 - Added visible **Navigator** and **Inspector** controls whose pressed state
   reports whether each panel is open.
 - Reworked the layout below 720 pixels into a single-column reading order with

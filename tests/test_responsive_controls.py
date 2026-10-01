@@ -94,6 +94,9 @@ class ResponsiveControlsTests(unittest.TestCase):
             ("#51607a", "#f6f8fa"),
             ("#a1a1aa", "#18181b"),
             ("#a1a1aa", "#0a0e15"),
+            ("#53657d", "#ffffff"),
+            ("#53657d", "#f6f8fa"),
+            ("#a1a1aa", "#09090b"),
         ):
             self.assertGreaterEqual(contrast(foreground, background), 4.5)
         self.assertRegex(
@@ -105,6 +108,11 @@ class ResponsiveControlsTests(unittest.TestCase):
             self.source,
             r"\.quicksearch kbd\{[^}]*font-size:11px; color:var\(--text-secondary\)",
         )
+
+    def test_focus_tokens_meet_non_text_contrast(self):
+        self.assertGreaterEqual(contrast("#a16207", "#ffffff"), 3.0)
+        self.assertGreaterEqual(contrast("#fbbf24", "#18181b"), 3.0)
+        self.assertIn('aria-live=\\"polite\\" aria-atomic=\\"false\\"', self.source)
 
     def test_panel_state_is_exposed_without_color(self):
         self.assertIn('"\\">Navigator: "+esc(sidebarOn?"On":"Off")', self.source)

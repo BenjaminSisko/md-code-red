@@ -105,14 +105,14 @@ function statusContract(src, failures) {
   var api = new Function(
     "document", "el", "STATE", "stigReleaseLabel", "esc", "escapeAttr",
     "APP_NAME", "APP_VERSION", "APP_BUILD_DATE", "APP_CLASSIFICATION",
-    "entryById", "verificationStatusForVersion", "THEME",
+    "entryById", "verificationStatusForVersion", "verificationStatusForResult", "currentResult", "THEME",
     '"use strict";\n' + code +
     "\nreturn {renderStatusBar:renderStatusBar,focusedStatusAction:focusedStatusAction};"
   )(
-    doc, el, {toast: "", version: "9", entryId: null},
+    doc, el, {toast: "", version: "9", entryId: null, pipeline: []},
     function () { return "STIG V2R9"; }, function (v) { return String(v); },
     function (v) { return String(v); }, "MD CODE RED", "test", "2026-09-30", "LAB",
-    function () { return null; }, function () { return {}; },
+    function () { return null; }, function () { return {}; }, function () { return {}; }, function () { return null; },
     {resolved: function () { return themeMode; }}
   );
 

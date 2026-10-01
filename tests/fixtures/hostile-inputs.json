@@ -104,6 +104,21 @@
   },
   "cron_hour": {
    "benign": "2"
+  },
+  "remote_path": {
+   "benign": "alice@host01.lab.internal:/tmp/file"
+  },
+  "http_url": {
+   "benign": "https://server.example.test/file?mode=full"
+  },
+  "git_path": {
+   "benign": "src/config/app.yml"
+  },
+  "shell_variable": {
+   "benign": "EDITOR"
+  },
+  "pid": {
+   "benign": "4242"
   }
  },
  "vectors": [

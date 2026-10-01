@@ -36,7 +36,7 @@ APP_VERSION = "v1.0.0-alpha.6"
 # useful answer; a tagged release needs "when was this released" instead, and
 # that value has to stop moving once it's committed. The next version bump
 # repins this alongside APP_VERSION.
-APP_BUILD_DATE = "2026-09-30"
+APP_BUILD_DATE = "2026-10-01"
 CLASSIFICATION = "UNCLASSIFIED"
 
 VERSIONS = schema.VERSIONS

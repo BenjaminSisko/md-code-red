@@ -125,7 +125,7 @@ so that a defect has to be present in both copies to reach the browser.
 | `content-src/flag_coverage_baseline.json` | The dated, ratcheting acceptance baseline Q20 measures flag-dictionary completeness against. Expires 2026-09-25 (`docs/POAM.md`). | |
 | `content-src/raw/rhel<N>/*.man.txt` | Staged, git-ignored raw `man`/`--help` captures -- the source of record for licensing review and for Q14's paraphrase-collision check. Never read by `build.py`. | |
 | `content/checklists.json`, `dossier.json`, `drills.json`, `errors.json`, `letter.md`, `modules.json`, `rhel_flags.json`, `scars.json`, `snippets.json`, `trees.json`, `flags.json` | Present under `content/` but **absent from `build.py`'s `CONTENT` map** -- none of these reach the shipped artifact. Leftover from the Grey Beard Ansible fork (`modules.json`/`flags.json` are `extract_ansible_doc.py`'s own output). | See Section 23. |
-| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 419 unittest cases and 128,449 harness checks pass on this build. |
+| `tests/` | `tests/hostile_harness.js` (the pure assembler, lifted and fuzzed under Node), `tests/test_*.py` (unittest, run via `python3 -m unittest discover -s tests`), `tests/fixtures/golden-commands.json` (the hand-authored validity oracle), `tests/captures/` (real SME capture records). | 424 unittest cases and 145,345 harness checks pass on this build. |
 | `stig-src/` | The pinned DISA STIG/CCI zip sources and their SHA-256 sums -- the source of record `extract/parse_xccdf.py` reads from. | |
 | `NOTICE` | The per-family licensing derivation statement (public-domain vs. paraphrase-only, and where each family's raw source is staged). | |
 
@@ -141,7 +141,7 @@ example).
 
 **Command entry** (`content/commands.json`, one of two shapes):
 
-*Static (fixed per-RHEL-version command)* -- 156 of 200 entries:
+*Static (fixed per-RHEL-version command)* -- 142 of 200 entries:
 ```
 {
   id, tool, explain_tool?, category, intent,
@@ -158,11 +158,11 @@ A `slot` is one of: `{command, notes?, changed_in_note?}`, `{same_as: "<version>
 changed_in_note?}`, or `{unavailable: {reason, alternative?}}`. A `receipt` is
 `{by, on, host, capture}` -- see Section 6.
 
-*Generator (guided form)* -- 44 of 200 entries:
+*Generator (guided form)* -- 58 of 200 entries:
 ```
 {
   id, tool, category, intent,
-  fields: [ {name, type, required, options?, versions?} ],
+  fields: [ {name, type, required, options?, versions?, write_target?} ],
   template: [ token, token, ... ],
   doc?: { kind: "yaml"|"ini"|"lines", filename, lines: [...] },
   versions?: ["7","8","9","10"],   // omitted means offered on all four

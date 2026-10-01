@@ -1,11 +1,11 @@
 # Independent Claude Opus Review — PR #17
 
-**Review date:** 2026-09-30  
-**Reviewer runtime:** Claude Code 2.1.233  
-**Requested model:** Opus, maximum effort  
-**Verified model:** `claude-opus-5-5`  
-**Scope:** Read-only review of `codex/alpha6-responsive-ux` at commit `510c9a0` against `main`  
-**Repository:** `BenjaminSisko/md-code-red`  
+**Review date:** 2026-09-30
+**Reviewer runtime:** Claude Code 2.1.233
+**Requested model:** Opus, maximum effort
+**Verified model:** `claude-opus-5-5`
+**Scope:** Read-only review of `codex/alpha6-responsive-ux` at commit `510c9a0` against `main`
+**Repository:** `BenjaminSisko/md-code-red`
 
 > This file preserves the independent review output. The reviewer was restricted from editing, writing, committing, pushing, or posting comments.
 

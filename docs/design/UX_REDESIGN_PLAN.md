@@ -1,9 +1,9 @@
 # MD CODE RED UX/UI Revamp Plan
 
-**Status:** Proposed design direction for alpha.6 and the post-alpha.6 implementation sequence  
-**Date:** 2026-09-30  
-**Product:** MD CODE RED, offline RHEL command and operational-reference toolkit  
-**Primary audiences:** Linux administrators, instructors, automation engineers, and compliance staff  
+**Status:** Proposed design direction for alpha.6 and the post-alpha.6 implementation sequence
+**Date:** 2026-09-30
+**Product:** MD CODE RED, offline RHEL command and operational-reference toolkit
+**Primary audiences:** Linux administrators, instructors, automation engineers, and compliance staff
 **Companion artifacts:** [Interactive concept board](UX_REDESIGN_CONCEPT.html) and [review presentation](UX_REDESIGN_REVIEW_DECK.html)
 
 ## Executive decision

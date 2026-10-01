@@ -3205,7 +3205,7 @@
    "fields": [
     {
      "name": "variable",
-     "type": "service",
+     "type": "shell_variable",
      "required": true
     }
    ],
@@ -3232,7 +3232,7 @@
     "id": "src-man-grep",
     "title": "man page for grep, as installed on the reference host",
     "url_or_man": "man grep(1)",
-    "version": "coreutils 8.32-git",
+    "version": "GNU grep 2.20-3.11",
     "retrieved_on": "2026-09-17",
     "license_class": "paraphrase-only"
    },
@@ -5022,7 +5022,7 @@
    "id": "kill-send-signal",
    "tool": "kill",
    "category": "process",
-   "intent": "Ask a process, by PID, to stop -- gracefully by default, or unconditionally with -9",
+   "intent": "Ask a process, by PID, to stop gracefully with SIGTERM",
    "verify": "`ps -p <pid>` no longer shows the process (or, for a reload signal like -HUP, the service's logs show it re-read its configuration).",
    "undo": "None -- a terminated process is gone; if it was a managed service, undo means starting it again (systemctl start), not un-killing the old process instance.",
    "blast": "yellow",
@@ -5044,7 +5044,7 @@
    "fields": [
     {
      "name": "pid",
-     "type": "integer",
+     "type": "pid",
      "required": true
     }
    ],
@@ -5595,7 +5595,7 @@
    "intent": "Fetch or post to a URL from the command line -- HTTP status, headers, and body, or a file download",
    "verify": "The expected HTTP status is returned and, for a download, the output file's size/checksum matches what was expected.",
    "undo": "For a plain fetch, nothing to undo -- read-only against the remote. A downloaded file can simply be deleted; curl itself makes no change on the local host beyond the file it was told to write.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-curl",
@@ -5615,11 +5615,12 @@
     {
      "name": "output",
      "type": "path",
-     "required": true
+     "required": true,
+     "write_target": true
     },
     {
      "name": "url",
-     "type": "comment",
+     "type": "http_url",
      "required": true
     }
    ],
@@ -5641,7 +5642,7 @@
      "field": "url"
     }
    ],
-   "notes": "The destination path and URL are editable. TLS verification remains enabled."
+   "notes": "The destination path and HTTP(S) URL are editable. The output is classified as a write target, execution-directory destinations are refused, and TLS certificate verification remains enabled."
   },
   {
    "id": "wget-download-url",
@@ -5650,7 +5651,7 @@
    "intent": "Download a file (or mirror a small site) from a URL, with built-in retry and resume that curl leaves to the caller",
    "verify": "The downloaded file's size/checksum matches what was expected.",
    "undo": "Delete the downloaded file -- wget makes no other change on the local host.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-man-wget",
@@ -5670,11 +5671,12 @@
     {
      "name": "output",
      "type": "path",
-     "required": true
+     "required": true,
+     "write_target": true
     },
     {
      "name": "url",
-     "type": "comment",
+     "type": "http_url",
      "required": true
     }
    ],
@@ -5693,14 +5695,14 @@
      "field": "url"
     }
    ],
-   "notes": "The destination path and URL are editable. Certificate checking remains enabled."
+   "notes": "The destination path and HTTP(S) URL are editable. The output is classified as a write target, execution-directory destinations are refused, and TLS certificate verification remains enabled."
   },
   {
    "id": "ssh-remote-shell",
    "tool": "ssh",
    "category": "network",
-   "intent": "Open an interactive shell, or run one command, on a remote host over an encrypted channel",
-   "verify": "A shell prompt (or the command's output) returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
+   "intent": "Open an interactive shell on a remote host over an encrypted channel",
+   "verify": "An interactive shell prompt returns from the remote host with the expected identity (`whoami`/`id` on the far end).",
    "undo": "Exit the remote shell (Ctrl-D or `exit`) to return to the local session; ssh itself changes nothing on either host beyond the transient connection.",
    "blast": "green",
    "stig": [],
@@ -5725,8 +5727,13 @@
      "required": false
     },
     {
-     "name": "destination",
-     "type": "comment",
+     "name": "username",
+     "type": "username",
+     "required": false
+    },
+    {
+     "name": "hostname",
+     "type": "hostname",
      "required": true
     }
    ],
@@ -5740,10 +5747,15 @@
      "optional": true
     },
     {
-     "field": "destination"
+     "flag": "-l",
+     "field": "username",
+     "optional": true
+    },
+    {
+     "field": "hostname"
     }
    ],
-   "notes": "Destination accepts the normal user@host form. Host-key checking is not weakened by this generator."
+   "notes": "Username and hostname are validated separately. Host-key checking is not weakened by this generator."
   },
   {
    "id": "scp-secure-copy",
@@ -5785,7 +5797,7 @@
     },
     {
      "name": "destination",
-     "type": "comment",
+     "type": "remote_path",
      "required": true
     }
    ],
@@ -5804,13 +5816,13 @@
      "field": "destination"
     }
    ],
-   "notes": "The source is a local absolute path. Destination accepts user@host:/absolute/path."
+   "notes": "The source is a local absolute path. The remote destination is restricted to [user@]host:/absolute/path with no remote-shell metacharacters."
   },
   {
    "id": "rsync-sync-files",
    "tool": "rsync",
    "category": "network",
-   "intent": "Synchronize a file tree to a local path or a remote host over ssh, transferring only what changed",
+   "intent": "Synchronize a local file tree to a remote host over ssh, transferring only what changed",
    "verify": "A `--dry-run` pass lists exactly the expected adds/updates/deletes before the real run; after the real run, a second rsync (still dry-run) reports nothing left to transfer.",
    "undo": "Without --delete, rsync only adds/updates files, so undo is the same as cp: remove or restore the files it wrote. With --delete, anything it removed at the destination is gone the same way rm's targets are, unless backed up first -- treat --delete with the same caution as rm -rf.",
    "blast": "yellow",
@@ -5841,12 +5853,12 @@
     },
     {
      "name": "source",
-     "type": "comment",
+     "type": "path",
      "required": true
     },
     {
      "name": "destination",
-     "type": "comment",
+     "type": "remote_path",
      "required": true
     }
    ],
@@ -5864,6 +5876,9 @@
      "lit": "-h"
     },
     {
+     "lit": "-s"
+    },
+    {
      "lit": "--dry-run",
      "requires": "dry_run"
     },
@@ -5874,7 +5889,7 @@
      "field": "destination"
     }
    ],
-   "notes": "Archive, verbose, and human-readable output are fixed. Start with Dry run selected, inspect the file list, then clear it only when ready to transfer."
+   "notes": "Archive, verbose, human-readable, and --protect-args (-s) behavior are fixed. Start with Dry run selected, inspect the file list, then clear it only when ready to transfer."
   },
   {
    "id": "git-clone",
@@ -6256,13 +6271,16 @@
    "fields": [
     {
      "name": "path",
-     "type": "comment",
+     "type": "git_path",
      "required": true
     }
    ],
    "template": [
     {
      "lit": "git"
+    },
+    {
+     "lit": "--literal-pathspecs"
     },
     {
      "lit": "checkout"
@@ -6274,7 +6292,7 @@
      "field": "path"
     }
    ],
-   "notes": "This overwrites uncommitted changes in the selected tracked path with its content from HEAD. Copy remains blocked until the destructive-operation acknowledgement is checked."
+   "notes": "This uses a literal repository-relative path and overwrites its uncommitted changes with content from HEAD. Copy remains blocked until the destructive-operation acknowledgement is checked."
   },
   {
    "id": "git-merge",
@@ -7347,7 +7365,7 @@
    "intent": "Recovery scenario: 'I lost a commit' -- a hard reset, a rebase, or a deleted branch removed a commit from every branch's visible history",
    "verify": "git show <recovered_branch> displays the recovered commit and git branch --contains <lost_revision> includes the new branch.",
    "undo": "Nothing further to undo -- this recovery only reads the reflog and creates a new reference; it does not remove anything.",
-   "blast": "green",
+   "blast": "yellow",
    "stig": [],
    "source": {
     "id": "src-git-htmldocs",
@@ -9091,8 +9109,8 @@
    "tool": "usermod",
    "category": "Users & sudo",
    "intent": "Add a user to a group without destroying their other groups",
-   "verify": "id alice shows wheel plus all previous groups.",
-   "undo": "gpasswd -d alice wheel",
+   "verify": "`id <username>` shows <groups> plus all previously recorded supplementary groups.",
+   "undo": "Restore the recorded pre-change supplementary groups with `usermod -G <previous_group_list> <username>`.",
    "blast": "yellow",
    "source": {
     "id": "src-greybeard-r-usermod-ag",

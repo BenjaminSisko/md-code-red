@@ -12,7 +12,7 @@ A single-file, offline HTML toolkit for Red Hat Enterprise Linux 7–10 system a
 
 **Current version:** v1.0.0-alpha.6 (release candidate, lab-only, unsigned)
 **Pinned STIG releases:** RHEL 7 V3R15 (sunset) · RHEL 8 V2R8 · RHEL 9 V2R9 · RHEL 10 V1R2 · CCI List 2025-01-23  
-**Last built:** 2026-09-30
+**Last built:** 2026-10-01
 
 ## Recent changes
 

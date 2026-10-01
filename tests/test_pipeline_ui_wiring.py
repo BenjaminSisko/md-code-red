@@ -294,6 +294,10 @@ def audit_the_header_names_a_pipeline(src):
     f = []
     for fn in ("renderEditor", "renderGeneratorResult"):
         text = body(src, fn)
+        if "esc(entry.tool)" in text:
+            f.append("%s() heads an assembled command with entry.tool. For a pipeline that "
+                     "names ONE stage of several, and the stage that writes the file may not "
+                     "be the one named" % fn)
         heads = re.findall(r'html\+="<p class=\\"muted\\">"\+esc\(([a-zA-Z0-9_.]+)\)\+" ', text)
         for h in heads:
             if h == "entry.tool":

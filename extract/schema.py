@@ -300,9 +300,10 @@ def resolved_command(entry, version):
 # ---------------------------------------------------------------------------
 FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portrange",
                     "protocol", "family", "action", "unit", "username", "groupname",
-                    "path", "zone", "service", "package", "selinux_boolean", "audit_key",
-                    "interface", "integer", "lvm_size", "group_list", "git_refname",
-                    "git_revision", "cron_minute", "cron_hour", "enum", "comment")
+                    "path", "remote_path", "http_url", "git_path", "shell_variable", "pid",
+                    "zone", "service", "package", "selinux_boolean", "audit_key", "interface",
+                    "integer", "lvm_size", "group_list", "git_refname", "git_revision",
+                    "cron_minute", "cron_hour", "enum", "comment")
 
 # Closed-grammar types only. `comment` and `enum` are deliberately absent from
 # every slot: rich-rule attribute syntax has no escape for a double quote inside
@@ -338,6 +339,12 @@ def spec_fields_errors(where, fields, names):
         if f.get("type") not in FIELD_TYPE_NAMES:
             errs.append("%s: field '%s' has type %r, which is not one of the %d types the "
                         "assembler validates" % (where, name, f.get("type"), len(FIELD_TYPE_NAMES)))
+        if "write_target" in f:
+            if f.get("write_target") is not True:
+                errs.append("%s: field '%s' write_target must be the boolean true" % (where, name))
+            elif f.get("type") != "path":
+                errs.append("%s: field '%s' is a write_target but is not an absolute path field"
+                            % (where, name))
         vs = f.get("versions")
         if vs is not None:
             if not isinstance(vs, list) or not vs or any(v not in VERSIONS for v in vs):
@@ -1269,6 +1276,28 @@ def instructional_errors(ds, command_entries):
                 if meta.get(key) is not None and not isinstance(meta.get(key), str):
                     errs.append("instructional %s.%s: %s must be a string or null" % (eid, name, key))
             errs += single_line_errors("instructional %s.%s" % (eid, name), meta)
+        # A runbook must bind the operator's current values.  Quoted shell
+        # output is correct only when the preflight, verify, and recovery text
+        # refer to the same target.  A copied example value is especially
+        # dangerous on destructive tasks because it can inspect or recover a
+        # different account, PID, path, or revision while still looking valid.
+        by_name = {f.get("name"): f for f in entry.get("fields", []) if isinstance(f, dict)}
+        guidance = [("verify", entry.get("verify") or ""), ("undo", entry.get("undo") or "")]
+        for key in ("prerequisites", "preflight"):
+            for i, item in enumerate(row.get(key) or []):
+                if isinstance(item, dict) and isinstance(item.get("command"), str):
+                    guidance.append(("%s[%d].command" % (key, i), item["command"]))
+        for name, field in sorted(by_name.items()):
+            if field.get("type") == "enum":
+                continue
+            meta = fields.get(name) if isinstance(fields, dict) else None
+            example = meta.get("example") if isinstance(meta, dict) else None
+            if not isinstance(example, str) or not example:
+                continue
+            for where, text in guidance:
+                if example in text and ("<%s>" % name) not in text and ("{{%s}}" % name) not in text:
+                    errs.append("instructional %s: %s hardcodes field '%s' example %r instead of "
+                                "binding <%s>" % (eid, where, name, example, name))
     paths = ds.get("learning_paths")
     if not isinstance(paths, list) or not paths:
         errs.append("instructional.learning_paths must be a non-empty list")

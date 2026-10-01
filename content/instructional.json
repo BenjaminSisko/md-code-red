@@ -1685,7 +1685,7 @@
    },
    "preflight": [
     {
-     "command": "ps -p 12345 -o pid,user,comm,args",
+     "command": "ps -p <pid> -o pid,user,comm,args",
      "text": "Recheck the process owner and command immediately before sending the signal."
     }
    ],
@@ -1716,7 +1716,7 @@
    },
    "preflight": [
     {
-     "command": "test ! -e /tmp/output.bin",
+     "command": "test ! -e <output>",
      "text": "Check whether the chosen output path already exists before downloading."
     }
    ],
@@ -1747,7 +1747,7 @@
    },
    "preflight": [
     {
-     "command": "test ! -e /tmp/output.bin",
+     "command": "test ! -e <output>",
      "text": "Check whether the chosen output path already exists before downloading."
     }
    ],
@@ -1768,17 +1768,24 @@
      "discovery_command": "ls -l ~/.ssh",
      "consequence": "SSH reads this private key; protect it from other users."
     },
-    "destination": {
-     "label": "Remote destination",
-     "meaning": "Remote account and host in user@host form.",
-     "example": "alice@server.example.test",
+    "username": {
+     "label": "Remote username",
+     "meaning": "Optional POSIX account name passed with ssh -l.",
+     "example": "alice",
      "discovery_command": null,
-     "consequence": "A successful connection authenticates to this account on this host."
+     "consequence": "A successful connection authenticates as this account."
+    },
+    "hostname": {
+     "label": "Remote hostname",
+     "meaning": "DNS hostname of the remote system.",
+     "example": "server.example.test",
+     "discovery_command": null,
+     "consequence": "SSH opens the encrypted connection to this host."
     }
    },
    "preflight": [
     {
-     "command": "ssh-keygen -F server.example.test",
+     "command": "ssh-keygen -F <hostname>",
      "text": "Review any already-known host key before connecting."
     }
    ],
@@ -1808,7 +1815,7 @@
     },
     "destination": {
      "label": "Remote destination",
-     "meaning": "Remote user, host, and destination path.",
+     "meaning": "Remote target in [user@]host:/absolute/path form.",
      "example": "alice@server.example.test:/tmp/config.yml",
      "discovery_command": null,
      "consequence": "An existing destination file can be replaced."
@@ -1839,14 +1846,14 @@
     },
     "source": {
      "label": "Source",
-     "meaning": "Local path or rsync remote source.",
+     "meaning": "Absolute local source path.",
      "example": "/etc/app/",
      "discovery_command": null,
      "consequence": "rsync reads this tree; a trailing slash means copy its contents."
     },
     "destination": {
      "label": "Destination",
-     "meaning": "Local path or user@host:path destination.",
+     "meaning": "Remote target in [user@]host:/absolute/path form.",
      "example": "alice@server.example.test:/tmp/app/",
      "discovery_command": null,
      "consequence": "Without --dry-run, rsync creates or updates files here."
@@ -1878,7 +1885,7 @@
    },
    "preflight": [
     {
-     "command": "git diff -- src/app.py",
+     "command": "git diff -- <path>",
      "text": "Review and save the exact uncommitted changes before discarding them."
     }
    ],
@@ -1906,7 +1913,7 @@
      "text": "Confirm that the currently checked-out branch is the branch that should receive the commit."
     },
     {
-     "command": "git show --stat a1b2c3d",
+     "command": "git show --stat <revision>",
      "text": "Review the commit before replaying it."
     }
    ],
@@ -1992,7 +1999,7 @@
    },
    "preflight": [
     {
-     "command": "id alice",
+     "command": "id <username>",
      "text": "Record the complete current group list before making the change."
     }
    ],

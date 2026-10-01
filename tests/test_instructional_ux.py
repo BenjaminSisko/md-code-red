@@ -70,7 +70,7 @@ class InstructionalSchemaTests(unittest.TestCase):
 
     def test_generator_plan_placeholders_are_bindable_and_broadly_detected(self):
         placeholder=re.compile(r'<[A-Za-z][A-Za-z0-9_-]*(?: [A-Za-z][A-Za-z0-9_-]*)*>|\{\{[^{}\n]+\}\}')
-        special={'generated_rule_arg'}
+        special={'generated_rule_arg','previous_group_list'}
         for entry in (e for e in self.commands if 'template' in e):
             names={f['name'] for f in entry['fields']}|special
             for field in ('verify','undo'):
@@ -80,6 +80,30 @@ class InstructionalSchemaTests(unittest.TestCase):
         self.assertNotIn('<exact generated rule>',json.dumps(self.commands))
         self.assertIn("values.generated_rule_arg=match[1]",self.template)
         self.assertIn("(?: [A-Za-z][A-Za-z0-9_-]*)*>",self.template)
+
+    def test_golden_examples_cannot_leak_into_runnable_guidance(self):
+        broken=copy.deepcopy(self.data)
+        broken['entries']['kill-send-signal']['preflight'][0]['command']='ps -p 12345'
+        errors=schema.instructional_errors(broken,self.commands)
+        self.assertTrue(any("hardcodes field 'pid' example '12345'" in e for e in errors),errors)
+
+    def test_converted_runbooks_bind_non_golden_values(self):
+        expected={
+            'kill-send-signal':'<pid>',
+            'curl-transfer-url':'<output>',
+            'wget-download-url':'<output>',
+            'ssh-remote-shell':'<hostname>',
+            'git-checkout-discard-changes':'<path>',
+            'git-recovery-wrong-branch':'<revision>',
+            'r-usermod-ag':'<username>',
+        }
+        for eid,token in expected.items():
+            commands='\n'.join((item.get('command') or '') for item in self.data['entries'][eid]['preflight'])
+            self.assertIn(token,commands,(eid,commands))
+        usermod=next(e for e in self.commands if e['id']=='r-usermod-ag')
+        self.assertIn('<username>',usermod['verify'])
+        self.assertIn('<groups>',usermod['verify'])
+        self.assertIn('<previous_group_list>',usermod['undo'])
 
     def test_known_field_guidance_is_domain_correct(self):
         git_source=self.data['entries']['gen-git-merge']['fields']['source']
