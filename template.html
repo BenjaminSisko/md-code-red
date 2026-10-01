@@ -821,6 +821,12 @@ function isRemotePath(s){
     user=left.slice(0,at); host=left.slice(at+1);
     if(!USERNAME_RE.test(user)) return false;
   }else host=left;
+  /* A literal dot segment changes where transfer tools place the transaction
+     directory and can turn /srv/tree/. into an in-tree backup. Keep the
+     remote grammar lexical and unambiguous instead of normalising after the
+     operator has reviewed a different string. */
+  var segments=path.split("/");
+  for(var i=0;i<segments.length;i++){ if(segments[i]===".") return false; }
   return HOSTNAME_RE.test(host)&&isPath(path)&&path!=="/";
 }
 function isChronyDirective(s){
@@ -3276,6 +3282,7 @@ function fieldInstruction(entry,name){
   var row=instructionFor(entry);
   return row&&row.fields?row.fields[name]||null:null;
 }
+/* ===== MCR-INSTRUCTION-BINDING-BEGIN ===================================== */
 function bindInstruction(text,values){
   return String(text||"").replace(/<([A-Za-z_][A-Za-z0-9_]*)>/g,function(_m,name){
     return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"<"+name+">";
@@ -3283,6 +3290,20 @@ function bindInstruction(text,values){
     return Object.prototype.hasOwnProperty.call(values||{},name)?String(values[name]):"{{"+name+"}}";
   });
 }
+function bindInstructionCommand(text,values){
+  /* Instruction prose names the operator's value as typed. Shell commands
+     need a different domain: each raw form value becomes one POSIX word.
+     Derived values below already come from shQuote() or from a closed command
+     fragment and must not be quoted a second time. */
+  var bound={},prequoted={generated_rule_arg:true,remote_destination_path:true,
+                          remote_source_basename:true};
+  for(var name in values){
+    if(!Object.prototype.hasOwnProperty.call(values,name)) continue;
+    bound[name]=prequoted[name]?String(values[name]):shQuote(String(values[name]));
+  }
+  return bindInstruction(text,bound);
+}
+/* ===== MCR-INSTRUCTION-BINDING-END ======================================= */
 function operationalPlan(entry,res){
   var ins=instructionFor(entry)||{},values={},formValues=STATE.formValues||{},pre=[],i,item,match;
   for(var valueName in formValues){
@@ -3305,14 +3326,14 @@ function operationalPlan(entry,res){
     }
   }
   for(i=0;i<(ins.prerequisites||[]).length;i++){
-    item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+    item=ins.prerequisites[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
   }
   for(i=0;i<(ins.preflight||[]).length;i++){
-    item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstruction(item.command,values):""));
+    item=ins.preflight[i]; pre.push(bindInstruction(item.text,values)+(item.command?"\n"+bindInstructionCommand(item.command,values):""));
   }
   return {preflight:pre.join("\n"),run:res.command,
-          verify:bindInstruction(entry.verify||"No curated verification step.",values),
-          recover:bindInstruction(entry.undo||"No curated recovery step.",values)};
+          verify:bindInstructionCommand(entry.verify||"No curated verification step.",values),
+          recover:bindInstructionCommand(entry.undo||"No curated recovery step.",values)};
 }
 function instructionIsBound(text){
   /* Hyphenated and plain-English placeholders previously escaped the narrow
@@ -5802,7 +5823,12 @@ function activateHit(i){
   if(!h) return;
   if(h.kind==="Reference"){ selectRefCommand(h.id); }
   else if(h.kind==="Tool"){ selectTool(h.id); }
-  else if(h.kind==="STIG"){ selectStigRule(h.id,h.version||STATE.version); }
+  else if(h.kind==="STIG"){
+    selectStigRule(h.id,h.version||STATE.version);
+    closePalette(false);
+    focusStigPanel();
+    return;
+  }
   else if(h.kind==="CCI"){ activateCrosswalkHit(h.id,"cci"); }
   else if(h.kind==="NIST"){ activateCrosswalkHit(h.id,"nist"); }
   else if(h.kind==="Flag" && h.version && !entryById(h.id)){
@@ -5924,6 +5950,17 @@ function selectStigRule(ruleId,version){
   STATE.toast="";
   document.body.setAttribute("data-inspector","on");
   setVersion(version);
+}
+function focusStigPanel(){
+  /* A linked rule opens a command workspace. On a one-column viewport the
+     Inspector follows that workspace and can otherwise land below the fold.
+     Give the rendered rule a programmatic focus target and bring the evidence
+     the operator selected into view. */
+  var panel=el("stig-panel");
+  if(!panel||!panel.textContent.trim()) return;
+  panel.setAttribute("tabindex","-1");
+  panel.focus();
+  panel.scrollIntoView({block:"start",inline:"nearest"});
 }
 function setRail(name){
   if(name==="stig"){
@@ -6082,7 +6119,7 @@ document.addEventListener("click",function(ev){
   var action=a.getAttribute("data-action");
   if(routeChromeAction(action)) return;
   if(action==="ack"){ STATE.acked=!!a.checked; STATE.toast=""; reRenderEditorAndInspector(); return; }
-  if(action==="ref-ack"){ STATE.refAck=!!a.checked; reRenderEditorAndInspector(); return; }
+  if(action==="ref-ack"){ STATE.refAck=!!a.checked; STATE.toast=""; reRenderEditorAndInspector(); return; }
   if(action==="ref-copy"){ doRefCopy(false); return; }
   if(action==="ref-copy-comment"){ doRefCopy(true); return; }
   if(action==="ref-evidence"){ doRefEvidence(); return; }

@@ -90,6 +90,41 @@ class ReleaseReadinessTests(unittest.TestCase):
         cited=set(re.findall(r"TC-[A-Za-z0-9_-]+",report))
         self.assertEqual(cited-recorded,set(),"HTML report cites nonexistent browser assertions")
 
+    def test_browser_results_and_release_docs_bind_to_current_candidate(self):
+        version="v1.0.0-alpha.6"
+        artifact=os.path.join(REPO,"dist","md-code-red_%s.html" % version)
+        with open(artifact,"rb") as fh:
+            blob=fh.read()
+        artifact_hash=hashlib.sha256(blob).hexdigest()
+        fingerprint=re.search(
+            rb"Content fingerprint \(SHA-256 of every data island\): ([0-9a-f]{64})",blob)
+        self.assertIsNotNone(fingerprint)
+        fingerprint=fingerprint.group(1).decode("ascii")
+        modes=[]
+        for suffix in ("", "-http"):
+            path=os.path.join(REPO,"docs","qa",
+                              "QA_RESULTS_%s-rc%s.json" % (version,suffix))
+            with open(path,encoding="utf-8") as fh:
+                result=json.load(fh)
+            self.assertEqual(result["meta"].get("artifactBytes"),len(blob),path)
+            self.assertEqual(result["meta"].get("artifactSha256"),artifact_hash,path)
+            self.assertEqual(result["meta"].get("contentFingerprint"),fingerprint,path)
+            self.assertEqual(result["summary"]["total"],len(result["results"]),path)
+            self.assertEqual(result["summary"]["pass"],len(result["results"]),path)
+            self.assertEqual(result["summary"]["fail"],0,path)
+            self.assertEqual(result["exceptions"],[],path)
+            self.assertEqual(result["consoleErrors"],[],path)
+            self.assertTrue(all(row["status"]=="PASS" for row in result["results"]),path)
+            modes.append({row["id"] for row in result["results"]})
+        self.assertEqual(modes[0],modes[1],"browser modes did not run the same assertion IDs")
+        required=("BQP_SUMMARY_","QA_REPORT_","SECURITY_REVIEW_","RELEASE_REPORT_")
+        for prefix in required:
+            path=os.path.join(REPO,"docs",prefix+version+".md")
+            with open(path,encoding="utf-8") as fh:
+                text=fh.read()
+            for expected in ("443", "168,697", "27,652", "897"):
+                self.assertIn(expected,text,"%s lacks current verification count %s" % (path,expected))
+
 
 if __name__ == "__main__":
     unittest.main()

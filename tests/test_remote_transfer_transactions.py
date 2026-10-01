@@ -9,16 +9,11 @@ import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
+BINDER=ROOT/'tests'/'instruction_binding_probe.js'
 
 
 def shell_quote(value):
     return "'"+value.replace("'", "'\\''")+"'"
-
-
-def bind(text, values):
-    for key, value in values.items():
-        text=text.replace('<'+key+'>', value).replace('{{'+key+'}}', value)
-    return text
 
 
 class RemoteTransferTransactionTests(unittest.TestCase):
@@ -54,8 +49,14 @@ exec /bin/sh -c "$*"
             'remote_identity':'operator@example.test',
             'remote_destination_path':shell_quote(str(target)),
             'remote_source_basename':shell_quote(basename),
-            'con':shell_quote('Wired connection 1'),
+            'con':'Wired connection 1',
         }
+
+    def app_bind(self, text, values):
+        proc=subprocess.run(['node',str(BINDER),str(ROOT/'template.html')],
+                            input=json.dumps({'text':text,'values':values}),text=True,
+                            stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True)
+        return json.loads(proc.stdout)['bound']
 
     def command(self, entry_id, kind, target, basename='config.yml'):
         if kind=='preflight':
@@ -68,7 +69,7 @@ exec /bin/sh -c "$*"
             raw=verify[verify.index("printf "):]
         else:
             raise AssertionError(kind)
-        return bind(raw,self.values(target,basename))
+        return self.app_bind(raw,self.values(target,basename))
 
     def run_command(self, command, check=True):
         return subprocess.run(command,shell=True,executable='/bin/sh',env=self.env,
@@ -129,6 +130,24 @@ exec /bin/sh -c "$*"
         self.run_command(self.command('rsync-sync-files','finalize',target))
         self.assertFalse(self.tmp.joinpath('tree.mdcr-rsync.txn').exists())
         self.run_command(preflight)
+
+    def test_scp_symlinked_file_is_refused_before_backup(self):
+        real=self.tmp/'real.conf'; real.write_text('before\n')
+        target=self.tmp/'link.conf'; target.symlink_to(real.name)
+        result=self.run_command(self.command('scp-secure-copy','preflight',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('symlinked SCP',result.stderr)
+        self.assertFalse(self.tmp.joinpath('link.conf.mdcr-scp.txn').exists())
+        self.assertEqual(real.read_text(),'before\n')
+
+    def test_rsync_symlinked_directory_is_refused_before_capacity_check(self):
+        real=self.tmp/'real-tree'; real.mkdir(); (real/'old').write_text('before\n')
+        target=self.tmp/'link-tree'; target.symlink_to(real.name,target_is_directory=True)
+        result=self.run_command(self.command('rsync-sync-files','preflight',target),check=False)
+        self.assertNotEqual(result.returncode,0)
+        self.assertIn('symlinked rsync',result.stderr)
+        self.assertFalse(self.tmp.joinpath('link-tree.mdcr-rsync.txn').exists())
+        self.assertEqual((real/'old').read_text(),'before\n')
 
 
 if __name__=='__main__':

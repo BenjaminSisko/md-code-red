@@ -1,6 +1,6 @@
 MD CODE RED — Command and Control Reference Export
 Tool version: v1.0.0-alpha.6  built 2026-10-01
-Content fingerprint (sha256 of every embedded data island): 13884109fdb87981016611b9017e25ddc46fce607490ea9e178f3230cd7dd9a2
+Content fingerprint (sha256 of every embedded data island): 26aa47f62622a94ae6c4522808eca86aca8522c0e679be9e94fb4ad2cccb6e8b
 
 STIG ID: RHEL-09-251015
 STIG version: V2R9  benchmark date: 01 Jul 2026

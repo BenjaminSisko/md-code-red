@@ -157,11 +157,13 @@ and the browser cannot inspect the operator's filesystem to distinguish that
 case. `/var/run`, `/etc/rc.local`, `/etc/rc0.d` through `/etc/rc6.d`, and user
 startup paths such as `.bashrc.d/` classify like their actual sensitive targets.
 
-The SCP and rsync preflight steps create an adjacent transaction directory on
-the remote host. They refuse a stale transaction, stage either a complete saved
-target or an explicit `absent` state, and publish the staged record atomically.
-Rsync also refuses the operation unless the remote filesystem has room for two
-copies plus a safety margin. Recover restores a saved target through a temporary
+Remote paths containing `.` or `..` segments are refused so the displayed
+path, classified target, and transaction location cannot diverge. The SCP and
+rsync preflight steps create an adjacent transaction directory on the remote
+host. They refuse top-level symlink destinations and stale transactions, stage
+either a complete saved target or an explicit `absent` state, and publish the
+staged record atomically. Rsync also refuses the operation unless the remote
+filesystem has room for two copies plus a safety margin. Recover restores a saved target through a temporary
 `after` path, or removes a new target only when the recorded state proves it was
 absent. After the operator accepts the verified result, the finalization command
 removes the transaction directory so the next transfer can begin.
@@ -514,7 +516,11 @@ with nine receipts each, and the documented algorithm chooses the lower release.
 
 Nine RHEL-first, read-only decision trees for boot/emergency mode, fstab,
 DNF/RPM, NetworkManager, firewalld, LVM/filesystems, SELinux AVCs, time sync and
-rsyslog are maintained in `content/rhel_troubleshooting.json`. They preserve
+rsyslog are maintained in `content/rhel_troubleshooting.json`. The NetworkManager
+static-address runbook resolves one unique connection name or UUID from
+`nmcli -g FILENAME,NAME,UUID connection show`, quotes the identifier as one shell
+word, and keeps its root-only rollback transaction under `/var/tmp`, outside
+NetworkManager's profile directories. They preserve
 unknowns and stop before destructive repair. They are operator data in this
 release and are not yet rendered as an in-browser rail.
 

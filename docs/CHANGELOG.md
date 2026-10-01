@@ -6,6 +6,16 @@ All notable changes to MD CODE RED are documented here. This project adheres to 
 
 ### Fixed -- Independent release review closure
 
+- Quote form values separately for runnable runbook commands, including ordinary
+  NetworkManager names with spaces. Static-address recovery now resolves exactly
+  one documented FILENAME/NAME/UUID row and keeps its root-only snapshot outside
+  NetworkManager profile directories.
+- Refuse top-level symlink destinations before SCP or rsync backup, capacity,
+  recovery, or finalization work; refuse remote `.` path segments; and execute
+  these cases through the shipped instruction binder in the fake-SSH suite.
+- Clear stale copy-success status when either curated or reference acknowledgement
+  is revoked, focus and scroll selected STIG evidence into view at mobile width,
+  and bind browser evidence to artifact bytes, SHA-256, and content fingerprint.
 - Rebuilt SCP and rsync recovery around remotely executed transaction scripts
   that survive OpenSSH argument joining, reject stale state, stage backups
   atomically, restore through a rollback-safe `after` path, and require explicit

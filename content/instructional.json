@@ -1014,7 +1014,7 @@
      "discovery_command": "nmcli connection show",
      "example": "lab-eth0",
      "label": "NetworkManager connection name",
-     "meaning": "The saved NetworkManager connection profile to modify."
+     "meaning": "The unique saved NetworkManager connection name or UUID to modify."
     },
     "gateway": {
      "consequence": "This value changes the target or scope of a state-changing operation; a recovery plan is required.",
@@ -1037,8 +1037,8 @@
      "text": "Record the complete current profile settings without exporting unsupported non-VPN formats."
     },
     {
-     "command": "profile_file=$(nmcli -g GENERAL.FILENAME connection show <con>) && test -n \"$profile_file\" && sudo test ! -e \"$profile_file.mdcr-before-static-ipv4\" && sudo cp -a -- \"$profile_file\" \"$profile_file.mdcr-before-static-ipv4\"",
-     "text": "Preserve the actual NetworkManager profile file and refuse to overwrite an earlier rollback copy."
+     "command": "printf '%s\\n' '# MDCR_NMCLI_PREFLIGHT' 'set -eu' 'umask 077' txn=/var/tmp/mdcr-nmcli-static-ipv4.txn 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: an unfinished NetworkManager transaction exists'\"'\"' >&2' '  exit 1' fi 'con=$1' 'record=$(nmcli -g FILENAME,NAME,UUID connection show | awk -F: -v n=\"$con\" '\"'\"'$2 == n || $3 == n { count++; value=$1 } END { if (count == 1) print value; else exit 1 }'\"'\"')' '[ -n \"$record\" ] && [ -f \"$record\" ] && [ ! -L \"$record\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: expected one regular NetworkManager profile file'\"'\"' >&2; exit 1; }' 'profile_file=$record' 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'cp -a -- \"$profile_file\" \"$preparing/before\"' 'printf '\"'\"'%s\\n'\"'\"' \"$profile_file\" > \"$preparing/profile_path\"' 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | sudo sh -s -- <con>",
+     "text": "Resolve exactly one name or UUID through the RHEL-documented FILENAME,NAME,UUID listing, then preserve the actual profile in a root-only transaction outside NetworkManager profile directories."
     }
    ],
    "prerequisites": [
@@ -1823,8 +1823,8 @@
    },
    "preflight": [
     {
-     "command": "printf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'target=$1' 'if [ -d \"$target\" ]; then target=$target/$2; fi' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished SCP transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ] || [ -L \"$target\" ]; then' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path> <remote_source_basename>",
-     "text": "Create one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Existing or partial transaction state is refused."
+     "command": "printf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP destination'\"'\"' >&2; exit 1; }' 'target=$destination' 'if [ -d \"$target\" ]; then target=$target/$2; fi' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked SCP target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished SCP transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ]; then' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path> <remote_source_basename>",
+     "text": "Create one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Symlinked targets and existing or partial transaction state are refused."
     }
    ],
    "prerequisites": [
@@ -1865,8 +1865,8 @@
      "text": "Run the assembled command with Dry run selected and review every listed change before clearing it."
     },
     {
-     "command": "printf '%s\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'target=$1' 'txn=$target.mdcr-rsync.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished rsync transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ] || [ -L \"$target\" ]; then' '  need=$(du -sk -- \"$target\" | awk '\"'\"'NR==1 {print $1}'\"'\"')' '  available=$(df -Pk -- \"$(dirname -- \"$target\")\" | awk '\"'\"'NR==2 {print $4}'\"'\"')' '  [ -n \"$need\" ] && [ -n \"$available\" ] && [ \"$available\" -ge $((need * 2 + 1024)) ] || {' '    printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: insufficient free space for a rollback copy plus reserve'\"'\"' >&2' '    exit 1' '  }' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path>",
-     "text": "Create one atomic remote transaction containing the destination tree or an absent-state record. Existing transaction state and insufficient rollback capacity are refused."
+     "command": "printf '%s\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'destination=$1' '[ ! -L \"$destination\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync destination'\"'\"' >&2; exit 1; }' 'target=$destination' '[ ! -L \"$target\" ] || { printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: symlinked rsync target'\"'\"' >&2; exit 1; }' 'txn=$target.mdcr-rsync.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished rsync transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ]; then' '  need=$(du -sk -- \"$target\" | awk '\"'\"'NR==1 {print $1}'\"'\"')' '  available=$(df -Pk -- \"$(dirname -- \"$target\")\" | awk '\"'\"'NR==2 {print $4}'\"'\"')' '  [ -n \"$need\" ] && [ -n \"$available\" ] && [ \"$available\" -ge $((need * 2 + 1024)) ] || {' '    printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: insufficient free space for a rollback copy plus reserve'\"'\"' >&2' '    exit 1' '  }' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path>",
+     "text": "Create one atomic remote transaction containing the destination tree or an absent-state record. Symlinked targets, existing transaction state, and insufficient rollback capacity are refused."
     }
    ],
    "prerequisites": [

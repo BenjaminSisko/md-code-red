@@ -151,10 +151,12 @@ class InstructionalSchemaTests(unittest.TestCase):
 
         nmcli=by_id['gen-nmcli-static-ipv4']
         nmcli_preflight='\n'.join((item.get('command') or '') for item in self.data['entries']['gen-nmcli-static-ipv4']['preflight'])
-        self.assertIn('GENERAL.FILENAME',nmcli_preflight)
+        self.assertIn('FILENAME,NAME,UUID',nmcli_preflight)
         self.assertIn('cp -a',nmcli_preflight)
+        self.assertIn('/var/tmp/mdcr-nmcli-static-ipv4.txn',nmcli_preflight)
         self.assertNotIn('connection export',nmcli_preflight+'\n'+nmcli['notes'])
-        self.assertIn('mdcr-before-static-ipv4',nmcli['undo'])
+        self.assertIn('MDCR_NMCLI_RECOVER',nmcli['undo'])
+        self.assertIn('profile_path',nmcli['undo'])
 
 
 if __name__=='__main__':

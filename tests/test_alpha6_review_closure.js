@@ -32,6 +32,12 @@ const remoteSystem=assemble('scp-secure-copy',{source:'/etc/app/config.yml',dest
 check(remoteSystem&&remoteSystem.blast==='red','remote protected destination was not raised to red');
 const remoteRoot=assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/'});
 check(remoteRoot===null,'remote filesystem root destination was not refused');
+check(assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/.'})===null,
+      'remote filesystem root expressed with a dot segment was not refused');
+check(assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/srv/app/.'})===null,
+      'remote rsync destination with a dot segment was not refused');
+check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/srv/app/./config.yml'})===null,
+      'remote SCP destination with a dot segment was not refused');
 const remoteDirectory=assemble('scp-secure-copy',{source:'/tmp/.bashrc',destination:'root@host:/root/'});
 check(remoteDirectory&&remoteDirectory.blast==='red','remote directory destination did not receive the strongest possible rating');
 check(assemble('scp-secure-copy',{source:'/tmp/key',destination:'root@host:/srv/app/.ssh/authorized_keys'})?.blast==='red',
