@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # QA Report -- v1.0.0-alpha.6
 
-Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The final candidate completed the full verification sequence on 2026-10-01.
 The detailed rendered-browser record is available in
@@ -21,14 +21,14 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
 | Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
-| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
+| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
 
 | Check | Result |
 |---|---|
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 470 tests |
+| Python unit suite | PASS; 477 tests |
 | Hostile-input harness | PASS; 168,697 checks, zero failures |
 | Standalone rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
 | HTTP rendered-browser audit | PASS; 898 of 898 assertions, zero runtime exceptions, zero console errors |
@@ -68,12 +68,24 @@ transaction finalization, SCP/rsync symlink refusal, atomic race handling,
 foreign-owner refusal, unsafe shared-parent refusal, explicit symlinked-parent
 refusal, GNU `mv -T` behavior, bounded raced-symlink replacement before and
 after removal, and exact status-1 HUP, INT, and TERM cleanup for both transfer
-methods. The NetworkManager execution matrix proves a
-space-bearing connection name backs up and restores the actual
-profile, while missing/duplicate/numeric-looking names and pre-existing,
-symlinked, raced, incorrectly permissioned, or forged-owner transaction state
-are handled through the app-bound command. It also exercises exact status-1
-HUP, INT, and TERM cleanup. The user-reported
+methods. A persistent-replant case runs with a hard timeout and proves the
+failure path exits exactly 1 after six bounded removals, leaves the attacker
+link in place, does not touch its sentinel, and retains transaction `state`,
+`before`, and `after`. Recover and Finalize also run against symlinked
+destinations, unsafe or symlinked parents, and positive SCP/rsync finalization
+paths. The NetworkManager execution matrix proves a space-bearing connection
+name backs up and restores the actual profile, while
+missing/duplicate/numeric-looking names and pre-existing, symlinked, raced,
+incorrectly permissioned, or forged-owner transaction state are handled
+through the app-bound command. Its pre-install symlink case starts the link
+target at mode `0755` and proves the target remains unchanged; Recover and
+Finalize independently reject an incorrectly permissioned state root. Positive
+Finalize coverage proves the trusted state is cleared, and signal execution
+uses child processes with default handlers before asserting exact status 1.
+The browser audit compares the copied rsync Recover payload byte for byte with
+the external instruction-binding probe, refuses any Preflight or Finalize
+marker in that payload, and counts exactly one keyboard activation and one
+clipboard write. The user-reported
 grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 

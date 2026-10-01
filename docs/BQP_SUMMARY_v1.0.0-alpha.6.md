@@ -6,13 +6,13 @@ last_verified: 2026-10-01
 
 # Build Quality Protocol Summary -- v1.0.0-alpha.6
 
-Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The final candidate is assembled from the pinned `APP_VERSION` and
 `APP_BUILD_DATE` in `build.py`. Two consecutive build and placeholder-
 provenance cycles produced byte-identical HTML, sidecar, and provenance files.
 The resulting bytes also match the artifact committed with implementation
-source `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8`.
+source `2e181c84c0a8621c33dd3fc8d76b0a0917135930`.
 
 | Item | Result |
 |---|---|
@@ -25,7 +25,7 @@ source `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8`.
 | Reproducibility | PASS; two consecutive cycles matched all three files byte for byte and matched the committed bytes |
 | Assembly | PASS; `build.py` assembled five escaped JSON islands and one application script without external assets |
 | Historical archive | Released alpha.5 files remain byte-for-byte under `releases/v1.0.0-alpha.5/` |
-| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
+| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
 
 The candidate provenance intentionally contains `TAG_COMMIT_PLACEHOLDER`.
 After merge, the release procedure must rebuild and retest the exact merge,

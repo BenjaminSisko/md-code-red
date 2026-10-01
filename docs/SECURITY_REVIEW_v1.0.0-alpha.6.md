@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 470 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
+Verification totals: 477 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 898 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -19,7 +19,7 @@ audit pass against the final artifact.
 | Artifact | `dist/md-code-red_v1.0.0-alpha.6.html`; 8,944,791 bytes |
 | Artifact SHA-256 | `198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb` |
 | Content fingerprint | `871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a` |
-| Implementation source | `05b96e5c74c7de5b3795df5e1ee9fa87b28583b8` |
+| Implementation source | `2e181c84c0a8621c33dd3fc8d76b0a0917135930` |
 
 This candidate adds or strengthens the following security properties:
 
@@ -58,6 +58,11 @@ This candidate adds or strengthens the following security properties:
   checks capacity for two copies plus a margin. Recovery restores through an
   `after` path, uses GNU `mv -T`, and makes a bounded retry after removing a
   raced symlink so a directory backup replaces the link without following it.
+  A persistent attacker that replants the link after every removal reaches the
+  bounded failure path: execution exits exactly 1 after six removals, retains
+  `state`, `before`, and `after`, leaves the link in place, and does not touch a
+  sentinel behind it. Recover and Finalize independently refuse symlinked
+  destinations and unsafe or symlinked transaction parents.
   A created target is removed only when recorded state proves it was absent;
   explicit finalization clears the transaction. SCP remains
   local-to-remote, and rsync recovery does not prescribe `--delete`.
@@ -65,12 +70,16 @@ This candidate adds or strengthens the following security properties:
   `/var/lib/md-code-red`. Preflight, Recover, and Finalize reject symlinked,
   non-root-owned, incorrectly permissioned, or incomplete state. Recovery reloads
   and reactivates the saved connection from a required console or out-of-band
-  session.
+  session. The pre-install symlink test begins with a mode-`0755` link target and
+  proves refusal occurs before `install` can change it; positive Finalize
+  coverage proves trusted state removal.
 - Runbook prose is never treated as a runnable clipboard payload. Preflight Copy
   includes only authored command fields; Verify and Recover Copy are enabled
   only for closed transaction scripts carrying an MDCR marker. Red-rated command,
   runbook, generated-file, and evidence-copy controls all share the exact-command
-  acknowledgement gate.
+  acknowledgement gate. The rendered audit compares the rsync Recover clipboard
+  bytes with the independent instruction-binding probe and rejects any payload
+  containing a Preflight or Finalize marker.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
   host-verified; the command cannot keep a receipt merely because its entry and

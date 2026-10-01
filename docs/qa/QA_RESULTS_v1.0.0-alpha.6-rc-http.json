@@ -5,7 +5,7 @@
     "date": "2026-10-01",
     "browser": "Google Chrome headless via CDP",
     "url": "http://127.0.0.1:8878/dist/md-code-red_v1.0.0-alpha.6.html",
-    "commit": "05b96e5c74c7de5b3795df5e1ee9fa87b28583b8",
+    "commit": "2e181c84c0a8621c33dd3fc8d76b0a0917135930",
     "artifactBytes": 8944791,
     "artifactSha256": "198ae5904b2c7d45112b0cc950d4108cd002d2288e940e819fcd107585c4dacb",
     "contentFingerprint": "871abbeab5aa6256de70ee84d7d215c07738f489cfbd1f2af166be3d132e113a",
@@ -55,7 +55,7 @@
       "description": "Initial page navigation and render",
       "status": "PASS",
       "expected": "informational",
-      "actual": "1218 ms",
+      "actual": "1219 ms",
       "severity": ""
     },
     {
@@ -7801,10 +7801,10 @@
     {
       "id": "TC-RUNBOOK-RED-GATE-001",
       "area": "Runbook",
-      "description": "Red runbook steps stay disabled before acknowledgement and Space copies Recover exactly once afterward",
+      "description": "Red runbook steps stay disabled before acknowledgement and Space copies only the exact Recover script once afterward",
       "status": "PASS",
       "expected": "",
-      "actual": "{\"rsyncPlanGate\":{\"ack\":true,\"before\":[{\"step\":\"preflight\",\"disabled\":true},{\"step\":\"run\",\"disabled\":true},{\"step\":\"verify\",\"disabled\":true},{\"step\":\"recover\",\"disabled\":true}],\"after\":[{\"step\":\"preflight\",\"disabled\":false},{\"step\":\"run\",\"disabled\":false},{\"step\":\"verify\",\"disabled\":false},{\"step\":\"recover\",\"disabled\":false}],\"recoverFocused\":true},\"rsyncPlanCopy\":{\"calls\":1,\"clicks\":1,\"clipboard\":\"printf '%s\\\\n' '# MDCR_RSYNC_RECOVER' 'set -eu' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' \",\"focus\":\"recover\"}}",
+      "actual": "{\"rsyncPlanGate\":{\"ack\":true,\"before\":[{\"step\":\"preflight\",\"disabled\":true},{\"step\":\"run\",\"disabled\":true},{\"step\":\"verify\",\"disabled\":true},{\"step\":\"recover\",\"disabled\":true}],\"after\":[{\"step\":\"preflight\",\"disabled\":false},{\"step\":\"run\",\"disabled\":false},{\"step\":\"verify\",\"disabled\":false},{\"step\":\"recover\",\"disabled\":false}],\"recoverFocused\":true,\"expectedRecover\":true},\"rsyncPlanCopy\":{\"calls\":1,\"clicks\":1,\"clipboard\":\"printf '%s\\\\n' '# MDCR_RSYNC_RECOVER' 'set -eu' 'destination=$1' '[ ! -L \\\"$destination\\\" ] || { printf '\\\"'\\\"'%s\\\\n'\\\"'\\\"' '\\\"'\\\"'Refusing: symlinked rsync destination'\\\"'\\\"' >&2; exit 1; }' \",\"exact\":true,\"otherMarkers\":[],\"focus\":\"recover\"}}",
       "severity": ""
     },
     {
@@ -8083,7 +8083,7 @@
       "description": "Architecture and test-plan counts match the live suite totals derived by this audit",
       "status": "PASS",
       "expected": "",
-      "actual": "470 unit; 168,697 hostile; 27,652 pipeline",
+      "actual": "477 unit; 168,697 hostile; 27,652 pipeline",
       "severity": ""
     },
     {
@@ -8092,7 +8092,7 @@
       "description": "Browser performance observation",
       "status": "PASS",
       "expected": "informational",
-      "actual": "{\"heap\":32196429,\"resources\":0,\"nav\":{\"dom\":38.89999997615814,\"load\":41.700000047683716}}",
+      "actual": "{\"heap\":6296662,\"resources\":0,\"nav\":{\"dom\":51,\"load\":52.89999997615814}}",
       "severity": ""
     },
     {
