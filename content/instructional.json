@@ -334,7 +334,7 @@
      "discovery_command": null,
      "example": "server time.mil iburst",
      "label": "Directive",
-     "meaning": "One chronyd source directive, such as server or pool plus its host."
+     "meaning": "One closed server or pool directive: source hostname or IP with optional iburst."
     }
    },
    "preflight": [
@@ -648,14 +648,14 @@
   "gen-git-clone": {
    "fields": {
     "directory": {
-     "consequence": "This value limits what the read-only command inspects.",
+     "consequence": "This value selects where a new working tree is created; cloning writes files and requires a recovery plan.",
      "discovery_command": null,
      "example": "project",
      "label": "Directory",
      "meaning": "The directory value used by this git command."
     },
     "repository": {
-     "consequence": "This value limits what the read-only command inspects.",
+     "consequence": "This value selects where a new working tree is created; cloning writes files and requires a recovery plan.",
      "discovery_command": "git remote -v",
      "example": "ssh://git@git.internal/team/project.git",
      "label": "Repository",
@@ -1033,12 +1033,12 @@
    },
    "preflight": [
     {
-     "command": null,
-     "text": "Confirm the target identity and intended scope before running the command."
+     "command": "nmcli connection show <con>",
+     "text": "Record the complete current profile settings without exporting unsupported non-VPN formats."
     },
     {
-     "command": null,
-     "text": "Capture the current state and confirm a tested recovery path before making this change."
+     "command": "profile_file=$(nmcli -g GENERAL.FILENAME connection show <con>) && test -n \"$profile_file\" && sudo test ! -e \"$profile_file.mdcr-before-static-ipv4\" && sudo cp -a -- \"$profile_file\" \"$profile_file.mdcr-before-static-ipv4\"",
+     "text": "Preserve the actual NetworkManager profile file and refuse to overwrite an earlier rollback copy."
     }
    ],
    "prerequisites": [
@@ -1823,8 +1823,8 @@
    },
    "preflight": [
     {
-     "command": "ssh <remote_identity> -- 'target=$1; [ -d \"$target\" ] && target=$target/$2; if [ -e \"$target\" ]; then test ! -e \"$target.mdcr-before-scp\" && cp -a -- \"$target\" \"$target.mdcr-before-scp\"; else test ! -e \"$target.mdcr-was-absent\" && : > \"$target.mdcr-was-absent\"; fi' sh <remote_destination_path> <remote_source_basename>",
-     "text": "Resolve the actual remote target, then preserve an existing target or record that it was absent before copying."
+     "command": "printf '%s\\n' '# MDCR_SCP_PREFLIGHT' 'set -eu' 'target=$1' 'if [ -d \"$target\" ]; then target=$target/$2; fi' 'txn=$target.mdcr-scp.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished SCP transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ] || [ -L \"$target\" ]; then' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path> <remote_source_basename>",
+     "text": "Create one atomic remote transaction containing the exact pre-transfer target or an absent-state record. Existing or partial transaction state is refused."
     }
    ],
    "prerequisites": [
@@ -1865,8 +1865,8 @@
      "text": "Run the assembled command with Dry run selected and review every listed change before clearing it."
     },
     {
-     "command": "ssh <remote_identity> -- 'target=$1; if [ -e \"$target\" ]; then test ! -e \"$target.mdcr-before-rsync\" && cp -a -- \"$target\" \"$target.mdcr-before-rsync\"; else test ! -e \"$target.mdcr-was-absent\" && : > \"$target.mdcr-was-absent\"; fi' sh <remote_destination_path>",
-     "text": "Preserve the remote destination tree, or record that it was absent, before the real synchronization."
+     "command": "printf '%s\\n' '# MDCR_RSYNC_PREFLIGHT' 'set -eu' 'target=$1' 'txn=$target.mdcr-rsync.txn' 'preparing=$txn.preparing' 'if [ -e \"$txn\" ] || [ -L \"$txn\" ] || [ -e \"$preparing\" ] || [ -L \"$preparing\" ]; then' '  printf '\"'\"'%s\\n'\"'\"' \"Refusing: an unfinished rsync transaction exists at $txn\" >&2' '  exit 1' fi 'cleanup() { rm -rf -- \"$preparing\"; }' 'trap cleanup EXIT HUP INT TERM' 'mkdir -- \"$preparing\"' 'if [ -e \"$target\" ] || [ -L \"$target\" ]; then' '  need=$(du -sk -- \"$target\" | awk '\"'\"'NR==1 {print $1}'\"'\"')' '  available=$(df -Pk -- \"$(dirname -- \"$target\")\" | awk '\"'\"'NR==2 {print $4}'\"'\"')' '  [ -n \"$need\" ] && [ -n \"$available\" ] && [ \"$available\" -ge $((need * 2 + 1024)) ] || {' '    printf '\"'\"'%s\\n'\"'\"' '\"'\"'Refusing: insufficient free space for a rollback copy plus reserve'\"'\"' >&2' '    exit 1' '  }' '  cp -a -- \"$target\" \"$preparing/before\"' '  printf '\"'\"'%s\\n'\"'\"' present > \"$preparing/state\"' else '  printf '\"'\"'%s\\n'\"'\"' absent > \"$preparing/state\"' fi 'mv -- \"$preparing\" \"$txn\"' 'trap - EXIT HUP INT TERM' | ssh <remote_identity> -- sh -s -- <remote_destination_path>",
+     "text": "Create one atomic remote transaction containing the destination tree or an absent-state record. Existing transaction state and insufficient rollback capacity are refused."
     }
    ],
    "prerequisites": [

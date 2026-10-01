@@ -31,7 +31,7 @@ check(remoteScratch&&remoteScratch.blast==='yellow','remote scratch destination 
 const remoteSystem=assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/etc/hosts'});
 check(remoteSystem&&remoteSystem.blast==='red','remote protected destination was not raised to red');
 const remoteRoot=assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/'});
-check(remoteRoot&&remoteRoot.blast==='red','remote filesystem root was not raised to red');
+check(remoteRoot===null,'remote filesystem root destination was not refused');
 const remoteDirectory=assemble('scp-secure-copy',{source:'/tmp/.bashrc',destination:'root@host:/root/'});
 check(remoteDirectory&&remoteDirectory.blast==='red','remote directory destination did not receive the strongest possible rating');
 check(assemble('scp-secure-copy',{source:'/tmp/key',destination:'root@host:/srv/app/.ssh/authorized_keys'})?.blast==='red',
@@ -44,6 +44,8 @@ check(assemble('scp-secure-copy',{source:'/tmp/.bashrc',destination:'root@host:/
       'remote directory possibility did not classify the source basename');
 check(assemble('rsync-sync-files',{source:'/etc/app/',destination:'root@host:/tmp/app'})?.blast==='red',
       'directory rsync source without a destination slash was not red');
+check(assemble('rsync-sync-files',{source:'/srv/dotfiles/.config',destination:'root@host:/home/alice/.config'})?.blast==='red',
+      'ambiguous rsync directory source without either trailing slash was not red');
 check(assemble('scp-secure-copy',{source:'/etc/app/config.yml',destination:'root@host:/var/run/systemd/system/x.service'})===null,
       '/var/run execution-sink alias was not refused');
 
@@ -64,6 +66,7 @@ check(redirected('/home/alice/.bash_logout')?.blast==='red','pipeline logout sta
 check(redirected('/lib64/libc.so.6')?.blast==='red','usrmerge /lib64 alias was not red');
 check(redirected('/lib/systemd/system/x.service')===null,'usrmerge /lib execution sink was not refused');
 check(redirected('/var/run/systemd/system/x.service')===null,'/var/run execution sink alias was not refused');
+check(redirected('/etc/rc.local')===null,'/etc/rc.local execution-sink alias was not refused');
 for(const level of ['0','1','2','3','4','5','6']){
   check(redirected('/etc/rc'+level+'.d/S99job')===null,'SysV rc'+level+' alias was not refused');
 }
@@ -73,6 +76,8 @@ for(const leaf of ['.zshenv','.zlogin','.zlogout','.xinitrc','.xsession','.Xclie
 }
 check(redirected('/home/alice/.config/environment.d/session.conf')?.blast==='red',
       'environment.d startup target was not red');
+check(redirected('/home/alice/.bashrc.d/aliases.sh')?.blast==='red',
+      '.bashrc.d startup target was not red');
 check(pipelineStartup&&pipelineStartup.blast_reasons.some(r=>r.id==='WRITE-TARGET'&&r.why.includes('/root/.bashrc')),
       'pipeline red banner reason omitted the write target');
 const attributedFlags=mod.assemblePipeline([
@@ -107,6 +112,14 @@ for(const good of ['https://git.example.test/team/repo.git','ssh://git@git.examp
                    'git@git.example.test:team/repo.git','/srv/git/repo.git']){
   check(assemble('gen-git-clone',{repository:good,directory:'clone'})!==null,'Git clone refused supported repository '+good);
 }
+check(mod.validateField('connection_name','Wired connection 1',null).ok,
+      'NetworkManager connection name with spaces was refused');
+check(mod.validateField('unit_description','OpenSSH server daemon',null).ok,
+      'systemd description with spaces was refused');
+check(mod.validateField('chrony_directive','server time.example.test iburst',null).ok,
+      'closed chronyd source directive was refused');
+check(!mod.validateField('chrony_directive','driftfile /tmp/chrony.drift',null).ok,
+      'chronyd file-writing directive was accepted');
 
 // Optional-subset controls exercise shapes the all-options golden fixture does
 // not: each omitted field must disappear with its own option and no neighbour.

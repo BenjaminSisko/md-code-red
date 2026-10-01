@@ -821,7 +821,16 @@ function isRemotePath(s){
     user=left.slice(0,at); host=left.slice(at+1);
     if(!USERNAME_RE.test(user)) return false;
   }else host=left;
-  return HOSTNAME_RE.test(host)&&isPath(path);
+  return HOSTNAME_RE.test(host)&&isPath(path)&&path!=="/";
+}
+function isChronyDirective(s){
+  /* chronyd accepts complete configuration directives as operands. Keep this
+     one-shot check to the two source directives it actually teaches so a
+     green command cannot smuggle file-writing or logging directives through
+     the former free-text field. */
+  var match=/^(server|pool) ([A-Za-z0-9.:-]+)( iburst)?$/.exec(s);
+  if(!match) return false;
+  return HOSTNAME_RE.test(match[2])||isIpv4(match[2])||isIpv6(match[2]);
 }
 function isHttpUrl(s){
   /* Only HTTP(S), without credentials, fragments, whitespace, IPv6 literals,
@@ -921,11 +930,12 @@ var FIELD_TYPES={
   pid:{cap:10,label:"process ID greater than zero",fn:isPid},
   zone:{cap:17,label:"firewalld zone",re:/^[A-Za-z0-9_-]{1,17}$/},
   service:{cap:64,label:"firewalld service name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/},
-  connection_name:{cap:128,label:"NetworkManager connection name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
+  connection_name:{cap:128,label:"ASCII NetworkManager connection name or UUID",re:/^[A-Za-z0-9][A-Za-z0-9_. -]{0,127}$/},
   lvm_name:{cap:128,label:"LVM volume name",re:/^[A-Za-z0-9][A-Za-z0-9+_.-]{0,127}$/},
   container_name:{cap:128,label:"container name",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
   directory_name:{cap:128,label:"directory name",re:/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/},
-  unit_description:{cap:128,label:"systemd unit description",re:/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/},
+  unit_description:{cap:128,label:"systemd unit description",re:/^[A-Za-z0-9][A-Za-z0-9 .,:_()\/-]{0,127}$/},
+  chrony_directive:{cap:256,label:"chronyd server or pool directive",fn:isChronyDirective},
   package:{cap:128,label:"package name",re:/^[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}$/},
   selinux_boolean:{cap:64,label:"SELinux boolean",re:/^[a-z][a-z0-9_]{0,63}$/},
   audit_key:{cap:31,label:"audit rule key",re:/^[A-Za-z0-9_-]{1,31}$/},
@@ -1238,9 +1248,10 @@ var DOC_KEY_RE=/^[A-Za-z_][A-Za-z0-9_.-]*$/;
 var DOC_LIT_RE=/^[A-Za-z0-9_./:@+-]+$/;
 var DOC_LINE_LIT_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
 var DOC_LINE_VALUE_RE=/^[A-Za-z0-9_./:@%*(),=+-]+$/;
-/* No whitespace, no quote, no ';' or '#', no '=', no control character:
-   nothing that can end an INI entry or start a comment. */
-var INI_VALUE_RE=/^[A-Za-z0-9_./:@+-]+$/;
+/* Spaces and ordinary description punctuation are data inside an INI value.
+   Quotes, ';', '#', '=', and controls remain excluded because they can alter
+   parsing or begin a comment. */
+var INI_VALUE_RE=/^[A-Za-z0-9_./:@+(), -]+$/;
 /* Closed grammars only, for the reason above the function. */
 var INI_FIELD_TYPES=["path","username","groupname","integer","port","hostname",
                      "interface","package","unit","service","unit_description",
@@ -1759,7 +1770,10 @@ function assembleCommand(spec,version,values,opts){
           if(PIPE_TARGET_RANK[candidateClass]>PIPE_TARGET_RANK[writeClass]) writeClass=candidateClass;
         }
       }
-      if((typeof sourceValue==="string"&&/\/$/.test(sourceValue))||/\/$/.test(writePath)){
+      if(spec.id==="rsync-sync-files"){
+        writeClass="red";
+        writeWhy="Rsync can treat the source as a directory even without a trailing slash, so the exact files written below "+writeValue+" cannot be classified in advance.";
+      }else if((typeof sourceValue==="string"&&/\/$/.test(sourceValue))||/\/$/.test(writePath)){
         writeClass="red";
         writeWhy="The remote operand can name a directory, so the exact files written below "+writeValue+" cannot be classified in advance.";
       }else if(candidateClass==="red"){
@@ -2246,7 +2260,7 @@ function lexicalPath(target){
        part of the supported platform contract. */
     var aliases=[["/bin","/usr/bin"],["/sbin","/usr/sbin"],
                  ["/lib","/usr/lib"],["/lib64","/usr/lib64"],
-                 ["/var/run","/run"],
+                 ["/var/run","/run"],["/etc/rc.local","/etc/rc.d/rc.local"],
                  ["/etc/rc0.d","/etc/rc.d/rc0.d"],["/etc/rc1.d","/etc/rc.d/rc1.d"],
                  ["/etc/rc2.d","/etc/rc.d/rc2.d"],["/etc/rc3.d","/etc/rc.d/rc3.d"],
                  ["/etc/rc4.d","/etc/rc.d/rc4.d"],["/etc/rc5.d","/etc/rc.d/rc5.d"],
@@ -2283,6 +2297,7 @@ function isExecutionSink(target){
 function isSensitiveUserTarget(target){
   var t=lexicalPath(target),parts=t.split("/"),leaf=parts.length?parts[parts.length-1]:"";
   if(t.indexOf("/.ssh/")>=0||/\/\.ssh$/.test(t)) return true;
+  if(t.indexOf("/.bashrc.d/")>=0||/\/\.bashrc\.d$/.test(t)) return true;
   if(inList([".bashrc",".bash_profile",".bash_login",".bash_logout",".profile",
              ".zshrc",".zprofile",".zshenv",".zlogin",".zlogout",
              ".cshrc",".tcshrc",".login",".kshrc",".xinitrc",".xsession",
@@ -5124,7 +5139,7 @@ function renderEditor(){
     if(STATE.stigRuleId){
       html+="<div class=\"card\"><h2>"+esc(STATE.stigRuleId)+"</h2>"+
             "<p class=\"muted\">Opened from search. The check text, fix text and control mapping "+
-            "are in the Inspector panel on the right — this rule has no command in this build's "+
+            "are in the Inspector panel — this rule has no command in this build's "+
             "catalog to assemble.</p></div>";
       el("editor-card").innerHTML=html;
       return;
@@ -5897,6 +5912,7 @@ function selectStigRule(ruleId,version){
   for(i=0;i<ruleset.length;i++){ if(ruleset[i].i===ruleId){ rule=ruleset[i]; break; } }
   if(!rule) return;
   if(rule.cmds&&rule.cmds.length&&entryById(rule.cmds[0])){
+    document.body.setAttribute("data-inspector","on");
     setVersion(version);
     selectEntry(rule.cmds[0]);
     return;
@@ -6065,7 +6081,7 @@ document.addEventListener("click",function(ev){
   if(!a) return;
   var action=a.getAttribute("data-action");
   if(routeChromeAction(action)) return;
-  if(action==="ack"){ STATE.acked=!!a.checked; reRenderEditorAndInspector(); return; }
+  if(action==="ack"){ STATE.acked=!!a.checked; STATE.toast=""; reRenderEditorAndInspector(); return; }
   if(action==="ref-ack"){ STATE.refAck=!!a.checked; reRenderEditorAndInspector(); return; }
   if(action==="ref-copy"){ doRefCopy(false); return; }
   if(action==="ref-copy-comment"){ doRefCopy(true); return; }

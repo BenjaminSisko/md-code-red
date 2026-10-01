@@ -2,7 +2,10 @@
 """Focused regression tests for release identity and provenance guidance."""
 
 import importlib.util
+import hashlib
+import json
 import os
+import re
 import unittest
 
 
@@ -48,6 +51,44 @@ class ReleaseReadinessTests(unittest.TestCase):
         message = str(caught.exception)
         self.assertIn("git clean -fdx dist", message)
         self.assertNotIn("rm -rf", message)
+
+    def test_bqp_summary_names_the_current_artifact_bytes(self):
+        version="v1.0.0-alpha.6"
+        artifact=os.path.join(REPO,"dist","md-code-red_%s.html" % version)
+        sidecar=artifact+".sha256"
+        provenance=os.path.join(REPO,"dist","md-code-red_%s.provenance.json" % version)
+        summary_path=os.path.join(REPO,"docs","BQP_SUMMARY_%s.md" % version)
+        with open(artifact,"rb") as fh:
+            blob=fh.read()
+        with open(sidecar,"rb") as fh:
+            sidecar_blob=fh.read()
+        with open(provenance,"rb") as fh:
+            provenance_blob=fh.read()
+        with open(summary_path,encoding="utf-8") as fh:
+            summary=fh.read()
+        fingerprint=re.search(
+            rb"Content fingerprint \(SHA-256 of every data island\): ([0-9a-f]{64})",blob)
+        self.assertIsNotNone(fingerprint)
+        for expected in (
+            format(len(blob),","),
+            hashlib.sha256(blob).hexdigest(),
+            fingerprint.group(1).decode("ascii"),
+            hashlib.sha256(sidecar_blob).hexdigest(),
+            hashlib.sha256(provenance_blob).hexdigest(),
+        ):
+            self.assertIn(expected,summary)
+
+    def test_html_report_cites_only_recorded_browser_assertions(self):
+        base=os.path.join(REPO,"docs","qa")
+        with open(os.path.join(base,"QA_RESULTS_v1.0.0-alpha.6-rc.json"),encoding="utf-8") as fh:
+            standalone=json.load(fh)
+        with open(os.path.join(base,"QA_RESULTS_v1.0.0-alpha.6-rc-http.json"),encoding="utf-8") as fh:
+            http=json.load(fh)
+        with open(os.path.join(base,"QA_REPORT_v1.0.0-alpha.6-rc.html"),encoding="utf-8") as fh:
+            report=fh.read()
+        recorded={row["id"] for row in standalone["results"]}|{row["id"] for row in http["results"]}
+        cited=set(re.findall(r"TC-[A-Za-z0-9_-]+",report))
+        self.assertEqual(cited-recorded,set(),"HTML report cites nonexistent browser assertions")
 
 
 if __name__ == "__main__":

@@ -205,7 +205,7 @@ class TheTwoStatementsAgree(unittest.TestCase):
     def test_doc_patterns_match_the_assembler(self):
         for name, compiled in (("DOC_KEY_RE", schema.DOC_KEY_RE),
                                ("DOC_LIT_RE", schema.DOC_LIT_RE),
-                               ("INI_VALUE_RE", re.compile(r"^[A-Za-z0-9_./:@+-]+$"))):
+                               ("INI_VALUE_RE", re.compile(r"^[A-Za-z0-9_./:@+(), -]+$"))):
             m = re.search(r"var %s=/(.+?)/;" % name, self.tpl)
             self.assertIsNotNone(m, "template.html has no %s" % name)
             self.assertEqual(compiled.pattern, m.group(1).replace("\\/", "/"),

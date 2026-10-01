@@ -746,6 +746,10 @@ function main() {
   var fx = JSON.parse(fs.readFileSync(path.join(REPO, "tests", "fixtures", "hostile-inputs.json"), "utf8"));
   var types = Object.keys(fx.field_types);
   var vectors = fx.vectors;
+  function expectedOutcome(type, def, vec) {
+    if (type === "comment") return vec.free_text;
+    return (def.quoted_safe_vectors || []).indexOf(vec.id) >= 0 ? "quote" : "reject";
+  }
 
   var stats = { checks: 0, rejected: 0, quoted: 0, oracles: 0, yamlOracles: 0, iniOracles: 0, linesOracles: 0,
                 failures: [], byClass: {}, byType: {} };
@@ -861,7 +865,7 @@ function main() {
              so the required outcome there is rejection, full stop. */
           check(spec.id + " / " + vec.id + " / RHEL " + version, vec["class"],
                 spec, version, { v: vec.value }, vec.value,
-                type === "comment" ? vec.free_text : "reject");
+                expectedOutcome(type, def, vec));
           if (stats.rejected > before.r) stats.byType[type].rejected++;
           else if (stats.quoted > before.q) stats.byType[type].quoted++;
         }
@@ -1427,7 +1431,7 @@ function main() {
           contentSpecChecks++;
           check(centry.id + " / field " + targetField.name + " / " + vec.id + " / RHEL " + version,
                 vec["class"], probe, version, values, vec.value,
-                targetField.type === "comment" ? vec.free_text : "reject");
+                expectedOutcome(targetField.type, fx.field_types[targetField.type], vec));
         }
       }
     }
@@ -2155,7 +2159,7 @@ function main() {
                  pvec["class"],
                  pipeStagesFor(PIPE_SHAPES[psh], ptype, pdef2, pvec.value),
                  VERSIONS[pr2], pvec.value,
-                 ptype === "comment" ? pvec.free_text : "reject",
+                 expectedOutcome(ptype, pdef2, pvec),
                  pipeStagesFor(PIPE_SHAPES[psh], ptype, pdef2, pdef2.benign));
         }
       }

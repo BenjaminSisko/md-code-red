@@ -45,6 +45,14 @@ class Alpha6ReviewClosureTests(unittest.TestCase):
         self.assertEqual({eid:entries[eid]['blast'] for eid in state_changing},
                          {eid:'yellow' for eid in state_changing})
 
+        with open(os.path.join(ROOT,'content','instructional.json'),encoding='utf-8') as fh:
+            instructions=json.load(fh)['entries']
+        for eid,entry in entries.items():
+            if entry['blast']=='green':
+                continue
+            for name,field in instructions.get(eid,{}).get('fields',{}).items():
+                self.assertNotIn('read-only',field.get('consequence','').lower(),(eid,name))
+
     def test_purpose_specific_field_types_replace_firewalld_service_errors(self):
         with open(os.path.join(ROOT,'content','commands.json'),encoding='utf-8') as fh:
             entries={e['id']:e for e in json.load(fh)['entries']}
@@ -57,6 +65,7 @@ class Alpha6ReviewClosureTests(unittest.TestCase):
             ('gen-git-clone','repository'):'git_repository',
             ('gen-git-clone','directory'):'directory_name',
             ('gen-systemd-unit','description'):'unit_description',
+            ('gen-chronyd-one-shot-check','directive'):'chrony_directive',
         }
         for (eid,name),want in expected.items():
             field=next(f for f in entries[eid]['fields'] if f['name']==name)

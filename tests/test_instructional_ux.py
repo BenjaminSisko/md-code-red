@@ -138,10 +138,23 @@ class InstructionalSchemaTests(unittest.TestCase):
             preflight='\n'.join((item.get('command') or '') for item in self.data['entries'][eid]['preflight'])
             self.assertIn('<remote_identity>',preflight)
             self.assertIn('<remote_destination_path>',preflight)
-            self.assertIn('.mdcr-before-'+suffix,preflight)
-            self.assertIn('.mdcr-was-absent',preflight)
-            self.assertIn('.mdcr-before-'+suffix,by_id[eid]['undo'])
-            self.assertIn('.mdcr-was-absent',by_id[eid]['undo'])
+            self.assertIn('sh -s --',preflight)
+            self.assertIn('.mdcr-'+suffix+'.txn',preflight)
+            self.assertIn('preparing',preflight)
+            self.assertIn('present',preflight)
+            self.assertIn('absent',preflight)
+            self.assertIn('.mdcr-'+suffix+'.txn',by_id[eid]['undo'])
+            self.assertIn('MDCR_'+suffix.upper()+'_RECOVER',by_id[eid]['undo'])
+            self.assertIn('MDCR_'+suffix.upper()+'_FINALIZE',by_id[eid]['verify'])
+        rsync_preflight='\n'.join((item.get('command') or '') for item in self.data['entries']['rsync-sync-files']['preflight'])
+        self.assertIn('insufficient free space',rsync_preflight)
+
+        nmcli=by_id['gen-nmcli-static-ipv4']
+        nmcli_preflight='\n'.join((item.get('command') or '') for item in self.data['entries']['gen-nmcli-static-ipv4']['preflight'])
+        self.assertIn('GENERAL.FILENAME',nmcli_preflight)
+        self.assertIn('cp -a',nmcli_preflight)
+        self.assertNotIn('connection export',nmcli_preflight+'\n'+nmcli['notes'])
+        self.assertIn('mdcr-before-static-ipv4',nmcli['undo'])
 
 
 if __name__=='__main__':

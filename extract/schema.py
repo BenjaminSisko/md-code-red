@@ -303,6 +303,7 @@ FIELD_TYPE_NAMES = ("hostname", "ipv4", "ipv6", "ipaddr", "cidr", "port", "portr
                     "path", "remote_path", "http_url", "git_repository", "git_path",
                     "shell_variable", "pid", "zone", "service", "connection_name", "lvm_name",
                     "container_name", "directory_name", "unit_description", "package",
+                    "chrony_directive",
                     "selinux_boolean", "audit_key", "interface",
                     "integer", "lvm_size", "group_list", "git_refname", "git_revision",
                     "cron_minute", "cron_hour", "enum", "comment")
