@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # QA Report -- v1.0.0-alpha.6
 
-Verification totals: 443 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 The final candidate completed the full verification sequence on 2026-10-01.
 The detailed rendered-browser record is available in
@@ -21,7 +21,7 @@ The same audit was also run through the local HTTP delivery path; that record is
 | Reproducible build | PASS; two HTML, sidecar, and placeholder-provenance cycles were byte-identical and matched the committed artifact |
 | Build-time schema validation | PASS |
 | QA gates | PASS; Q1-Q26 plus JavaScript syntax |
-| Python unit suite | PASS; 443 tests |
+| Python unit suite | PASS; 451 tests |
 | Hostile-input harness | PASS; 168,697 checks, zero failures |
 | Standalone rendered-browser audit | PASS; 897 of 897 assertions, zero runtime exceptions, zero console errors |
 | HTTP rendered-browser audit | PASS; 897 of 897 assertions, zero runtime exceptions, zero console errors |
@@ -50,15 +50,19 @@ acknowledgement, and Add-to-pipeline click after typing is not swallowed; the
 clipboard matches the changed command; stale success text clears; and Tab moves
 to the next control. It verifies that editing a red command clears its
 acknowledgement, partial re-renders retain focus, the first valid input announces
-readiness, rendered warning/control/placeholder contrast exceeds 4.5:1, linked STIG
-selection focuses evidence in view at 390 pixels, target-specific blast reasons
-survive composition, and the browser renders bound transfer protocols. Eight
+readiness, rendered warning/control/placeholder contrast exceeds 4.5:1, linked
+STIG selection closes the palette and focuses evidence in view at 390 pixels,
+keyboard Copy retains focus, target-specific blast reasons survive composition,
+and the browser renders bound transfer protocols. Eleven
 fake-SSH execution tests use the app's own instruction binder, reproduce OpenSSH
 argument joining, and exercise existing-target restore, directory-target
 resolution, absent-target recovery, stale-state refusal, rsync tree restore,
-transaction finalization, and SCP/rsync symlink refusal. A separate execution
-test proves a space-bearing NetworkManager name backs up and restores the actual
-profile through the app-bound transaction command. The user-reported grep task produced
+transaction finalization, SCP/rsync symlink refusal, atomic race handling,
+foreign-owner refusal, and unsafe shared-parent refusal. Six separate execution
+tests prove a space-bearing NetworkManager name backs up and restores the actual
+profile, while pre-existing, symlinked, raced, or incorrectly permissioned
+transaction state is refused through the app-bound command. The user-reported
+grep task produced
 exactly `grep -r -n -i 'laundry' '/etc'` from five editable controls.
 
 Known evidence limits remain visible: RHEL 7 and RHEL 9 have no independently

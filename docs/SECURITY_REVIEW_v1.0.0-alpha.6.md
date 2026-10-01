@@ -6,7 +6,7 @@ last_verified: 2026-10-01
 
 # Security Review -- v1.0.0-alpha.6
 
-Verification totals: 443 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
+Verification totals: 451 unit tests; 168,697 hostile-input checks; 27,652 pipeline checks; 897 rendered-browser assertions in each delivery mode.
 
 The candidate preserves the offline single-file architecture, deny-network CSP,
 closed generator grammars, output escaping, dangerous-pattern detection, and
@@ -24,8 +24,8 @@ This candidate adds or strengthens the following security properties:
 - Curl, wget, SCP, and rsync destination fields are classified as write targets.
   Execution sinks are refused, protected system and sensitive user startup or
   authentication targets are red. SCP rates the validated path plus source
-  basename and may conservatively remain yellow when the remote host alone can
-  reveal directory semantics; every rsync remote write is red. Other writes are
+  basename and may remain yellow when only the remote host can reveal directory
+  semantics; every rsync remote write is red. Other writes are
   at least yellow. RHEL usrmerge
   aliases (`/bin`, `/sbin`,
   `/lib`, and `/lib64`), `/var/run`, and `/etc/rc0.d` through `/etc/rc6.d`
@@ -39,15 +39,21 @@ This candidate adds or strengthens the following security properties:
   destructive-child reasons survive composition and appear in the red banner.
 - A destructive acknowledgement is bound to the current command. Any field,
   pipeline, operator, or release change clears it and disables Copy again.
-- SCP and rsync use single-stdin remote transaction scripts whose exact app-bound
+- SCP and rsync use single-stdin remote transaction scripts whose app-bound
   strings execute through a fake SSH transport that reproduces OpenSSH's joined
-  remote-command semantics. Preflight refuses symlink targets, remote dot
-  segments, and stale transaction state,
+  remote-command semantics. Field validation refuses remote dot segments before
+  those scripts run. Preflight refuses symlink targets, unsafe writable parents,
+  foreign-owned or stale transaction state,
   atomically publishes either a complete backup or an `absent` record, and rsync
   checks capacity for two copies plus a margin. Recovery restores through an
   `after` path or removes a created target only when recorded state proves it was
   absent; explicit finalization clears the transaction. SCP remains
   local-to-remote, and rsync recovery does not prescribe `--delete`.
+- NetworkManager rollback state is atomically created under root-owned mode-0700
+  `/var/lib/md-code-red`. Preflight, Recover, and Finalize reject symlinked,
+  non-root-owned, incorrectly permissioned, or incomplete state. Recovery reloads
+  and reactivates the saved connection from a required console or out-of-band
+  session.
 - Generator receipts include the exact reviewed `command_as_run`. Changing any
   field immediately changes both the Inspector and status bar to Not
   host-verified; the command cannot keep a receipt merely because its entry and
